@@ -8,14 +8,13 @@ import { cleanupExpiredKeys } from './services/idempotency.service';
 import { query } from './config/database';
 import { logger } from './utils/logger';
 
-// التأكد من قراءة المنفذ من متغيرات البيئة أو استخدام 4000 كافتراضي
 const PORT = parseInt(process.env.PORT || '4000');
 
 // ── HTTP + Socket.io ──────────────────────────────────────────────────────
 const httpServer = http.createServer(app);
 const io = new SocketServer(httpServer, {
   cors: {
-    // دعم تعدد النطاقات بما فيها الدومين الجديد cafeslux.com
+    // دعم تعدد النطاقات بما فيها cafeslux.com
     origin: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
     credentials: true,
   },
@@ -24,10 +23,10 @@ const io = new SocketServer(httpServer, {
 
 initSocket(io);
 
-// ── Start (تم التعديل ليدعم 0.0.0.0 للعمل على Railway) ──────────────────────
+// ── Start (تعديل 0.0.0.0 للعمل على Railway) ────────────────────────────────
 httpServer.listen(PORT, '0.0.0.0', () => {
   logger.info(`[Server] LUX Supreme v4.3 listening on port ${PORT} (0.0.0.0)`);
-  logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`[Server] Environment: ${process.env.NODE_ENV || 'production'}`);
 });
 
 // ── Scheduled tasks (المهام المجدولة للمقهى) ────────────────────────────────
@@ -51,14 +50,13 @@ setTimeout(() => {
   query('SELECT take_mrr_snapshot()').catch(() => {});
 }, 30_000);
 
-// ── Graceful shutdown (الإغلاق الآمن للسيرفر) ───────────────────────────────
+// ── Graceful shutdown ─────────────────────────────────────────────────────
 function shutdown(signal: string) {
   logger.info(`[Server] ${signal} received — shutting down gracefully`);
   httpServer.close(() => {
     logger.info('[Server] HTTP server closed');
     process.exit(0);
   });
-  // إغلاق قسري بعد 10 ثوانٍ إذا تعذر الإغلاق الآمن
   setTimeout(() => { logger.error('[Server] Forced shutdown'); process.exit(1); }, 10_000);
 }
 
