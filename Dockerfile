@@ -3,6 +3,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
+# REBUILD-20260328165037
 RUN npm run build
 
 FROM node:20-alpine AS backend-build
