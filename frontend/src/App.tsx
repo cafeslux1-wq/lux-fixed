@@ -1,6 +1,33 @@
 import{useState,useEffect}from'react'
 const G='#C9A84C'
 type R='/'|'/menu'|'/portal/pos'|'/app/customer'
+
+// Images served from /menu/ static folder
+const I:Record<string,string>={
+  'Classic Breakfast':'/menu/classic_breakfast.jpg',
+  'Omelette au Fromage':'/menu/omelette_fromage.jpg',
+  'Moroccan Breakfast':'/menu/moroccan_breakfast.jpg',
+  'Espresso':'/menu/espresso.jpg','Espresso Prestige':'/menu/espresso_prestige.jpg',
+  'Double Espresso':'/menu/double_espresso.jpg','Capsule':'/menu/capsule.jpg',
+  'Lait Chocolat':'/menu/lait_chocolat.jpg','Lait Chaud':'/menu/lait_chaud.jpg',
+  'Lait Verveine':'/menu/lait_verveine.jpg','Lait Aromatisé':'/menu/lait_aromatise.jpg',
+  'Café Crème':'/menu/cafe_creme.jpg','Cappuccino':'/menu/cappuccino.jpg',
+  'Café Chocolat':'/menu/cafe_chocolat.jpg','Chocolat Fondu':'/menu/chocolat_fondu.jpg',
+  'Thé Marocain':'/menu/the_marocain.jpg','Golden Tea':'/menu/golden_tea.jpg',
+  'Thé Royal':'/menu/the_royal.jpg','Banane':'/menu/banane.jpg','Pomme':'/menu/pomme.jpg',
+  'Orange':'/menu/orange.jpg','Citron':'/menu/citron.jpg',
+  'Fruits de Saison':'/menu/fruits_saison.jpg','Mangue':'/menu/mangue.jpg',
+  'Ananas':'/menu/ananas.jpg','Avocat':'/menu/avocat.jpg',
+  'Avocat Royal':'/menu/avocat_royal.jpg','Mojito':'/menu/mojito.jpg',
+  'Panache LUX':'/menu/panache_lux.jpg','Cocktail Royal':'/menu/cocktail_royal.jpg',
+  'Zaazaa Lux':'/menu/zaazaa_lux.jpg','Crêpe Royale':'/menu/crepe_royale.jpg',
+  'Crêpe Fromage':'/menu/crepe_fromage.jpg','Pack Crêpes':'/menu/pack_crepes.jpg',
+  'LUX Power Toast':'/menu/lux_power_toast.jpg','Meskouta':'/menu/meskouta.jpg',
+  'Cake Prestige':'/menu/cake_prestige.jpg','Sablés 7pcs':'/menu/sables_7pcs.jpg',
+  'Sellou Portion':'/menu/sellou_portion.jpg','Plateau Gâteaux':'/menu/plateau_gateaux.jpg',
+  'Sellou 1 Kg':'/menu/sellou_1kg.jpg','Salade Fruits Royale':'/menu/salade_royale.jpg',
+  'Soda':'/menu/soda.jpg','Red Bull':'/menu/red_bull.jpg','Milkshake Classic':'/menu/milkshake.jpg',
+}
 const M=[
 {id:'pdej',icon:'🍳',title:'Petit-Déjeuner',sub:'Café noir offert',items:[
 {n:'Classic Breakfast',p:22,s:'Pain, oeuf, olives, fromage'},{n:'Chamali',p:27,s:'2 oeufs, fromage, pain, jben'},
@@ -22,10 +49,16 @@ const M=[
 {n:'Crêpe Nutella',p:23},{n:'Crêpe Royale',p:30,sig:1},{n:'Crêpe Fromage',p:25},{n:'Crêpe Thon',p:35}]},
 {id:'resto',icon:'🍽',title:'Restaurant',items:[
 {n:'LUX Power Toast',p:25,sig:1},{n:'Harira',p:14},{n:'Meskouta',p:5},
-{n:'Cake Prestige',p:10},{n:'Sablés 7pcs',p:13},{n:'Plateau Gâteaux',p:100},{n:'Salade Royale',p:40}]},
+{n:'Cake Prestige',p:10},{n:'Sablés 7pcs',p:13},{n:'Plateau Gâteaux',p:100},{n:'Salade Fruits Royale',p:40}]},
 {id:'soft',icon:'🥫',title:'Soft & Shakes',items:[
-{n:'Soda',p:12,s:'Coca, 7up, Fanta'},{n:'Red Bull',p:20},{n:'Milkshake',p:35}]}
+{n:'Soda',p:12,s:'Coca, 7up, Fanta'},{n:'Red Bull',p:20},{n:'Milkshake Classic',p:35}]}
 ]
+function Img({n,h,icon}:{n:string,h:number,icon:string}){
+const[ok,sok]=useState(!!I[n])
+return I[n]&&ok
+?<img src={I[n]} alt={n} style={{width:'100%',height:h,objectFit:'cover'}} onError={()=>sok(false)}/>
+:<div style={{width:'100%',height:h,background:'linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:h/3}}>{icon}</div>
+}
 function Home({go}:{go:(r:R)=>void}){
 const[v,sv]=useState(false)
 useEffect(()=>{setTimeout(()=>sv(true),80)},[])
@@ -70,11 +103,11 @@ function Menu({go}:{go:(r:R)=>void}){
 const[id,sid]=useState('pdej')
 const cat=M.find((c:any)=>c.id===id)||M[0]
 return<div style={{height:'100vh',background:'#FAF8F2',fontFamily:"'DM Sans',sans-serif",display:'flex',flexDirection:'column',overflow:'hidden'}}>
-<style>{`.cb{transition:all .18s}.cb:hover{background:rgba(201,168,76,.1)!important;color:#1A0A00!important}.cb.on{background:${G}!important;color:#000!important;font-weight:600}.mc{transition:all .18s;cursor:pointer}.mc:hover{border-color:${G}!important;transform:translateY(-2px)}`}</style>
+<style>{`.cb{transition:all .18s}.cb:hover{background:rgba(201,168,76,.1)!important;color:#1A0A00!important}.cb.on{background:${G}!important;color:#000!important;font-weight:600}.mc{transition:all .18s;cursor:pointer}.mc:hover{border-color:${G}!important;transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.1)}`}</style>
 <div style={{background:'linear-gradient(135deg,#1A0A00,#2D1500)',padding:'11px 18px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
 <button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',padding:'6px 13px',borderRadius:7,cursor:'pointer',fontSize:12}}>← Retour</button>
 <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>★ Café Lux</span>
-<div style={{marginLeft:'auto',background:G,color:'#000',padding:'6px 14px',borderRadius:16,fontSize:11,fontWeight:700}}>🚚 Livraison 15 DH</div>
+<div style={{marginLeft:'auto',background:G,color:'#000',padding:'6px 14px',borderRadius:16,fontSize:11,fontWeight:700}}>🚚 Livraison 15 DH — Gratuite dès 200 DH</div>
 </div>
 <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 <div style={{width:172,background:'#fff',padding:10,overflowY:'auto',flexShrink:0,borderRight:'1px solid #EDE5D5'}}>
@@ -86,7 +119,7 @@ return<div style={{height:'100vh',background:'#FAF8F2',fontFamily:"'DM Sans',san
 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(165px,1fr))',gap:10}}>
 {(cat as any).items.map((it:any,i:number)=>(
 <div key={i} className="mc" style={{background:'#fff',border:`1.5px solid ${it.sig?'rgba(201,168,76,.4)':'#EDE5D5'}`,borderRadius:11,overflow:'hidden'}}>
-<div style={{width:'100%',height:100,background:it.sig?'linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.06))':'linear-gradient(135deg,#F5F0E5,#EDE5D5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>{it.sig?'⭐':(cat as any).icon}</div>
+<Img n={it.n} h={105} icon={(cat as any).icon}/>
 <div style={{padding:'9px 11px'}}>
 <div style={{fontSize:12,fontWeight:600,color:'#1A0A00',marginBottom:3,lineHeight:1.3}}>{it.n}</div>
 {it.s&&<div style={{fontSize:10,color:'#999',marginBottom:6}}>{it.s}</div>}
@@ -128,7 +161,7 @@ return<div style={{height:'100vh',background:'#0D0D0D',display:'flex',flexDirect
 <div style={{flex:1,padding:12,overflowY:'auto',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:8,alignContent:'start'}}>
 {(cat as any).items.map((it:any,i:number)=>(
 <div key={i} className="mc2" onClick={()=>{if(!table){alert('Choisissez une table!');return}add(it.n,it.p)}} style={{background:'#151515',borderRadius:10,overflow:'hidden'}}>
-<div style={{width:'100%',height:75,background:'linear-gradient(135deg,#1A1A1A,#222)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>{(cat as any).icon}</div>
+<Img n={it.n} h={75} icon={(cat as any).icon}/>
 <div style={{padding:'7px 9px'}}>
 <div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',lineHeight:1.3,marginBottom:3}}>{it.n}</div>
 <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,color:G,fontWeight:600}}>{it.p} DH</div>
@@ -152,10 +185,10 @@ return<div style={{height:'100vh',background:'#0D0D0D',display:'flex',flexDirect
 <span style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:G,fontWeight:600}}>{(total*1.1).toFixed(0)} DH</span>
 </div>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
-{['💵','💳'].map(m=><button key={m} onClick={()=>{if(cart.length){alert(`✅ ${(total*1.1).toFixed(0)} DH`);setCart([]);setTable(null)}}} style={{padding:'8px',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#888',borderRadius:8,cursor:'pointer',fontSize:13}}>{m}</button>)}
+{['💵 Espèces','💳 CB'].map(m=><button key={m} onClick={()=>{if(cart.length){alert(`✅ ${(total*1.1).toFixed(0)} DH\n${m}`);setCart([]);setTable(null)}}} style={{padding:'8px',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#888',borderRadius:8,cursor:'pointer',fontSize:11}}>{m}</button>)}
 </div>
 <button onClick={()=>{if(cart.length){alert(`✅ Encaissé: ${(total*1.1).toFixed(0)} DH`);setCart([]);setTable(null)}}} style={{width:'100%',padding:'11px',background:G,color:'#000',border:'none',borderRadius:9,fontWeight:700,cursor:'pointer',fontSize:13}}>✓ Encaisser</button>
-{cart.length>0&&<button onClick={()=>setCart([])} style={{width:'100%',marginTop:6,padding:'7px',background:'transparent',border:'1px solid #1E1E1E',color:'#444',borderRadius:9,cursor:'pointer',fontSize:11}}>Vider</button>}
+{cart.length>0&&<button onClick={()=>setCart([])} style={{width:'100%',marginTop:6,padding:'7px',background:'transparent',border:'1px solid #1E1E1E',color:'#444',borderRadius:9,cursor:'pointer',fontSize:11}}>Vider le ticket</button>}
 </div></div></div></div>
 }
 function CustomerApp({go}:{go:(r:R)=>void}){
@@ -181,7 +214,7 @@ return<div style={{minHeight:'100vh',background:'#0A0A0A',fontFamily:"'DM Sans',
 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:10,marginBottom:20}}>
 {QK.map((it:any,i:number)=>(
 <div key={i} onClick={()=>add(it.n,it.p)} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:10,overflow:'hidden',cursor:'pointer'}}>
-<div style={{width:'100%',height:85,background:'#1A1A1A',display:'flex',alignItems:'center',justifyContent:'center',fontSize:26}}>⭐</div>
+<Img n={it.n} h={90} icon="⭐"/>
 <div style={{padding:'8px 10px'}}>
 <div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',marginBottom:4}}>{it.n}</div>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -190,12 +223,12 @@ return<div style={{minHeight:'100vh',background:'#0A0A0A',fontFamily:"'DM Sans',
 </div></div></div>))}
 </div>
 {cart.length>0&&<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:14}}>
-<div style={{fontWeight:600,marginBottom:10,color:'#F0EDE8'}}>🛒 سلة الطلب</div>
+<div style={{fontWeight:600,marginBottom:10}}>🛒 سلة الطلب</div>
 {cart.map(c=><div key={c.n} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #1A1A1A',fontSize:12}}>
 <span style={{color:'#888'}}>{c.q}x {c.n}</span><span style={{color:G}}>{c.p*c.q} DH</span></div>)}
 <div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontWeight:700}}>
 <span>المجموع</span><span style={{color:G,fontFamily:"'Playfair Display',serif",fontSize:18}}>{total} DH</span></div>
-<button onClick={()=>{alert(`✅ طلبك وصل!\nالمجموع: ${total} DH\n+${Math.floor(total/5)} نقطة`);setCart([])}} style={{width:'100%',marginTop:12,padding:'12px',background:G,color:'#000',border:'none',borderRadius:9,fontWeight:700,cursor:'pointer',fontSize:14}}>تأكيد الطلب 🚀</button>
+<button onClick={()=>{alert(`✅ طلبك وصل!\n${total} DH — +${Math.floor(total/5)} نقطة`);setCart([])}} style={{width:'100%',marginTop:12,padding:'12px',background:G,color:'#000',border:'none',borderRadius:9,fontWeight:700,cursor:'pointer',fontSize:14}}>تأكيد الطلب 🚀</button>
 </div>}
 </div>}
 {tab==='wallet'&&<div style={{padding:16}}>
@@ -204,7 +237,7 @@ return<div style={{minHeight:'100vh',background:'#0A0A0A',fontFamily:"'DM Sans',
 <div style={{fontFamily:"'Playfair Display',serif",fontSize:42,color:G,fontWeight:700}}>150 DH</div>
 </div>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
-{[50,100,200,500].map(a=><button key={a} onClick={()=>alert(`+${a} DH rechargé! Bonus: +${Math.floor(a*.1)} DH`)} style={{padding:'14px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,color:'#F0EDE8',cursor:'pointer',fontSize:14,fontWeight:600}}>+{a} DH<div style={{fontSize:10,color:G,marginTop:3}}>+{Math.floor(a*.1)} bonus</div></button>)}
+{[50,100,200,500].map(a=><button key={a} onClick={()=>alert(`+${a} DH!\nBonus: +${Math.floor(a*.1)} DH`)} style={{padding:'14px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,color:'#F0EDE8',cursor:'pointer',fontSize:14,fontWeight:600}}>+{a} DH<div style={{fontSize:10,color:G,marginTop:3}}>+{Math.floor(a*.1)} bonus</div></button>)}
 </div>
 <div style={{background:'#111',borderRadius:12,padding:14}}>
 {[{t:'Café + Croissant',m:-38,d:"Aujourd'hui 09:15"},{t:'Recharge Wallet',m:100,d:'Hier 14:30'},{t:'Morning Lux',m:-35,d:'Lundi 08:45'}].map((tx,i)=>(
@@ -220,7 +253,7 @@ return<div style={{minHeight:'100vh',background:'#0A0A0A',fontFamily:"'DM Sans',
 {[{p:50,l:'Espresso offert',i:'☕'},{p:100,l:'Cappuccino offert',i:'🥛'},{p:200,l:'-20% sur commande',i:'🎫'},{p:350,l:'Petit-Déjeuner offert',i:'🍳'}].map((r,i)=>(
 <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px',background:'#111',border:`1px solid ${pts>=r.p?'rgba(61,190,122,.3)':'#1A1A1A'}`,borderRadius:10,marginBottom:8}}>
 <div style={{fontSize:26}}>{r.i}</div>
-<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{r.l}</div><div style={{fontSize:11,color:'#555',marginTop:2}}>{r.p} pts requis</div></div>
+<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{r.l}</div><div style={{fontSize:11,color:'#555',marginTop:2}}>{r.p} pts</div></div>
 <button onClick={()=>pts>=r.p?alert(`✅ ${r.l}!`):alert(`${r.p-pts} pts manquants`)} style={{padding:'6px 14px',background:pts>=r.p?'#3DBE7A':'#1A1A1A',color:pts>=r.p?'#000':'#444',border:'none',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600}}>{pts>=r.p?'Utiliser':'Bientôt'}</button>
 </div>))}
 </div>}
