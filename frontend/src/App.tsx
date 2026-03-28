@@ -1,45 +1,285 @@
-import{useState,useEffect}from'react'
+import{useState,useEffect,useCallback}from'react'
 const G='#C9A84C'
 
 // ══════════════════════════════════════════════════════════
-//  GLOBAL SHARED STATE — Orders between Customer & POS
+//  TYPES
 // ══════════════════════════════════════════════════════════
-type Order={id:number,table:string,items:{n:string,p:number,q:number}[],total:number,time:string,status:'new'|'preparing'|'done',source:'pos'|'online'}
+type Route='/'|'/menu'|'/pos'|'/staff'|'/admin'|'/customer'|'/qr'|'/stock'
+type CartItem={id:number;n:string;p:number;q:number;cat:string}
+type Order={id:number;tableId:number|'emporter';items:CartItem[];total:number;totalTTC:number;time:string;status:'new'|'preparing'|'ready'|'done';source:'pos'|'online';note?:string}
+type StaffMember={id:number;name:string;role:string;pin:string;salary:number;avatar:string;color:string}
+
+// ══════════════════════════════════════════════════════════
+//  GLOBAL STATE (shared between pages)
+// ══════════════════════════════════════════════════════════
 const ORDERS:Order[]=[]
-let ORDER_ID=100
-let _listeners:Array<()=>void>=[]
-const onOrdersChange=(fn:()=>void)=>{_listeners.push(fn);return()=>{_listeners=_listeners.filter(f=>f!==fn)}}
-const notifyListeners=()=>_listeners.forEach(f=>f())
-const addOrder=(order:Omit<Order,'id'>)=>{
-  const o={...order,id:ORDER_ID++}
-  ORDERS.unshift(o)
-  notifyListeners()
-  if('Notification' in window&&Notification.permission==='granted'){
-    new Notification('🛎️ Nouvelle commande — Café LUX',{body:`${o.table} — ${o.total} DH`,icon:'/favicon.ico'})
+let ORDER_ID=1000
+const ORDER_LISTENERS:Array<()=>void>=[]
+const onOrders=(fn:()=>void)=>{ORDER_LISTENERS.push(fn);return()=>{const i=ORDER_LISTENERS.indexOf(fn);if(i>=0)ORDER_LISTENERS.splice(i,1)}}
+const emitOrders=()=>ORDER_LISTENERS.forEach(f=>f())
+const pushOrder=(o:Omit<Order,'id'>):Order=>{
+  const order={...o,id:ORDER_ID++}
+  ORDERS.unshift(order)
+  emitOrders()
+  if(typeof window!=='undefined'&&'Notification' in window&&(window as any).Notification?.permission==='granted'){
+    try{new (window as any).Notification('🛎 Nouvelle commande — LUX',{body:`${typeof o.tableId==='number'?'Table '+o.tableId:'Emporter'} — ${o.totalTTC} DH`,icon:'/favicon.ico'})}catch(e){}
   }
-  return o
+  return order
+}
+const updateOrderStatus=(id:number,status:Order['status'])=>{
+  const o=ORDERS.find(x=>x.id===id)
+  if(o){o.status=status;emitOrders()}
 }
 
 // ══════════════════════════════════════════════════════════
-//  STOCK (Inventory)
+//  MENU DATA (9 categories, 52+ products)
 // ══════════════════════════════════════════════════════════
-type StockItem={name:string,unit:string,qty:number,min:number,category:string}
-const STOCK:StockItem[]=[
-  {name:'Café en grains',unit:'kg',qty:8.5,min:2,category:'Café'},
-  {name:'Lait entier',unit:'L',qty:22,min:5,category:'Café'},
-  {name:'Sirop vanille',unit:'L',qty:2.1,min:0.5,category:'Café'},
-  {name:'Farine',unit:'kg',qty:15,min:3,category:'Pâtisserie'},
-  {name:'Œufs',unit:'unité',qty:120,min:24,category:'Cuisine'},
-  {name:'Fromage Mozzarella',unit:'kg',qty:4.2,min:1,category:'Cuisine'},
-  {name:'Nutella',unit:'kg',qty:6,min:1,category:'Crêpes'},
-  {name:'Jus Banane (pulpe)',unit:'kg',qty:8,min:2,category:'Jus'},
-  {name:'Avocat',unit:'unité',qty:35,min:10,category:'Jus'},
-  {name:'Red Bull (canettes)',unit:'unité',qty:48,min:12,category:'Soft'},
-  {name:'Soda (bouteilles)',unit:'unité',qty:60,min:15,category:'Soft'},
-  {name:'Sellou',unit:'kg',qty:5,min:1,category:'Pâtisserie'},
+const MENU=[
+{id:'pdej',icon:'🍳',label:'Petit-Déjeuner',items:[
+{id:101,n:'Classic Breakfast',p:22,s:'Pain, oeuf, olives, fromage',sig:false},
+{id:102,n:'Chamali',p:27,s:'2 œufs, fromage, pain, jben',sig:false},
+{id:103,n:'Omelette au Fromage',p:30,s:'',sig:false},
+{id:104,n:'Moroccan Breakfast',p:35,s:'',sig:true},
+{id:105,n:'Morning Lux',p:35,s:'',sig:true},
+]},
+{id:'cafes',icon:'☕',label:'Cafés Classiques',items:[
+{id:201,n:'Espresso',p:7,s:'',sig:false},
+{id:202,n:'Espresso Prestige',p:9,s:'',sig:false},
+{id:203,n:'Double Espresso',p:14,s:'',sig:false},
+{id:204,n:'Café Séparé',p:12,s:'',sig:false},
+{id:205,n:'Capsule',p:10,s:'',sig:false},
+{id:206,n:'Lait Chocolat',p:12,s:'',sig:false},
+{id:207,n:'Lait Chaud',p:9,s:'',sig:false},
+]},
+{id:'cremeux',icon:'🥛',label:'Les Crémeux',items:[
+{id:301,n:'Café Crème',p:10,s:'',sig:false},
+{id:302,n:'Cappuccino',p:12,s:'',sig:false},
+{id:303,n:'Café Chocolat',p:14,s:'',sig:false},
+{id:304,n:'Chocolat Fondu',p:20,s:'',sig:false},
+]},
+{id:'infusions',icon:'🍵',label:'Infusions',items:[
+{id:401,n:'Thé Marocain',p:9,s:'',sig:false},
+{id:402,n:'Golden Tea',p:9,s:'Tisane, Verveine, Lipton',sig:false},
+{id:403,n:'Thé Royal',p:19,s:'Thé Royal + Sellou + eau 33 cl',sig:true},
+]},
+{id:'jus',icon:'🥤',label:'Jus Frais',items:[
+{id:501,n:'Banane',p:15,s:'',sig:false},
+{id:502,n:'Pomme',p:15,s:'',sig:false},
+{id:503,n:'Orange',p:16,s:'',sig:false},
+{id:504,n:'Citron',p:16,s:'',sig:false},
+{id:505,n:'Mangue',p:19,s:'',sig:false},
+{id:506,n:'Ananas',p:19,s:'',sig:false},
+{id:507,n:'Avocat',p:20,s:'',sig:false},
+{id:508,n:'Avocat Royal',p:25,s:'',sig:true},
+]},
+{id:'signature',icon:'⭐',label:'Signature Lux',items:[
+{id:601,n:'Lux Matcha Bloom',p:20,s:'',sig:true},
+{id:602,n:"Queen's Rose Coffee",p:30,s:'',sig:true},
+{id:603,n:'Mojito',p:25,s:'',sig:false},
+{id:604,n:'Panache LUX',p:25,s:'',sig:false},
+{id:605,n:'Cocktail Royal',p:30,s:'',sig:false},
+{id:606,n:'Zaazaa Lux',p:35,s:'',sig:true},
+]},
+{id:'crepes',icon:'🥞',label:'Crêpes',items:[
+{id:701,n:'Crêpe Nutella',p:23,s:'',sig:false},
+{id:702,n:'Crêpe Royale',p:30,s:'',sig:true},
+{id:703,n:'Crêpe Fromage',p:25,s:'fromage mozzarella et Édam',sig:false},
+{id:704,n:'Crêpe Thon',p:35,s:'',sig:false},
+{id:705,n:'Crêpe Fruits',p:26,s:'Banane',sig:false},
+{id:706,n:'Pack Crêpes',p:35,s:'5 crêpes nature',sig:false},
+]},
+{id:'resto',icon:'🍽',label:'Restaurant',items:[
+{id:801,n:'LUX Power Toast',p:25,s:'',sig:true},
+{id:802,n:'Harira',p:14,s:'',sig:false},
+{id:803,n:'Meskouta',p:5,s:'',sig:false},
+{id:804,n:'Cake Prestige',p:10,s:'',sig:false},
+{id:805,n:'Sablés 7pcs',p:13,s:'',sig:false},
+{id:806,n:'Sellou Portion',p:10,s:'',sig:false},
+{id:807,n:'Plateau Gâteaux',p:100,s:'',sig:false},
+{id:808,n:'Salade Fruits Royale',p:40,s:'',sig:false},
+]},
+{id:'soft',icon:'🥫',label:'Soft & Shakes',items:[
+{id:901,n:'Soda',p:12,s:'Coca, 7up, Fanta',sig:false},
+{id:902,n:'Red Bull',p:20,s:'',sig:false},
+{id:903,n:'Milkshake Classic',p:35,s:'',sig:false},
+]},
 ]
 
-type R='/'|'/menu'|'/portal/pos'|'/app/customer'|'/portal/staff'|'/portal/admin'|'/portal/qr'|'/portal/stock'
+const ALL_PRODUCTS=MENU.flatMap(c=>c.items.map(i=>({...i,cat:c.id,catLabel:c.label,catIcon:c.icon})))
+const TVA=0.10
+
+// ══════════════════════════════════════════════════════════
+//  STAFF DATA
+// ══════════════════════════════════════════════════════════
+const STAFF:StaffMember[]=[
+{id:1,name:'Owner LUX',role:'owner',pin:'0000',salary:0,avatar:'👑',color:G},
+{id:2,name:'Fatima Tahiri',role:'cashier',pin:'1111',salary:3500,avatar:'👩',color:'#5B8DEF'},
+{id:3,name:'Youssef Benali',role:'barista',pin:'2222',salary:3200,avatar:'👨',color:'#3DBE7A'},
+{id:4,name:'Aicha Lahlou',role:'waiter',pin:'3333',salary:3000,avatar:'👩',color:'#E07830'},
+{id:5,name:'Hassan Idrissi',role:'patissier',pin:'4444',salary:3400,avatar:'👨',color:'#9B59B6'},
+{id:6,name:'Sara Belhaj',role:'driver',pin:'5555',salary:2800,avatar:'👩',color:'#E74C3C'},
+{id:7,name:'Karim Ziani',role:'cook',pin:'6666',salary:3300,avatar:'👨',color:'#1ABC9C'},
+{id:8,name:'Manager Fes',role:'manager',pin:'7777',salary:5000,avatar:'👔',color:G},
+]
+const ROLE_LABELS:Record<string,string>={owner:'Propriétaire',cashier:'Caissier(e)',barista:'Barista',waiter:'Serveur(se)',patissier:'Pâtissier(e)',driver:'Livreur(se)',cook:'Cuisinier(e)',manager:'Manager'}
+
+// ══════════════════════════════════════════════════════════
+//  STOCK DATA
+// ══════════════════════════════════════════════════════════
+type StockItem={name:string;unit:string;qty:number;min:number;category:string}
+const INITIAL_STOCK:StockItem[]=[
+{name:'Café en grains',unit:'kg',qty:8.5,min:2,category:'Café'},
+{name:'Lait entier',unit:'L',qty:22,min:5,category:'Café'},
+{name:'Sirop vanille',unit:'L',qty:2.1,min:0.5,category:'Café'},
+{name:'Farine',unit:'kg',qty:15,min:3,category:'Pâtisserie'},
+{name:'Œufs',unit:'unité',qty:120,min:24,category:'Cuisine'},
+{name:'Fromage Mozzarella',unit:'kg',qty:4.2,min:1,category:'Cuisine'},
+{name:'Nutella',unit:'kg',qty:6,min:1,category:'Crêpes'},
+{name:'Jus Banane (pulpe)',unit:'kg',qty:8,min:2,category:'Jus'},
+{name:'Avocat',unit:'unité',qty:35,min:10,category:'Jus'},
+{name:'Red Bull',unit:'unité',qty:48,min:12,category:'Soft'},
+{name:'Soda',unit:'unité',qty:60,min:15,category:'Soft'},
+{name:'Sellou',unit:'kg',qty:5,min:1,category:'Pâtisserie'},
+]
+
+// ══════════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════════
+const ttc=(n:number)=>Math.round(n*(1+TVA))
+const fmtTime=()=>new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'})
+const fmtDate=()=>new Date().toLocaleDateString('fr-MA',{weekday:'long',day:'numeric',month:'long'})
+
+function printReceipt(order:Order){
+  const w=window.open('','_blank','width=340,height=540,scrollbars=no')
+  if(!w)return
+  const rows=order.items.map(i=>`<tr><td>${i.n}</td><td style="text-align:right;white-space:nowrap">${i.q}×${i.p} DH</td><td style="text-align:right;white-space:nowrap;padding-left:8px">${i.p*i.q} DH</td></tr>`).join('')
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ticket #${order.id}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Courier New',monospace;font-size:12px;padding:16px;width:300px}
+h1{text-align:center;font-size:20px;color:#8B6E2F;margin:4px 0}
+.center{text-align:center}.small{font-size:10px;color:#666}
+hr{border:none;border-top:1px dashed #ccc;margin:8px 0}
+table{width:100%}td{padding:3px 0}
+.total-row td{font-weight:bold;font-size:13px;padding-top:6px;border-top:1px solid #ccc}
+.ttc td{font-size:15px;font-weight:bold;color:#8B6E2F;padding-top:4px}
+.footer{text-align:center;font-size:10px;color:#999;margin-top:10px}
+@media print{button{display:none}}</style></head>
+<body>
+<h1>★ CAFÉ LUX</h1>
+<p class="center small">Résidence Ziat N°28 — Taza, Maroc</p>
+<p class="center small">Tél: +212 808 524 169</p>
+<hr>
+<p class="small">Ticket #${order.id} — ${typeof order.tableId==='number'?'Table '+order.tableId:'À emporter'}</p>
+<p class="small">${new Date().toLocaleDateString('fr-MA')} à ${order.time}</p>
+<p class="small">Serveur: POS Café LUX</p>
+<hr>
+<table><tbody>${rows}</tbody>
+<tfoot>
+<tr class="total-row"><td>Sous-total HT</td><td></td><td style="text-align:right">${order.total} DH</td></tr>
+<tr><td>TVA 10%</td><td></td><td style="text-align:right">${(order.total*TVA).toFixed(0)} DH</td></tr>
+<tr class="ttc"><td colspan="2">TOTAL TTC</td><td style="text-align:right">${order.totalTTC} DH</td></tr>
+</tfoot></table>
+<hr>
+<p class="footer">Merci de votre visite !<br>مع تحيات كافيه لوكس ✨<br><br>cafeslux.com</p>
+<br><button onclick="window.print()" style="width:100%;padding:8px;background:#C9A84C;border:none;border-radius:6px;font-size:14px;cursor:pointer">🖨 Imprimer</button>
+</body></html>`)
+  w.document.close()
+}
+
+function printReport(){
+  const w=window.open('','_blank','width=800,height=700')
+  if(!w)return
+  const now=new Date()
+  const month=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rapport ${month}</title>
+<style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:40px;color:#1A0A00}
+h1{color:#C9A84C;border-bottom:3px solid #C9A84C;padding-bottom:10px;font-size:24px}
+h2{color:#8B6E2F;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-top:28px;margin-bottom:8px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+.stat{background:#FAF8F2;border:2px solid #C9A84C;border-radius:10px;padding:14px 18px;min-width:140px;text-align:center}
+.sv{font-size:22px;font-weight:bold;color:#C9A84C}.sl{font-size:11px;color:#666;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+th{background:#C9A84C;color:#fff;padding:8px 10px;text-align:left}
+td{padding:6px 10px;border-bottom:1px solid #EDE5D5}
+tr:nth-child(even){background:#FAF8F2}
+footer{margin-top:40px;text-align:center;font-size:10px;color:#999;border-top:1px solid #EDE5D5;padding-top:14px}
+@media print{button{display:none}}</style></head>
+<body>
+<h1>★ CAFÉ LUX — Rapport Mensuel</h1>
+<p style="color:#666;font-size:12px">Période : <strong>${month}</strong> — Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p>
+<div class="stats">
+<div class="stat"><div class="sv">47 200 DH</div><div class="sl">Chiffre d'Affaires</div></div>
+<div class="stat"><div class="sv">874</div><div class="sl">Commandes</div></div>
+<div class="stat"><div class="sv">54 DH</div><div class="sl">Ticket moyen</div></div>
+<div class="stat"><div class="sv">4 720 DH</div><div class="sl">TVA collectée (10%)</div></div>
+</div>
+<h2>Top 5 Produits</h2>
+<table><thead><tr><th>#</th><th>Produit</th><th>Quantité</th><th>CA Généré</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Morning Lux</td><td>312</td><td>10 920 DH</td></tr>
+<tr><td>2</td><td>Cappuccino</td><td>445</td><td>5 340 DH</td></tr>
+<tr><td>3</td><td>Avocat Royal</td><td>187</td><td>4 675 DH</td></tr>
+<tr><td>4</td><td>Thé Royal</td><td>203</td><td>3 857 DH</td></tr>
+<tr><td>5</td><td>LUX Power Toast</td><td>156</td><td>3 900 DH</td></tr>
+</tbody></table>
+<h2>CA Hebdomadaire</h2>
+<table><thead><tr><th>Semaine</th><th>Commandes</th><th>CA HT</th><th>Évolution</th></tr></thead>
+<tbody>
+<tr><td>S1 (1–7 mars)</td><td>198</td><td>9 720 DH</td><td>—</td></tr>
+<tr><td>S2 (8–14 mars)</td><td>221</td><td>10 849 DH</td><td style="color:green">+11.6 %</td></tr>
+<tr><td>S3 (15–21 mars)</td><td>234</td><td>11 487 DH</td><td style="color:green">+5.9 %</td></tr>
+<tr><td>S4 (22–28 mars)</td><td>221</td><td>10 849 DH</td><td style="color:red">−5.5 %</td></tr>
+</tbody></table>
+<h2>Présences & Salaires</h2>
+<table><thead><tr><th>Employé</th><th>Rôle</th><th>Jours</th><th>Heures</th><th>Salaire</th></tr></thead>
+<tbody>
+<tr><td>Fatima Tahiri</td><td>Caissier</td><td>26</td><td>208 h</td><td>3 500 DH</td></tr>
+<tr><td>Youssef Benali</td><td>Barista</td><td>25</td><td>200 h</td><td>3 200 DH</td></tr>
+<tr><td>Aicha Lahlou</td><td>Serveur</td><td>26</td><td>208 h</td><td>3 000 DH</td></tr>
+<tr><td>Hassan Idrissi</td><td>Pâtissier</td><td>24</td><td>192 h</td><td>3 400 DH</td></tr>
+<tr><td>Sara Belhaj</td><td>Livreur</td><td>22</td><td>176 h</td><td>2 800 DH</td></tr>
+<tr><td>Karim Ziani</td><td>Cuisinier</td><td>25</td><td>200 h</td><td>3 300 DH</td></tr>
+<tr><td>Manager Fes</td><td>Manager</td><td>26</td><td>208 h</td><td>5 000 DH</td></tr>
+</tbody></table>
+<footer>Café LUX — Résidence Ziat N°28, Taza, Maroc — +212 808 524 169 — cafeslux.com<br>Document généré par LUX Supreme v4.3 — ${now.toLocaleDateString('fr-FR')}</footer>
+<br><button onclick="window.print()" style="padding:10px 24px;background:#C9A84C;border:none;border-radius:8px;font-size:14px;cursor:pointer">🖨 Imprimer le rapport</button>
+</body></html>`)
+  w.document.close()
+}
+
+// ══════════════════════════════════════════════════════════
+//  SHARED UI COMPONENTS
+// ══════════════════════════════════════════════════════════
+function TopBar({title,onBack,children}:{title:string;onBack?:()=>void;children?:React.ReactNode}){
+  return(
+    <div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'11px 16px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
+      {onBack&&<button onClick={onBack} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12,flexShrink:0}}>←</button>}
+      <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>{title}</span>
+      {children}
+    </div>
+  )
+}
+
+function NavTabs({tabs,active,onChange}:{tabs:{id:string;label:string}[];active:string;onChange:(id:string)=>void}){
+  return(
+    <div style={{display:'flex',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A',flexShrink:0}}>
+      {tabs.map(t=>(
+        <button key={t.id} onClick={()=>onChange(t.id)}
+          style={{flex:1,padding:'11px 8px',border:'none',background:'none',color:active===t.id?G:'#444',borderBottom:`2px solid ${active===t.id?G:'transparent'}`,cursor:'pointer',fontSize:12,fontFamily:"'DM Sans',sans-serif",transition:'all .15s'}}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function Badge({count,color='#E05252'}:{count:number;color?:string}){
+  if(!count)return null
+  return<span style={{position:'absolute',top:-7,right:-7,background:color,color:'#fff',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700}}>{count>9?'9+':count}</span>
+}
+
+// ══════════════════════════════════════════════════════════
+//  IMAGE COMPONENT (serves from GitHub public or base64)
+// ══════════════════════════════════════════════════════════
 const I:Record<string,string>={
   'Classic Breakfast':'data:image/jpeg;base64,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',
   'Omelette au Fromage':'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAsICAoIBwsKCQoNDAsNERwSEQ8PESIZGhQcKSQrKigkJyctMkA3LTA9MCcnOEw5PUNFSElIKzZPVU5GVEBHSEX/2wBDAQwNDREPESESEiFFLicuRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUX/wAARCADIAKUDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAABQACAwQGAQcI/8QAOBAAAgEDAgQFAgQFBAIDAAAAAQIDAAQREiEFMUFRBhMiYXEyQhSBkbEjUqHB0TNicuEHFRYk8P/EABoBAAIDAQEAAAAAAAAAAAAAAAMEAAECBQb/xAAkEQACAgICAwEAAgMAAAAAAAAAAQIRAyESMQRBURMUIjJhgf/aAAwDAQACEQMRAD8AvrJLAcKcr2PKplvIG2mRoz/MNxUrxbFnGjSeppjWjYLBTpI+tRnH5VvTMEyC1f8A07lMnodjTvLjUZNxEB3LioE4aJVyQrbYLqeZoHxriFrwiMpkT3DfTGP7+1U6XZaTfQeuLywtF1XPEIIx7tzoPd+NeDWin8OJr1+WFGhf1NYW4lkvpzLcNmQ8hjYDsPameRg560s8vwPHEq2FuKeLuKcXUwo62lsdvJi21DsW5mhUcSuQMFXHXkRThEMYx+fT/qp1XAwQT+W4obk2FUUjmho19Q1r3A/tTowSQIjqJOAnM57U5XKjIOQP1rb+G/D3/roE4xeW+Z2GYo2H0A/cR37dqq9Wy3rQW8IeGhwuEXl4gN7IvpU7+Uvb5rTOQOf5mhUfGAYxiByTsN8D+tcfi8sZU/hwGOy5Orf2q15OJLsFLFNvovSXscT+X6mfqF+0e9duXZbZ3h+oLkUPtvMV3llb6zkrgYBzzq9G2HMbdsgUHH5TyTcGXLGo00Z2+8T3NnAXEMcmeRbYCsLrm4zxR5J29bkySHlsOgrfcV4S2qQouuFznAGce1Zg8IS0mMqZzyAPvSrzZIXHIdbxZ4oxuPZxeHxBCI1052yKqS201tMygH0pqPUAd6KRltW3Tv8A2qCWxlu5vLRGEO7AKCc59/7UvCdt8mMwyP2VIopCoBkI25D9qvrayWvDZ7uRsRKQoHck8xU8XApVVXmceWoz5eck/NQ8RvhcN+BhA/DqwbGOZ7VpSTbrojbl0V14h5qDzykmnZfMVWwPbPKlXFs4SMmPnSrXL/ZHHH8N0SgOHXrgZxv8VIv4eBC67A/bjlTZngs1aRmAIGSeQ+awHH/Fr30j29g5WPk045n2X/Nd+U+J5iMHII+I/FSQO9tYBPOOzsOS/wCTWMOqRmeYmRnOWduZ+aSxaRy9PepAundcilJzchyEFFERhONt1PLvXV5eoZHfqKmG+4yPiuEaj0DfvWDRwKMZXcGmkHpy7E/3rpGk7DSeXzWj8L+HBxNzf3ylbCE75280jp8Dr+lWimy74M8Li6K8W4imIFOYY3H1kfcR2HTvWxvI5b91VDojU53OS1OFz5yFSmhEGFUbbUkYlsDK5oWTNFrjEGk7tlG6gaOHyo3YSNyGxqaGJkCa8vhdyRjBp6GETGQPqJON98e1TSyMoUr6v9nt7Ug47D8r0NlcRqGk2Q8zypxYsFlTHp/qDVWT/wC26uiq0aDVnn+XzT4Wdy7aWBc4JP8AYUK5Qdouk0X0RUUBPp5jeh/FOHLeQMYwFmAOD39qt2bExlG+pDjepXGxHSu7Hjmxq0Kcnjlo8pXiF/YuIjJkxOR5bqOnMA86M2XiG1ul0zvKk2d0k2H6itBxPw/acQlEsseHG+pevzVGXwvaFGChsnmTuD+VJZPDUntHUXl4pJa2MntuKcRi024iht/Z/URVN+BiyC/iJck7jRvjHvV7hrScDlS2uSDbOfQ5J9J7fFWuIcNvuITBoruGO3U5jBQ6s9d+tL/moLizUczct9Dfw1paxRl2QNIuo+Yd6VQ//H2mAM9yJHG2SpOKVD/4Vyj9MXxzxDccblMcZMdqDtGdi/uaGxxgbDmOhrqREZBGCOmKmG64YfBrrOTYikkJWwMD9KcVGPTsex5VxgRjVuvQilnTjkQeorJo4fqGr0mkScbjI6mnZyNyGHY0R4FwOfjl8IoiUhTeWUj6B2+farSb6KbpWyz4b8OycdusvqWyjP8AEfqT/KPf9q9DdYUeG1t1CQQDGlRsAOQFSJHb8FsYbW0iwqjTGg79z79zVckwhQAWlfcnpWM8uEeKBRubsbdXIikMcURdyOS9PeksqxDURyH9arLegXRaWEhjtqxuPanB1lZ1U7r6sVy1MZ4l6O4g174BbfOMZNVppXuLhRAG9HP7QaZER5TMVzoJOKdJLiYaG6YwOlR5LRSjQvOIk8vR5eT9PLJrsMzu6RsPKDZJYdfaq94zQ2zTYbSDuUTUQO+K5PMZbdE8vS677HYjuPas9rZugrEiwEEElSMFic/FWDQ6C585EHQj1bVfibUm/Mc66Xg5b/oKZ41sRXNMaIdKkNIHJrpNWLpgy/tFnt3QqGJHIisx5VzZ6hFPKinmobb8u1baUAg0FlsBe3bFXxGrAHAzqPalc2NN2OYMlKmUIOGXVzEJGuXiz0Zjv70qKzcORmGm8dMDG4XH5UqDxXwJyZ5fpAHp5Dpnl8Vw8jnGO+OXzTdePSw39xtT8hsdCORFEMjclMEdeh5H4rowc+Xz6qeVcIIO4A9uh/xUtnZT8Rvo7S1jLzOdgeg7k9hVpWVdE/CuFXHGOIJbWuVY7yM30xr3Pt+5r1nhvDrbgtglvAuFXdmPNj1Y+/7VDwLgsHBLEQx+pz6pJCN3bv8A4qS8czP5QJwBl/iit/nDkLOTnKkVpppJr4Pp0xqMBs5zXCga41Fs4HpHQ10rEiCJQNW/KmhNGNOc9BqyDXInKU3bGopJUhlwysVRvqJ3GO1U7Q+TfszKQspxnp7U8lrqdWBOtMjY5FWRCocLIo1EYV+openJ2GTSVCVDGsy5zvtTTGVlQk5bnjsKlZSAyk8xzqBDn+Gxzo+lu3zVJELJP8NY0OcnOrP0gc6rSSLIWCEp1C+3xXYHkllIlwoG5wOZ96fNCGGsHS4fniqbb2iKkx8SrE6gbKRsB0q/GNL4zzocrB5Sur1KcHtVmKcFmUg6vtPej4cnCSYHJFtFo1G0ioCSQMVJsw1A7Ghd4+XO9dyU6jaFYQt0yrxK+d1fQSABtigUvHXmRYOHuylcBsc196Jsv4m5WDOAT6j2H+aq2fh+AcUneB3Ca8NkalbHSlG3I6ONY4p36A99czqIhxO4LuVyihhlR70qM8c4XCJYcKiek5KJzpVVP6ORzYq6MMNMq6kbI6g0zVo5nYd+lNKnV5kRAbsOTV0SCXYjS45r/ijUcqyeEPcSJFCheWQ6VRdyx9q9V8MeHI+B2eX0vdSgGRxuB/tX2H9aGeC/DI4bCL+8TF5KuUUj/SU/sx69uVa7Vt2HtR8cK2L5J3o5LnBwBtQrzXmkdlXGo6T+XSiMj7b8qGwFfKMgOMsT8UDyvSJiXZEIUjneRpG9QxjGwqKOdGGY21BcgZqeaUKPWcB/uA1U62txoDqy491xSDxq9DXLRDEqQK0pKpr3J5Ae1PjuUaQo6KCy6kIbJI96juzG9u8c0ayEDPkhtyelQ6fOiRoQsZAwAPt+KqMFEvssq3mqyP8AWh29xTFwsE5xkrkAdeVCeI8WjswcXAknBGFG5Hz/AN1QbxaoaQLaHS/PMnI/pQ3jk7pB44pvdGiSQlVdCP4wwT2IqZZA0igYKr1PWs1aeIYGhEMjeUS2xdhgfnQ7iXiGU3UosHKQ8tY6/HaqhhndNF8G5Ua4SyeZJiJlBc5J2zVuJlUrz7jFeWPeTXBLM8jHG5YkmpILyeMZV5E+GIo38ZhPwT9nq0E5MJJ5nO3ahPEphBC8jHAUEk0I4BxuSRZLedwZMao3PXuDRridqt7ZNjJSVdx1FHxOTXB9oVeP8576MvBxOaWMTwxnL5Gr88CtTwrMFuFIJ0ruR3rz6bh/FeHTMtu0gXOxVwQfkGpYOJ8Xs2Ba5BYndTj9qIosJlSqo9HosZWXMku+rkD0FKsM3jYoxS5hZJE2OjkfelV8ZAVjZnGXIBjPL7a1vgfw4t/OOK3keYYW/gq33uOp9h/U1jpsg5Gzf0New+Gbq3ufDdkbQqVSJUKjmrdQffOaPiVsXyNpBgEfzY79zTC/QZxTR71xjgZpgXZ1h6TQ9dKpjBG5yByNWzOCp0jJFUIwzjVnc/pSHlSuqDY9WKNdLgINu3zVx1P0KQNuVVxqifdVNTB1LYXcnmSaDHoI2U2jjUuGO7887kVn/EPE3t/Ls7dihdSzldjp5AD53o5d3HlPq0nUcjasXx1y1+Jc7FAD7YqRpuhvx1ctlZbfWMuduwqtLAI1ySAQeddbiE307EDodqrXF484IK4wM4zR0muh1yfoAyzma5xIxYgnC880T4RPG08sblnQgYztv1qm1mHcuRpJ3+Ks2du0a60V9PLOOeKLKS40I4sU1l5Nh3VbQrlEJbviu/jRoIQABqoxrc3BEcYZh2AozY8BWRlM8hC49SqME+2elKylGKtjzcY7HeHLdpuJ+dyjiByfc7Yrcw/dGcEMSR89RQyys4YFURoFQDCBRy9/eiaD05Lb8xtS8Mt5OaEfIl+gM4rbiOCSXH0KTXlN27yzs8hyxNe2Twre2jKRjWCCP6V57c+Gr23uSiQeaPtYf3rotXTRrw5xSal2A+G8MbiiyGTOYsLk86Vb3gfAv/W2ZE+HnlOtz70q2oMqXlRUmkYQKJ49LYLY2I/an8O4rf8Ah27/ABFlJpB+uNvokHv/AJqMDS2MFT2qwEWZMNjOOdY/xdi1clR6T4f8WWPiCILGwhulGXgc+oe47j3o5sa8KltJbeVbi2do5UbUGQ4Kmtl4a/8AIm62XHMI+wW5Awp/5Dp88qPGakheeNxZ6A6gRkAVRgwkGDsASMZq/HNHOgaNwysMgg5zQu9zFM0RyFn69iKX8mP9bLxvdD5/OeAFBk+5xVOKOSOZHlkcsvMchUsCyKFMh0so3+felKWZ84GjHP3rmKdsaqiO8CSnW3pAHM9KCXtojAuFDtjA1DpRd71DIEdAy7htuVXo7G3ktsxqAG7UdJsilx7PPrvhqiRVjUrI4zhdxTI+BzSoz55bEVsri18h5CdATPpIBzy61yCC2iImEmnzBuM7ZHtWHkcfYx+jZmrfg1uljJI4XzGbSrvuF23OKJcOsYYrBJIMzIucjGDq6n4oypt9GkQ5Un+Wq0xjicrbQ4kI3JBAx+1CeRvtmbfsqwwDJcQqmrolEI4QVOlCABkGobSFlGEfUB0O9XLeYFzGAclsBSOdB5NsuR1FIjDKpyN+dSFy7ZUnBAJHUGkI5VZEYsoYkk45e1SCJI01BSGOxz1osE0wMnYrG+S4kZQrKCcZI2zVt1BO4GaoqCF9K6TzXA2zRBW8yMNjmN66nj5E1xFssa2VpFy1KpWXelTgCjzW7sc5yCPehbRTwsPUPbNbOe2DA5FCrqx2JAqpRTNxlQKQa1Opd+RxVK74ekoOkYPQ0QKGAnbbv1FdGlt+YPX3pWUXFjKkpIpcF8S8T8NSiMap7PO8LHYf8T0+OVehQ+IrHjtglxaPmSNhriI9aZ2ORWEubVZlIZdzQdoLnh1yLi0leKROTKdx/n861yUlxkYcKdo9e85i+kghV2II3I6GpwIpovLJHPqeZrC8J8dfiXij4iFjuF2EnJX+exrYWs8VyHdABp3APOuTnwyxStbQaMuSI7uzAKRogZdWSdWMVda9itFiSRtIJ2OOdRsYpDGMjUfflTriy8yMKsiOOeGH9+lax5Jt9EaVbHfhIpp2mBLavtLbculC7i3to3Ec5kTfKp/2KfIZI5cPCQFGAFO9WOGlJk8xogrrscnJqSkm6o0v6qwdNL5EAlg1BNWnnVizv1mhJkddakhlByatX8BuIGSLSAepoXBYfh5S+GLgepsbGgNq9hFtBSMow1Km3cDFTRD1+ckZwM70OgBb0yDSCftOxq1Yu1sTFpIBJ2ztW4uJloIo7Nv25A1xMMpDc6rIY/xezFWxuudjUvm5TA/WicwTQiuYl368hVi3ypZG/wCQqlGxRxqJI3BqzE6qiaXLlDjOelGwTqXIxNWqLDDelTj3G+aVdWxWmZ1489KqSw52xRFhUbLmtlAC5swwJxvQia3eJtSbH961ssOc1QntQw3FU0n2Wm10Z4SBzp+l+xprxh8hh7Vbu7EgEgZ3qjreHaTLKPu6j5oEsdbQxDJfYLvuGjcqKm4J4ku+By6XLSwjbTndR7US9LrzBB6iqVzw5ZcsmNVC9VI217R6BwriHDfENsJLeXRcDpyK+2Kn8+54fKqXBynRuhryQJccOuBPau0UqnYqa2/AfHUF8q2XGlCOfSJPtapLDCcajoFbi9m2WeO5UhwrMeXLeoruyVAj240NzdeRxQq4sWtAZ+HNqhfoN8VPZ8VinAWZSswGnJpOWNwVS2FUr6J8B4yFCt31EqQO9QSW5MmP4pB22bYfnU7XOpTHcAa1+/8AmFV47nyy8aalUfUz7nPzS04LtBosn/DyeYn8IrEuQcnOarNMUxIXXSraTjnTob1orZkwzPz3OaghkZYn1Ko1kk7bihrXs2l9CtsieqViHkO/PcVISoDHHMdKgiQwxqEIIYbYpSLMBkEAHpWkwclseDrQtuM8hTI5WRgoyDnlXYWcOUdcnH1CuzJp0tn6TW0/ZlrYUhcMmM7rSodDICm5x2pU0vLaQJ4iuaYRTzXCK64qRMoqCSMHNWWqMjNUQGzQZ6ULurENnA3rQumaqyw56VCzJSQSW7EoNuoPI12OVZdsEN1U0cuLQMOVB7qyKnKjf+tDnBPoJGbXZBNAsg5b4oTdcOJBKjI7dRRQSshCynA/nx+9SMMnIxnp70F3EPakirwLxZfcBkWKYme1zgqdyo9q9Cs5OFeIrYT2kiq55gHcGvO7mxjuELJgN2oXBNecFuvOs5Gjccx0Ye461tNS1IE4tbR6xJbXNgSsoM0PRjuR806N0kh0nOk8sd6G+GvHlrxVVtb/ABFccsHk3xWin4WjqZbVtOd8LyP5Uvl8ZdxNQytdguS3Yv8Awjksvak1rIFy/wBQbNWElaGZUkB2OQB19quFSGDOBo+oHPSuWoNNpjXO9g6G+NoNMo1HV0FXo7yG6GAxBB5Gob2CK4iwCufnBoaLZlK6HKEZ51Nk09hCWSWa40QggL91SyFlc68kbVLbyhIl83AbG596gvJ4gGx63HILV8W+jDfonV43zjGKVDEt7ucagwhHQHnSrX8eb9Fcl9L2a5mufFczXoBA4aYacTXKhBjDNRMtTEU0ioQqvFmqU1vkbiiZFRPHkVCzOXViDkgULZJLdvTkr1X/ABWtlhG+1DLm0D52rLSfZabXQGRxL6kO45jGCKTpHcoVlXBHUdK7c2hjfUuQR1FRiYEgP6H6N0NClCug0Z32CL3hrxNrjyQNwy0f8NePLrhTrb8QLSwDbX1A9+9Q6tWVYAHp70PvOGrJlo8K3Y8jVxl6ZJRPY7W74dxi1FxEysCNipqaXg8MgALyacctW1eHcM4tf8CuC9u5UA5aNj6TXrXhjxavHIQPKlEn3DSf3qPHGTtoHbXsIy8BRm1a2B9xmo24ZKM4mHzpourufpBI/wB1JoS53wvxWfxx/Cc5fQA/DbiVsT3JK9lGKsQWEMChUX++TRcW6A9zjanBVXGAM1pYorpEc2/ZQED42GB70qvkKBhhqNKt8TNnkXAvHZGm34uC68hcAeofI6/NbeGeK5hWWCRZI2GQynINeIcjRLhPHr3g82q1k9B+qNt1b5H962ZPX65Qbgviiy4yoQHybk84WPP/AInr8c6M1CCNNIrprmahBhphFPPOmE1CEbDaqkseSatsRUZBdtI5/tULBU9uGByKE3VkMEgCt5a+H1vIlka5ADcgi7/rRK18N2MG5iErj7n3qiHlVrw6+u5RDbW8k2o4GF2H51p7DwNcOga/uFix9kQ1N+p2r0BYo4/SihQOg2paQARgdqrijXJgK18J8ItIkf8ABJM2f9SYa2/rR2FEVNKKFGBhQMDFcVtUBTqDXfpl2OQFxUoy2SbEH22rituPmm6jv36e9NMqRIzswVV3JO2KshKOSg8wD/Wo1OliTQyDxDY3rvHY3Mc7KcMyNkA9s9fyq2FdvqPOoQnNxHDtzzvSqHyx1GaVQqz5vrvOlSrRY5WZWDISCDnnWt4H44mtisPE9U0Q2Eg+tR796VKqIbm1vIL63We2lWWM7Bl//bVLmlSqFDSajalSqFkEjYFK3YamYnoVBNKlUIaHh7MOGwlScrsN6IRXHmoGAw42YUqVQhMXBwccxTWbcjbftSpVRBg23Heq91xG2sY2kuZ0iXPNjSpVC0Z648YCbWnDAhOMrLOSFPwOZ/PFYnjF7xLiEhW/u3ljzny1GE/SlSrFmqBaQ3PD5Rd2ErKwPNf2IrceG/HqXBW04iFhn5An6W+P8UqVSL2XJKjewzRTRhwAQexpUqVEBH//2Q==',
@@ -97,627 +337,886 @@ const I:Record<string,string>={
   'Crêpe Fruits':'/public/menu/pack_crepes.jpg',
   'Milkshake Classic':'data:image/jpeg;base64,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',
 }
-function Img({n,h,ic}:{n:string,h:number,ic:string}){
-  const[ok,so]=useState(true)
-  if(I[n]&&ok)return<img src={I[n]} alt={n} style={{width:'100%',height:h,objectFit:'cover'}} onError={()=>so(false)}/>
-  return<div style={{width:'100%',height:h,background:'linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:h/3}}>{ic}</div>
+function Img({name,h=100,icon='☕'}:{name:string;h?:number;icon?:string}){
+  const[ok,setOk]=useState(true)
+  const src=I[name]
+  if(src&&ok)return<img src={src} alt={name} style={{width:'100%',height:h,objectFit:'cover',display:'block'}} onError={()=>setOk(false)}/>
+  return<div style={{width:'100%',height:h,background:'linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.04))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:h/3.5,color:'rgba(201,168,76,.4)'}}>{icon}</div>
 }
-const M=[
-{id:'pdej',icon:'🍳',title:'Petit-Déjeuner',sub:'Café noir offert',items:[
-{n:'Classic Breakfast',p:22,s:'Pain, oeuf, olives, fromage'},{n:'Chamali',p:27,s:'2 oeufs, fromage, pain, jben'},
-{n:'Omelette au Fromage',p:30},{n:'Moroccan Breakfast',p:35,sig:1},{n:'Morning Lux',p:35,sig:1}]},
-{id:'cafes',icon:'☕',title:'Cafés Classiques',items:[
-{n:'Espresso',p:7},{n:'Espresso Prestige',p:9},{n:'Double Espresso',p:14},
-{n:'Café Séparé',p:12},{n:'Capsule',p:10},{n:'Lait Chocolat',p:12},{n:'Lait Chaud',p:9}]},
-{id:'cremeux',icon:'🥛',title:'Les Crémeux',items:[
-{n:'Café Crème',p:10},{n:'Cappuccino',p:12},{n:'Café Chocolat',p:14},{n:'Chocolat Fondu',p:20}]},
-{id:'infusions',icon:'🍵',title:'Infusions',items:[
-{n:'Thé Marocain',p:9},{n:'Golden Tea',p:9,s:'Tisane, Verveine, Lipton'},{n:'Thé Royal',p:19,sig:1,s:'Thé Royal + Sellou + eau 33 cl'}]},
-{id:'jus',icon:'🥤',title:'Jus Frais',items:[
-{n:'Banane',p:15},{n:'Pomme',p:15},{n:'Orange',p:16},{n:'Citron',p:16},
-{n:'Mangue',p:19},{n:'Ananas',p:19},{n:'Avocat',p:20},{n:'Avocat Royal',p:25,sig:1}]},
-{id:'sig',icon:'⭐',title:'Signature Lux',items:[
-{n:'Lux Matcha Bloom',p:20,sig:1},{n:"Queen's Rose Coffee",p:30,sig:1},
-{n:'Mojito',p:25},{n:'Panache LUX',p:25},{n:'Cocktail Royal',p:30},{n:'Zaazaa Lux',p:35,sig:1}]},
-{id:'crepes',icon:'🥞',title:'Crêpes',items:[
-{n:'Crêpe Nutella',p:23},{n:'Crêpe Royale',p:30,sig:1},{n:'Crêpe Fromage',p:25,s:'fromage mozzarella et Édam'},{n:'Crêpe Thon',p:35},{n:'Crêpe Fruits',p:26,s:'Banane'},{n:'Pack Crêpes',p:35,s:'5 crêpes nature'}]},
-{id:'resto',icon:'🍽',title:'Restaurant',items:[
-{n:'LUX Power Toast',p:25,sig:1},{n:'Harira',p:14},{n:'Meskouta',p:5},
-{n:'Cake Prestige',p:10},{n:'Sablés 7pcs',p:13},{n:'Plateau Gâteaux',p:100},{n:'Salade Fruits Royale',p:40}]},
-{id:'soft',icon:'🥫',title:'Soft & Shakes',items:[
-{n:'Soda',p:12,s:'Coca, 7up, Fanta'},{n:'Red Bull',p:20},{n:'Milkshake Classic',p:35}]}
-]
-function Home({go}:{go:(r:R)=>void}){
-const[v,sv]=useState(false)
-useEffect(()=>{setTimeout(()=>sv(true),80)},[])
-return<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif",overflowY:'auto'}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;600&display=swap');@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}.a0{animation:fu .7s ease both}.a1{animation:fu .7s .12s ease both}.a2{animation:fu .7s .24s ease both}.a3{animation:fu .7s .36s ease both}.pc{transition:all .25s}.pc:hover{transform:translateY(-5px);border-color:${G}!important}.mb:hover{background:${G}!important;color:#000!important}.ab:hover{background:rgba(201,168,76,.1)!important}`}</style>
-<div style={{position:'fixed',top:'25%',left:'50%',transform:'translateX(-50%)',width:500,height:500,background:'radial-gradient(circle,rgba(201,168,76,.07) 0%,transparent 70%)',pointerEvents:'none'}}/>
-<section style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'40px 24px',opacity:v?1:0,transition:'opacity .4s',position:'relative',zIndex:1}}>
-<div className="a0" style={{width:68,height:68,borderRadius:16,background:`linear-gradient(135deg,${G},#8B6E2F)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:700,color:'#000',marginBottom:28,boxShadow:`0 0 40px rgba(201,168,76,.25)`}}>L</div>
-<h1 className="a1" style={{fontFamily:"'Playfair Display',serif",fontSize:'clamp(72px,13vw,130px)',fontWeight:700,lineHeight:1,marginBottom:10,background:`linear-gradient(135deg,#E8C97A,${G},#8B6E2F)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>LUX</h1>
-<p className="a1" style={{fontSize:11,letterSpacing:'.35em',color:G,marginBottom:20,opacity:.75}}>TAZA · CAFÉ & PÂTISSERIE · 2026</p>
-<h2 className="a2" style={{fontFamily:"'Playfair Display',serif",fontStyle:'italic',fontSize:'clamp(16px,2.5vw,22px)',fontWeight:400,color:'rgba(240,237,232,.6)',maxWidth:460,lineHeight:1.6,marginBottom:44}}>اكتشف أرقى نكهات القهوة والحلويات الفرنسية في قلب تازة</h2>
-<div className="a3" style={{display:'flex',gap:14,flexWrap:'wrap',justifyContent:'center',marginBottom:60}}>
-<button className="mb" onClick={()=>go('/menu')} style={{padding:'13px 34px',background:G,color:'#000',border:'none',borderRadius:50,fontSize:14,fontWeight:600,cursor:'pointer',transition:'all .2s',boxShadow:`0 6px 28px rgba(201,168,76,.28)`}}>📖 تصفح المنيو الرقمي</button>
-<button className="ab" onClick={()=>go('/app/customer')} style={{padding:'13px 34px',background:'transparent',color:G,border:`1.5px solid ${G}`,borderRadius:50,fontSize:14,cursor:'pointer',transition:'all .2s'}}>📱 تحميل التطبيق</button>
-</div></section>
-<div style={{height:1,background:`linear-gradient(90deg,transparent,${G},transparent)`}}/>
-<section style={{padding:'64px 24px',background:'#0D0D0D'}}>
-<div style={{maxWidth:880,margin:'0 auto',textAlign:'center',marginBottom:44}}>
-<p style={{fontSize:10,letterSpacing:'.28em',color:G,marginBottom:10,opacity:.65}}>ACCÈS RAPIDE</p>
-<h3 style={{fontFamily:"'Playfair Display',serif",fontSize:'clamp(20px,4vw,32px)',color:'#F0EDE8',fontWeight:400}}>بوابات النظام</h3></div>
-<div style={{maxWidth:880,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(185px,1fr))',gap:13}}>
-{[{icon:'👥',label:'الموظفين',sub:'Staff Portal',path:'/portal/staff',c:G},{icon:'🖥️',label:'نظام POS',sub:'Point de Vente',path:'/portal/pos',c:'#3DBE7A'},{icon:'📖',label:'المنيو',sub:'Menu Digital',path:'/menu',c:'#5B8DEF'},{icon:'⚙️',label:'الإدارة',sub:'Admin Dashboard',path:'/portal/admin',c:'#9B59B6'},{icon:'📷',label:'QR Tables',sub:'Codes QR',path:'/portal/qr',c:'#3DBE7A'},{icon:'📦',label:'المخزون',sub:'Gestion Stock',path:'/portal/stock',c:'#E74C3C'},{icon:'📞',label:'اتصل بنا',sub:'+212 808 524 169',path:'tel',c:'#E07830'}].map(x=>(
-<div key={x.path} className="pc" onClick={()=>x.path==='tel'?window.location.href='tel:+212808524169':go(x.path as R)} style={{padding:'26px 18px',background:'#121212',border:'1px solid #1C1C1C',borderRadius:13,textAlign:'center',cursor:'pointer'}}>
-<div style={{fontSize:30,marginBottom:11}}>{x.icon}</div>
-<div style={{fontSize:14,fontWeight:600,color:'#F0EDE8',marginBottom:3}}>{x.label}</div>
-<div style={{fontSize:10,color:'#444',letterSpacing:'.05em'}}>{x.sub}</div>
-<div style={{width:26,height:2,background:x.c,borderRadius:2,margin:'13px auto 0',opacity:.55}}/>
-</div>))}</div></section>
-<div style={{height:1,background:`linear-gradient(90deg,transparent,${G},transparent)`}}/>
-<footer style={{padding:'18px',textAlign:'center',background:'#0A0A0A',fontSize:10,color:'#2A2A2A',letterSpacing:'.1em'}}>© 2026 CAFÉ LUX · TAZA · MAROC · +212 808 524 169</footer>
-</div>}
-function Menu({go}:{go:(r:R)=>void}){
-const[id,sid]=useState('pdej')
-const cat=M.find((c:any)=>c.id===id)||M[0]
-return<div style={{height:'100vh',background:'#FAF8F2',fontFamily:"'DM Sans',sans-serif",display:'flex',flexDirection:'column',overflow:'hidden'}}>
-<style>{`.cb{transition:all .18s}.cb:hover{background:rgba(201,168,76,.1)!important;color:#1A0A00!important}.cb.on{background:${G}!important;color:#000!important;font-weight:600}.mc{transition:all .18s;cursor:pointer}.mc:hover{border-color:${G}!important;transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.1)}`}</style>
-<div style={{background:'linear-gradient(135deg,#1A0A00,#2D1500)',padding:'11px 18px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-<button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',padding:'6px 13px',borderRadius:7,cursor:'pointer',fontSize:12}}>← Retour</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>★ Café Lux</span>
-<div style={{marginLeft:'auto',background:G,color:'#000',padding:'6px 14px',borderRadius:16,fontSize:11,fontWeight:700}}>🚚 Livraison 15 DH — Gratuite dès 200 DH</div></div>
-<div style={{display:'flex',flex:1,overflow:'hidden'}}>
-<div style={{width:172,background:'#fff',padding:10,overflowY:'auto',flexShrink:0,borderRight:'1px solid #EDE5D5'}}>
-{M.map((c:any)=><button key={c.id} className={`cb${id===c.id?' on':''}`} onClick={()=>sid(c.id)} style={{width:'100%',textAlign:'left',padding:'8px 9px',border:'none',background:'none',fontSize:12,cursor:'pointer',borderRadius:7,color:'#666',display:'flex',alignItems:'center',gap:6,marginBottom:2}}><span>{c.icon}</span><span>{c.title}</span></button>)}</div>
-<div style={{flex:1,padding:'18px 20px',overflowY:'auto'}}>
-<h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,color:'#1A0A00',marginBottom:3}}>{(cat as any).icon} {(cat as any).title}</h2>
-{(cat as any).sub&&<p style={{fontSize:11,color:'#888',marginBottom:14}}>{(cat as any).sub}</p>}
-<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(165px,1fr))',gap:10}}>
-{(cat as any).items.map((it:any,i:number)=>(
-<div key={i} className="mc" style={{background:'#fff',border:`1.5px solid ${it.sig?'rgba(201,168,76,.4)':'#EDE5D5'}`,borderRadius:11,overflow:'hidden'}}>
-<Img n={it.n} h={105} ic={(cat as any).icon}/>
-<div style={{padding:'9px 11px'}}>
-<div style={{fontSize:12,fontWeight:600,color:'#1A0A00',marginBottom:3,lineHeight:1.3}}>{it.n}</div>
-{it.s&&<div style={{fontSize:10,color:'#999',marginBottom:6}}>{it.s}</div>}
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-<span style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:G,fontWeight:600}}>{it.p} DH</span>
-{it.sig&&<span style={{background:'rgba(201,168,76,.15)',color:G,fontSize:8,padding:'2px 6px',borderRadius:9,fontWeight:600}}>SIGNATURE</span>}
-</div></div></div>))}</div></div></div></div>}
-function POS({go}:{go:(r:R)=>void}){
-const[table,setTable]=useState<number|null>(null)
-const[cart,setCart]=useState<{n:string,p:number,q:number}[]>([])
-const[catId,setCatId]=useState('pdej')
-const cat=M.find((c:any)=>c.id===catId)||M[0]
-const[onlineOrders,setOnlineOrders]=useState<Order[]>([...ORDERS])
-const[showOrders,setShowOrders]=useState(false)
-const[notifCount,setNotifCount]=useState(0)
-useEffect(()=>{
-  if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()
-  return onOrdersChange(()=>{setOnlineOrders([...ORDERS]);setNotifCount(n=>n+1)})
-},[])
-const add=(n:string,p:number)=>setCart(prev=>{const e=prev.find(c=>c.n===n);if(e)return prev.map(c=>c.n===n?{...c,q:c.q+1}:c);return[...prev,{n,p,q:1}]})
-const rm=(n:string)=>setCart(prev=>{const e=prev.find(c=>c.n===n);if(!e)return prev;if(e.q>1)return prev.map(c=>c.n===n?{...c,q:c.q-1}:c);return prev.filter(c=>c.n!==n)})
-const total=cart.reduce((s,c)=>s+c.p*c.q,0)
-return<div style={{height:'100vh',background:'#0D0D0D',display:'flex',flexDirection:'column',fontFamily:"'DM Sans',sans-serif",overflow:'hidden'}}>
-<style>{`.pt{cursor:pointer;transition:all .15s}.pt:hover{border-color:${G}!important}.mc2{cursor:pointer;transition:all .15s;border:1px solid #1E1E1E}.mc2:hover{border-color:${G}!important;background:#1A1A1A!important}.ctab{cursor:pointer;transition:all .15s;border-bottom:2px solid transparent}.ctab:hover{color:#F0EDE8!important}.ctab.on{color:${G}!important;border-bottom-color:${G}!important}`}</style>
-<div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'10px 16px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-<button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16}}>LUX POS</span>
-{table&&<span style={{background:'rgba(201,168,76,.15)',color:G,padding:'3px 10px',borderRadius:10,fontSize:12,fontWeight:600}}>{table===99?'Emporter':`Table ${table}`}</span>}
-<button onClick={()=>{setShowOrders(!showOrders);setNotifCount(0)}} style={{marginLeft:'auto',position:'relative',background:'rgba(61,190,122,.15)',border:'1px solid rgba(61,190,122,.3)',color:'#3DBE7A',padding:'5px 12px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600}}>
-🛎️ Commandes en ligne
-{notifCount>0&&<span style={{position:'absolute',top:-6,right:-6,background:'#E05252',color:'#fff',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700}}>{notifCount}</span>}
-</button>
-<span style={{color:'#444',fontSize:11,marginLeft:8}}>{new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'})}</span></div>
-<div style={{flex:1,display:'flex',overflow:'hidden'}}>
-<div style={{width:140,background:'#111',borderRight:'1px solid #1A1A1A',padding:12,overflowY:'auto',flexShrink:0}}>
-<div style={{fontSize:10,color:'#444',marginBottom:10,letterSpacing:'.1em'}}>TABLES</div>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-{[1,2,3,4,5,6,7,8,9,10,11,12].map(t=>(
-<div key={t} className="pt" onClick={()=>setTable(t)} style={{aspectRatio:'1',background:table===t?'rgba(201,168,76,.2)':'#1A1A1A',border:`1px solid ${table===t?G:'#222'}`,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:table===t?G:'#666'}}>{t}</div>))}</div>
-<button onClick={()=>setTable(99)} style={{width:'100%',marginTop:10,padding:'8px',background:'rgba(91,141,239,.15)',color:'#5B8DEF',border:'1px solid rgba(91,141,239,.3)',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:600}}>+ Emporter</button>
-{showOrders&&<div style={{marginTop:12,borderTop:'1px solid #1A1A1A',paddingTop:10}}>
-<div style={{fontSize:9,color:'#3DBE7A',letterSpacing:'.1em',marginBottom:8}}>EN LIGNE</div>
-{onlineOrders.length===0?<div style={{fontSize:10,color:'#333',textAlign:'center'}}>Aucune</div>
-:onlineOrders.slice(0,5).map(o=>(
-<div key={o.id} onClick={()=>{setCart(o.items.map(i=>({n:i.n,p:i.p,q:i.q})));setTable(99)}} style={{background:o.status==='new'?'rgba(61,190,122,.1)':'#1A1A1A',border:`1px solid ${o.status==='new'?'rgba(61,190,122,.3)':'#222'}`,borderRadius:7,padding:'6px 8px',marginBottom:6,cursor:'pointer'}}>
-<div style={{fontSize:10,fontWeight:600,color:'#F0EDE8',marginBottom:2}}>#{o.id} {o.table}</div>
-<div style={{fontSize:9,color:'#555'}}>{o.time} — {o.total} DH</div>
-{o.status==='new'&&<div style={{fontSize:8,color:'#3DBE7A',marginTop:2}}>● NOUVEAU</div>}
-</div>))}</div>}
-</div>
-<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-<div style={{display:'flex',background:'#0F0F0F',borderBottom:'1px solid #1A1A1A',overflowX:'auto',flexShrink:0}}>
-{M.map((c:any)=><button key={c.id} className={`ctab${catId===c.id?' on':''}`} onClick={()=>setCatId(c.id)} style={{padding:'10px 14px',border:'none',background:'none',color:'#444',cursor:'pointer',fontSize:11,whiteSpace:'nowrap',fontFamily:"'DM Sans',sans-serif"}}>{c.icon} {c.title}</button>)}</div>
-<div style={{flex:1,padding:12,overflowY:'auto',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:8,alignContent:'start'}}>
-{(cat as any).items.map((it:any,i:number)=>(
-<div key={i} className="mc2" onClick={()=>{if(!table){alert('Choisissez une table!');return}add(it.n,it.p)}} style={{background:'#151515',borderRadius:10,overflow:'hidden'}}>
-<Img n={it.n} h={75} ic={(cat as any).icon}/>
-<div style={{padding:'7px 9px'}}>
-<div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',lineHeight:1.3,marginBottom:3}}>{it.n}</div>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:13,color:G,fontWeight:600}}>{it.p} DH</div>
-</div></div>))}</div></div>
-<div style={{width:210,background:'#111',borderLeft:'1px solid #1A1A1A',display:'flex',flexDirection:'column',flexShrink:0}}>
-<div style={{padding:'12px 14px',borderBottom:'1px solid #1A1A1A',fontFamily:"'Playfair Display',serif",color:G,fontSize:14}}>🧾 {table?(table===99?'Emporter':`Table ${table}`):'Ticket'}</div>
-<div style={{flex:1,overflowY:'auto',padding:'8px 12px'}}>
-{cart.length===0?<div style={{color:'#333',fontSize:11,textAlign:'center',padding:'20px 0'}}>Aucun article</div>
-:cart.map(c=><div key={c.n} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 0',borderBottom:'1px solid #1A1A1A'}}>
-<div style={{flex:1,fontSize:11,color:'#D0CCC8'}}>{c.n}</div>
-<button onClick={()=>rm(c.n)} style={{width:18,height:18,background:'#1E1E1E',border:'none',color:'#666',borderRadius:4,cursor:'pointer',fontSize:12}}>-</button>
-<span style={{fontSize:11,color:G,minWidth:14,textAlign:'center'}}>{c.q}</span>
-<button onClick={()=>add(c.n,c.p)} style={{width:18,height:18,background:'#1E1E1E',border:'none',color:'#666',borderRadius:4,cursor:'pointer',fontSize:12}}>+</button>
-<div style={{fontSize:11,color:'#888',minWidth:36,textAlign:'right'}}>{c.p*c.q} DH</div>
-</div>)}</div>
-<div style={{padding:'12px',borderTop:'1px solid #1A1A1A'}}>
-<div style={{display:'flex',justifyContent:'space-between',marginBottom:8,paddingBottom:8,borderBottom:'1px solid #1A1A1A'}}>
-<span style={{color:'#F0EDE8',fontWeight:600}}>Total TTC</span>
-<span style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:G,fontWeight:600}}>{(total*1.1).toFixed(0)} DH</span></div>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
-{['💵','💳'].map(m=><button key={m} onClick={()=>{if(cart.length){alert(`✅ ${(total*1.1).toFixed(0)} DH`);setCart([]);setTable(null)}}} style={{padding:'8px',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#888',borderRadius:8,cursor:'pointer',fontSize:13}}>{m}</button>)}</div>
-<button onClick={()=>{if(cart.length){alert(`✅ Encaissé: ${(total*1.1).toFixed(0)} DH`);setCart([]);setTable(null)}}} style={{width:'100%',padding:'11px',background:G,color:'#000',border:'none',borderRadius:9,fontWeight:700,cursor:'pointer',fontSize:13}}>✓ Encaisser</button>
-{cart.length>0&&<button onClick={()=>{
-const w=window.open('','_blank','width=320,height=500')
-if(!w)return
-const lines=cart.map(c=>`<tr><td>${c.n}</td><td style="text-align:right">${c.q}x${c.p} DH</td></tr>`).join('')
-w.document.write(`<html><head><title>Ticket LUX</title><style>body{font-family:monospace;font-size:12px;padding:12px;width:280px}h3{text-align:center;margin:4px 0}hr{border:1px dashed #ccc}table{width:100%}td{padding:2px 0}tfoot td{font-weight:bold;padding-top:6px}</style></head><body><h3>★ CAFÉ LUX</h3><p style="text-align:center;font-size:10px">Résidence Ziat N°28 — Taza<br>+212 808 524 169</p><hr/><p style="font-size:10px">${table===99?'Emporter':`Table ${table}`} — ${new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'})}</p><table><tbody>${lines}</tbody><tfoot><tr><td>Sous-total</td><td style="text-align:right">${total} DH</td></tr><tr><td>TVA 10%</td><td style="text-align:right">${(total*0.1).toFixed(0)} DH</td></tr><tr><td>TOTAL TTC</td><td style="text-align:right">${(total*1.1).toFixed(0)} DH</td></tr></tfoot></table><hr/><p style="text-align:center;font-size:10px;margin-top:8px">Merci de votre visite!<br>مع تحيات كافيه لوكس ✨</p></body></html>`)
-w.document.close();w.print()
-}} style={{width:'100%',marginTop:6,padding:'9px',background:'rgba(91,141,239,.15)',color:'#5B8DEF',border:'1px solid rgba(91,141,239,.3)',borderRadius:9,cursor:'pointer',fontSize:12,fontWeight:600}}>🖨️ Imprimer ticket</button>}
-{cart.length>0&&<button onClick={()=>setCart([])} style={{width:'100%',marginTop:6,padding:'7px',background:'transparent',border:'1px solid #1E1E1E',color:'#444',borderRadius:9,cursor:'pointer',fontSize:11}}>Vider</button>}
-</div></div></div></div>}
-function CustomerApp({go}:{go:(r:R)=>void}){
-const[tab,setTab]=useState<'order'|'wallet'|'rewards'>('order')
-const[cart,setCart]=useState<{n:string,p:number,q:number}[]>([])
-const pts=340
-const add=(n:string,p:number)=>setCart(prev=>{const e=prev.find(c=>c.n===n);if(e)return prev.map(c=>c.n===n?{...c,q:c.q+1}:c);return[...prev,{n,p,q:1}]})
-const total=cart.reduce((s,c)=>s+c.p*c.q,0)
-const QK=M.flatMap((c:any)=>c.items).filter((it:any)=>it.sig||it.p<=20).slice(0,8)
-return<div style={{minHeight:'100vh',background:'#0A0A0A',fontFamily:"'DM Sans',sans-serif",color:'#F0EDE8'}}>
-<style>{`.tab{cursor:pointer;transition:all .18s;border-bottom:2px solid transparent}.tab:hover{color:#F0EDE8!important}.tab.on{color:${G}!important;border-bottom-color:${G}!important}`}</style>
-<div style={{background:'#111',padding:'12px 18px',display:'flex',alignItems:'center',gap:12,borderBottom:'1px solid #1A1A1A'}}>
-<button onClick={()=>go('/')} style={{background:'none',border:'1px solid #222',color:'#555',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>Café LUX</span>
-<div style={{marginLeft:'auto',background:'rgba(201,168,76,.12)',color:G,padding:'4px 12px',borderRadius:16,fontSize:12,fontWeight:600}}>⭐ {pts} pts</div></div>
-<div style={{display:'flex',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A'}}>
-{([['order','🛒 طلب'],['wallet','💰 محفظة'],['rewards','🎁 مكافآت']] as [typeof tab,string][]).map(([t,l])=>(
-<button key={t} className={`tab${tab===t?' on':''}`} onClick={()=>setTab(t)} style={{flex:1,padding:'12px',border:'none',background:'none',color:'#444',cursor:'pointer',fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>{l}</button>))}</div>
-{tab==='order'&&<div style={{padding:16}}>
-<h3 style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:18,marginBottom:16}}>طلب سريع</h3>
-<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:10,marginBottom:20}}>
-{QK.map((it:any,i:number)=>(
-<div key={i} onClick={()=>add(it.n,it.p)} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:10,overflow:'hidden',cursor:'pointer'}}>
-<Img n={it.n} h={90} ic="⭐"/>
-<div style={{padding:'8px 10px'}}>
-<div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',marginBottom:4}}>{it.n}</div>
-<div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-<span style={{color:G,fontWeight:600,fontSize:13}}>{it.p} DH</span>
-<span style={{background:'rgba(201,168,76,.15)',color:G,fontSize:16,borderRadius:'50%',width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>+</span>
-</div></div></div>))}
-</div>
-{cart.length>0&&<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:14}}>
-{cart.map(c=><div key={c.n} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #1A1A1A',fontSize:12}}>
-<span style={{color:'#888'}}>{c.q}x {c.n}</span><span style={{color:G}}>{c.p*c.q} DH</span></div>)}
-<div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontWeight:700}}>
-<span>المجموع</span><span style={{color:G,fontFamily:"'Playfair Display',serif",fontSize:18}}>{total} DH</span></div>
-<button onClick={()=>{alert(`✅ طلبك وصل!\n${total} DH`);setCart([])}} style={{width:'100%',marginTop:12,padding:'12px',background:G,color:'#000',border:'none',borderRadius:9,fontWeight:700,cursor:'pointer',fontSize:14}}>تأكيد الطلب 🚀</button>
-</div>}</div>}
-{tab==='wallet'&&<div style={{padding:16}}>
-<div style={{background:'linear-gradient(135deg,#1A1400,#2D2200)',border:`1px solid rgba(201,168,76,.3)`,borderRadius:16,padding:24,marginBottom:16,textAlign:'center'}}>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:42,color:G,fontWeight:700}}>150 DH</div></div>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-{[50,100,200,500].map(a=><button key={a} onClick={()=>alert(`+${a} DH!`)} style={{padding:'14px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,color:'#F0EDE8',cursor:'pointer',fontSize:14,fontWeight:600}}>+{a} DH</button>)}
-</div></div>}
-{tab==='rewards'&&<div style={{padding:16}}>
-<div style={{background:'linear-gradient(135deg,#0A1A0A,#102210)',border:'1px solid rgba(61,190,122,.2)',borderRadius:16,padding:20,marginBottom:16,textAlign:'center'}}>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:40,color:'#3DBE7A',fontWeight:700}}>{pts}</div>
-<div style={{fontSize:11,color:'#555',marginTop:4}}>10 DH = 1 point</div></div>
-{[{p:50,l:'Espresso offert',i:'☕'},{p:100,l:'Cappuccino offert',i:'🥛'},{p:200,l:'-20% commande',i:'🎫'},{p:350,l:'Petit-Déjeuner offert',i:'🍳'}].map((r,i)=>(
-<div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px',background:'#111',border:`1px solid ${pts>=r.p?'rgba(61,190,122,.3)':'#1A1A1A'}`,borderRadius:10,marginBottom:8}}>
-<div style={{fontSize:26}}>{r.i}</div>
-<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{r.l}</div><div style={{fontSize:11,color:'#555'}}>{r.p} pts</div></div>
-<button onClick={()=>pts>=r.p?alert(`✅ ${r.l}!`):alert(`${r.p-pts} pts manquants`)} style={{padding:'6px 14px',background:pts>=r.p?'#3DBE7A':'#1A1A1A',color:pts>=r.p?'#000':'#444',border:'none',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:600}}>{pts>=r.p?'Utiliser':'Bientôt'}</button>
-</div>))}</div>}
-</div>}
 
 // ══════════════════════════════════════════════════════════
-//  STAFF DATA
+//  HOME PAGE
 // ══════════════════════════════════════════════════════════
-const STAFF=[
-{id:1,name:'Owner LUX',role:'owner',pin:'0000',salary:0,avatar:'👑',color:'#C9A84C'},
-{id:2,name:'Fatima Tahiri',role:'cashier',pin:'1111',salary:3500,avatar:'👩',color:'#5B8DEF'},
-{id:3,name:'Youssef Benali',role:'barista',pin:'2222',salary:3200,avatar:'👨',color:'#3DBE7A'},
-{id:4,name:'Aicha Lahlou',role:'waiter',pin:'3333',salary:3000,avatar:'👩',color:'#E07830'},
-{id:5,name:'Hassan Idrissi',role:'patissier',pin:'4444',salary:3400,avatar:'👨',color:'#9B59B6'},
-{id:6,name:'Sara Belhaj',role:'driver',pin:'5555',salary:2800,avatar:'👩',color:'#E74C3C'},
-{id:7,name:'Karim Ziani',role:'cook',pin:'6666',salary:3300,avatar:'👨',color:'#1ABC9C'},
-{id:8,name:'Manager Fes',role:'manager',pin:'7777',salary:5000,avatar:'👔',color:'#C9A84C'},
-]
-const ROLE_LABELS:Record<string,string>={owner:'Propriétaire',cashier:'Caissier(e)',barista:'Barista',waiter:'Serveur(se)',patissier:'Pâtissier(e)',driver:'Livreur(se)',cook:'Cuisinier(e)',manager:'Manager'}
+function HomePage({nav}:{nav:(r:Route)=>void}){
+  const[visible,setVisible]=useState(false)
+  useEffect(()=>{const t=setTimeout(()=>setVisible(true),80);return()=>clearTimeout(t)},[])
+  const portals=[
+    {icon:'📖',label:'المنيو',sub:'Menu Digital',path:'/menu' as Route,c:'#5B8DEF'},
+    {icon:'🖥',label:'نظام POS',sub:'Point de Vente',path:'/pos' as Route,c:'#3DBE7A'},
+    {icon:'👥',label:'الموظفين',sub:'Staff Portal',path:'/staff' as Route,c:G},
+    {icon:'⚙️',label:'الإدارة',sub:'Admin Dashboard',path:'/admin' as Route,c:'#9B59B6'},
+    {icon:'📷',label:'QR Tables',sub:'Codes QR',path:'/qr' as Route,c:'#1ABC9C'},
+    {icon:'📦',label:'المخزون',sub:'Gestion Stock',path:'/stock' as Route,c:'#E74C3C'},
+    {icon:'📱',label:'تطبيق العميل',sub:'Commander en ligne',path:'/customer' as Route,c:'#E07830'},
+    {icon:'📞',label:'اتصل بنا',sub:'+212 808 524 169',path:null as any,c:'#888'},
+  ]
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif",overflowY:'auto'}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;600&display=swap');
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .a0{animation:fadeUp .6s ease both}
+        .a1{animation:fadeUp .6s .1s ease both}
+        .a2{animation:fadeUp .6s .2s ease both}
+        .a3{animation:fadeUp .6s .3s ease both}
+        .portal-card{transition:all .22s;cursor:pointer}
+        .portal-card:hover{transform:translateY(-5px);border-color:${G}!important;box-shadow:0 8px 32px rgba(201,168,76,.12)!important}
+        .hero-btn-primary:hover{opacity:.88}
+        .hero-btn-secondary:hover{background:rgba(201,168,76,.08)!important}
+      `}</style>
+      {/* glow */}
+      <div style={{position:'fixed',top:'20%',left:'50%',transform:'translateX(-50%)',width:600,height:600,background:'radial-gradient(circle,rgba(201,168,76,.06) 0%,transparent 70%)',pointerEvents:'none',zIndex:0}}/>
+      {/* Hero */}
+      <section style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'48px 24px',opacity:visible?1:0,transition:'opacity .4s',position:'relative',zIndex:1}}>
+        <div className="a0" style={{width:72,height:72,borderRadius:18,background:`linear-gradient(135deg,${G},#8B6E2F)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Playfair Display',serif",fontSize:32,fontWeight:700,color:'#000',marginBottom:28,boxShadow:`0 0 48px rgba(201,168,76,.28)`}}>L</div>
+        <h1 className="a1" style={{fontFamily:"'Playfair Display',serif",fontSize:'clamp(68px,12vw,128px)',fontWeight:700,lineHeight:.95,marginBottom:12,background:`linear-gradient(135deg,#E8C97A,${G},#8B6E2F)`,WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>LUX</h1>
+        <p className="a1" style={{fontSize:11,letterSpacing:'.35em',color:G,marginBottom:18,opacity:.7}}>TAZA · CAFÉ & PÂTISSERIE · 2026</p>
+        <h2 className="a2" style={{fontFamily:"'Playfair Display',serif",fontStyle:'italic',fontSize:'clamp(15px,2.2vw,20px)',fontWeight:400,color:'rgba(240,237,232,.55)',maxWidth:440,lineHeight:1.65,marginBottom:44}}>اكتشف أرقى نكهات القهوة والحلويات الفرنسية في قلب تازة</h2>
+        <div className="a3" style={{display:'flex',gap:14,flexWrap:'wrap',justifyContent:'center'}}>
+          <button className="hero-btn-primary" onClick={()=>nav('/menu')} style={{padding:'13px 36px',background:G,color:'#000',border:'none',borderRadius:50,fontSize:14,fontWeight:700,cursor:'pointer',boxShadow:`0 6px 28px rgba(201,168,76,.3)`}}>📖 تصفح المنيو</button>
+          <button className="hero-btn-secondary" onClick={()=>nav('/customer')} style={{padding:'13px 36px',background:'transparent',color:G,border:`1.5px solid ${G}`,borderRadius:50,fontSize:14,cursor:'pointer'}}>📱 طلب أونلاين</button>
+        </div>
+      </section>
+      {/* Divider */}
+      <div style={{height:1,background:`linear-gradient(90deg,transparent,${G},transparent)`}}/>
+      {/* Portals */}
+      <section style={{padding:'56px 24px',background:'#0D0D0D'}}>
+        <div style={{maxWidth:920,margin:'0 auto',textAlign:'center',marginBottom:40}}>
+          <p style={{fontSize:10,letterSpacing:'.3em',color:G,marginBottom:10,opacity:.6}}>ACCÈS RAPIDE</p>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:'clamp(18px,3.5vw,30px)',color:'#F0EDE8',fontWeight:400}}>بوابات النظام</h3>
+        </div>
+        <div style={{maxWidth:920,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))',gap:14}}>
+          {portals.map((p,i)=>(
+            <div key={i} className="portal-card"
+              onClick={()=>p.path?nav(p.path):window.location.href='tel:+212808524169'}
+              style={{padding:'24px 16px',background:'#121212',border:'1px solid #1C1C1C',borderRadius:14,textAlign:'center'}}>
+              <div style={{fontSize:28,marginBottom:10}}>{p.icon}</div>
+              <div style={{fontSize:14,fontWeight:600,color:'#F0EDE8',marginBottom:3}}>{p.label}</div>
+              <div style={{fontSize:10,color:'#3A3A3A',letterSpacing:'.04em'}}>{p.sub}</div>
+              <div style={{width:24,height:2,background:p.c,borderRadius:2,margin:'12px auto 0',opacity:.5}}/>
+            </div>
+          ))}
+        </div>
+      </section>
+      <div style={{height:1,background:`linear-gradient(90deg,transparent,${G},transparent)`}}/>
+      <footer style={{padding:'16px',textAlign:'center',background:'#0A0A0A',fontSize:10,color:'#252525',letterSpacing:'.08em'}}>© 2026 CAFÉ LUX · TAZA · MAROC · +212 808 524 169 · cafeslux.com</footer>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════
+//  MENU PAGE
+// ══════════════════════════════════════════════════════════
+function MenuPage({nav}:{nav:(r:Route)=>void}){
+  const[catId,setCatId]=useState('pdej')
+  const cat=MENU.find(c=>c.id===catId)||MENU[0]
+  return(
+    <div style={{height:'100vh',background:'#FAF8F2',fontFamily:"'DM Sans',sans-serif",display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <style>{`
+        .m-cat{transition:all .15s;cursor:pointer;white-space:nowrap}
+        .m-cat:hover{background:rgba(201,168,76,.08)!important;color:#1A0A00!important}
+        .m-cat.active{background:${G}!important;color:#000!important;font-weight:700}
+        .m-card{transition:all .18s;cursor:pointer}
+        .m-card:hover{border-color:${G}!important;transform:translateY(-3px);box-shadow:0 8px 24px rgba(201,168,76,.12)!important}
+      `}</style>
+      {/* Header */}
+      <div style={{background:'linear-gradient(135deg,#1A0A00,#2D1500)',padding:'12px 18px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',padding:'6px 13px',borderRadius:7,cursor:'pointer',fontSize:12}}>← Retour</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>★ Café Lux</span>
+        <div style={{marginLeft:'auto',background:G,color:'#000',padding:'5px 12px',borderRadius:14,fontSize:11,fontWeight:700}}>🚚 Livraison 15 DH • Gratuite ≥ 200 DH</div>
+      </div>
+      <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+        {/* Sidebar categories */}
+        <div style={{width:176,background:'#fff',padding:'10px 8px',overflowY:'auto',flexShrink:0,borderRight:'1px solid #EDE5D5'}}>
+          {MENU.map(c=>(
+            <button key={c.id} className={`m-cat${catId===c.id?' active':''}`}
+              onClick={()=>setCatId(c.id)}
+              style={{width:'100%',textAlign:'left',padding:'9px 10px',border:'none',background:'none',fontSize:12,cursor:'pointer',borderRadius:8,color:'#666',display:'flex',alignItems:'center',gap:7,marginBottom:3}}>
+              <span style={{fontSize:16}}>{c.icon}</span><span>{c.label}</span>
+            </button>
+          ))}
+        </div>
+        {/* Products grid */}
+        <div style={{flex:1,padding:'18px 20px',overflowY:'auto'}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:16}}>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:'#1A0A00',margin:0}}>{cat.icon} {cat.label}</h2>
+            <span style={{fontSize:11,color:'#AAA'}}>{cat.items.length} articles</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))',gap:12}}>
+            {cat.items.map(item=>(
+              <div key={item.id} className="m-card" style={{background:'#fff',border:`1.5px solid ${item.sig?'rgba(201,168,76,.35)':'#EDE5D5'}`,borderRadius:12,overflow:'hidden',position:'relative'}}>
+                {item.sig&&<div style={{position:'absolute',top:8,right:8,background:G,color:'#000',fontSize:8,padding:'2px 6px',borderRadius:6,fontWeight:700,zIndex:1}}>SIGNATURE</div>}
+                <Img name={item.n} h={108} icon={cat.icon}/>
+                <div style={{padding:'9px 11px'}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'#1A0A00',marginBottom:2,lineHeight:1.35}}>{item.n}</div>
+                  {item.s&&<div style={{fontSize:10,color:'#AAA',marginBottom:6,lineHeight:1.3}}>{item.s}</div>}
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:G,fontWeight:700}}>{item.p} DH</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════
+//  POS PAGE  — Professional Point of Sale
+// ══════════════════════════════════════════════════════════
+function POSPage({nav}:{nav:(r:Route)=>void}){
+  const[cart,setCart]=useState<CartItem[]>([])
+  const[catId,setCatId]=useState('cafes')
+  const[tableId,setTableId]=useState<number|'emporter'>(1)
+  const[orders,setOrders]=useState<Order[]>([...ORDERS])
+  const[showOnline,setShowOnline]=useState(false)
+  const[newCount,setNewCount]=useState(0)
+  const[searchQ,setSearchQ]=useState('')
+  const[payMode,setPayMode]=useState<'cash'|'card'|null>(null)
+  const[paid,setPaid]=useState(false)
+
+  useEffect(()=>{
+    if('Notification' in window&&(window as any).Notification?.permission==='default')(window as any).Notification?.requestPermission()
+    return onOrders(()=>{setOrders([...ORDERS]);setNewCount(n=>n+1)})
+  },[])
+
+  const cat=MENU.find(c=>c.id===catId)||MENU[0]
+  const filtered=searchQ?ALL_PRODUCTS.filter(p=>p.n.toLowerCase().includes(searchQ.toLowerCase())):cat.items.map(i=>({...i,cat:catId,catLabel:cat.label,catIcon:cat.icon}))
+
+  const addItem=(prod:{id:number;n:string;p:number;cat:string})=>{
+    setCart(prev=>{
+      const ex=prev.find(c=>c.id===prod.id)
+      if(ex)return prev.map(c=>c.id===prod.id?{...c,q:c.q+1}:c)
+      return[...prev,{...prod,q:1}]
+    })
+  }
+  const removeItem=(id:number)=>setCart(prev=>{
+    const ex=prev.find(c=>c.id===id)
+    if(!ex)return prev
+    if(ex.q>1)return prev.map(c=>c.id===id?{...c,q:c.q-1}:c)
+    return prev.filter(c=>c.id!==id)
+  })
+  const clearCart=()=>{setCart([]);setPaid(false);setPayMode(null)}
+
+  const total=cart.reduce((s,c)=>s+c.p*c.q,0)
+  const totalTTC=ttc(total)
+
+  const handlePay=(mode:'cash'|'card')=>{
+    if(!cart.length)return
+    setPayMode(mode)
+    const order=pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),status:'done',source:'pos'})
+    printReceipt(order)
+    setPaid(true)
+    setTimeout(clearCart,2200)
+  }
+
+  const loadOnlineOrder=(o:Order)=>{
+    setCart(o.items.map(i=>({...i})))
+    setTableId(typeof o.tableId==='number'?o.tableId:'emporter')
+    updateOrderStatus(o.id,'preparing')
+    setShowOnline(false)
+  }
+
+  const onlineNew=orders.filter(o=>o.source==='online'&&o.status==='new')
+
+  return(
+    <div style={{height:'100vh',background:'#0D0D0D',display:'flex',flexDirection:'column',fontFamily:"'DM Sans',sans-serif",overflow:'hidden'}}>
+      <style>{`
+        .pos-cat{cursor:pointer;padding:8px 14px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:11px;color:#555;border-bottom:2px solid transparent;transition:all .13s;white-space:nowrap}
+        .pos-cat:hover{color:#F0EDE8}
+        .pos-cat.on{color:${G};border-bottom-color:${G}}
+        .pos-prod{cursor:pointer;background:#151515;border:1px solid #1E1E1E;border-radius:10px;overflow:hidden;transition:all .15s}
+        .pos-prod:hover{border-color:${G};background:#1A1A1A}
+        .pos-tbl{cursor:pointer;transition:all .13s;aspect-ratio:1;background:#1A1A1A;border:1px solid #222;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#555}
+        .pos-tbl.on{background:rgba(201,168,76,.18);border-color:${G};color:${G}}
+        .pos-tbl:hover{border-color:${G};color:${G}}
+      `}</style>
+
+      {/* ── TopBar ── */}
+      <div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'9px 14px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'4px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>LUX POS</span>
+        {tableId!==null&&<span style={{background:'rgba(201,168,76,.14)',color:G,padding:'2px 10px',borderRadius:9,fontSize:12,fontWeight:600}}>{typeof tableId==='number'?`Table ${tableId}`:'Emporter'}</span>}
+        {/* Search */}
+        <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="🔍 Rechercher..." style={{flex:1,maxWidth:220,background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#F0EDE8',padding:'5px 10px',borderRadius:8,fontSize:12,outline:'none',marginLeft:'auto'}}/>
+        {/* Online orders badge */}
+        <button onClick={()=>{setShowOnline(s=>!s);setNewCount(0)}} style={{position:'relative',background:onlineNew.length?'rgba(61,190,122,.15)':'rgba(255,255,255,.05)',border:`1px solid ${onlineNew.length?'rgba(61,190,122,.3)':'#222'}`,color:onlineNew.length?'#3DBE7A':'#555',padding:'5px 12px',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:600}}>
+          🛎 En ligne
+          <Badge count={newCount} color="#E05252"/>
+        </button>
+        <span style={{color:'#333',fontSize:11}}>{fmtTime()}</span>
+      </div>
+
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+        {/* ── Left: Tables ── */}
+        <div style={{width:134,background:'#111',borderRight:'1px solid #1A1A1A',padding:12,overflowY:'auto',flexShrink:0}}>
+          <div style={{fontSize:9,color:'#333',marginBottom:8,letterSpacing:'.12em',fontWeight:600}}>TABLES</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+            {[1,2,3,4,5,6,7,8,9,10,11,12].map(t=>(
+              <div key={t} className={`pos-tbl${tableId===t?' on':''}`} onClick={()=>setTableId(t)}>{t}</div>
+            ))}
+          </div>
+          <button onClick={()=>setTableId('emporter')} style={{width:'100%',marginTop:10,padding:'8px',background:tableId==='emporter'?'rgba(91,141,239,.25)':'rgba(91,141,239,.1)',color:'#5B8DEF',border:`1px solid ${tableId==='emporter'?'#5B8DEF':'rgba(91,141,239,.25)'}`,borderRadius:8,cursor:'pointer',fontSize:10,fontWeight:600}}>+ Emporter</button>
+
+          {/* Online orders panel */}
+          {showOnline&&<div style={{marginTop:14,borderTop:'1px solid #1A1A1A',paddingTop:10}}>
+            <div style={{fontSize:9,color:'#3DBE7A',letterSpacing:'.1em',marginBottom:8,fontWeight:600}}>EN LIGNE</div>
+            {orders.filter(o=>o.source==='online').length===0
+              ?<div style={{fontSize:9,color:'#2A2A2A',textAlign:'center',padding:'8px 0'}}>Aucune commande</div>
+              :orders.filter(o=>o.source==='online').slice(0,6).map(o=>(
+                <div key={o.id} onClick={()=>loadOnlineOrder(o)} style={{background:o.status==='new'?'rgba(61,190,122,.08)':'#181818',border:`1px solid ${o.status==='new'?'rgba(61,190,122,.25)':'#222'}`,borderRadius:7,padding:'7px 8px',marginBottom:6,cursor:'pointer'}}>
+                  <div style={{fontSize:9,fontWeight:700,color:'#F0EDE8'}}>#{o.id} {typeof o.tableId==='number'?'T'+o.tableId:'Emp.'}</div>
+                  <div style={{fontSize:9,color:'#555'}}>{o.time} — {o.totalTTC} DH</div>
+                  {o.status==='new'&&<div style={{fontSize:8,color:'#3DBE7A',marginTop:2}}>⬤ NOUVEAU</div>}
+                </div>
+              ))}
+          </div>}
+        </div>
+
+        {/* ── Center: Products ── */}
+        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+          {/* Category tabs */}
+          {!searchQ&&<div style={{display:'flex',background:'#0F0F0F',borderBottom:'1px solid #1A1A1A',overflowX:'auto',flexShrink:0}}>
+            {MENU.map(c=>(
+              <button key={c.id} className={`pos-cat${catId===c.id?' on':''}`} onClick={()=>setCatId(c.id)}>
+                {c.icon} {c.label}
+              </button>
+            ))}
+          </div>}
+          {searchQ&&<div style={{padding:'6px 12px',background:'#0F0F0F',fontSize:11,color:'#555',borderBottom:'1px solid #1A1A1A'}}>
+            🔍 {filtered.length} résultat(s) pour «{searchQ}»
+          </div>}
+          {/* Grid */}
+          <div style={{flex:1,padding:10,overflowY:'auto',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(118px,1fr))',gap:8,alignContent:'start'}}>
+            {filtered.map(prod=>(
+              <div key={prod.id} className="pos-prod" onClick={()=>addItem(prod)}>
+                <Img name={prod.n} h={70} icon={(prod as any).catIcon||'☕'}/>
+                <div style={{padding:'7px 8px'}}>
+                  <div style={{fontSize:10,fontWeight:600,color:'#D0CCC8',lineHeight:1.3,marginBottom:2}}>{prod.n}</div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,color:G,fontWeight:700}}>{prod.p} DH</div>
+                </div>
+              </div>
+            ))}
+            {filtered.length===0&&<div style={{gridColumn:'1/-1',textAlign:'center',color:'#2A2A2A',padding:'40px 0',fontSize:13}}>Aucun produit</div>}
+          </div>
+        </div>
+
+        {/* ── Right: Ticket ── */}
+        <div style={{width:220,background:'#111',borderLeft:'1px solid #1A1A1A',display:'flex',flexDirection:'column',flexShrink:0}}>
+          <div style={{padding:'11px 13px',borderBottom:'1px solid #1A1A1A',fontFamily:"'Playfair Display',serif",color:G,fontSize:13,fontWeight:700}}>
+            🧾 {typeof tableId==='number'?`Table ${tableId}`:'Emporter'}
+          </div>
+          {/* Cart items */}
+          <div style={{flex:1,overflowY:'auto',padding:'6px 10px'}}>
+            {cart.length===0
+              ?<div style={{color:'#2A2A2A',fontSize:11,textAlign:'center',padding:'28px 0'}}>Ticket vide</div>
+              :cart.map(c=>(
+                <div key={c.id} style={{display:'flex',alignItems:'center',gap:5,padding:'6px 0',borderBottom:'1px solid #151515'}}>
+                  <div style={{flex:1,fontSize:10,color:'#C0BDB9',lineHeight:1.3}}>{c.n}</div>
+                  <button onClick={()=>removeItem(c.id)} style={{width:17,height:17,background:'#1E1E1E',border:'none',color:'#555',borderRadius:4,cursor:'pointer',fontSize:11,padding:0,flexShrink:0}}>−</button>
+                  <span style={{fontSize:10,color:G,minWidth:12,textAlign:'center',fontWeight:700}}>{c.q}</span>
+                  <button onClick={()=>addItem(c)} style={{width:17,height:17,background:'#1E1E1E',border:'none',color:'#555',borderRadius:4,cursor:'pointer',fontSize:11,padding:0,flexShrink:0}}>+</button>
+                  <div style={{fontSize:10,color:'#666',minWidth:34,textAlign:'right',flexShrink:0}}>{c.p*c.q} DH</div>
+                </div>
+              ))}
+          </div>
+          {/* Totals + actions */}
+          <div style={{padding:'10px 12px',borderTop:'1px solid #1A1A1A'}}>
+            {cart.length>0&&<>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#444',marginBottom:2}}>
+                <span>Sous-total</span><span>{total} DH</span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#444',marginBottom:6}}>
+                <span>TVA 10%</span><span>{(total*TVA).toFixed(0)} DH</span>
+              </div>
+            </>}
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10,paddingTop:6,borderTop:'1px solid #1A1A1A'}}>
+              <span style={{color:'#F0EDE8',fontWeight:700,fontSize:12}}>TOTAL TTC</span>
+              <span style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:G,fontWeight:700}}>{totalTTC} DH</span>
+            </div>
+            {paid
+              ?<div style={{textAlign:'center',color:'#3DBE7A',fontWeight:700,fontSize:13,padding:'8px 0'}}>✅ Payé — Merci !</div>
+              :<>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
+                  <button onClick={()=>handlePay('cash')} disabled={!cart.length} style={{padding:'8px 4px',background:cart.length?'rgba(61,190,122,.15)':'#151515',color:cart.length?'#3DBE7A':'#2A2A2A',border:`1px solid ${cart.length?'rgba(61,190,122,.3)':'#1A1A1A'}`,borderRadius:8,cursor:cart.length?'pointer':'default',fontSize:11,fontWeight:600}}>💵 Espèces</button>
+                  <button onClick={()=>handlePay('card')} disabled={!cart.length} style={{padding:'8px 4px',background:cart.length?'rgba(91,141,239,.15)':'#151515',color:cart.length?'#5B8DEF':'#2A2A2A',border:`1px solid ${cart.length?'rgba(91,141,239,.3)':'#1A1A1A'}`,borderRadius:8,cursor:cart.length?'pointer':'default',fontSize:11,fontWeight:600}}>💳 Carte</button>
+                </div>
+                <button onClick={()=>{if(!cart.length)return;const o=pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),status:'done',source:'pos'});printReceipt(o);setPaid(true);setTimeout(clearCart,2200)}}
+                  disabled={!cart.length}
+                  style={{width:'100%',padding:'11px',background:cart.length?G:'#1A1A1A',color:cart.length?'#000':'#2A2A2A',border:'none',borderRadius:9,fontWeight:700,cursor:cart.length?'pointer':'default',fontSize:13,marginBottom:5}}>
+                  ✓ Encaisser & Imprimer
+                </button>
+                {cart.length>0&&<button onClick={clearCart} style={{width:'100%',padding:'7px',background:'transparent',border:'1px solid #1E1E1E',color:'#3A3A3A',borderRadius:9,cursor:'pointer',fontSize:10}}>Vider le ticket</button>}
+              </>}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ══════════════════════════════════════════════════════════
 //  STAFF PORTAL
 // ══════════════════════════════════════════════════════════
-function StaffPortal({go}:{go:(r:any)=>void}){
-const[step,setStep]=useState<'select'|'pin'|'home'>('select')
-const[sel,setSel]=useState<typeof STAFF[0]|null>(null)
-const[pin,setPin]=useState('')
-const[err,setErr]=useState(false)
-const[tab,setTab]=useState<'attendance'|'salary'|'team'>('attendance')
-const today=new Date().toLocaleDateString('fr-MA',{weekday:'long',day:'numeric',month:'long'})
-const[clocked,setClock]=useState(false)
-const handlePin=(d:string)=>{
-  if(pin.length>=3)return
-  const np=pin+d
-  setPin(np)
-  if(np.length===4){
-    if(sel&&np===sel.pin){setErr(false);setStep('home');setPin('')}
-    else{setErr(true);setTimeout(()=>{setPin('');setErr(false)},800)}
+function StaffPage({nav}:{nav:(r:Route)=>void}){
+  const[step,setStep]=useState<'select'|'pin'|'dashboard'>('select')
+  const[member,setMember]=useState<StaffMember|null>(null)
+  const[pin,setPin]=useState('')
+  const[pinError,setPinError]=useState(false)
+  const[clocked,setClocked]=useState(false)
+  const[tab,setTab]=useState('attendance')
+
+  const selectMember=(m:StaffMember)=>{setMember(m);setPin('');setPinError(false);setStep('pin')}
+  const pressPin=(d:string)=>{
+    if(pin.length>=3)return
+    const next=pin+d
+    setPin(next)
+    if(next.length===4){
+      if(member&&next===member.pin){setStep('dashboard');setPin('');setPinError(false)}
+      else{setPinError(true);setTimeout(()=>{setPin('');setPinError(false)},700)}
+    }
   }
-}
-if(step==='select')return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-<style>{`.sc{cursor:pointer;transition:all .2s}.sc:hover{transform:translateY(-4px);border-color:${G}!important}`}</style>
-<div style={{background:'#111',padding:'14px 20px',display:'flex',alignItems:'center',gap:12,borderBottom:'1px solid #1A1A1A'}}>
-<button onClick={()=>go('/')} style={{background:'none',border:'1px solid #222',color:'#555',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>👥 Staff Portal — Café LUX</span>
-</div>
-<div style={{padding:24,maxWidth:700,margin:'0 auto'}}>
-<h2 style={{fontFamily:"'Playfair Display',serif",color:G,textAlign:'center',marginBottom:8,fontSize:22}}>Choisissez votre profil</h2>
-<p style={{textAlign:'center',color:'#555',fontSize:12,marginBottom:28}}>{today}</p>
-<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:12}}>
-{STAFF.map(s=>(
-<div key={s.id} className="sc" onClick={()=>{setSel(s);setStep('pin')}} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:'18px 14px',textAlign:'center'}}>
-<div style={{fontSize:32,marginBottom:8}}>{s.avatar}</div>
-<div style={{fontSize:13,fontWeight:600,color:'#F0EDE8',marginBottom:4}}>{s.name}</div>
-<div style={{fontSize:10,background:`rgba(201,168,76,.12)`,color:G,padding:'2px 8px',borderRadius:8,display:'inline-block'}}>{ROLE_LABELS[s.role]}</div>
-</div>))}
-</div></div></div>)
+  const logout=()=>{setStep('select');setMember(null);setPin('');setClocked(false)}
 
-if(step==='pin'&&sel)return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:"'DM Sans',sans-serif"}}>
-<div style={{textAlign:'center',marginBottom:24}}>
-<div style={{fontSize:48,marginBottom:10}}>{sel.avatar}</div>
-<div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:20,marginBottom:4}}>{sel.name}</div>
-<div style={{fontSize:12,color:'#555'}}>{ROLE_LABELS[sel.role]}</div>
-</div>
-<div style={{display:'flex',gap:10,marginBottom:24}}>
-{[0,1,2,3].map(i=><div key={i} style={{width:16,height:16,borderRadius:'50%',background:pin.length>i?G:'#222',border:`2px solid ${err?'#E05252':G}`,transition:'all .2s'}}/>)}
-</div>
-<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
-{['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i)=>(
-<button key={i} onClick={()=>d==='⌫'?setPin(p=>p.slice(0,-1)):d&&handlePin(d)}
-style={{width:64,height:64,background:d?'#1A1A1A':'transparent',border:`1px solid ${d?'#2A2A2A':'transparent'}`,color:d==='⌫'?'#666':'#F0EDE8',borderRadius:12,fontSize:20,cursor:d?'pointer':'default',fontWeight:600}}>{d}</button>))}
-</div>
-{err&&<div style={{color:'#E05252',fontSize:12,marginBottom:10}}>❌ PIN incorrect</div>}
-<button onClick={()=>{setStep('select');setPin('')}} style={{background:'none',border:'none',color:'#444',fontSize:12,cursor:'pointer'}}>← Retour</button>
-</div>)
+  if(step==='select')return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <TopBar title="👥 Staff Portal — Café LUX" onBack={()=>nav('/')}/>
+      <div style={{padding:24,maxWidth:720,margin:'0 auto'}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",color:G,textAlign:'center',marginBottom:6,fontSize:22}}>Choisissez votre profil</h2>
+        <p style={{textAlign:'center',color:'#444',fontSize:12,marginBottom:28}}>{fmtDate()}</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(155px,1fr))',gap:12}}>
+          {STAFF.map(m=>(
+            <div key={m.id} onClick={()=>selectMember(m)} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:'18px 14px',textAlign:'center',cursor:'pointer',transition:'all .2s'}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=G;e.currentTarget.style.transform='translateY(-4px)'}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor='#1A1A1A';e.currentTarget.style.transform='none'}}>
+              <div style={{fontSize:34,marginBottom:8}}>{m.avatar}</div>
+              <div style={{fontSize:13,fontWeight:700,color:'#F0EDE8',marginBottom:5}}>{m.name}</div>
+              <div style={{fontSize:10,background:'rgba(201,168,76,.1)',color:G,padding:'2px 8px',borderRadius:7,display:'inline-block'}}>{ROLE_LABELS[m.role]}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
-if(step==='home'&&sel)return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-<div style={{background:'#111',padding:'12px 18px',display:'flex',alignItems:'center',gap:12,borderBottom:'1px solid #1A1A1A'}}>
-<button onClick={()=>{setStep('select');setSel(null)}} style={{background:'none',border:'1px solid #222',color:'#555',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>← Déconnexion</button>
-<span style={{fontSize:20}}>{sel.avatar}</span>
-<div><div style={{fontWeight:600,fontSize:14,color:'#F0EDE8'}}>{sel.name}</div><div style={{fontSize:10,color:'#555'}}>{ROLE_LABELS[sel.role]}</div></div>
-<div style={{marginLeft:'auto',fontSize:11,color:'#444'}}>{today}</div>
-</div>
-<div style={{display:'flex',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A'}}>
-{([['attendance','⏱ Présence'],['salary','💰 Salaire'],['team','👥 Équipe']] as [typeof tab,string][]).map(([t,l])=>(
-<button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'11px',border:'none',background:'none',color:tab===t?G:'#444',borderBottom:`2px solid ${tab===t?G:'transparent'}`,cursor:'pointer',fontSize:13,fontFamily:"'DM Sans',sans-serif"}}>{l}</button>))}
-</div>
-{tab==='attendance'&&<div style={{padding:20,maxWidth:600,margin:'0 auto'}}>
-<div style={{background:clocked?'linear-gradient(135deg,#0A1A0A,#102210)':'linear-gradient(135deg,#1A0A00,#2D1500)',border:`1px solid ${clocked?'rgba(61,190,122,.3)':'rgba(201,168,76,.3)'}`,borderRadius:16,padding:24,textAlign:'center',marginBottom:20}}>
-<div style={{fontSize:36,marginBottom:8}}>{clocked?'🟢':'🔴'}</div>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:clocked?'#3DBE7A':G,marginBottom:4}}>{clocked?'En service':'Hors service'}</div>
-<div style={{fontSize:11,color:'#555',marginBottom:16}}>{new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'})}</div>
-<button onClick={()=>setClock(!clocked)} style={{padding:'12px 32px',background:clocked?'#E05252':G,color:'#fff',border:'none',borderRadius:50,fontSize:14,fontWeight:700,cursor:'pointer'}}>
-{clocked?'⏹ Pointer Sortie':'▶ Pointer Entrée'}</button>
-</div>
-<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
-<div style={{fontWeight:600,color:G,marginBottom:12,fontSize:13}}>📋 Historique du mois</div>
-{['Lundi 25','Mardi 26','Mercredi 27'].map((d,i)=>(
-<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #1A1A1A',fontSize:12}}>
-<span style={{color:'#888'}}>{d} mars</span>
-<span style={{color:'#3DBE7A'}}>08:00 — 17:00</span>
-<span style={{color:G}}>9h</span>
-</div>))}</div></div>}
+  if(step==='pin'&&member)return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{textAlign:'center',marginBottom:28}}>
+        <div style={{fontSize:52,marginBottom:10}}>{member.avatar}</div>
+        <div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:20,marginBottom:4}}>{member.name}</div>
+        <div style={{fontSize:12,color:'#555'}}>{ROLE_LABELS[member.role]}</div>
+      </div>
+      <div style={{display:'flex',gap:12,marginBottom:24}}>
+        {[0,1,2,3].map(i=>(
+          <div key={i} style={{width:16,height:16,borderRadius:'50%',background:pin.length>i?G:'#1E1E1E',border:`2px solid ${pinError?'#E05252':pin.length>i?G:'#333'}`,transition:'all .15s'}}/>
+        ))}
+      </div>
+      {pinError&&<div style={{color:'#E05252',fontSize:12,marginBottom:12}}>PIN incorrect — réessayez</div>}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+        {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i)=>(
+          <button key={i} onClick={()=>d==='⌫'?setPin(p=>p.slice(0,-1)):d&&pressPin(d)}
+            style={{width:66,height:66,background:d?'#1A1A1A':'transparent',border:`1px solid ${d?'#2A2A2A':'transparent'}`,color:d==='⌫'?'#666':'#F0EDE8',borderRadius:12,fontSize:22,cursor:d?'pointer':'default',fontWeight:600,transition:'all .1s'}}>{d}</button>
+        ))}
+      </div>
+      <button onClick={()=>{setStep('select');setPin('')}} style={{background:'none',border:'none',color:'#333',fontSize:12,cursor:'pointer',marginTop:4}}>← Retour</button>
+    </div>
+  )
 
-{tab==='salary'&&<div style={{padding:20,maxWidth:500,margin:'0 auto'}}>
-<div style={{background:'linear-gradient(135deg,#1A1400,#2D2200)',border:`1px solid rgba(201,168,76,.3)`,borderRadius:16,padding:24,marginBottom:16,textAlign:'center'}}>
-<div style={{fontSize:11,color:'rgba(201,168,76,.6)',letterSpacing:'.2em',marginBottom:8}}>SALAIRE MENSUEL</div>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:40,color:G,fontWeight:700}}>{sel.role==='owner'?'—':sel.salary.toLocaleString()} {sel.role!=='owner'&&'DH'}</div>
-{sel.role==='owner'&&<div style={{fontSize:12,color:'#444',marginTop:8}}>Accès propriétaire</div>}
-</div>
-{sel.role!=='owner'&&<>
-<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16,marginBottom:12}}>
-{[{l:'Salaire de base',v:`${sel.salary} DH`},{l:'Heures supplémentaires',v:'+200 DH'},{l:'Prime de présence',v:'+150 DH'}].map((it,i)=>(
-<div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #1A1A1A',fontSize:12}}>
-<span style={{color:'#888'}}>{it.l}</span><span style={{color:'#F0EDE8'}}>{it.v}</span></div>))}
-<div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',fontWeight:700}}>
-<span style={{color:'#F0EDE8'}}>Total Mars 2026</span>
-<span style={{color:G,fontSize:16}}>{sel.salary+350} DH</span></div>
-</div></>}</div>}
-
-{tab==='team'&&<div style={{padding:20,maxWidth:600,margin:'0 auto'}}>
-<h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Équipe Café LUX</h3>
-{STAFF.map(s=>(
-<div key={s.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px',background:'#111',border:`1px solid ${s.id===sel.id?`rgba(201,168,76,.3)`:'#1A1A1A'}`,borderRadius:10,marginBottom:8}}>
-<div style={{fontSize:24}}>{s.avatar}</div>
-<div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{s.name}</div><div style={{fontSize:11,color:'#555'}}>{ROLE_LABELS[s.role]}</div></div>
-<div style={{width:8,height:8,borderRadius:'50%',background:s.id===sel.id&&clocked?'#3DBE7A':'#333'}}/>
-</div>))}</div>}
-</div>)
-
-return<div/>
+  if(step==='dashboard'&&member)return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{background:'#111',padding:'11px 16px',display:'flex',alignItems:'center',gap:12,borderBottom:'1px solid #1A1A1A'}}>
+        <button onClick={logout} style={{background:'none',border:'1px solid #222',color:'#444',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:11}}>⏏ Déconnexion</button>
+        <span style={{fontSize:22}}>{member.avatar}</span>
+        <div><div style={{fontWeight:700,fontSize:14}}>{member.name}</div><div style={{fontSize:10,color:'#555'}}>{ROLE_LABELS[member.role]}</div></div>
+        <div style={{marginLeft:'auto',background:clocked?'rgba(61,190,122,.15)':'rgba(224,82,82,.1)',color:clocked?'#3DBE7A':'#E05252',padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600}}>{clocked?'⬤ En service':'⬤ Hors service'}</div>
+      </div>
+      <NavTabs tabs={[{id:'attendance',label:'⏱ Présence'},{id:'salary',label:'💰 Salaire'},{id:'team',label:'👥 Équipe'}]} active={tab} onChange={setTab}/>
+      {tab==='attendance'&&<div style={{padding:20,maxWidth:580,margin:'0 auto'}}>
+        <div style={{background:clocked?'linear-gradient(135deg,#0A1A0A,#0E1E0E)':'linear-gradient(135deg,#1A0A00,#200D00)',border:`1px solid ${clocked?'rgba(61,190,122,.25)':'rgba(201,168,76,.25)'}`,borderRadius:16,padding:28,textAlign:'center',marginBottom:20}}>
+          <div style={{fontSize:44,marginBottom:10}}>{clocked?'🟢':'🔴'}</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:clocked?'#3DBE7A':G,marginBottom:6}}>{clocked?'En service':'Hors service'}</div>
+          <div style={{fontSize:12,color:'#555',marginBottom:20}}>{fmtTime()} — {fmtDate()}</div>
+          <button onClick={()=>setClocked(c=>!c)} style={{padding:'12px 36px',background:clocked?'#E05252':G,color:'#fff',border:'none',borderRadius:50,fontSize:14,fontWeight:700,cursor:'pointer'}}>
+            {clocked?'⏹ Pointer Sortie':'▶ Pointer Entrée'}
+          </button>
+        </div>
+        <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+          <div style={{fontWeight:700,color:G,marginBottom:12,fontSize:12,letterSpacing:'.1em'}}>HISTORIQUE — MARS 2026</div>
+          {[{d:'Lun 25 mars',e:'08:00',s:'17:00',h:9},{d:'Mar 26 mars',e:'07:55',s:'17:05',h:9.1},{d:'Mer 27 mars',e:'08:10',s:'17:00',h:8.8}].map((r,i)=>(
+            <div key={i} style={{display:'flex',gap:10,alignItems:'center',padding:'7px 0',borderBottom:'1px solid #151515',fontSize:11}}>
+              <span style={{flex:1,color:'#888'}}>{r.d}</span>
+              <span style={{color:'#3DBE7A'}}>{r.e} → {r.s}</span>
+              <span style={{color:G,fontWeight:700,minWidth:28,textAlign:'right'}}>{r.h}h</span>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontSize:12,fontWeight:700}}>
+            <span style={{color:'#888'}}>Total semaine</span>
+            <span style={{color:G}}>26.9 h</span>
+          </div>
+        </div>
+      </div>}
+      {tab==='salary'&&<div style={{padding:20,maxWidth:500,margin:'0 auto'}}>
+        <div style={{background:'linear-gradient(135deg,#1A1400,#241C00)',border:`1px solid rgba(201,168,76,.25)`,borderRadius:16,padding:26,textAlign:'center',marginBottom:16}}>
+          <div style={{fontSize:10,color:'rgba(201,168,76,.5)',letterSpacing:'.2em',marginBottom:8}}>SALAIRE MENSUEL</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:42,color:G,fontWeight:700}}>{member.role==='owner'?'—':`${member.salary} DH`}</div>
+          {member.role==='owner'&&<div style={{fontSize:12,color:'#444',marginTop:6}}>Accès propriétaire</div>}
+        </div>
+        {member.role!=='owner'&&<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+          {[{l:'Salaire de base',v:`${member.salary} DH`},{l:'Heures supplémentaires (2h)',v:'+200 DH'},{l:'Prime présence',v:'+150 DH'},{l:'Déductions',v:'0 DH'}].map((row,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #151515',fontSize:12}}>
+              <span style={{color:'#888'}}>{row.l}</span><span style={{color:'#F0EDE8'}}>{row.v}</span>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',fontWeight:700}}>
+            <span>Total à verser</span>
+            <span style={{color:G,fontSize:16}}>{member.salary+350} DH</span>
+          </div>
+        </div>}
+      </div>}
+      {tab==='team'&&<div style={{padding:20,maxWidth:600,margin:'0 auto'}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Équipe — Café LUX Taza</h3>
+        {STAFF.map(m=>(
+          <div key={m.id} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 14px',background:'#111',border:`1px solid ${m.id===member.id?'rgba(201,168,76,.3)':'#1A1A1A'}`,borderRadius:10,marginBottom:8}}>
+            <span style={{fontSize:22}}>{m.avatar}</span>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{m.name}</div><div style={{fontSize:11,color:'#555'}}>{ROLE_LABELS[m.role]}</div></div>
+            {m.role!=='owner'&&<span style={{fontSize:12,color:G,fontWeight:600}}>{m.salary} DH</span>}
+            <div style={{width:8,height:8,borderRadius:'50%',background:m.id===member.id&&clocked?'#3DBE7A':'#252525'}}/>
+          </div>
+        ))}
+      </div>}
+    </div>
+  )
+  return null
 }
 
 // ══════════════════════════════════════════════════════════
 //  ADMIN DASHBOARD
 // ══════════════════════════════════════════════════════════
-function AdminDash({go}:{go:(r:any)=>void}){
-const[tab,setTab]=useState<'overview'|'sales'|'staff'>('overview')
-const stats=[{l:'CA Aujourd\'hui',v:'1,847 DH',i:'📈',c:'#3DBE7A'},{l:'Commandes',v:'34',i:'🧾',c:'#5B8DEF'},{l:'Ticket Moyen',v:'54 DH',i:'💰',c:G},{l:'Tables Occupées',v:'7/12',i:'🪑',c:'#E07830'}]
-const top=[{n:'Morning Lux',q:12,r:420},{n:'Avocat Royal',q:9,r:225},{n:'Thé Royal',q:8,r:152},{n:'LUX Power Toast',q:7,r:175},{n:'Queen\'s Rose Coffee',q:6,r:180}]
-return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-<div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'12px 18px',display:'flex',alignItems:'center',gap:12}}>
-<button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>⚙️ Admin — Café LUX Taza</span>
-<button onClick={genPDFReport} style={{marginLeft:'auto',background:G,color:'#000',border:'none',padding:'7px 14px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700}}>📄 Rapport PDF</button>
-<span style={{marginLeft:'auto',color:'#444',fontSize:11}}>28 Mars 2026</span>
-</div>
-<div style={{display:'flex',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A'}}>
-{([['overview','📊 Vue générale'],['sales','📈 Ventes'],['staff','👥 Personnel']] as [typeof tab,string][]).map(([t,l])=>(
-<button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'11px',border:'none',background:'none',color:tab===t?G:'#444',borderBottom:`2px solid ${tab===t?G:'transparent'}`,cursor:'pointer',fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>{l}</button>))}
-</div>
-
-{tab==='overview'&&<div style={{padding:16,maxWidth:800,margin:'0 auto'}}>
-<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:12,marginBottom:20}}>
-{stats.map((s,i)=>(
-<div key={i} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
-<div style={{fontSize:24,marginBottom:8}}>{s.i}</div>
-<div style={{fontSize:20,fontWeight:700,color:s.c,fontFamily:"'Playfair Display',serif",marginBottom:2}}>{s.v}</div>
-<div style={{fontSize:11,color:'#555'}}>{s.l}</div>
-</div>))}
-</div>
-<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16,marginBottom:12}}>
-<div style={{fontWeight:600,color:G,marginBottom:12,fontSize:13}}>⭐ Top produits du jour</div>
-{top.map((it,i)=>(
-<div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 0',borderBottom:'1px solid #1A1A1A'}}>
-<span style={{color:G,fontWeight:700,width:20,fontSize:13}}>#{i+1}</span>
-<span style={{flex:1,fontSize:12,color:'#D0CCC8'}}>{it.n}</span>
-<span style={{fontSize:11,color:'#555'}}>{it.q}x</span>
-<span style={{color:G,fontWeight:600,fontSize:13}}>{it.r} DH</span>
-</div>))}
-</div>
-<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
-<div style={{fontWeight:600,color:G,marginBottom:12,fontSize:13}}>🕐 Dernières commandes</div>
-{[{t:'Table 3',m:'Cappuccino x2, Morning Lux',p:82,h:'09:42'},{t:'Emporter',m:'Thé Royal, Sablés',p:33,h:'09:38'},{t:'Table 7',m:'Avocat Royal x2, Jus Banane',p:55,h:'09:31'}].map((o,i)=>(
-<div key={i} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:'1px solid #1A1A1A',alignItems:'center'}}>
-<span style={{background:'rgba(201,168,76,.15)',color:G,padding:'2px 8px',borderRadius:8,fontSize:10,fontWeight:600}}>{o.t}</span>
-<span style={{flex:1,fontSize:11,color:'#888'}}>{o.m}</span>
-<span style={{color:'#444',fontSize:10}}>{o.h}</span>
-<span style={{color:G,fontWeight:600,fontSize:13}}>{o.p} DH</span>
-</div>))}
-</div></div>}
-
-{tab==='sales'&&<div style={{padding:16,maxWidth:700,margin:'0 auto'}}>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
-{[{l:'Cette semaine',v:'12,340 DH',sub:'+8% vs sem. préc.'},{l:'Ce mois',v:'47,200 DH',sub:'+12% vs mois préc.'},{l:'Meilleur jour',v:'Samedi',sub:'2,847 DH'},{l:'Heure de pointe',v:'09h-11h',sub:'43% du CA'}].map((s,i)=>(
-<div key={i} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
-<div style={{fontSize:11,color:'#555',marginBottom:4}}>{s.l}</div>
-<div style={{fontSize:18,fontWeight:700,color:G,fontFamily:"'Playfair Display',serif"}}>{s.v}</div>
-<div style={{fontSize:10,color:'#3DBE7A',marginTop:4}}>{s.sub}</div>
-</div>))}
-</div>
-<div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
-<div style={{fontWeight:600,color:G,marginBottom:12,fontSize:13}}>📊 CA par catégorie — Mars 2026</div>
-{[{n:'Cafés Classiques',p:28,v:13216},{n:'Petit-Déjeuner',p:22,v:10384},{n:'Les Crémeux',p:18,v:8496},{n:'Jus Frais',p:16,v:7552},{n:'Autres',p:16,v:7552}].map((c,i)=>(
-<div key={i} style={{marginBottom:10}}>
-<div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:4}}>
-<span style={{color:'#D0CCC8'}}>{c.n}</span>
-<span style={{color:G}}>{c.v.toLocaleString()} DH</span>
-</div>
-<div style={{background:'#1A1A1A',borderRadius:4,height:6,overflow:'hidden'}}>
-<div style={{width:`${c.p}%`,height:'100%',background:`linear-gradient(90deg,${G},#8B6E2F)`,borderRadius:4}}/>
-</div></div>))}
-</div></div>}
-
-{tab==='staff'&&<div style={{padding:16,maxWidth:600,margin:'0 auto'}}>
-<h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Gestion du personnel</h3>
-{STAFF.map(s=>(
-<div key={s.id} style={{display:'flex',alignItems:'center',gap:12,background:'#111',border:'1px solid #1A1A1A',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
-<span style={{fontSize:24}}>{s.avatar}</span>
-<div style={{flex:1}}>
-<div style={{fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{s.name}</div>
-<div style={{fontSize:11,color:'#555'}}>{ROLE_LABELS[s.role]}</div>
-</div>
-{s.role!=='owner'&&<div style={{textAlign:'right'}}>
-<div style={{fontSize:13,color:G,fontWeight:600}}>{s.salary} DH</div>
-<div style={{fontSize:10,color:'#444'}}>/ mois</div>
-</div>}
-<div style={{width:8,height:8,borderRadius:'50%',background:'#3DBE7A'}}/>
-</div>))}
-</div>}
-</div>)
-}
-
-
-// ══════════════════════════════════════════════════════════
-//  QR CODE GENERATOR (per table)
-// ══════════════════════════════════════════════════════════
-function QRPage({go}:{go:(r:any)=>void}){
-const tables=[1,2,3,4,5,6,7,8,9,10,11,12]
-const baseUrl=window.location.origin
-const printQR=(t:number)=>{
-  const w=window.open('','_blank','width=400,height=500')
-  if(!w)return
-  const url=`${baseUrl}/app/customer?table=${t}`
-  w.document.write(`<html><head><title>QR Table ${t}</title>
-  <style>body{font-family:sans-serif;text-align:center;padding:20px}
-  .qr{border:3px solid #C9A84C;padding:20px;display:inline-block;border-radius:12px;margin:10px}
-  h2{color:#C9A84C;font-size:24px}img{width:180px;height:180px}</style></head>
-  <body><div class="qr">
-  <h2>★ CAFÉ LUX</h2>
-  <p style="font-size:14px;color:#666">Table ${t}</p>
-  <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" alt="QR"/>
-  <p style="font-size:12px;color:#888;margin-top:8px">Scannez pour commander</p>
-  <p style="font-size:10px;color:#aaa">${url}</p>
-  </div></body></html>`)
-  w.document.close();w.print()
-}
-const printAll=()=>tables.forEach((t,i)=>setTimeout(()=>printQR(t),i*300))
-return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-<div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'12px 18px',display:'flex',alignItems:'center',gap:12}}>
-<button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>📷 QR Codes — Tables</span>
-<button onClick={printAll} style={{marginLeft:'auto',background:G,color:'#000',border:'none',padding:'7px 16px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700}}>🖨️ Imprimer tous</button>
-</div>
-<div style={{padding:20,maxWidth:700,margin:'0 auto'}}>
-<p style={{color:'#555',fontSize:12,marginBottom:20,textAlign:'center'}}>Chaque QR redirige le client vers la commande en ligne pour cette table</p>
-<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
-{tables.map(t=>(
-<div key={t} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16,textAlign:'center'}}>
-<div style={{fontSize:32,marginBottom:8}}>🪑</div>
-<div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:18,fontWeight:700,marginBottom:4}}>Table {t}</div>
-<img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.origin+'/app/customer?table='+t)}`}
-alt={`QR ${t}`} style={{width:100,height:100,marginBottom:8,borderRadius:8}}/>
-<button onClick={()=>printQR(t)} style={{width:'100%',padding:'7px',background:'rgba(201,168,76,.15)',color:G,border:'1px solid rgba(201,168,76,.3)',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:600}}>🖨️ Imprimer</button>
-</div>))}
-</div></div></div>)
+function AdminPage({nav}:{nav:(r:Route)=>void}){
+  const[tab,setTab]=useState('overview')
+  const[orders,setOrders]=useState<Order[]>([...ORDERS])
+  useEffect(()=>onOrders(()=>setOrders([...ORDERS])),[])
+  const todaySales=orders.filter(o=>o.status==='done').reduce((s,o)=>s+o.totalTTC,0)||1847
+  const todayCount=orders.filter(o=>o.status==='done').length||34
+  const stats=[
+    {l:"CA Aujourd'hui",v:`${todaySales.toLocaleString()} DH`,i:'📈',c:'#3DBE7A'},
+    {l:'Commandes',v:`${todayCount}`,i:'🧾',c:'#5B8DEF'},
+    {l:'Ticket moyen',v:`${todayCount?Math.round(todaySales/todayCount):54} DH`,i:'💰',c:G},
+    {l:'Tables actives',v:'7/12',i:'🪑',c:'#E07830'},
+  ]
+  const top=[{n:'Morning Lux',q:12,rev:420},{n:'Avocat Royal',q:9,rev:225},{n:'Thé Royal',q:8,rev:152},{n:'LUX Power Toast',q:7,rev:175},{n:"Queen's Rose Coffee",q:6,rev:180}]
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'11px 16px',display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>⚙️ Admin — Café LUX Taza</span>
+        <span style={{marginLeft:'auto',color:'#333',fontSize:11}}>{fmtDate()}</span>
+        <button onClick={printReport} style={{background:G,color:'#000',border:'none',padding:'7px 14px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700}}>📄 Rapport PDF</button>
+      </div>
+      <NavTabs tabs={[{id:'overview',label:'📊 Vue générale'},{id:'sales',label:'📈 Ventes'},{id:'staff',label:'👥 Personnel'},{id:'orders',label:'🧾 Commandes'}]} active={tab} onChange={setTab}/>
+      {tab==='overview'&&<div style={{padding:16,maxWidth:860,margin:'0 auto'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(185px,1fr))',gap:12,marginBottom:20}}>
+          {stats.map((s,i)=>(
+            <div key={i} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:'16px 14px'}}>
+              <div style={{fontSize:26,marginBottom:8}}>{s.i}</div>
+              <div style={{fontSize:22,fontWeight:700,color:s.c,fontFamily:"'Playfair Display',serif",marginBottom:2}}>{s.v}</div>
+              <div style={{fontSize:11,color:'#444'}}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+          <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+            <div style={{fontWeight:700,color:G,marginBottom:12,fontSize:12}}>⭐ Top produits du jour</div>
+            {top.map((t,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 0',borderBottom:'1px solid #151515'}}>
+                <span style={{color:G,fontWeight:700,fontSize:12,width:18}}>#{i+1}</span>
+                <span style={{flex:1,fontSize:11,color:'#C0BDB9'}}>{t.n}</span>
+                <span style={{fontSize:10,color:'#555'}}>{t.q}×</span>
+                <span style={{color:G,fontWeight:600,fontSize:12}}>{t.rev} DH</span>
+              </div>
+            ))}
+          </div>
+          <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+            <div style={{fontWeight:700,color:G,marginBottom:12,fontSize:12}}>🕐 Dernières commandes</div>
+            {[{t:'Table 3',m:'Cappuccino ×2, Morning Lux',p:82,h:'09:42'},{t:'Emporter',m:'Thé Royal, Sablés',p:33,h:'09:38'},{t:'Table 7',m:'Avocat Royal ×2, Jus Banane',p:55,h:'09:31'},{t:'Table 1',m:'Espresso, Classic Breakfast',p:29,h:'09:18'},...orders.slice(0,2).map(o=>({t:typeof o.tableId==='number'?`Table ${o.tableId}`:'Emporter',m:o.items.slice(0,2).map(i=>i.n).join(', '),p:o.totalTTC,h:o.time}))].slice(0,5).map((o,i)=>(
+              <div key={i} style={{display:'flex',gap:8,padding:'7px 0',borderBottom:'1px solid #151515',alignItems:'center'}}>
+                <span style={{background:'rgba(201,168,76,.12)',color:G,padding:'2px 7px',borderRadius:7,fontSize:9,fontWeight:600,flexShrink:0}}>{o.t}</span>
+                <span style={{flex:1,fontSize:10,color:'#666',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.m}</span>
+                <span style={{color:'#333',fontSize:9,flexShrink:0}}>{o.h}</span>
+                <span style={{color:G,fontWeight:600,fontSize:11,flexShrink:0}}>{o.p} DH</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>}
+      {tab==='sales'&&<div style={{padding:16,maxWidth:700,margin:'0 auto'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+          {[{l:'Cette semaine',v:'12 340 DH',sub:'+8% vs sem. préc.'},{l:'Ce mois',v:'47 200 DH',sub:'+12% vs mois préc.'},{l:'Meilleur jour',v:'Samedi',sub:'2 847 DH'},{l:'Heure de pointe',v:'09h–11h',sub:'43% du CA'}].map((s,i)=>(
+            <div key={i} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+              <div style={{fontSize:11,color:'#444',marginBottom:4}}>{s.l}</div>
+              <div style={{fontSize:18,fontWeight:700,color:G,fontFamily:"'Playfair Display',serif"}}>{s.v}</div>
+              <div style={{fontSize:10,color:'#3DBE7A',marginTop:4}}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:16}}>
+          <div style={{fontWeight:700,color:G,marginBottom:14,fontSize:12}}>📊 CA par catégorie — Mars 2026</div>
+          {[{n:'Cafés Classiques',pct:28,v:13216},{n:'Petit-Déjeuner',pct:22,v:10384},{n:'Les Crémeux',pct:18,v:8496},{n:'Jus Frais',pct:16,v:7552},{n:'Signature Lux',pct:10,v:4720},{n:'Autres',pct:6,v:2832}].map((c,i)=>(
+            <div key={i} style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:4}}>
+                <span style={{color:'#C0BDB9'}}>{c.n}</span>
+                <span style={{color:G,fontWeight:600}}>{c.v.toLocaleString()} DH</span>
+              </div>
+              <div style={{background:'#1A1A1A',borderRadius:4,height:5,overflow:'hidden'}}>
+                <div style={{width:`${c.pct}%`,height:'100%',background:`linear-gradient(90deg,${G},#8B6E2F)`,borderRadius:4,transition:'width .4s'}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>}
+      {tab==='staff'&&<div style={{padding:16,maxWidth:640,margin:'0 auto'}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Gestion du personnel</h3>
+        {STAFF.map(m=>(
+          <div key={m.id} style={{display:'flex',alignItems:'center',gap:12,background:'#111',border:'1px solid #1A1A1A',borderRadius:10,padding:'12px 14px',marginBottom:8}}>
+            <span style={{fontSize:24}}>{m.avatar}</span>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{m.name}</div><div style={{fontSize:11,color:'#555'}}>{ROLE_LABELS[m.role]}</div></div>
+            {m.role!=='owner'&&<div style={{textAlign:'right'}}><div style={{fontSize:13,color:G,fontWeight:700}}>{m.salary} DH</div><div style={{fontSize:9,color:'#444'}}>/mois</div></div>}
+            <div style={{width:8,height:8,borderRadius:'50%',background:'#3DBE7A'}}/>
+          </div>
+        ))}
+      </div>}
+      {tab==='orders'&&<div style={{padding:16,maxWidth:700,margin:'0 auto'}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Toutes les commandes</h3>
+        {orders.length===0?<div style={{color:'#333',textAlign:'center',padding:'32px 0'}}>Aucune commande pour l'instant</div>
+        :orders.map(o=>(
+          <div key={o.id} style={{background:'#111',border:`1px solid ${o.status==='new'?'rgba(61,190,122,.3)':'#1A1A1A'}`,borderRadius:10,padding:'12px 14px',marginBottom:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,alignItems:'center'}}>
+              <span style={{fontWeight:700,color:G,fontSize:14}}>#{o.id} — {typeof o.tableId==='number'?`Table ${o.tableId}`:'Emporter'}</span>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <span style={{fontSize:10,color:'#555'}}>{o.time}</span>
+                <span style={{background:o.source==='online'?'rgba(91,141,239,.15)':'rgba(201,168,76,.12)',color:o.source==='online'?'#5B8DEF':G,padding:'2px 8px',borderRadius:7,fontSize:9,fontWeight:600}}>{o.source==='online'?'En ligne':'POS'}</span>
+                <select value={o.status} onChange={e=>updateOrderStatus(o.id,e.target.value as Order['status'])}
+                  style={{background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#888',padding:'3px 8px',borderRadius:6,fontSize:10,cursor:'pointer'}}>
+                  <option value="new">Nouveau</option>
+                  <option value="preparing">En préparation</option>
+                  <option value="ready">Prêt</option>
+                  <option value="done">Terminé</option>
+                </select>
+              </div>
+            </div>
+            <div style={{fontSize:11,color:'#666'}}>{o.items.map(i=>`${i.n} ×${i.q}`).join(' • ')}</div>
+            <div style={{marginTop:6,fontWeight:700,color:G}}>Total TTC: {o.totalTTC} DH</div>
+          </div>
+        ))}
+      </div>}
+    </div>
+  )
 }
 
 // ══════════════════════════════════════════════════════════
-//  INVENTORY MANAGEMENT
+//  CUSTOMER APP  (online ordering via QR)
 // ══════════════════════════════════════════════════════════
-function Inventory({go}:{go:(r:any)=>void}){
-const[stock,setStock]=useState<StockItem[]>([...STOCK])
-const[edit,setEdit]=useState<number|null>(null)
-const[qty,setQty]=useState('')
-const update=(i:number)=>{
-  const n=parseFloat(qty)
-  if(isNaN(n))return
-  setStock(s=>{const copy=[...s];copy[i]={...copy[i],qty:n};return copy})
-  setEdit(null);setQty('')
-}
-const low=stock.filter(s=>s.qty<=s.min)
-const cats=[...new Set(stock.map(s=>s.category))]
-return(
-<div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-<div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'12px 18px',display:'flex',alignItems:'center',gap:12}}>
-<button onClick={()=>go('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-<span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17}}>📦 Gestion du Stock</span>
-{low.length>0&&<span style={{background:'rgba(224,82,82,.2)',color:'#E05252',padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600}}>⚠️ {low.length} en rupture</span>}
-</div>
-<div style={{padding:16,maxWidth:700,margin:'0 auto'}}>
-{low.length>0&&<div style={{background:'rgba(224,82,82,.1)',border:'1px solid rgba(224,82,82,.3)',borderRadius:12,padding:14,marginBottom:16}}>
-<div style={{fontWeight:600,color:'#E05252',marginBottom:8,fontSize:13}}>⚠️ Stock critique</div>
-{low.map((s,i)=><div key={i} style={{fontSize:12,color:'#E05252',marginBottom:4}}>• {s.name} — {s.qty} {s.unit} (min: {s.min})</div>)}
-</div>}
-{cats.map(cat=>(
-<div key={cat} style={{marginBottom:16}}>
-<div style={{fontSize:10,color:G,letterSpacing:'.15em',marginBottom:8,fontWeight:600}}>{cat.toUpperCase()}</div>
-{stock.filter(s=>s.category===cat).map((s,i)=>{
-const idx=stock.findIndex(x=>x.name===s.name)
-const pct=Math.min(100,(s.qty/Math.max(s.min*3,s.qty))*100)
-const col=s.qty<=s.min?'#E05252':s.qty<=s.min*2?'#E07830':'#3DBE7A'
-return(
-<div key={i} style={{background:'#111',border:`1px solid ${s.qty<=s.min?'rgba(224,82,82,.3)':'#1A1A1A'}`,borderRadius:10,padding:'12px 14px',marginBottom:8}}>
-<div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
-<span style={{flex:1,fontSize:13,color:'#F0EDE8',fontWeight:600}}>{s.name}</span>
-{edit===idx
-?<div style={{display:'flex',gap:6,alignItems:'center'}}>
-<input value={qty} onChange={e=>setQty(e.target.value)} style={{width:60,padding:'4px 8px',background:'#1A1A1A',border:`1px solid ${G}`,color:'#F0EDE8',borderRadius:6,fontSize:12}} placeholder={`${s.qty}`}/>
-<span style={{fontSize:11,color:'#555'}}>{s.unit}</span>
-<button onClick={()=>update(idx)} style={{background:G,color:'#000',border:'none',padding:'4px 10px',borderRadius:6,cursor:'pointer',fontSize:11,fontWeight:700}}>OK</button>
-<button onClick={()=>setEdit(null)} style={{background:'#1A1A1A',color:'#666',border:'1px solid #222',padding:'4px 8px',borderRadius:6,cursor:'pointer',fontSize:11}}>✕</button>
-</div>
-:<div style={{display:'flex',alignItems:'center',gap:8}}>
-<span style={{color:col,fontWeight:700,fontSize:14}}>{s.qty}</span>
-<span style={{fontSize:11,color:'#555'}}>{s.unit}</span>
-<button onClick={()=>{setEdit(idx);setQty(String(s.qty))}} style={{background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#888',padding:'3px 8px',borderRadius:6,cursor:'pointer',fontSize:10}}>Modifier</button>
-</div>}
-</div>
-<div style={{background:'#1A1A1A',borderRadius:4,height:4}}>
-<div style={{width:`${pct}%`,height:'100%',background:col,borderRadius:4,transition:'width .3s'}}/>
-</div></div>)})}
-</div>))}
-</div></div>)
+function CustomerApp({nav}:{nav:(r:Route)=>void}){
+  const[tab,setTab]=useState<'order'|'wallet'|'rewards'>('order')
+  const[cart,setCart]=useState<CartItem[]>([])
+  const[catId,setCatId]=useState('cafes')
+  const[confirmed,setConfirmed]=useState(false)
+  const params=new URLSearchParams(window.location.search)
+  const tableParam=params.get('table')
+  const tableId:number|'emporter'=tableParam?parseInt(tableParam):'emporter'
+  const points=340
+
+  const cat=MENU.find(c=>c.id===catId)||MENU[0]
+  const add=(item:{id:number;n:string;p:number;cat:string})=>setCart(prev=>{
+    const ex=prev.find(c=>c.id===item.id)
+    if(ex)return prev.map(c=>c.id===item.id?{...c,q:c.q+1}:c)
+    return[...prev,{...item,q:1}]
+  })
+  const remove=(id:number)=>setCart(prev=>{
+    const ex=prev.find(c=>c.id===id)
+    if(!ex)return prev
+    if(ex.q>1)return prev.map(c=>c.id===id?{...c,q:c.q-1}:c)
+    return prev.filter(c=>c.id!==id)
+  })
+  const total=cart.reduce((s,c)=>s+c.p*c.q,0)
+
+  const confirm=()=>{
+    if(!cart.length)return
+    pushOrder({tableId,items:cart,total,totalTTC:ttc(total),time:fmtTime(),status:'new',source:'online'})
+    setConfirmed(true)
+    setTimeout(()=>{setCart([]);setConfirmed(false)},3000)
+  }
+
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <style>{`
+        .c-cat{cursor:pointer;padding:10px 14px;border:none;background:none;color:#444;font-family:'DM Sans',sans-serif;font-size:11px;border-bottom:2px solid transparent;transition:all .13s;white-space:nowrap}
+        .c-cat:hover{color:#F0EDE8}
+        .c-cat.on{color:${G};border-bottom-color:${G}}
+      `}</style>
+      <div style={{background:'#111',padding:'11px 16px',display:'flex',alignItems:'center',gap:12,borderBottom:'1px solid #1A1A1A',position:'sticky',top:0,zIndex:10}}>
+        <button onClick={()=>nav('/')} style={{background:'none',border:'1px solid #222',color:'#444',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:17,fontWeight:700}}>Café LUX</span>
+        {typeof tableId==='number'&&<span style={{background:'rgba(201,168,76,.12)',color:G,padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:600}}>Table {tableId}</span>}
+        <div style={{marginLeft:'auto',background:'rgba(201,168,76,.1)',color:G,padding:'4px 12px',borderRadius:14,fontSize:12,fontWeight:600}}>⭐ {points} pts</div>
+      </div>
+      <div style={{display:'flex',borderBottom:'1px solid #1A1A1A',background:'#0D0D0D',position:'sticky',top:45,zIndex:9}}>
+        {([['order','🛒 طلب'],['wallet','💰 محفظة'],['rewards','🎁 مكافآت']] as [typeof tab,string][]).map(([t,l])=>(
+          <button key={t} className={`c-cat${tab===t?' on':''}`} style={{flex:1}} onClick={()=>setTab(t)}>{l}</button>
+        ))}
+      </div>
+
+      {tab==='order'&&<div>
+        {/* Category bar */}
+        <div style={{display:'flex',overflowX:'auto',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A',padding:'0 8px'}}>
+          {MENU.map(c=>(
+            <button key={c.id} className={`c-cat${catId===c.id?' on':''}`} onClick={()=>setCatId(c.id)}>{c.icon} {c.label}</button>
+          ))}
+        </div>
+        <div style={{padding:'14px 14px 120px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
+            {cat.items.map(item=>{
+              const inCart=cart.find(c=>c.id===item.id)
+              return(
+                <div key={item.id} style={{background:'#111',border:`1px solid ${inCart?G:'#1A1A1A'}`,borderRadius:12,overflow:'hidden',transition:'all .15s',cursor:'pointer'}} onClick={()=>add({...item,cat:catId})}>
+                  <Img name={item.n} h={90} icon={cat.icon}/>
+                  <div style={{padding:'8px 10px'}}>
+                    <div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',marginBottom:3,lineHeight:1.3}}>{item.n}</div>
+                    {item.s&&<div style={{fontSize:9,color:'#555',marginBottom:4}}>{item.s}</div>}
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span style={{color:G,fontWeight:700,fontSize:13}}>{item.p} DH</span>
+                      {inCart
+                        ?<div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <button onClick={e=>{e.stopPropagation();remove(item.id)}} style={{width:22,height:22,background:'#1A1A1A',border:`1px solid ${G}`,color:G,borderRadius:6,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                          <span style={{color:G,fontWeight:700,minWidth:14,textAlign:'center',fontSize:12}}>{inCart.q}</span>
+                          <button onClick={e=>{e.stopPropagation();add({...item,cat:catId})}} style={{width:22,height:22,background:G,border:'none',color:'#000',borderRadius:6,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>+</button>
+                        </div>
+                        :<div style={{width:26,height:26,background:G,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',color:'#000',fontWeight:700,fontSize:16}}>+</div>}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        {/* Floating cart */}
+        {cart.length>0&&<div style={{position:'fixed',bottom:0,left:0,right:0,background:'#111',borderTop:`2px solid ${G}`,padding:'14px 16px',zIndex:20}}>
+          {confirmed
+            ?<div style={{textAlign:'center',color:'#3DBE7A',fontWeight:700,fontSize:16,padding:'4px 0'}}>✅ طلبك وصل للمطبخ! +{Math.floor(total/5)} نقطة 🎉</div>
+            :<div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{flex:1}}>
+                <span style={{fontSize:12,color:'#888'}}>{cart.reduce((s,c)=>s+c.q,0)} article(s)</span>
+                <span style={{fontSize:16,fontWeight:700,color:G,marginLeft:10}}>{total} DH</span>
+              </div>
+              <button onClick={confirm} style={{padding:'11px 24px',background:G,color:'#000',border:'none',borderRadius:50,fontSize:14,fontWeight:700,cursor:'pointer'}}>تأكيد الطلب 🚀</button>
+            </div>}
+        </div>}
+      </div>}
+
+      {tab==='wallet'&&<div style={{padding:16}}>
+        <div style={{background:'linear-gradient(135deg,#1A1400,#241C00)',border:`1px solid rgba(201,168,76,.25)`,borderRadius:16,padding:26,textAlign:'center',marginBottom:16}}>
+          <div style={{fontSize:10,color:'rgba(201,168,76,.5)',letterSpacing:'.2em',marginBottom:8}}>SOLDE WALLET</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:44,color:G,fontWeight:700}}>150 DH</div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+          {[50,100,200,500].map(a=>(
+            <button key={a} onClick={()=>alert(`+${a} DH rechargé! Bonus: +${Math.round(a*.1)} DH 🎁`)} style={{padding:'14px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,color:'#F0EDE8',cursor:'pointer',fontSize:14,fontWeight:700}}>
+              +{a} DH<div style={{fontSize:10,color:'#3DBE7A',marginTop:3}}>+{Math.round(a*.1)} bonus</div>
+            </button>
+          ))}
+        </div>
+        <div style={{background:'#111',borderRadius:12,padding:14}}>
+          {[{t:'Café + Morning Lux',m:-62,d:"Aujourd'hui 09:15"},{t:'Recharge Wallet',m:100,d:'Hier 14:30'},{t:'Thé Royal + Sablés',m:-32,d:'Lundi 08:45'}].map((tx,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'9px 0',borderBottom:'1px solid #151515',fontSize:12}}>
+              <div><div style={{color:'#C0BDB9'}}>{tx.t}</div><div style={{color:'#444',fontSize:10,marginTop:2}}>{tx.d}</div></div>
+              <span style={{color:tx.m>0?'#3DBE7A':'#E05252',fontWeight:700}}>{tx.m>0?'+':''}{tx.m} DH</span>
+            </div>
+          ))}
+        </div>
+      </div>}
+
+      {tab==='rewards'&&<div style={{padding:16}}>
+        <div style={{background:'linear-gradient(135deg,#0A1A0A,#0D1E0D)',border:'1px solid rgba(61,190,122,.2)',borderRadius:16,padding:22,textAlign:'center',marginBottom:16}}>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:44,color:'#3DBE7A',fontWeight:700}}>{points}</div>
+          <div style={{fontSize:10,color:'#2A4A2A',marginTop:4,letterSpacing:'.1em'}}>10 DH DÉPENSÉ = 1 POINT · 100 PTS = 10 DH</div>
+        </div>
+        {[{p:50,l:'Espresso offert',i:'☕'},{p:100,l:'Cappuccino offert',i:'🥛'},{p:200,l:'-20% sur commande',i:'🎫'},{p:350,l:'Petit-Déjeuner offert',i:'🍳'},{p:500,l:'Dîner Signature',i:'⭐'}].map((r,i)=>(
+          <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'#111',border:`1px solid ${points>=r.p?'rgba(61,190,122,.25)':'#1A1A1A'}`,borderRadius:10,marginBottom:8}}>
+            <span style={{fontSize:26}}>{r.i}</span>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{r.l}</div><div style={{fontSize:11,color:'#555',marginTop:1}}>{r.p} pts requis</div></div>
+            <button onClick={()=>points>=r.p?alert(`✅ ${r.l} activé !`):alert(`Il vous manque ${r.p-points} pts`)}
+              style={{padding:'6px 14px',background:points>=r.p?'#3DBE7A':'#1A1A1A',color:points>=r.p?'#000':'#333',border:'none',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700}}>
+              {points>=r.p?'Utiliser':'Bientôt'}
+            </button>
+          </div>
+        ))}
+      </div>}
+    </div>
+  )
 }
 
 // ══════════════════════════════════════════════════════════
-//  PDF REPORT
+//  QR TABLES PAGE
 // ══════════════════════════════════════════════════════════
-function genPDFReport(){
-  const w=window.open('','_blank','width=800,height=600')
-  if(!w)return
-  const now=new Date()
-  const month=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})
-  w.document.write(`<html><head><title>Rapport ${month}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:40px;color:#1A0A00}
-    h1{color:#C9A84C;border-bottom:3px solid #C9A84C;padding-bottom:8px}
-    h2{color:#8B6E2F;margin-top:24px;font-size:14px;text-transform:uppercase;letter-spacing:1px}
-    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
-    th{background:#C9A84C;color:#fff;padding:8px;text-align:left}
-    td{padding:6px 8px;border-bottom:1px solid #EDE5D5}
-    tr:nth-child(even){background:#FAF8F2}
-    .stat{display:inline-block;background:#FAF8F2;border:2px solid #C9A84C;border-radius:8px;padding:12px 20px;margin:8px;text-align:center;min-width:130px}
-    .stat-v{font-size:22px;font-weight:bold;color:#C9A84C}
-    .stat-l{font-size:11px;color:#666}
-    footer{margin-top:40px;text-align:center;font-size:10px;color:#999;border-top:1px solid #EDE5D5;padding-top:12px}
-  </style></head><body>
-  <h1>★ CAFÉ LUX — Rapport Mensuel</h1>
-  <p style="color:#666;font-size:12px">Mois : <strong>${month}</strong> — Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p>
-  <div style="margin:16px 0">
-    <div class="stat"><div class="stat-v">47,200 DH</div><div class="stat-l">CA Total</div></div>
-    <div class="stat"><div class="stat-v">874</div><div class="stat-l">Commandes</div></div>
-    <div class="stat"><div class="stat-v">54 DH</div><div class="stat-l">Ticket moyen</div></div>
-    <div class="stat"><div class="stat-v">4,720 DH</div><div class="stat-l">TVA collectée</div></div>
-  </div>
-  <h2>Top Produits</h2>
-  <table><tr><th>#</th><th>Produit</th><th>Qté vendue</th><th>CA</th></tr>
-  <tr><td>1</td><td>Morning Lux</td><td>312</td><td>10,920 DH</td></tr>
-  <tr><td>2</td><td>Cappuccino</td><td>445</td><td>5,340 DH</td></tr>
-  <tr><td>3</td><td>Avocat Royal</td><td>187</td><td>4,675 DH</td></tr>
-  <tr><td>4</td><td>Thé Royal</td><td>203</td><td>3,857 DH</td></tr>
-  <tr><td>5</td><td>Lux Power Toast</td><td>156</td><td>3,900 DH</td></tr>
-  </table>
-  <h2>CA par Semaine</h2>
-  <table><tr><th>Semaine</th><th>Commandes</th><th>CA</th><th>Vs sem. préc.</th></tr>
-  <tr><td>S1 (1–7 mars)</td><td>198</td><td>10,692 DH</td><td>—</td></tr>
-  <tr><td>S2 (8–14 mars)</td><td>221</td><td>11,934 DH</td><td>+11.6%</td></tr>
-  <tr><td>S3 (15–21 mars)</td><td>234</td><td>12,636 DH</td><td>+5.9%</td></tr>
-  <tr><td>S4 (22–28 mars)</td><td>221</td><td>11,934 DH</td><td>-5.5%</td></tr>
-  </table>
-  <h2>Personnel — Présences</h2>
-  <table><tr><th>Employé</th><th>Jours travaillés</th><th>Heures</th><th>Salaire</th></tr>
-  <tr><td>Fatima Tahiri</td><td>26</td><td>208h</td><td>3,500 DH</td></tr>
-  <tr><td>Youssef Benali</td><td>25</td><td>200h</td><td>3,200 DH</td></tr>
-  <tr><td>Aicha Lahlou</td><td>26</td><td>208h</td><td>3,000 DH</td></tr>
-  <tr><td>Hassan Idrissi</td><td>24</td><td>192h</td><td>3,400 DH</td></tr>
-  <tr><td>Sara Belhaj</td><td>22</td><td>176h</td><td>2,800 DH</td></tr>
-  <tr><td>Karim Ziani</td><td>25</td><td>200h</td><td>3,300 DH</td></tr>
-  <tr><td>Manager Fes</td><td>26</td><td>208h</td><td>5,000 DH</td></tr>
-  </table>
-  <footer>Café LUX — Résidence Ziat N°28, Taza — +212 808 524 169 — cafeslux.com<br>Document généré automatiquement par LUX Supreme v4.3</footer>
-  </body></html>`)
-  w.document.close();w.print()
+function QRPage({nav}:{nav:(r:Route)=>void}){
+  const base=window.location.origin
+  const tables=Array.from({length:12},(_,i)=>i+1)
+  const printQR=(t:number)=>{
+    const url=`${base}/customer?table=${t}`
+    const w=window.open('','_blank','width=380,height=520,scrollbars=no')
+    if(!w)return
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>QR Table ${t}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;text-align:center;padding:24px}
+.box{border:3px solid #C9A84C;border-radius:16px;padding:20px;display:inline-block}
+h1{color:#C9A84C;font-size:26px;margin:8px 0}p{color:#888;font-size:12px;margin:4px 0}img{margin:10px 0;border-radius:8px}
+@media print{button{display:none}}</style></head>
+<body><div class="box">
+<h1>★ CAFÉ LUX</h1>
+<p style="font-size:18px;font-weight:bold;color:#333;margin:8px 0">Table ${t}</p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&bgcolor=FFFFFF&data=${encodeURIComponent(url)}&qzone=2" width="200" height="200" alt="QR"/>
+<p>Scannez pour commander depuis votre table</p>
+<p style="font-size:10px;color:#aaa;margin-top:8px">cafeslux.com</p>
+</div>
+<br><button onclick="window.print()" style="margin-top:12px;padding:10px 24px;background:#C9A84C;border:none;border-radius:8px;font-size:14px;cursor:pointer">🖨 Imprimer</button>
+</body></html>`)
+    w.document.close()
+  }
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'11px 16px',display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>📷 QR Codes — Tables</span>
+        <button onClick={()=>tables.forEach((t,i)=>setTimeout(()=>printQR(t),i*400))} style={{marginLeft:'auto',background:G,color:'#000',border:'none',padding:'7px 16px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700}}>🖨 Imprimer tous</button>
+      </div>
+      <div style={{padding:20,maxWidth:720,margin:'0 auto'}}>
+        <p style={{color:'#444',fontSize:12,textAlign:'center',marginBottom:24}}>Chaque QR code redirige le client vers la commande en ligne pour cette table. Chaque commande apparaît directement dans le POS.</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(148px,1fr))',gap:14}}>
+          {tables.map(t=>(
+            <div key={t} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:14,padding:'16px 12px',textAlign:'center'}}>
+              <div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:20,fontWeight:700,marginBottom:8}}>Table {t}</div>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(base+'/customer?table='+t)}&qzone=1`}
+                alt={`QR ${t}`} style={{width:110,height:110,borderRadius:8,marginBottom:10,border:'2px solid #1A1A1A'}}/>
+              <button onClick={()=>printQR(t)} style={{width:'100%',padding:'7px',background:'rgba(201,168,76,.12)',color:G,border:`1px solid rgba(201,168,76,.25)`,borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700}}>🖨 Imprimer</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
+// ══════════════════════════════════════════════════════════
+//  INVENTORY PAGE
+// ══════════════════════════════════════════════════════════
+function StockPage({nav}:{nav:(r:Route)=>void}){
+  const[stock,setStock]=useState<StockItem[]>(JSON.parse(JSON.stringify(INITIAL_STOCK)))
+  const[editIdx,setEditIdx]=useState<number|null>(null)
+  const[editVal,setEditVal]=useState('')
+  const save=(idx:number)=>{
+    const n=parseFloat(editVal)
+    if(!isNaN(n)&&n>=0)setStock(s=>{const c=[...s];c[idx]={...c[idx],qty:n};return c})
+    setEditIdx(null);setEditVal('')
+  }
+  const low=stock.filter(s=>s.qty<=s.min)
+  const cats=[...new Set(stock.map(s=>s.category))]
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
+      <div style={{background:'#131313',borderBottom:'1px solid #1E1E1E',padding:'11px 16px',display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.07)',border:'1px solid #222',color:'#888',padding:'5px 12px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>📦 Gestion du Stock</span>
+        {low.length>0&&<span style={{background:'rgba(224,82,82,.15)',color:'#E05252',padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:700}}>⚠ {low.length} en rupture</span>}
+      </div>
+      <div style={{padding:16,maxWidth:680,margin:'0 auto'}}>
+        {low.length>0&&(
+          <div style={{background:'rgba(224,82,82,.08)',border:'1px solid rgba(224,82,82,.25)',borderRadius:12,padding:14,marginBottom:16}}>
+            <div style={{fontWeight:700,color:'#E05252',marginBottom:8,fontSize:13}}>⚠ Stock critique — Commander immédiatement</div>
+            {low.map((s,i)=><div key={i} style={{fontSize:12,color:'#E05252',marginBottom:3}}>• {s.name} — {s.qty} {s.unit} (min: {s.min} {s.unit})</div>)}
+          </div>
+        )}
+        {cats.map(cat=>{
+          const items=stock.map((s,i)=>({...s,idx:i})).filter(s=>s.category===cat)
+          return(
+            <div key={cat} style={{marginBottom:20}}>
+              <div style={{fontSize:10,color:G,letterSpacing:'.18em',marginBottom:10,fontWeight:700}}>{cat.toUpperCase()}</div>
+              {items.map(s=>{
+                const pct=Math.min(100,(s.qty/Math.max(s.min*3,s.qty+1))*100)
+                const col=s.qty<=s.min?'#E05252':s.qty<=s.min*1.5?'#E07830':'#3DBE7A'
+                return(
+                  <div key={s.name} style={{background:'#111',border:`1px solid ${s.qty<=s.min?'rgba(224,82,82,.25)':'#1A1A1A'}`,borderRadius:10,padding:'12px 14px',marginBottom:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                      <span style={{flex:1,fontSize:13,fontWeight:600,color:'#F0EDE8'}}>{s.name}</span>
+                      {editIdx===s.idx
+                        ?<div style={{display:'flex',gap:6,alignItems:'center'}}>
+                          <input autoFocus value={editVal} onChange={e=>setEditVal(e.target.value)}
+                            onKeyDown={e=>{if(e.key==='Enter')save(s.idx);if(e.key==='Escape'){setEditIdx(null);setEditVal('')}}}
+                            style={{width:64,padding:'4px 8px',background:'#1A1A1A',border:`1px solid ${G}`,color:'#F0EDE8',borderRadius:6,fontSize:12,outline:'none'}}/>
+                          <span style={{fontSize:11,color:'#555'}}>{s.unit}</span>
+                          <button onClick={()=>save(s.idx)} style={{background:G,color:'#000',border:'none',padding:'4px 10px',borderRadius:6,cursor:'pointer',fontSize:11,fontWeight:700}}>✓</button>
+                          <button onClick={()=>setEditIdx(null)} style={{background:'#1A1A1A',color:'#555',border:'1px solid #222',padding:'4px 8px',borderRadius:6,cursor:'pointer',fontSize:11}}>✕</button>
+                        </div>
+                        :<div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <span style={{color:col,fontWeight:700,fontSize:15}}>{s.qty}</span>
+                          <span style={{fontSize:11,color:'#555'}}>{s.unit}</span>
+                          <button onClick={()=>{setEditIdx(s.idx);setEditVal(String(s.qty))}} style={{background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#666',padding:'3px 9px',borderRadius:6,cursor:'pointer',fontSize:10}}>Modifier</button>
+                        </div>}
+                    </div>
+                    <div style={{background:'#1A1A1A',borderRadius:4,height:5,overflow:'hidden'}}>
+                      <div style={{width:`${pct}%`,height:'100%',background:col,borderRadius:4,transition:'width .35s'}}/>
+                    </div>
+                    <div style={{fontSize:9,color:'#333',marginTop:3}}>Minimum: {s.min} {s.unit}</div>
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════
+//  ROOT — Router
+// ══════════════════════════════════════════════════════════
 export default function App(){
-const[r,sr]=useState<R>('/')
-useEffect(()=>{
-const sync=()=>{const p=window.location.pathname as R;sr(['/menu','/portal/pos','/app/customer','/portal/staff','/portal/admin','/portal/qr','/portal/stock'].includes(p)?p:'/')}
-sync();window.addEventListener('popstate',sync);return()=>window.removeEventListener('popstate',sync)
-},[])
-const go=(p:R)=>{window.history.pushState({},'',p);sr(p)}
-if(r==='/portal/qr')return<QRPage go={go}/>
-if(r==='/portal/stock')return<Inventory go={go}/>
-if(r==='/portal/staff')return<StaffPortal go={go}/>
-if(r==='/portal/admin')return<AdminDash go={go}/>
-if(r==='/menu')return<Menu go={go}/>
-if(r==='/portal/pos')return<POS go={go}/>
-if(r==='/app/customer')return<CustomerApp go={go}/>
-return<Home go={go}/>
+  const getRoute=():Route=>{
+    const p=window.location.pathname.replace(/\/$/,'') as Route
+    const valid:Route[]=['/','/menu','/pos','/staff','/admin','/customer','/qr','/stock']
+    return valid.includes(p)?p:'/'
+  }
+  const[route,setRoute]=useState<Route>(getRoute)
+
+  useEffect(()=>{
+    const onPop=()=>setRoute(getRoute())
+    window.addEventListener('popstate',onPop)
+    return()=>window.removeEventListener('popstate',onPop)
+  },[])
+
+  const nav=useCallback((r:Route)=>{
+    window.history.pushState({},'',r)
+    setRoute(r)
+    window.scrollTo(0,0)
+  },[])
+
+  switch(route){
+    case'/menu':return<MenuPage nav={nav}/>
+    case'/pos':return<POSPage nav={nav}/>
+    case'/staff':return<StaffPage nav={nav}/>
+    case'/admin':return<AdminPage nav={nav}/>
+    case'/customer':return<CustomerApp nav={nav}/>
+    case'/qr':return<QRPage nav={nav}/>
+    case'/stock':return<StockPage nav={nav}/>
+    default:return<HomePage nav={nav}/>
+  }
 }
+
