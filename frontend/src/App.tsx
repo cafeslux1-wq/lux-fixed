@@ -110,6 +110,75 @@ async function staffLogin(branchId: string, pin: string): Promise<string | null>
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  PRIVACY GATE  — internal routes require staff auth
+// ═══════════════════════════════════════════════════════════════
+// Session persisted in sessionStorage (clears on tab close)
+const SESSION_KEY = 'lux_staff_session'
+type Session = { staffId: number; name: string; role: string; avatar: string }
+const loadSession = (): Session | null => {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null') } catch { return null }
+}
+const saveSession = (s: Session) => sessionStorage.setItem(SESSION_KEY, JSON.stringify(s))
+const clearSession = () => sessionStorage.removeItem(SESSION_KEY)
+
+// Public routes — no auth needed
+const PUBLIC_ROUTES: Route[] = ['/', '/menu', '/customer']
+const isPublic = (r: Route) => PUBLIC_ROUTES.includes(r)
+
+// Geofence — Café LUX Taza center
+const CAFE_LAT = 34.2155
+const CAFE_LNG = -4.0088
+const CAFE_RADIUS_M = 300  // 300m radius
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+async function gpsCheckIn(staffId: number): Promise<{ ok: boolean; dist?: number; msg: string }> {
+  if (!navigator.geolocation) return { ok: false, msg: 'GPS non supporté' }
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        const dist = Math.round(haversineDistance(lat, lng, CAFE_LAT, CAFE_LNG))
+        const inside = dist <= CAFE_RADIUS_M
+        // Send to backend (non-blocking)
+        apiFetch('/hr/attendance/clock-in', {
+          method: 'POST',
+          body: JSON.stringify({ lat, lng, accuracyM: Math.round(pos.coords.accuracy) }),
+        }, null).catch(() => {})
+        resolve({
+          ok: inside,
+          dist,
+          msg: inside
+            ? `✅ Présence confirmée — vous êtes à ${dist}m du café`
+            : `⚠ Vous êtes à ${dist}m (max ${CAFE_RADIUS_M}m). Pointage enregistré avec note.`,
+        })
+      },
+      err => resolve({ ok: false, msg: `GPS refusé: ${err.message}` }),
+      { timeout: 8000, maximumAge: 60000 }
+    )
+  })
+}
+
+// Staff daily tasks
+const DAILY_TASKS: Record<string, string[]> = {
+  barista:   ['Nettoyer la machine à café', 'Préparer les syrops', 'Vérifier le stock café', 'Remplir les grains'],
+  cashier:   ['Ouvrir la caisse', 'Vérifier la monnaie', 'Imprimer rapport de caisse', 'Fermer session POS'],
+  waiter:    ['Préparer les tables', 'Vérifier la propreté salle', 'Réapprovisionner les condiments'],
+  patissier: ['Préparer la pâte', 'Vérifier stock farine/œufs', 'Préparer crêpes du jour'],
+  cook:      ['Préparer Harira', 'Vérifier stock légumes', 'Préparer sauces'],
+  driver:    ['Vérifier les commandes livraison', 'Confirmer adresses clients'],
+  manager:   ['Vérifier présences', 'Valider commandes fournisseurs', 'Rapport journalier'],
+  owner:     ['Voir tableau de bord', 'Approuver dépenses', 'Analyser performances'],
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -118,7 +187,7 @@ type CartItem={id:number;n:string;p:number;cat:string;q:number}
 type OrderStatus='new'|'preparing'|'ready'|'done'|'cancelled'
 type OrderSource='pos'|'online'
 type Order={id:number;tableId:number|'emporter';items:CartItem[];total:number;totalTTC:number;time:string;date:string;status:OrderStatus;source:OrderSource;note?:string;staffId?:number}
-type Product={id:number;cat:string;n:string;p:number;s:string;sig:boolean;available:boolean}
+type Product={id:number;cat:string;n:string;p:number;s:string;sig:boolean;available:boolean;imgUrl?:string}
 type Category={id:string;icon:string;label:string}
 type Ingredient={name:string;qty:number;unit:string}
 type StockItem={name:string;unit:string;qty:number;min:number;category:string}
@@ -460,11 +529,84 @@ const I:Record<string,string>={
   'Crêpe Fruits':'/public/menu/pack_crepes.jpg',
   'Milkshake Classic':'data:image/jpeg;base64,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',
 }
-function Img({name,h=100,icon='☕'}:{name:string;h?:number;icon?:string}){
+function Img({name,h=100,icon='☕',imgUrl}:{name:string;h?:number;icon?:string;imgUrl?:string}){
   const[ok,setOk]=useState(true)
-  const src=I[name]
+  const src=imgUrl||I[name]
   if(src&&ok)return<img src={src} alt={name} style={{width:'100%',height:h,objectFit:'cover',display:'block'}} onError={()=>setOk(false)}/>
-  return<div style={{width:'100%',height:h,background:'linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.03))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:h/3.2,color:'rgba(201,168,76,.35)'}}>{icon}</div>
+  // Luxury placeholder with category icon
+  return(
+    <div style={{width:'100%',height:h,background:'linear-gradient(135deg,#1A1400 0%,#0D0D0D 100%)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,position:'relative',overflow:'hidden'}}>
+      <div style={{position:'absolute',inset:0,background:`radial-gradient(circle at 50% 60%,rgba(201,168,76,.08),transparent 70%)`}}/>
+      <span style={{fontSize:h/3.5,filter:'grayscale(0.3)',opacity:.5}}>{icon}</span>
+      <span style={{fontSize:Math.max(8,h/10),color:'rgba(201,168,76,.25)',letterSpacing:'.05em',fontFamily:"'DM Sans',sans-serif"}}>CAFÉ LUX</span>
+    </div>
+  )
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  STAFF GATE — shown for protected routes when not authenticated
+// ═══════════════════════════════════════════════════════════════
+function StaffGate({onAuth,target}:{onAuth:(s:Session)=>void;target:string}){
+  const[step,setStep]=useState<'select'|'pin'>('select')
+  const[me,setMe]=useState<StaffMember|null>(null)
+  const[pin,setPin]=useState('');const[err,setErr]=useState(false)
+  const sel=(m:StaffMember)=>{setMe(m);setPin('');setErr(false);setStep('pin')}
+  const press=async(d:string)=>{
+    if(pin.length>=3)return;const np=pin+d;setPin(np)
+    if(np.length===4){
+      if(me&&np===me.pin){
+        const session:Session={staffId:me.id,name:me.name,role:me.role,avatar:me.avatar}
+        saveSession(session)
+        staffLogin(BRANCH_ID,np).catch(()=>{})
+        onAuth(session)
+        setPin('');setErr(false)
+      }else{setErr(true);setTimeout(()=>{setPin('');setErr(false)},700)}
+    }
+  }
+  return(
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif",display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{marginBottom:32,textAlign:'center'}}>
+        <div style={{width:64,height:64,background:`linear-gradient(135deg,${G},#8B6E2F)`,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,fontWeight:700,color:'#000',margin:'0 auto 16px',boxShadow:`0 0 40px rgba(201,168,76,.25)`}}>L</div>
+        <div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:18,fontWeight:700}}>Accès restreint</div>
+        <div style={{fontSize:11,color:'#444',marginTop:4}}>{target} — Personnel autorisé uniquement</div>
+      </div>
+      {step==='select'&&(
+        <div style={{width:'100%',maxWidth:600}}>
+          <p style={{textAlign:'center',color:'#3A3A3A',fontSize:12,marginBottom:20}}>Identifiez-vous pour continuer</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10}}>
+            {STAFF.map(m=>(
+              <div key={m.id} onClick={()=>sel(m)} style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:'14px 10px',textAlign:'center',cursor:'pointer',transition:'all .18s'}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=G;e.currentTarget.style.transform='translateY(-3px)'}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='#1A1A1A';e.currentTarget.style.transform='none'}}>
+                <div style={{fontSize:28,marginBottom:6}}>{m.avatar}</div>
+                <div style={{fontSize:11,fontWeight:700,color:'#F0EDE8',marginBottom:3}}>{m.name}</div>
+                <div style={{fontSize:9,color:G}}>{ROLE_LABELS[m.role]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {step==='pin'&&me&&(
+        <div style={{textAlign:'center'}}>
+          <div style={{fontSize:44,marginBottom:8}}>{me.avatar}</div>
+          <div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:18,marginBottom:3}}>{me.name}</div>
+          <div style={{fontSize:11,color:'#444',marginBottom:24}}>{ROLE_LABELS[me.role]}</div>
+          <div style={{display:'flex',gap:10,marginBottom:20,justifyContent:'center'}}>
+            {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:'50%',background:pin.length>i?G:'#1E1E1E',border:`2px solid ${err?'#E05252':pin.length>i?G:'#2A2A2A'}`,transition:'all .14s'}}/>)}
+          </div>
+          {err&&<div style={{color:'#E05252',fontSize:11,marginBottom:10}}>PIN incorrect</div>}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:12}}>
+            {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d,i)=>(
+              <button key={i} onClick={()=>d==='⌫'?setPin(p=>p.slice(0,-1)):d&&press(d)}
+                style={{width:60,height:60,background:d?'#1A1A1A':'transparent',border:`1px solid ${d?'#2A2A2A':'transparent'}`,color:d==='⌫'?'#555':'#F0EDE8',borderRadius:10,fontSize:20,cursor:d?'pointer':'default',fontWeight:600}}>{d}</button>
+            ))}
+          </div>
+          <button onClick={()=>setStep('select')} style={{background:'none',border:'none',color:'#2A2A2A',fontSize:11,cursor:'pointer'}}>← Retour</button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -473,16 +615,20 @@ function Img({name,h=100,icon='☕'}:{name:string;h?:number;icon?:string}){
 function HomePage({nav}:{nav:(r:Route)=>void}){
   const[v,setV]=useState(false)
   useEffect(()=>{const t=setTimeout(()=>setV(true),60);return()=>clearTimeout(t)},[])
+  // Public portals — visible to everyone
   const portals=[
-    {icon:'📖',l:'المنيو',s:'Menu Digital',r:'/menu' as Route,c:'#5B8DEF'},
+    {icon:'📖',l:'المنيو الرقمي',s:'Menu Digital',r:'/menu' as Route,c:'#5B8DEF',pub:true},
+    {icon:'📱',l:'طلب أونلاين',s:'Commander par QR',r:'/customer' as Route,c:'#E07830',pub:true},
+    {icon:'📞',l:'اتصل بنا',s:'+212 808 524 169',r:null as any,c:'#888',pub:true},
+  ]
+  // Staff portals — shown with lock icon, require auth
+  const staffPortals=[
     {icon:'🖥',l:'نظام POS',s:'Point de Vente',r:'/pos' as Route,c:'#3DBE7A'},
-    {icon:'🍽',l:'شاشة المطبخ',s:'KDS — Kitchen Display',r:'/kitchen' as Route,c:'#E07830'},
+    {icon:'🍽',l:'شاشة المطبخ',s:'KDS',r:'/kitchen' as Route,c:'#E07830'},
     {icon:'👥',l:'الموظفين',s:'Staff Portal',r:'/staff' as Route,c:G},
-    {icon:'⚙️',l:'الإدارة',s:'Admin Dashboard',r:'/admin' as Route,c:'#9B59B6'},
+    {icon:'⚙️',l:'الإدارة',s:'Admin',r:'/admin' as Route,c:'#9B59B6'},
     {icon:'📷',l:'QR Tables',s:'Codes QR',r:'/qr' as Route,c:'#1ABC9C'},
-    {icon:'📦',l:'المخزون',s:'Gestion Stock',r:'/stock' as Route,c:'#E74C3C'},
-    {icon:'📱',l:'تطبيق العميل',s:'Commander en ligne',r:'/customer' as Route,c:'#E07830'},
-    {icon:'📞',l:'اتصل بنا',s:'+212 808 524 169',r:null as any,c:'#555'},
+    {icon:'📦',l:'المخزون',s:'Stock',r:'/stock' as Route,c:'#E74C3C'},
   ]
   return(
     <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif",overflowY:'auto'}}>
@@ -505,16 +651,34 @@ function HomePage({nav}:{nav:(r:Route)=>void}){
           <p style={{fontSize:10,letterSpacing:'.3em',color:G,marginBottom:8,opacity:.58}}>ACCÈS RAPIDE</p>
           <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:'clamp(18px,3vw,28px)',color:'#F0EDE8',fontWeight:400}}>بوابات النظام</h3>
         </div>
-        <div style={{maxWidth:920,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:12}}>
-          {portals.map((p,i)=>(
-            <div key={i} className="pc" onClick={()=>p.r?nav(p.r):window.location.href='tel:+212808524169'}
-              style={{padding:'22px 14px',background:'#111',border:'1px solid #1C1C1C',borderRadius:14,textAlign:'center'}}>
-              <div style={{fontSize:26,marginBottom:9}}>{p.icon}</div>
-              <div style={{fontSize:13,fontWeight:600,color:'#F0EDE8',marginBottom:3}}>{p.l}</div>
-              <div style={{fontSize:10,color:'#333',letterSpacing:'.04em'}}>{p.s}</div>
-              <div style={{width:22,height:2,background:p.c,borderRadius:2,margin:'11px auto 0',opacity:.45}}/>
+        <div style={{maxWidth:920,margin:'0 auto'}}>
+          {/* Public */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12,marginBottom:20}}>
+            {portals.map((p,i)=>(
+              <div key={i} className="pc" onClick={()=>p.r?nav(p.r):window.location.href='tel:+212808524169'}
+                style={{padding:'22px 14px',background:'#111',border:'1px solid #1C1C1C',borderRadius:14,textAlign:'center'}}>
+                <div style={{fontSize:26,marginBottom:9}}>{p.icon}</div>
+                <div style={{fontSize:13,fontWeight:600,color:'#F0EDE8',marginBottom:3}}>{p.l}</div>
+                <div style={{fontSize:10,color:'#333',letterSpacing:'.04em'}}>{p.s}</div>
+                <div style={{width:22,height:2,background:p.c,borderRadius:2,margin:'11px auto 0',opacity:.45}}/>
+              </div>
+            ))}
+          </div>
+          {/* Staff portals with lock */}
+          <div style={{borderTop:'1px solid #1A1A1A',paddingTop:20,marginTop:4}}>
+            <p style={{fontSize:10,color:'#2A2A2A',letterSpacing:'.2em',textAlign:'center',marginBottom:14}}>🔒 ACCÈS PERSONNEL</p>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(145px,1fr))',gap:10}}>
+              {staffPortals.map((p,i)=>(
+                <div key={i} className="pc" onClick={()=>nav(p.r)}
+                  style={{padding:'16px 12px',background:'#0D0D0D',border:'1px solid #151515',borderRadius:12,textAlign:'center'}}>
+                  <div style={{fontSize:22,marginBottom:7}}>{p.icon}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:'#555',marginBottom:2}}>{p.l}</div>
+                  <div style={{fontSize:9,color:'#252525'}}>{p.s}</div>
+                  <div style={{width:18,height:1,background:p.c,borderRadius:1,margin:'9px auto 0',opacity:.25}}/>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
       <div style={{height:1,background:`linear-gradient(90deg,transparent,${G},transparent)`}}/>
@@ -553,7 +717,7 @@ function MenuPage({nav}:{nav:(r:Route)=>void}){
             {items.map(item=>(
               <div key={item.id} className="card" style={{background:'#fff',border:`1.5px solid ${item.sig?'rgba(201,168,76,.32)':'#EDE5D5'}`,borderRadius:12,overflow:'hidden',position:'relative'}}>
                 {item.sig&&<div style={{position:'absolute',top:7,right:7,background:G,color:'#000',fontSize:8,padding:'2px 6px',borderRadius:6,fontWeight:700,zIndex:1}}>SIGNATURE</div>}
-                <Img name={item.n} h={106} icon={cat.icon}/>
+                <Img name={item.n} h={106} icon={cat.icon} imgUrl={(item as any).imgUrl}/>
                 <div style={{padding:'8px 10px'}}>
                   <div style={{fontSize:12,fontWeight:600,color:'#1A0A00',marginBottom:2,lineHeight:1.3}}>{item.n}</div>
                   {item.s&&<div style={{fontSize:9,color:'#AAA',marginBottom:5,lineHeight:1.3}}>{item.s}</div>}
@@ -915,11 +1079,11 @@ function AdminPage({nav}:{nav:(r:Route)=>void}){
   const[editP,setEditP]=useState(0)
   const[editAvail,setEditAvail]=useState(true)
   const[newForm,setNewForm]=useState(false)
-  const[nf,setNf]=useState({n:'',cat:'cafes',p:10,s:'',sig:false})
+  const[nf,setNf]=useState({n:'',cat:'cafes',p:10,s:'',sig:false,imgUrl:''})
 
   const startEdit=(p:Product)=>{setEditId(p.id);setEditP(p.p);setEditAvail(p.available)}
   const saveEdit=()=>{if(editId!==null){updateProduct(editId,{p:editP,available:editAvail});setEditId(null)}}
-  const addNew=()=>{if(!nf.n.trim())return;addProduct({...nf,available:true});setNf({n:'',cat:'cafes',p:10,s:'',sig:false});setNewForm(false)}
+  const addNew=()=>{if(!nf.n.trim())return;addProduct({...nf,available:true,imgUrl:(nf as any).imgUrl||undefined});setNf({n:'',cat:'cafes',p:10,s:'',sig:false});setNewForm(false)}
 
   return(
     <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
@@ -1007,6 +1171,11 @@ function AdminPage({nav}:{nav:(r:Route)=>void}){
             <div><label style={{fontSize:10,color:'#555',display:'block',marginBottom:4}}>Description</label>
               <input value={nf.s} onChange={e=>setNf(x=>({...x,s:e.target.value}))} style={{width:'100%',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#F0EDE8',padding:'7px 10px',borderRadius:7,fontSize:12,outline:'none',boxSizing:'border-box'}}/></div>
           </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,color:'#555',display:'block',marginBottom:4}}>🖼 URL de l'image (optionnel)</label>
+            <input value={(nf as any).imgUrl||''} onChange={e=>setNf(x=>({...x,imgUrl:e.target.value}))} placeholder="https://example.com/photo.jpg" style={{width:'100%',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#F0EDE8',padding:'7px 10px',borderRadius:7,fontSize:11,outline:'none',boxSizing:'border-box'}}/>
+            {(nf as any).imgUrl&&<div style={{marginTop:6,borderRadius:7,overflow:'hidden',height:60}}><img src={(nf as any).imgUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} alt="preview"/></div>}
+          </div>
           <label style={{display:'flex',alignItems:'center',gap:8,fontSize:12,color:'#888',marginBottom:12,cursor:'pointer'}}>
             <input type="checkbox" checked={nf.sig} onChange={e=>setNf(x=>({...x,sig:e.target.checked}))}/> Produit Signature
           </label>
@@ -1041,6 +1210,7 @@ function AdminPage({nav}:{nav:(r:Route)=>void}){
                       <span style={{fontFamily:"'Playfair Display',serif",fontSize:15,color:G,fontWeight:700,minWidth:48}}>{p.p} DH</span>
                       <span style={{fontSize:9,color:p.available?'#3DBE7A':'#E05252',fontWeight:600}}>{p.available?'✓ Dispo':'✗ Indispo'}</span>
                       <button onClick={()=>startEdit(p)} style={{background:'rgba(201,168,76,.1)',color:G,border:`1px solid rgba(201,168,76,.2)`,padding:'3px 10px',borderRadius:6,cursor:'pointer',fontSize:10,fontWeight:700}}>Modifier</button>
+                      <button onClick={()=>{const url=prompt('URL de l\'image:',p.imgUrl||'');if(url!==null)updateProduct(p.id,{imgUrl:url})}} style={{background:'rgba(91,141,239,.08)',color:'#5B8DEF',border:'1px solid rgba(91,141,239,.2)',padding:'3px 9px',borderRadius:6,cursor:'pointer',fontSize:10}}>🖼</button>
                       <button onClick={()=>{if(confirm(`Supprimer "${p.n}" ?`))deleteProduct(p.id)}} style={{background:'rgba(224,82,82,.08)',color:'#E05252',border:'1px solid rgba(224,82,82,.2)',padding:'3px 9px',borderRadius:6,cursor:'pointer',fontSize:10}}>🗑</button>
                     </div>}
                 </div>
@@ -1095,7 +1265,7 @@ function StaffPage({nav}:{nav:(r:Route)=>void}){
   const[step,setStep]=useState<'select'|'pin'|'dash'>('select')
   const[me,setMe]=useState<StaffMember|null>(null)
   const[pin,setPin]=useState('');const[err,setErr]=useState(false)
-  const[clocked,setClocked]=useState(false);const[tab,setTab]=useState('attendance')
+  const[clocked,setClocked]=useState(false);const[tab,setTab]=useState('attendance');const[gpsMsg,setGpsMsg]=useState('')
   const sel=(m:StaffMember)=>{setMe(m);setPin('');setErr(false);setStep('pin')}
   const press=async(d:string)=>{
     if(pin.length>=3)return;const np=pin+d;setPin(np)
@@ -1152,7 +1322,7 @@ function StaffPage({nav}:{nav:(r:Route)=>void}){
         <div><div style={{fontWeight:700,fontSize:13}}>{me.name}</div><div style={{fontSize:10,color:'#444'}}>{ROLE_LABELS[me.role]}</div></div>
         <div style={{marginLeft:'auto',background:clocked?'rgba(61,190,122,.12)':'rgba(224,82,82,.08)',color:clocked?'#3DBE7A':'#E05252',padding:'3px 10px',borderRadius:8,fontSize:11,fontWeight:700}}>{clocked?'⬤ En service':'⬤ Hors service'}</div>
       </div>
-      <NavTabs tabs={[{id:'attendance',label:'⏱ Présence'},{id:'salary',label:'💰 Salaire'},{id:'team',label:'👥 Équipe'}]} active={tab} onChange={setTab}/>
+      <NavTabs tabs={[{id:'attendance',label:'⏱ Présence'},{id:'tasks',label:'✅ Tâches'},{id:'salary',label:'💰 Salaire'},{id:'team',label:'👥 Équipe'}]} active={tab} onChange={setTab}/>
       {tab==='attendance'&&<div style={{padding:18,maxWidth:560,margin:'0 auto'}}>
         <div style={{background:clocked?'linear-gradient(135deg,#0A1A0A,#0E1C0E)':'linear-gradient(135deg,#1A0A00,#200C00)',border:`1px solid ${clocked?'rgba(61,190,122,.22)':'rgba(201,168,76,.22)'}`,borderRadius:16,padding:26,textAlign:'center',marginBottom:18}}>
           <div style={{fontSize:42,marginBottom:8}}>{clocked?'🟢':'🔴'}</div>
@@ -1169,6 +1339,22 @@ function StaffPage({nav}:{nav:(r:Route)=>void}){
               <span style={{color:G,fontWeight:700,minWidth:38,textAlign:'right'}}>{r.h}h</span>
             </div>
           ))}
+        </div>
+      </div>}
+      {tab==='tasks'&&<div style={{padding:18,maxWidth:560,margin:'0 auto'}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",color:G,marginBottom:16,fontSize:18}}>Tâches du jour — {fmtDate()}</h3>
+        {(DAILY_TASKS[me!.role]||DAILY_TASKS['cashier']).map((task,i)=>{
+          const doneKey=`task_${me!.id}_${i}`
+          const[done,setDone]=useState(false)
+          return(
+            <div key={i} onClick={()=>setDone(d=>!d)} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:done?'rgba(61,190,122,.07)':'#111',border:`1px solid ${done?'rgba(61,190,122,.22)':'#1A1A1A'}`,borderRadius:10,marginBottom:8,cursor:'pointer',transition:'all .15s'}}>
+              <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${done?'#3DBE7A':'#2A2A2A'}`,background:done?'#3DBE7A':'transparent',display:'flex',alignItems:'center',justifyContent:'center',color:'#000',fontSize:13,fontWeight:700,flexShrink:0,transition:'all .15s'}}>{done?'✓':''}</div>
+              <span style={{fontSize:13,color:done?'#3DBE7A':'#C0BDB9',textDecoration:done?'line-through':'none'}}>{task}</span>
+            </div>
+          )
+        })}
+        <div style={{marginTop:16,background:'#111',border:'1px solid #1A1A1A',borderRadius:10,padding:14,textAlign:'center'}}>
+          <div style={{fontSize:11,color:'#444'}}>Progression: tâches complétées aujourd'hui</div>
         </div>
       </div>}
       {tab==='salary'&&<div style={{padding:18,maxWidth:500,margin:'0 auto'}}>
@@ -1206,51 +1392,82 @@ function StaffPage({nav}:{nav:(r:Route)=>void}){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CUSTOMER APP  — Online ordering (QR → table)
+//  CUSTOMER APP  — Unified: browse menu + cart + checkout
 // ═══════════════════════════════════════════════════════════════
 function CustomerApp({nav}:{nav:(r:Route)=>void}){
   const[cart,setCart]=useState<CartItem[]>([])
   const[catId,setCatId]=useState('cafes')
-  const[confirmed,setConfirmed]=useState(false)
-  const[tab,setTab]=useState<'order'|'wallet'|'rewards'>('order')
+  const[view,setView]=useState<'menu'|'cart'|'confirm'>('menu')
   const[prods,setProds]=useState([...PRODUCTS])
-  const pts=340
+  const[confirmed,setConfirmed]=useState(false)
+  const[points,setPoints]=useState(340)
+  const[note,setNote]=useState('')
   useEffect(()=>onProds(()=>setProds([...PRODUCTS])),[])
+
   const params=new URLSearchParams(window.location.search)
   const tp=params.get('table')
   const tableId:number|'emporter'=tp?parseInt(tp):'emporter'
   const cat=CATS.find(c=>c.id===catId)||CATS[0]
   const items=prods.filter(p=>p.cat===catId&&p.available)
+
   const add=(p:Product)=>setCart(prev=>{const ex=prev.find(c=>c.id===p.id);if(ex)return prev.map(c=>c.id===p.id?{...c,q:c.q+1}:c);return[...prev,{...p,q:1}]})
   const sub=(id:number)=>setCart(prev=>{const ex=prev.find(c=>c.id===id);if(!ex)return prev;if(ex.q>1)return prev.map(c=>c.id===id?{...c,q:c.q-1}:c);return prev.filter(c=>c.id!==id)})
+  const remove=(id:number)=>setCart(prev=>prev.filter(c=>c.id!==id))
   const total=cart.reduce((s,c)=>s+c.p*c.q,0)
-  const confirm=()=>{if(!cart.length)return;pushOrder({tableId,items:cart,total,totalTTC:ttc(total),time:fmtTime(),date:todayStr(),status:'new',source:'online'});setConfirmed(true);setTimeout(()=>{setCart([]);setConfirmed(false)},3200)}
+  const totalTTC=ttc(total)
+  const earned=Math.floor(total/5)
+  const cartCount=cart.reduce((s,c)=>s+c.q,0)
+
+  const confirm=async()=>{
+    if(!cart.length)return
+    pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),date:todayStr(),status:'new',source:'online',note:note||undefined})
+    await submitOrderAPI({tableId,items:cart,total,totalTTC,note:note||undefined})
+    setConfirmed(true)
+    setPoints(p=>p+earned)
+    setTimeout(()=>{setCart([]);setNote('');setView('menu');setConfirmed(false)},3500)
+  }
+
   return(
-    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-      <style>{`.cc{cursor:pointer;padding:9px 13px;border:none;background:none;color:#444;font-family:'DM Sans',sans-serif;font-size:11px;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap;flex:0 0 auto}.cc:hover{color:#F0EDE8}.cc.on{color:${G};border-bottom-color:${G}}`}</style>
-      <div style={{background:'#111',padding:'10px 14px',display:'flex',alignItems:'center',gap:10,borderBottom:'1px solid #1A1A1A',position:'sticky',top:0,zIndex:10}}>
+    <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif",maxWidth:600,margin:'0 auto',position:'relative'}}>
+      <style>{`
+        .cc{cursor:pointer;padding:9px 12px;border:none;background:none;color:#444;font-family:'DM Sans',sans-serif;font-size:11px;border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap;flex:0 0 auto}
+        .cc:hover{color:#F0EDE8}.cc.on{color:${G};border-bottom-color:${G}}
+        .ccard{cursor:pointer;background:#111;border:1px solid #1A1A1A;border-radius:12px;overflow:hidden;transition:all .15s}
+        .ccard:hover{border-color:${G};transform:translateY(-2px)}
+        .ccard.in{border-color:${G}!important;background:#131313}
+      `}</style>
+
+      {/* ── TOP HEADER ── */}
+      <div style={{background:'#0D0D0D',padding:'11px 14px',display:'flex',alignItems:'center',gap:10,borderBottom:'1px solid #1A1A1A',position:'sticky',top:0,zIndex:20}}>
         <button onClick={()=>nav('/')} style={{background:'none',border:'1px solid #1E1E1E',color:'#3A3A3A',padding:'4px 10px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
-        <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>Café LUX</span>
-        {typeof tableId==='number'&&<span style={{background:'rgba(201,168,76,.1)',color:G,padding:'3px 9px',borderRadius:8,fontSize:11,fontWeight:700}}>Table {tableId}</span>}
-        <div style={{marginLeft:'auto',background:'rgba(201,168,76,.08)',color:G,padding:'4px 11px',borderRadius:13,fontSize:12,fontWeight:700}}>⭐ {pts} pts</div>
+        <div>
+          <div style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:15,fontWeight:700}}>★ Café LUX</div>
+          {typeof tableId==='number'&&<div style={{fontSize:9,color:'#444'}}>Table {tableId}</div>}
+        </div>
+        <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
+          <div style={{background:'rgba(201,168,76,.08)',color:G,padding:'4px 10px',borderRadius:13,fontSize:11,fontWeight:700}}>⭐ {points} pts</div>
+          {view==='menu'&&<button onClick={()=>setView('cart')} style={{position:'relative',background:cartCount?G:'#1A1A1A',color:cartCount?'#000':'#555',border:`1px solid ${cartCount?G:'#2A2A2A'}`,padding:'5px 12px',borderRadius:10,cursor:'pointer',fontSize:12,fontWeight:700,transition:'all .15s'}}>
+            🛒 {cartCount>0&&<span style={{marginLeft:4}}>{cartCount}</span>}
+            {cartCount>0&&<span style={{marginLeft:4,color:cartCount?'#000':'#444'}}>{total} DH</span>}
+          </button>}
+        </div>
       </div>
-      <div style={{display:'flex',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A',position:'sticky',top:45,zIndex:9}}>
-        {([['order','🛒 طلب'],['wallet','💰 محفظة'],['rewards','🎁 مكافآت']] as [typeof tab,string][]).map(([t,l])=><button key={t} className={`cc${tab===t?' on':''}`} style={{flex:1}} onClick={()=>setTab(t)}>{l}</button>)}
-      </div>
-      {tab==='order'&&<div>
-        <div style={{display:'flex',overflowX:'auto',background:'#0D0D0D',borderBottom:'1px solid #1A1A1A',padding:'0 6px'}}>
+
+      {/* ── MENU VIEW ── */}
+      {view==='menu'&&<>
+        <div style={{display:'flex',overflowX:'auto',background:'#0A0A0A',borderBottom:'1px solid #1A1A1A',padding:'0 6px',position:'sticky',top:45,zIndex:19}}>
           {CATS.map(c=><button key={c.id} className={`cc${catId===c.id?' on':''}`} onClick={()=>setCatId(c.id)}>{c.icon} {c.label}</button>)}
         </div>
-        <div style={{padding:'14px 12px 130px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(148px,1fr))',gap:10}}>
+        <div style={{padding:'14px 12px 100px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(152px,1fr))',gap:10}}>
             {items.map(item=>{
               const inCart=cart.find(c=>c.id===item.id)
               return(
-                <div key={item.id} onClick={()=>add(item)} style={{background:'#111',border:`1px solid ${inCart?G:'#1A1A1A'}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color .14s'}}>
-                  <Img name={item.n} h={90} icon={cat.icon}/>
+                <div key={item.id} className={`ccard${inCart?' in':''}`} onClick={()=>add(item)}>
+                  <Img name={item.n} h={92} icon={cat.icon} imgUrl={(item as any).imgUrl}/>
                   <div style={{padding:'8px 10px'}}>
                     <div style={{fontSize:11,fontWeight:600,color:'#D0CCC8',lineHeight:1.3,marginBottom:3}}>{item.n}</div>
-                    {item.s&&<div style={{fontSize:9,color:'#444',marginBottom:4}}>{item.s}</div>}
+                    {item.s&&<div style={{fontSize:9,color:'#3A3A3A',marginBottom:4}}>{item.s}</div>}
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                       <span style={{color:G,fontWeight:700,fontSize:13}}>{item.p} DH</span>
                       {inCart
@@ -1259,7 +1476,7 @@ function CustomerApp({nav}:{nav:(r:Route)=>void}){
                           <span style={{color:G,fontWeight:700,minWidth:14,textAlign:'center',fontSize:12}}>{inCart.q}</span>
                           <button onClick={()=>add(item)} style={{width:22,height:22,background:G,border:'none',color:'#000',borderRadius:5,cursor:'pointer',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>+</button>
                         </div>
-                        :<div style={{width:26,height:26,background:G,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',color:'#000',fontWeight:700,fontSize:16}}>+</div>}
+                        :<div style={{width:26,height:26,background:G,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',color:'#000',fontWeight:700,fontSize:16,cursor:'pointer'}}>+</div>}
                     </div>
                   </div>
                 </div>
@@ -1267,44 +1484,94 @@ function CustomerApp({nav}:{nav:(r:Route)=>void}){
             })}
           </div>
         </div>
-        {cart.length>0&&<div style={{position:'fixed',bottom:0,left:0,right:0,background:'linear-gradient(180deg,rgba(10,10,10,0) 0,#0A0A0A 20%)',padding:'20px 14px 14px',zIndex:20}}>
-          {confirmed
-            ?<div style={{background:'rgba(61,190,122,.15)',border:'1px solid rgba(61,190,122,.3)',borderRadius:12,padding:'14px',textAlign:'center',color:'#3DBE7A',fontWeight:700,fontSize:15}}>✅ طلبك وصل للمطبخ ! +{Math.floor(total/5)} نقطة 🎉</div>
-            :<div style={{background:'#111',border:`1px solid rgba(201,168,76,.25)`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{flex:1}}><span style={{fontSize:12,color:'#666'}}>{cart.reduce((s,c)=>s+c.q,0)} article(s)</span><span style={{fontSize:16,fontWeight:700,color:G,marginLeft:10}}>{total} DH</span></div>
-              <button onClick={confirm} style={{padding:'11px 22px',background:G,color:'#000',border:'none',borderRadius:50,fontSize:14,fontWeight:700,cursor:'pointer'}}>تأكيد الطلب 🚀</button>
-            </div>}
+        {cartCount>0&&<div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:600,background:'linear-gradient(180deg,rgba(10,10,10,0),#0A0A0A 25%)',padding:'20px 14px 14px',zIndex:30}}>
+          <button onClick={()=>setView('cart')} style={{width:'100%',padding:'13px',background:G,color:'#000',border:'none',borderRadius:14,fontSize:15,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',paddingLeft:18,paddingRight:18}}>
+            <span>🛒 Voir la commande ({cartCount})</span>
+            <span>{total} DH</span>
+          </button>
         </div>}
-      </div>}
-      {tab==='wallet'&&<div style={{padding:16}}>
-        <div style={{background:'linear-gradient(135deg,#1A1400,#231B00)',border:`1px solid rgba(201,168,76,.2)`,borderRadius:16,padding:24,textAlign:'center',marginBottom:14}}>
-          <div style={{fontSize:10,color:'rgba(201,168,76,.42)',letterSpacing:'.2em',marginBottom:7}}>SOLDE WALLET</div>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:44,color:G,fontWeight:700}}>150 DH</div>
+      </>}
+
+      {/* ── CART VIEW ── */}
+      {view==='cart'&&<div style={{padding:14}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20}}>
+          <button onClick={()=>setView('menu')} style={{background:'none',border:'1px solid #1E1E1E',color:'#555',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12}}>← Menu</button>
+          <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:18,fontWeight:700}}>Votre commande</span>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-          {[50,100,200,500].map(a=><button key={a} onClick={()=>alert(`✅ +${a} DH rechargé! Bonus: +${Math.round(a*.1)} DH 🎁`)} style={{padding:'13px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,color:'#F0EDE8',cursor:'pointer',fontSize:14,fontWeight:700}}>+{a} DH<div style={{fontSize:10,color:'#3DBE7A',marginTop:2}}>+{Math.round(a*.1)} bonus</div></button>)}
-        </div>
-        <div style={{background:'#111',borderRadius:12,padding:13}}>
-          {[{t:'Café + Morning Lux',m:-62,d:"Aujourd'hui"},{t:'Recharge',m:100,d:'Hier'},{t:'Thé Royal + Sablés',m:-32,d:'Lundi'}].map((tx,i)=>(
-            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #151515',fontSize:12}}>
-              <div><div style={{color:'#C0BDB9'}}>{tx.t}</div><div style={{color:'#3A3A3A',fontSize:10,marginTop:1}}>{tx.d}</div></div>
-              <span style={{color:tx.m>0?'#3DBE7A':'#E05252',fontWeight:700}}>{tx.m>0?'+':''}{tx.m} DH</span>
+        {cart.length===0
+          ?<div style={{textAlign:'center',color:'#2A2A2A',padding:'48px 0',fontSize:15}}>Votre panier est vide</div>
+          :<>
+            {cart.map(item=>(
+              <div key={item.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px',background:'#111',border:'1px solid #1A1A1A',borderRadius:10,marginBottom:8}}>
+                <div style={{width:44,height:44,borderRadius:8,overflow:'hidden',flexShrink:0}}><Img name={item.n} h={44} icon="☕"/></div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:600,color:'#F0EDE8'}}>{item.n}</div>
+                  <div style={{fontSize:11,color:G,fontWeight:700}}>{item.p} DH</div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:7}}>
+                  <button onClick={()=>sub(item.id)} style={{width:26,height:26,background:'#1A1A1A',border:`1px solid ${G}`,color:G,borderRadius:7,cursor:'pointer',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                  <span style={{color:G,fontWeight:700,minWidth:18,textAlign:'center'}}>{item.q}</span>
+                  <button onClick={()=>add(item)} style={{width:26,height:26,background:G,border:'none',color:'#000',borderRadius:7,cursor:'pointer',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>+</button>
+                </div>
+                <span style={{color:'#F0EDE8',fontWeight:700,minWidth:48,textAlign:'right',fontSize:13}}>{item.p*item.q} DH</span>
+                <button onClick={()=>remove(item.id)} style={{background:'none',border:'none',color:'#2A2A2A',cursor:'pointer',fontSize:16,padding:'0 4px'}}>✕</button>
+              </div>
+            ))}
+            <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:14,marginTop:16,marginBottom:12}}>
+              <label style={{fontSize:11,color:'#555',display:'block',marginBottom:6}}>📝 Note pour le café (optionnel)</label>
+              <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Allergies, préférences, demandes spéciales..." rows={2} style={{width:'100%',background:'#1A1A1A',border:'1px solid #2A2A2A',color:'#F0EDE8',borderRadius:8,padding:'7px 10px',fontSize:11,resize:'none',outline:'none',boxSizing:'border-box',fontFamily:"'DM Sans',sans-serif"}}/>
             </div>
-          ))}
-        </div>
+            <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:14,marginBottom:14}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#555',marginBottom:4}}><span>Sous-total</span><span>{total} DH</span></div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#555',marginBottom:8}}><span>TVA 10%</span><span>{(total*TVA).toFixed(0)} DH</span></div>
+              <div style={{display:'flex',justifyContent:'space-between',fontWeight:700,fontSize:16,paddingTop:8,borderTop:'1px solid #1A1A1A'}}>
+                <span>Total TTC</span><span style={{color:G,fontFamily:"'Playfair Display',serif",fontSize:20}}>{totalTTC} DH</span>
+              </div>
+              <div style={{marginTop:8,fontSize:10,color:'#3DBE7A'}}>🎁 Vous gagnerez +{earned} points avec cette commande</div>
+            </div>
+            <button onClick={()=>setView('confirm')} style={{width:'100%',padding:'14px',background:G,color:'#000',border:'none',borderRadius:14,fontSize:15,fontWeight:700,cursor:'pointer'}}>
+              Confirmer la commande →
+            </button>
+          </>}
       </div>}
-      {tab==='rewards'&&<div style={{padding:16}}>
-        <div style={{background:'linear-gradient(135deg,#0A1A0A,#0D1C0D)',border:'1px solid rgba(61,190,122,.18)',borderRadius:16,padding:22,textAlign:'center',marginBottom:14}}>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:44,color:'#3DBE7A',fontWeight:700}}>{pts}</div>
-          <div style={{fontSize:10,color:'#1E3A1E',marginTop:3}}>10 DH = 1 PT · 100 PTS = 10 DH OFFERTS</div>
-        </div>
-        {[{p:50,l:'Espresso offert',i:'☕'},{p:100,l:'Cappuccino offert',i:'🥛'},{p:200,l:'-20% commande',i:'🎫'},{p:350,l:'Petit-Déjeuner offert',i:'🍳'},{p:500,l:'Dîner Signature',i:'⭐'}].map((r,i)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:11,padding:'11px 13px',background:'#111',border:`1px solid ${pts>=r.p?'rgba(61,190,122,.22)':'#1A1A1A'}`,borderRadius:10,marginBottom:7}}>
-            <span style={{fontSize:26}}>{r.i}</span>
-            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{r.l}</div><div style={{fontSize:11,color:'#3A3A3A',marginTop:1}}>{r.p} pts requis</div></div>
-            <button onClick={()=>pts>=r.p?alert(`✅ ${r.l} activé !`):alert(`Manque ${r.p-pts} pts`)} style={{padding:'5px 13px',background:pts>=r.p?'#3DBE7A':'#1A1A1A',color:pts>=r.p?'#000':'#2A2A2A',border:'none',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:700}}>{pts>=r.p?'Utiliser':'Bientôt'}</button>
+
+      {/* ── CONFIRM / SUCCESS VIEW ── */}
+      {view==='confirm'&&<div style={{padding:20,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'80vh'}}>
+        {confirmed
+          ?<div style={{textAlign:'center'}}>
+            <div style={{fontSize:72,marginBottom:16,animation:'bounce 0.5s'}}>✅</div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:'#3DBE7A',marginBottom:8}}>Commande envoyée !</div>
+            <div style={{fontSize:13,color:'#555',marginBottom:16}}>Votre commande est en préparation</div>
+            <div style={{background:'rgba(61,190,122,.1)',border:'1px solid rgba(61,190,122,.2)',borderRadius:12,padding:14,marginBottom:16}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#3DBE7A'}}>+{earned} points ajoutés ⭐</div>
+              <div style={{fontSize:11,color:'#555',marginTop:3}}>Total: {points} pts</div>
+            </div>
+            <div style={{fontSize:12,color:'#3A3A3A'}}>Retour automatique dans 3 secondes…</div>
           </div>
-        ))}
+          :<div style={{width:'100%',maxWidth:440}}>
+            <button onClick={()=>setView('cart')} style={{background:'none',border:'1px solid #1E1E1E',color:'#555',padding:'5px 11px',borderRadius:7,cursor:'pointer',fontSize:12,marginBottom:20}}>← Modifier</button>
+            <h3 style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:20,marginBottom:16}}>Récapitulatif</h3>
+            <div style={{background:'#111',border:'1px solid #1A1A1A',borderRadius:12,padding:14,marginBottom:12}}>
+              <div style={{fontSize:12,color:G,fontWeight:600,marginBottom:10}}>{typeof tableId==='number'?`Table ${tableId}`:'À emporter'}</div>
+              {cart.map(item=>(
+                <div key={item.id} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #151515',fontSize:12}}>
+                  <span style={{color:'#C0BDB9'}}>{item.q}× {item.n}</span>
+                  <span style={{color:G,fontWeight:600}}>{item.p*item.q} DH</span>
+                </div>
+              ))}
+              {note&&<div style={{marginTop:8,fontSize:11,color:'#555'}}>📝 {note}</div>}
+              <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0 0',fontWeight:700,fontSize:15,borderTop:'1px solid #1A1A1A',marginTop:8}}>
+                <span>Total TTC</span><span style={{color:G}}>{totalTTC} DH</span>
+              </div>
+            </div>
+            <div style={{fontSize:11,color:'#3DBE7A',marginBottom:14}}>🎁 +{earned} points après confirmation</div>
+            <button onClick={confirm} style={{width:'100%',padding:'14px',background:G,color:'#000',border:'none',borderRadius:14,fontSize:15,fontWeight:700,cursor:'pointer',marginBottom:8}}>
+              ✓ Valider et envoyer en cuisine
+            </button>
+            <button onClick={()=>setView('cart')} style={{width:'100%',padding:'11px',background:'transparent',color:'#3A3A3A',border:'1px solid #1E1E1E',borderRadius:14,fontSize:13,cursor:'pointer'}}>
+              Annuler
+            </button>
+          </div>}
       </div>}
     </div>
   )
@@ -1423,17 +1690,37 @@ function StockPage({nav}:{nav:(r:Route)=>void}){
 // ═══════════════════════════════════════════════════════════════
 export default function App(){
   const ROUTES:Route[]=['/','/menu','/pos','/staff','/admin','/customer','/qr','/stock','/kitchen','/portal/kitchen','/portal/pos','/portal/staff','/portal/admin']
+  const PROTECTED:Route[]=['/pos','/kitchen','/staff','/admin','/qr','/stock','/portal/kitchen','/portal/pos','/portal/staff','/portal/admin']
+
   const getRoute=():Route=>{
     const p=window.location.pathname as Route
     return ROUTES.includes(p)?p:'/'
   }
   const[route,setRoute]=useState<Route>(getRoute)
+  const[session,setSession]=useState<Session|null>(loadSession)
+
   useEffect(()=>{
     const fn=()=>setRoute(getRoute())
     window.addEventListener('popstate',fn)
     return()=>window.removeEventListener('popstate',fn)
   },[])
+
   const nav=useCallback((r:Route)=>{window.history.pushState({},'',r);setRoute(r);window.scrollTo(0,0)},[])
+
+  const onAuth=(s:Session)=>{setSession(s);setRoute(route)}
+
+  // Protected route guard
+  const isProtected=PROTECTED.includes(route)
+  if(isProtected&&!session){
+    const labels:Record<string,string>={
+      '/pos':'POS — Caisse','/kitchen':'KDS — Cuisine','/staff':'Staff Portal',
+      '/admin':'Administration','/qr':'QR Tables','/stock':'Gestion Stock',
+      '/portal/pos':'POS — Caisse','/portal/kitchen':'KDS — Cuisine',
+      '/portal/staff':'Staff Portal','/portal/admin':'Administration',
+    }
+    return<StaffGate onAuth={onAuth} target={labels[route]||route}/>
+  }
+
   switch(route){
     case'/menu':return<MenuPage nav={nav}/>
     case'/pos':case'/portal/pos':return<POSPage nav={nav}/>
