@@ -14,8 +14,10 @@ import { hrRoutes, menuRoutes, billingRoutes, adminRoutes, customerRoutes } from
 const app = express();
 const API = '/api/v1';
 
-const FRONTEND_DIST = path.resolve(__dirname, '..', '..', '..', 'frontend', 'dist');
+// ✅ FIXED: __dirname = /app/backend/dist → go up 2 levels to /app
+const FRONTEND_DIST = path.resolve(__dirname, '..', '..', 'frontend', 'dist');
 const hasFrontend = fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
+console.log(`[App] Frontend dist: ${FRONTEND_DIST} (exists: ${hasFrontend})`);
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
@@ -38,23 +40,27 @@ app.use((req: any, _res: express.Response, next: express.NextFunction) => {
   next();
 });
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({
+  status: 'ok',
+  ts: new Date().toISOString(),
+  frontend: hasFrontend ? `found at ${FRONTEND_DIST}` : `NOT FOUND at ${FRONTEND_DIST}`,
+}));
 
-// ── Static files (images, fonts, etc.) — BEFORE API routes ──────────────
+// ── Static files FIRST ────────────────────────────────────────────────────
 if (hasFrontend) {
   app.use('/assets', express.static(path.join(FRONTEND_DIST, 'assets'), {
     maxAge: '1y', immutable: true,
   }));
-  // Serve ALL static files (including /public/menu/*.jpg images)
   app.use(express.static(FRONTEND_DIST, { index: false }));
+  console.log(`[App] Serving static files from ${FRONTEND_DIST}`);
 }
 
-// ── Public API (no auth) ─────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────
 app.use(`${API}/auth/staff`, authRoutes);
 app.use(`${API}/billing`,    billingRoutes);
 app.use(`${API}/menu`,       menuRoutes);
 
-// ── Protected API (JWT required) ─────────────────────────────────────────
+// ── Protected API ─────────────────────────────────────────────────────────
 app.use(`${API}`, requireStaffAuth);
 app.use(`${API}`, checkSubscription);
 app.use(`${API}/orders`,    ordersRoutes);
@@ -62,22 +68,19 @@ app.use(`${API}/hr`,        hrRoutes);
 app.use(`${API}/customers`, customerRoutes);
 app.use(`${API}`,           adminRoutes);
 
-// ── SPA fallback — ONLY for HTML routes, never for files ─────────────────
+// ── SPA fallback ─────────────────────────────────────────────────────────
 if (hasFrontend) {
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
-    if (/\.[a-zA-Z0-9]+$/.test(req.path)) return next(); // skip file requests
+    if (/\.[a-zA-Z0-9]{1,10}$/.test(req.path)) return next();
     res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
   });
 }
 
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Not found' }));
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[App] Unhandled error:', err.message);
-  res.status(500).json({
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
-  });
+  console.error('[App] Error:', err.message);
+  res.status(500).json({ success: false, error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
 });
 
 export default app;
