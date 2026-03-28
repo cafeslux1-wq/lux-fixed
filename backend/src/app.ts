@@ -14,7 +14,9 @@ import { hrRoutes, menuRoutes, billingRoutes, adminRoutes, customerRoutes } from
 const app = express();
 const API = '/api/v1';
 
-// ✅ FIXED: __dirname = /app/backend/dist → go up 2 levels to /app
+// ✅ FIX: Trust Railway's reverse proxy (fixes ERR_ERL_UNEXPECTED_X_FORWARDED_FOR)
+app.set('trust proxy', 1);
+
 const FRONTEND_DIST = path.resolve(__dirname, '..', '..', 'frontend', 'dist');
 const hasFrontend = fs.existsSync(path.join(FRONTEND_DIST, 'index.html'));
 console.log(`[App] Frontend dist: ${FRONTEND_DIST} (exists: ${hasFrontend})`);
@@ -28,13 +30,21 @@ app.use(cors({
     cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 app.use(`${API}/billing/webhook`, express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false }));
+
+// Rate limit — now works correctly with trust proxy
+app.use(rateLimit({
+  windowMs: 60_000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
+
 app.use((req: any, _res: express.Response, next: express.NextFunction) => {
   req.requestId = `lux-${uuidv4().slice(0, 12)}`;
   next();
@@ -43,10 +53,9 @@ app.use((req: any, _res: express.Response, next: express.NextFunction) => {
 app.get('/health', (_req, res) => res.json({
   status: 'ok',
   ts: new Date().toISOString(),
-  frontend: hasFrontend ? `found at ${FRONTEND_DIST}` : `NOT FOUND at ${FRONTEND_DIST}`,
+  frontend: hasFrontend ? `found at ${FRONTEND_DIST}` : `NOT FOUND`,
 }));
 
-// ── Static files FIRST ────────────────────────────────────────────────────
 if (hasFrontend) {
   app.use('/assets', express.static(path.join(FRONTEND_DIST, 'assets'), {
     maxAge: '1y', immutable: true,
@@ -55,12 +64,10 @@ if (hasFrontend) {
   console.log(`[App] Serving static files from ${FRONTEND_DIST}`);
 }
 
-// ── Public API ────────────────────────────────────────────────────────────
 app.use(`${API}/auth/staff`, authRoutes);
 app.use(`${API}/billing`,    billingRoutes);
 app.use(`${API}/menu`,       menuRoutes);
 
-// ── Protected API ─────────────────────────────────────────────────────────
 app.use(`${API}`, requireStaffAuth);
 app.use(`${API}`, checkSubscription);
 app.use(`${API}/orders`,    ordersRoutes);
@@ -68,7 +75,6 @@ app.use(`${API}/hr`,        hrRoutes);
 app.use(`${API}/customers`, customerRoutes);
 app.use(`${API}`,           adminRoutes);
 
-// ── SPA fallback ─────────────────────────────────────────────────────────
 if (hasFrontend) {
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
@@ -80,7 +86,10 @@ if (hasFrontend) {
 app.use((_req, res) => res.status(404).json({ success: false, error: 'Not found' }));
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[App] Error:', err.message);
-  res.status(500).json({ success: false, error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
+  res.status(500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+  });
 });
 
 export default app;
