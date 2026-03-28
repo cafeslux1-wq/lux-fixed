@@ -271,3 +271,4 @@ if(r==='/portal/pos')return<POS go={go}/>
 if(r==='/app/customer')return<CustomerApp go={go}/>
 return<Home go={go}/>
 }
+
