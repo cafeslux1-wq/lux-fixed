@@ -2,9 +2,118 @@ import{useState,useEffect,useCallback,useRef}from'react'
 const G='#C9A84C'
 
 // ═══════════════════════════════════════════════════════════════
+//  API CONFIG & HTTP LAYER
+// ═══════════════════════════════════════════════════════════════
+const API_URL = 'https://www.cafeslux.com/api/v1'
+const BRANCH_ID = 'b0000000-0000-0000-0000-000000000001'
+
+// JWT token store (set on staff login via PIN → /api/v1/auth/staff/pin)
+let AUTH_TOKEN: string | null = null
+const setToken = (t: string | null) => { AUTH_TOKEN = t }
+
+const headers = (extra: Record<string, string> = {}): HeadersInit => ({
+  'Content-Type': 'application/json',
+  ...(AUTH_TOKEN ? { Authorization: `Bearer ${AUTH_TOKEN}` } : {}),
+  ...extra,
+})
+
+// Generic fetch with offline fallback
+async function apiFetch<T>(
+  path: string,
+  opts: RequestInit = {},
+  fallback?: T
+): Promise<T> {
+  if (!navigator.onLine) {
+    if (fallback !== undefined) return fallback
+    throw new Error('Hors ligne')
+  }
+  const res = await fetch(`${API_URL}${path}`, {
+    ...opts,
+    headers: headers(opts.headers as Record<string, string>),
+  })
+  if (!res.ok) {
+    const msg = await res.text().catch(() => res.statusText)
+    throw new Error(`API ${res.status}: ${msg}`)
+  }
+  return res.json()
+}
+
+// ── Submit order to backend (with local fallback) ─────────────────────────
+async function submitOrderAPI(order: {
+  tableId: number | 'emporter'
+  items: CartItem[]
+  total: number
+  totalTTC: number
+  note?: string
+}): Promise<{ id?: string; success: boolean; local?: boolean }> {
+  const payload = {
+    branchId: BRANCH_ID,
+    tableNumber: typeof order.tableId === 'number' ? String(order.tableId) : '0',
+    orderType: order.tableId === 'emporter' ? 'takeaway' : 'dine_in',
+    source: 'pos',
+    items: order.items.map(i => ({
+      productName: i.n,
+      unitPrice: i.p,
+      quantity: i.q,
+      category: i.cat,
+    })),
+    paymentMethod: 'cash',
+    notes: order.note,
+  }
+  try {
+    const data = await apiFetch<any>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return { id: data?.data?.id, success: true }
+  } catch (e) {
+    console.warn('[LUX] API unavailable, saving locally:', e)
+    return { success: true, local: true }
+  }
+}
+
+// ── Fetch live orders from backend ────────────────────────────────────────
+async function fetchOrdersAPI(): Promise<any[]> {
+  try {
+    const data = await apiFetch<any>(`/orders?branchId=${BRANCH_ID}&limit=50`, {}, null)
+    return (data?.data?.orders || data?.orders || [])
+  } catch {
+    return []
+  }
+}
+
+// ── Update order status ───────────────────────────────────────────────────
+async function updateStatusAPI(orderId: string, status: string): Promise<boolean> {
+  try {
+    await apiFetch(`/orders/${orderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+// ── Staff PIN login (returns JWT) ─────────────────────────────────────────
+async function staffLogin(branchId: string, pin: string): Promise<string | null> {
+  try {
+    const data = await apiFetch<any>('/auth/staff/pin', {
+      method: 'POST',
+      body: JSON.stringify({ branchId, pin }),
+    })
+    const token = data?.data?.token || data?.token
+    if (token) setToken(token)
+    return token || null
+  } catch {
+    return null
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  TYPES
 // ═══════════════════════════════════════════════════════════════
-type Route='/'|'/menu'|'/pos'|'/staff'|'/admin'|'/customer'|'/qr'|'/stock'|'/kitchen'
+type Route='/'|'/menu'|'/pos'|'/staff'|'/admin'|'/customer'|'/qr'|'/stock'|'/kitchen'|'/portal/kitchen'|'/portal/pos'|'/portal/staff'|'/portal/admin'
 type CartItem={id:number;n:string;p:number;cat:string;q:number}
 type OrderStatus='new'|'preparing'|'ready'|'done'|'cancelled'
 type OrderSource='pos'|'online'
@@ -495,18 +604,27 @@ function POSPage({nav}:{nav:(r:Route)=>void}){
   const total=cart.reduce((s,c)=>s+c.p*c.q,0)
   const totalTTC=ttc(total)
 
-  const pay=(mode:'cash'|'card')=>{
+  const pay=async(mode:'cash'|'card')=>{
     if(!cart.length)return
+    // Save locally for offline support
     const order=pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),date:todayStr(),status:'done',source:'pos',note:note||undefined})
+    // Submit to backend
+    const result=await submitOrderAPI({tableId,items:cart,total,totalTTC,note:note||undefined})
+    if(result.local)console.info('[LUX] Saved locally (offline mode)')
+    else console.info('[LUX] Order synced to backend:',result.id)
     printReceipt(order)
     setPaid(true)
     setTimeout(clear,2000)
   }
-  const sendToKitchen=()=>{
+  const sendToKitchen=async()=>{
     if(!cart.length)return
-    pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),date:todayStr(),status:'new',source:'pos',note:note||undefined})
+    // Save locally
+    const order=pushOrder({tableId,items:cart,total,totalTTC,time:fmtTime(),date:todayStr(),status:'new',source:'pos',note:note||undefined})
+    // Submit to backend with status 'preparing'
+    const result=await submitOrderAPI({tableId,items:cart,total,totalTTC,note:note||undefined})
     setCart([]);setNote('')
-    alert(`✅ Commande #${ORDER_ID-1} envoyée en cuisine !`)
+    if(result.local)alert(`✅ Commande #${order.id} envoyée en cuisine (mode hors-ligne)`)
+    else alert(`✅ Commande #${order.id} envoyée en cuisine et synchronisée !`)
   }
   const loadOnline=(o:Order)=>{setCart(o.items.map(i=>({...i})));setTableId(typeof o.tableId==='number'?o.tableId:'emporter');setStatus(o.id,'preparing');setShowOnline(false)}
   const onlineOrders=orders.filter(o=>o.source==='online'&&o.status==='new')
@@ -630,80 +748,143 @@ function POSPage({nav}:{nav:(r:Route)=>void}){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  KDS — Kitchen Display System
+//  KDS — Kitchen Display System  (real API + local fallback)
 // ═══════════════════════════════════════════════════════════════
+type ApiOrder={id:string;tableNumber?:string|null;orderType?:string;status:string;items:Array<{productName:string;quantity:number;unitPrice:number}>;note?:string;createdAt?:string}
+
 function KDSPage({nav}:{nav:(r:Route)=>void}){
-  const[orders,setOrders]=useState<Order[]>([...ORDERS])
+  const[apiOrders,setApiOrders]=useState<ApiOrder[]>([])
+  const[localOrders,setLocalOrders]=useState<Order[]>([...ORDERS])
+  const[loading,setLoading]=useState(true)
   const[filter,setFilter]=useState<'all'|'new'|'preparing'|'ready'>('all')
+  const[lastSync,setLastSync]=useState('')
   const timerRef=useRef<any>(null)
+
+  const fetchAPI=async()=>{
+    const remote=await fetchOrdersAPI()
+    const pending=remote.filter((o:any)=>['pending','preparing','new'].includes(o.status))
+    setApiOrders(pending)
+    setLastSync(fmtTime())
+  }
+
   useEffect(()=>{
-    const unsub=onOrders(()=>setOrders([...ORDERS]))
-    timerRef.current=setInterval(()=>setOrders(prev=>[...prev]),30000)
-    return()=>{unsub();clearInterval(timerRef.current)}
+    fetchAPI().finally(()=>setLoading(false))
+    const u=onOrders(()=>setLocalOrders([...ORDERS]))
+    timerRef.current=setInterval(fetchAPI,10000)
+    return()=>{u();clearInterval(timerRef.current)}
   },[])
 
-  const active=orders.filter(o=>o.status!=='done'&&o.status!=='cancelled')
-  const filtered=filter==='all'?active:active.filter(o=>o.status===filter)
-  const statusColors:Record<string,string>={new:'#E05252',preparing:'#E07830',ready:'#3DBE7A',done:'#444'}
-  const statusLabels:Record<string,string>={new:'Nouveau',preparing:'En préparation',ready:'Prêt',done:'Terminé'}
-  const nextStatus=(s:OrderStatus):OrderStatus=>{const map:Record<OrderStatus,OrderStatus>={new:'preparing',preparing:'ready',ready:'done',done:'done',cancelled:'cancelled'};return map[s]}
+  // Merge API orders + local orders (deduplicate by id)
+  const merged:Array<{id:string;table:string;items:{n:string;q:number}[];status:string;time:string;source:'api'|'local';note?:string}>=[]
+
+  // Local orders not done
+  localOrders.filter(o=>o.status!=='done'&&o.status!=='cancelled').forEach(o=>{
+    merged.push({
+      id:String(o.id),table:typeof o.tableId==='number'?'Table '+o.tableId:'Emporter',
+      items:o.items.map(i=>({n:i.n,q:i.q})),status:o.status,time:o.time,source:'local',note:o.note
+    })
+  })
+
+  // API orders (skip if already in local)
+  apiOrders.forEach(o=>{
+    if(merged.find(m=>m.id===o.id))return
+    merged.push({
+      id:o.id,
+      table:o.tableNumber&&o.tableNumber!=='0'?'Table '+o.tableNumber:o.orderType==='takeaway'?'Emporter':'Table ?',
+      items:(o.items||[]).map(i=>({n:i.productName,q:i.quantity})),
+      status:o.status,time:o.createdAt?new Date(o.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):fmtTime(),
+      source:'api',note:o.note
+    })
+  })
+
+  const filtered=filter==='all'?merged:merged.filter(o=>o.status===filter||(filter==='new'&&o.status==='pending'))
+  const statusColor:Record<string,string>={new:'#E05252',pending:'#E05252',preparing:'#E07830',ready:'#3DBE7A'}
+  const statusLabel:Record<string,string>={new:'Nouveau',pending:'Nouveau',preparing:'En préparation',ready:'Prêt ✓'}
+
+  const handleStatus=async(id:string,source:'api'|'local',next:'preparing'|'ready'|'done')=>{
+    if(source==='api'){
+      const apiStatus=next==='done'?'served':next
+      await updateStatusAPI(id,apiStatus)
+      setApiOrders(prev=>next==='done'?prev.filter(o=>o.id!==id):prev.map(o=>o.id===id?{...o,status:next}:o))
+    } else {
+      const numId=parseInt(id)
+      if(next==='done')setStatus(numId,'done')
+      else setStatus(numId,next as OrderStatus)
+    }
+  }
+
   const age=(time:string)=>{
-    const[h,m]=time.split(':').map(Number)
-    const now=new Date();const then=new Date();then.setHours(h,m,0)
-    const diff=Math.floor((now.getTime()-then.getTime())/60000)
-    return diff<0?0:diff
+    try{const[h,m]=time.split(':').map(Number);const now=new Date();const then=new Date();then.setHours(h,m,0);const d=Math.floor((now.getTime()-then.getTime())/60000);return d<0?0:d}catch{return 0}
   }
 
   return(
     <div style={{minHeight:'100vh',background:'#080808',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}.new-badge{animation:pulse 1.5s infinite}`}</style>
-      <div style={{background:'#0F0F0F',borderBottom:'1px solid #1A1A1A',padding:'10px 16px',display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:10}}>
-        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.05)',border:'1px solid #1E1E1E',color:'#666',padding:'4px 10px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}.pulse{animation:pulse 1.4s infinite}`}</style>
+      <div style={{background:'#0D0D0D',borderBottom:'1px solid #1A1A1A',padding:'10px 16px',display:'flex',alignItems:'center',gap:10,position:'sticky',top:0,zIndex:10}}>
+        <button onClick={()=>nav('/')} style={{background:'rgba(255,255,255,.05)',border:'1px solid #1A1A1A',color:'#555',padding:'4px 10px',borderRadius:7,cursor:'pointer',fontSize:12}}>←</button>
         <span style={{fontFamily:"'Playfair Display',serif",color:G,fontSize:16,fontWeight:700}}>🍽 KDS — Cuisine</span>
+        {loading&&<span style={{fontSize:11,color:'#555'}}>Chargement…</span>}
         <div style={{display:'flex',gap:6,marginLeft:12}}>
-          {(['all','new','preparing','ready'] as const).map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} style={{padding:'4px 10px',background:filter===f?'rgba(201,168,76,.18)':'transparent',border:`1px solid ${filter===f?G:'#222'}`,color:filter===f?G:'#555',borderRadius:7,cursor:'pointer',fontSize:10,fontWeight:600}}>
-              {f==='all'?`Tous (${active.length})`:f==='new'?`Nouveaux (${active.filter(o=>o.status==='new').length})`:f==='preparing'?`En cours (${active.filter(o=>o.status==='preparing').length})`:`Prêts (${active.filter(o=>o.status==='ready').length})`}
-            </button>
-          ))}
+          {(['all','new','preparing','ready'] as const).map(f=>{
+            const cnt=f==='all'?merged.length:merged.filter(o=>o.status===f||('new'===f&&o.status==='pending')).length
+            return<button key={f} onClick={()=>setFilter(f)} style={{padding:'4px 10px',background:filter===f?'rgba(201,168,76,.15)':'transparent',border:`1px solid ${filter===f?G:'#1E1E1E'}`,color:filter===f?G:'#444',borderRadius:7,cursor:'pointer',fontSize:10,fontWeight:600}}>{f==='all'?`Tous (${merged.length})`:f==='new'?`Nouveaux (${cnt})`:f==='preparing'?`En cours (${cnt})`:`Prêts (${cnt})`}</button>
+          })}
         </div>
-        <div style={{marginLeft:'auto',fontSize:11,color:'#333'}}>{fmtTime()} · Mise à jour auto toutes les 30s</div>
+        <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
+          <span style={{fontSize:10,color:'#2A2A2A'}}>Sync: {lastSync||'—'}</span>
+          <button onClick={()=>{setLoading(true);fetchAPI().finally(()=>setLoading(false))}} style={{background:'rgba(201,168,76,.08)',color:G,border:`1px solid rgba(201,168,76,.2)`,padding:'4px 10px',borderRadius:7,cursor:'pointer',fontSize:10,fontWeight:600}}>🔄 Refresh</button>
+        </div>
       </div>
 
-      <div style={{padding:14,display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12,alignItems:'start'}}>
-        {filtered.length===0&&<div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',color:'#252525',fontSize:18}}>🍃 Aucune commande active</div>}
+      {!navigator.onLine&&<div style={{background:'rgba(224,82,82,.12)',borderBottom:'1px solid rgba(224,82,82,.25)',padding:'7px 16px',fontSize:11,color:'#E05252',fontWeight:600}}>⚠ Hors ligne — Affichage des commandes locales uniquement</div>}
+
+      <div style={{padding:12,display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(258px,1fr))',gap:12,alignItems:'start'}}>
+        {filtered.length===0&&!loading&&(
+          <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',color:'#1E1E1E',fontSize:18}}>
+            {navigator.onLine?'🍃 Aucune commande active':'📡 Hors ligne — aucune commande locale'}
+          </div>
+        )}
         {filtered.map(order=>{
           const mins=age(order.time)
           const urgent=mins>15&&order.status!=='ready'
+          const col=statusColor[order.status]||'#333'
           return(
-            <div key={order.id} style={{background:urgent?'rgba(224,82,82,.06)':'#111',border:`2px solid ${urgent?'rgba(224,82,82,.4)':order.status==='new'?'rgba(224,82,82,.3)':order.status==='preparing'?'rgba(224,120,48,.3)':order.status==='ready'?'rgba(61,190,122,.3)':'#1A1A1A'}`,borderRadius:14,overflow:'hidden'}}>
-              {/* Order header */}
-              <div style={{background:order.status==='new'?'rgba(224,82,82,.12)':order.status==='preparing'?'rgba(224,120,48,.1)':'rgba(61,190,122,.1)',padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}>
+            <div key={order.id} style={{background:urgent?'rgba(224,82,82,.05)':'#111',border:`2px solid ${urgent?'rgba(224,82,82,.35)':col+'55'}`,borderRadius:14,overflow:'hidden'}}>
+              <div style={{background:`${col}14`,padding:'10px 13px',display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:8}}>
                 <div>
-                  <div style={{fontWeight:700,fontSize:14,color:'#F0EDE8'}}>#{order.id} — {typeof order.tableId==='number'?'Table '+order.tableId:'Emporter'}</div>
-                  <div style={{fontSize:10,color:'#666'}}>{order.source==='online'?'📱 En ligne':'🖥 POS'} · {order.time} · {mins}min</div>
+                  <div style={{fontWeight:700,fontSize:14,color:'#F0EDE8'}}>{order.table}</div>
+                  <div style={{fontSize:10,color:'#555',marginTop:2}}>{order.source==='api'?'📡 API':'💾 Local'} · {order.time}{mins>0?` · ${mins}min`:''}</div>
                 </div>
-                <div style={{marginLeft:'auto',textAlign:'right'}}>
-                  <div className={order.status==='new'?'new-badge':''} style={{background:statusColors[order.status],color:'#fff',fontSize:9,padding:'3px 8px',borderRadius:6,fontWeight:700,marginBottom:4}}>{statusLabels[order.status]}</div>
+                <div style={{textAlign:'right',flexShrink:0}}>
+                  <div className={order.status==='new'||order.status==='pending'?'pulse':''} style={{background:col,color:'#fff',fontSize:9,padding:'3px 8px',borderRadius:6,fontWeight:700,marginBottom:3}}>{statusLabel[order.status]||order.status}</div>
                   {urgent&&<div style={{color:'#E05252',fontSize:9,fontWeight:700}}>⚠ {mins}min !</div>}
+                  <div style={{fontSize:9,color:'#2A2A2A',marginTop:2}}>#{order.id.toString().slice(0,6)}</div>
                 </div>
               </div>
-              {/* Items */}
-              <div style={{padding:'10px 14px'}}>
-                {order.items.map((item,i)=>(
+              <div style={{padding:'10px 13px'}}>
+                {order.items.map((it,i)=>(
                   <div key={i} style={{display:'flex',gap:8,padding:'5px 0',borderBottom:'1px solid #161616',alignItems:'center'}}>
-                    <span style={{background:G,color:'#000',width:22,height:22,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0}}>{item.q}</span>
-                    <span style={{fontSize:12,color:'#D0CCC8',fontWeight:600}}>{item.n}</span>
+                    <span style={{background:G,color:'#000',width:22,height:22,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0}}>{it.q}</span>
+                    <span style={{fontSize:12,color:'#D0CCC8',fontWeight:600}}>{it.n}</span>
                   </div>
                 ))}
-                {order.note&&<div style={{marginTop:8,background:'rgba(201,168,76,.08)',border:'1px solid rgba(201,168,76,.2)',borderRadius:7,padding:'6px 8px',fontSize:10,color:G}}>📝 {order.note}</div>}
+                {order.note&&<div style={{marginTop:8,background:'rgba(201,168,76,.07)',border:'1px solid rgba(201,168,76,.18)',borderRadius:7,padding:'5px 8px',fontSize:10,color:G}}>📝 {order.note}</div>}
               </div>
-              {/* Actions */}
-              {order.status!=='done'&&<div style={{padding:'8px 12px',borderTop:'1px solid #1A1A1A'}}>
-                <button onClick={()=>setStatus(order.id,nextStatus(order.status))} style={{width:'100%',padding:'10px',background:order.status==='new'?'#E07830':order.status==='preparing'?'#3DBE7A':'#5B8DEF',color:'#fff',border:'none',borderRadius:9,cursor:'pointer',fontSize:12,fontWeight:700}}>
-                  {order.status==='new'?'▶ Commencer la préparation':order.status==='preparing'?'✓ Marquer comme Prêt':'✅ Servir — Terminer'}
-                </button>
-              </div>}
+              {order.status!=='ready'&&order.status!=='done'&&(
+                <div style={{padding:'8px 12px',borderTop:'1px solid #1A1A1A',display:'flex',gap:6'}}>
+                  {(order.status==='new'||order.status==='pending')&&(
+                    <button onClick={()=>handleStatus(order.id,order.source,'preparing')} style={{flex:1,padding:'9px',background:'rgba(224,120,48,.18)',color:'#E07830',border:'1px solid rgba(224,120,48,.3)',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700}}>▶ Commencer</button>
+                  )}
+                  {order.status==='preparing'&&(
+                    <button onClick={()=>handleStatus(order.id,order.source,'ready')} style={{flex:1,padding:'9px',background:'rgba(61,190,122,.18)',color:'#3DBE7A',border:'1px solid rgba(61,190,122,.3)',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700}}>✓ Prêt à servir</button>
+                  )}
+                </div>
+              )}
+              {order.status==='ready'&&(
+                <div style={{padding:'8px 12px',borderTop:'1px solid #1A1A1A'}}>
+                  <button onClick={()=>handleStatus(order.id,order.source,'done')} style={{width:'100%',padding:'9px',background:'rgba(91,141,239,.18)',color:'#5B8DEF',border:'1px solid rgba(91,141,239,.3)',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700}}>✅ Servi — Terminer</button>
+                </div>
+              )}
             </div>
           )
         })}
@@ -916,7 +1097,19 @@ function StaffPage({nav}:{nav:(r:Route)=>void}){
   const[pin,setPin]=useState('');const[err,setErr]=useState(false)
   const[clocked,setClocked]=useState(false);const[tab,setTab]=useState('attendance')
   const sel=(m:StaffMember)=>{setMe(m);setPin('');setErr(false);setStep('pin')}
-  const press=(d:string)=>{if(pin.length>=3)return;const np=pin+d;setPin(np);if(np.length===4){if(me&&np===me.pin){setStep('dash');setPin('');setErr(false)}else{setErr(true);setTimeout(()=>{setPin('');setErr(false)},700)}}}
+  const press=async(d:string)=>{
+    if(pin.length>=3)return;const np=pin+d;setPin(np)
+    if(np.length===4){
+      if(me&&np===me.pin){
+        // Try backend JWT login (non-blocking)
+        staffLogin(BRANCH_ID,np).then(tok=>{
+          if(tok)console.info('[LUX] JWT obtained for',me.name)
+          else console.info('[LUX] Local PIN auth (no JWT)')
+        })
+        setStep('dash');setPin('');setErr(false)
+      }else{setErr(true);setTimeout(()=>{setPin('');setErr(false)},700)}
+    }
+  }
   const logout=()=>{setStep('select');setMe(null);setPin('');setClocked(false);setTab('attendance')}
   if(step==='select')return(
     <div style={{minHeight:'100vh',background:'#0A0A0A',color:'#F0EDE8',fontFamily:"'DM Sans',sans-serif"}}>
@@ -1229,7 +1422,7 @@ function StockPage({nav}:{nav:(r:Route)=>void}){
 //  ROOT — Router
 // ═══════════════════════════════════════════════════════════════
 export default function App(){
-  const ROUTES:Route[]=['/','/menu','/pos','/staff','/admin','/customer','/qr','/stock','/kitchen']
+  const ROUTES:Route[]=['/','/menu','/pos','/staff','/admin','/customer','/qr','/stock','/kitchen','/portal/kitchen','/portal/pos','/portal/staff','/portal/admin']
   const getRoute=():Route=>{
     const p=window.location.pathname as Route
     return ROUTES.includes(p)?p:'/'
@@ -1243,10 +1436,10 @@ export default function App(){
   const nav=useCallback((r:Route)=>{window.history.pushState({},'',r);setRoute(r);window.scrollTo(0,0)},[])
   switch(route){
     case'/menu':return<MenuPage nav={nav}/>
-    case'/pos':return<POSPage nav={nav}/>
-    case'/kitchen':return<KDSPage nav={nav}/>
-    case'/staff':return<StaffPage nav={nav}/>
-    case'/admin':return<AdminPage nav={nav}/>
+    case'/pos':case'/portal/pos':return<POSPage nav={nav}/>
+    case'/kitchen':case'/portal/kitchen':return<KDSPage nav={nav}/>
+    case'/staff':case'/portal/staff':return<StaffPage nav={nav}/>
+    case'/admin':case'/portal/admin':return<AdminPage nav={nav}/>
     case'/customer':return<CustomerApp nav={nav}/>
     case'/qr':return<QRPage nav={nav}/>
     case'/stock':return<StockPage nav={nav}/>
