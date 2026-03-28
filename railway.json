@@ -2,10 +2,7 @@
   "$schema": "https://schema.railway.app/railway-schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile",
-    "buildArgs": {
-      "CACHEBUST": "${{RAILWAY_DEPLOYMENT_ID}}"
-    }
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
     "startCommand": "node backend/dist/server.js",
