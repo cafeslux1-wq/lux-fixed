@@ -1,13 +1,14 @@
-# ══════════════════════════════════════════════════════════
-#  LUX Supreme — Dockerfile (No-Cache Build)
-#  Every commit triggers a full fresh build
-# ══════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════
+#  LUX Supreme — Dockerfile
+#  CACHEBUST via build arg = fresh build every deploy
+# ══════════════════════════════════════════════════════════════
 
 FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
-# ARG forces Docker to NEVER cache layers below this line
+
+# Bust cache — forces rebuild on every new commit
 ARG CACHEBUST=1
 COPY frontend/ ./
 RUN npm run build
@@ -31,3 +32,4 @@ WORKDIR /app
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 EXPOSE 4000
 CMD ["node", "backend/dist/server.js"]
+
