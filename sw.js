@@ -7,7 +7,7 @@ const APP_SHELL_CACHE = 'lux-shell-v2';
 const ASSETS_CACHE    = 'lux-assets-v2';
 const API_CACHE       = 'lux-api-v2';
 const FONT_CACHE      = 'lux-fonts-v1';
-const API_BASE        = 'https://api.cafeslux.com';
+const API_BASE        = 'https://cafeslux-api-production.up.railway.app';
 
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/api-client.js'];
 
