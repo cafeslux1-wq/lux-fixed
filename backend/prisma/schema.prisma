@@ -1,0 +1,203 @@
+// ═══════════════════════════════════════════════════════════
+//  CAFÉ LUX — Prisma Schema
+//  Database: PostgreSQL (Railway)
+// ═══════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── USERS ──────────────────────────────────────────────────
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("staff") // admin, staff, kitchen
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// ── MENU ───────────────────────────────────────────────────
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  icon      String    @default("")
+  sortOrder Int       @default(0)
+  active    Boolean   @default(true)
+  products  Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String      @default("")
+  price       Float
+  imageUrl    String      @default("")
+  isSignature Boolean     @default(false)
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  category    Category    @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  orderItems  OrderItem[]
+  costItems   RecipeCost[]
+}
+
+model RecipeCost {
+  id          Int     @id @default(autoincrement())
+  product     Product @relation(fields: [productId], references: [id])
+  productId   Int
+  ingredient  String
+  quantity    Float
+  unit        String
+  costPerUnit Float
+}
+
+// ── ORDERS ─────────────────────────────────────────────────
+model Order {
+  id          Int         @id @default(autoincrement())
+  source      String      @default("pos") // pos, web, glovo, jumia
+  type        String      @default("table") // table, takeaway, delivery
+  status      String      @default("pending") // pending, accepted, preparing, ready, delivered, done, cancelled
+  externalId  String?     // Glovo/Jumia order ID
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  customerId  Int?
+  table       String?
+  address     String      @default("")
+  notes       String      @default("")
+  payMethod   String      @default("cash")
+  subtotal    Float       @default(0)
+  deliveryFee Float       @default(0)
+  discount    Float       @default(0)
+  total       Float
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  product   Product? @relation(fields: [productId], references: [id])
+  productId Int?
+  name      String
+  price     Float
+  qty       Int
+}
+
+// ── CUSTOMERS ──────────────────────────────────────────────
+model Customer {
+  id            Int           @id @default(autoincrement())
+  name          String
+  phone         String        @unique
+  email         String?
+  loyaltyPoints Int           @default(0)
+  level         String        @default("bronze")
+  orders        Order[]
+  reservations  Reservation[]
+  lastSeen      DateTime?
+  createdAt     DateTime      @default(now())
+}
+
+// ── RESERVATIONS ───────────────────────────────────────────
+model Reservation {
+  id         Int       @id @default(autoincrement())
+  name       String
+  phone      String
+  date       String
+  time       String
+  guests     Int       @default(2)
+  notes      String    @default("")
+  status     String    @default("confirmed")
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId Int?
+  createdAt  DateTime  @default(now())
+}
+
+// ── COUPONS ────────────────────────────────────────────────
+model Coupon {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  type      String   // pct, fixed, delivery
+  value     Float
+  minOrder  Float    @default(0)
+  maxUses   Int      @default(100)
+  usedCount Int      @default(0)
+  active    Boolean  @default(true)
+  expiresAt DateTime?
+}
+
+// ── GIFT CARDS ─────────────────────────────────────────────
+model GiftCard {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  sender    String
+  recipient String
+  amount    Float
+  balance   Float
+  phone     String
+  message   String   @default("")
+  status    String   @default("active") // active, used, expired
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+// ── STOCK ──────────────────────────────────────────────────
+model StockItem {
+  id          Int      @id @default(autoincrement())
+  name        String
+  unit        String
+  quantity    Float    @default(0)
+  minQuantity Float    @default(0)
+  supplier    String   @default("")
+  lastUpdated DateTime @updatedAt
+}
+
+// ── REVIEWS ────────────────────────────────────────────────
+model Review {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  stars     Int
+  text      String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ── STAFF ──────────────────────────────────────────────────
+model Employee {
+  id        Int          @id @default(autoincrement())
+  name      String
+  role      String
+  salary    Float
+  phone     String       @default("")
+  active    Boolean      @default(true)
+  startDate String
+  schedules Shift[]
+  attendance Attendance[]
+}
+
+model Shift {
+  id         Int      @id @default(autoincrement())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId Int
+  date       String
+  type       String   // matin, soir, repos
+}
+
+model Attendance {
+  id         Int       @id @default(autoincrement())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  employeeId Int
+  date       String
+  checkIn    String?
+  checkOut   String?
+  lat        Float?
+  lng        Float?
+}
