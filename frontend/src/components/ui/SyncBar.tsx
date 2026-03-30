@@ -1,1 +1,0 @@
-export { SyncBar } from './index';
