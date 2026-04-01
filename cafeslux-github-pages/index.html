@@ -65,7 +65,7 @@
 <!-- LUX API Configuration -->
 <script>
   // ► Change this to your Railway API URL
-  window.LUX_API_URL = 'https://YOUR-APP.up.railway.app'; // ← remplace par ton URL Railway;
+  window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app'; // ← remplace par ton URL Railway;
 </script>
 <script src="api-client.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2040,13 +2040,12 @@ function closeSuccess(){
 }
 
 // ─── TRACKING ─────────────────────────────────────────────
-function trackOrders(){
-  const phone=document.getElementById('track-phone').value.trim();
-  if(!phone){toast('⚠ Entrez votre numéro');return;}
-  // Try API first, fallback to local
-  let cust = null;
-  try {
-    cust = await LuxAPI.getCustomer(phone);
+async function trackOrders(){ // أضفنا async هنا
+  const phone = document.getElementById('track-phone').value.trim();
+  // ...
+  if(typeof LuxAPI !== 'undefined') {
+     cust = await LuxAPI.getCustomer(phone); // الآن سيعمل!
+  }
   } catch {}
   if(!cust){ const custs=getLS('lux_web_customers',{}); cust=custs[phone]; }
   const res=document.getElementById('track-results');
