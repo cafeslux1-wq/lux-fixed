@@ -2040,13 +2040,19 @@ function closeSuccess(){
 }
 
 // ─── TRACKING ─────────────────────────────────────────────
-async function trackOrders(){ // أضفنا كلمة async هنا
-  const phone = document.getElementById('track-phone').value.trim();
-  // ... كود آخر ...
-  if(typeof LuxAPI !== 'undefined') {
-      cust = await LuxAPI.getCustomer(phone); // الآن await تعمل بشكل سليم
+async function trackOrders(){
+  const phone=document.getElementById('track-phone').value.trim();
+  if(!phone){toast('⚠ Entrez votre numéro');return;}
+
+  let cust=null;
+  try {
+    if(typeof LuxAPI!=='undefined') {
+      cust=await LuxAPI.getCustomer(phone);
+    }
+  } catch(e) {
+    console.warn('API Offline', e);
   }
-  } catch {}
+
   if(!cust){ const custs=getLS('lux_web_customers',{}); cust=custs[phone]; }
   const res=document.getElementById('track-results');
   if(!cust||!cust.orders||!cust.orders.length){

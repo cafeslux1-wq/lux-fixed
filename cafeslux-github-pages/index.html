@@ -2040,34 +2040,39 @@ function closeSuccess(){
 }
 
 // ─── TRACKING ─────────────────────────────────────────────
-async function trackOrders(){ // أضفنا كلمة async هنا
-  const phone = document.getElementById('track-phone').value.trim();
-  // ... كود آخر ...
-  if(typeof LuxAPI !== 'undefined') {
-      cust = await LuxAPI.getCustomer(phone); // الآن await تعمل بشكل سليم
+async function trackOrders(){
+  const phone=document.getElementById('track-phone').value.trim();
+  if(!phone){toast('⚠ Entrez votre numéro');return;}
+
+  let cust=null;
+  try {
+    if(typeof LuxAPI!=='undefined') {
+      cust=await LuxAPI.getCustomer(phone);
+    }
+  } catch(e) {
+    console.warn('API Offline', e);
   }
-  } catch(e) { console.warn("API Offline", e); }
-  
-  if(!cust){ const custs = getLS('lux_web_customers',{}); cust = custs[phone]; }
-  
-  const res = document.getElementById('track-results');
-  if(!cust || !cust.orders || !cust.orders.length){
-    res.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🔍</div><div>Aucune commande trouvée</div></div>';
+
+  if(!cust){ const custs=getLS('lux_web_customers',{}); cust=custs[phone]; }
+  const res=document.getElementById('track-results');
+  if(!cust||!cust.orders||!cust.orders.length){
+    res.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🔍</div><div>Aucune commande trouvée pour ce numéro</div></div>';
     return;
   }
-  
-  const allOrders = getLS('lux_web_orders',[]);
-  let html = '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+cust.orders.length+' commande(s)</div>';
-  cust.orders.slice(0,10).forEach(o => {
-    const live = allOrders.find(x => x.id === o.id);
-    const status = live ? live.status : o.status;
-    const statusHtml = status === 'pending' ? '<span class="status-badge sb-pending">En attente</span>' : status === 'accepted' ? '<span class="status-badge sb-accepted">En préparation</span>' : '<span class="status-badge sb-done">Terminée</span>';
-    html += `<div class="order-status-card"><div class="osc-head"><div class="osc-id">📋 #${String(o.id).slice(-6)}</div><div class="osc-date">${o.date}</div></div>`;
-    html += `<div class="osc-items">${(live?live.items:o.items||[]).slice(0,3).map(i=>i.q+'x '+i.n).join(' · ')}</div>`;
-    html += `<div class="osc-footer"><div class="osc-total">${o.total} MAD</div>${statusHtml}</div></div>`;
+  // Sync status from web orders
+  const allOrders=getLS('lux_web_orders',[]);
+  let html='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+cust.orders.length+' commande(s) · '+(cust.points||0)+' points fidélité</div>';
+  cust.orders.slice(0,10).forEach(o=>{
+    const live=allOrders.find(x=>x.id===o.id);
+    const status=live?live.status:o.status;
+    const statusHtml=status==='pending'?'<span class="status-badge sb-pending">En attente</span>':status==='accepted'?'<span class="status-badge sb-accepted">En préparation</span>':'<span class="status-badge sb-done">Terminée</span>';
+    html+=`<div class="order-status-card"><div class="osc-head"><div class="osc-id">📋 #${String(o.id).slice(-6)}</div><div class="osc-date">${o.date}</div></div>`;
+    html+=`<div class="osc-items">${(live?live.items:o.items||[]).slice(0,3).map(i=>i.q+'x '+i.n).join(' · ')}</div>`;
+    html+=`<div class="osc-footer"><div class="osc-total">${o.total} MAD</div>${statusHtml}</div></div>`;
   });
-  res.innerHTML = html;
+  res.innerHTML=html;
 }
+
 // ─── ACCOUNT ──────────────────────────────────────────────
 function loadAccount(){
   const phone=document.getElementById('acct-phone').value.trim();
