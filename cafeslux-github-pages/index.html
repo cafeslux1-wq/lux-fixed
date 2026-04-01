@@ -2040,17 +2040,12 @@ function closeSuccess(){
 }
 
 // ─── TRACKING ─────────────────────────────────────────────
-// ✅ يجب أن تبدأ بـ async لكي يعمل await بالداخل
-async function trackOrders(){
+async function trackOrders(){ // أضفنا كلمة async هنا
   const phone = document.getElementById('track-phone').value.trim();
-  if(!phone){toast('⚠ Entrez votre numéro');return;}
-  
-  let cust = null;
-  try {
-    // التأكد من وجود المكتبة قبل طلب البيانات
-    if(typeof LuxAPI !== 'undefined') {
-      cust = await LuxAPI.getCustomer(phone); 
-    }
+  // ... كود آخر ...
+  if(typeof LuxAPI !== 'undefined') {
+      cust = await LuxAPI.getCustomer(phone); // الآن await تعمل بشكل سليم
+  }
   } catch(e) { console.warn("API Offline", e); }
   
   if(!cust){ const custs = getLS('lux_web_customers',{}); cust = custs[phone]; }
