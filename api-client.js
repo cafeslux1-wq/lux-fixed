@@ -9,7 +9,7 @@
   'use strict';
 
   // ── CONFIG ─────────────────────────────────────────────────────
-  const API_BASE = window.LUX_API_URL || 'https://api.cafeslux.com';
+  const API_BASE = window.LUX_API_URL || 'cafeslux-api-production.up.railway.app';
   const LS_PREFIX = 'lux_';
   const SYNC_INTERVAL = 30000; // 30s
 
