@@ -6,6 +6,97 @@
 <title>Cafe Lux — Systeme Integre</title>
 <script>window.LUX_API_URL = 'https://api.cafeslux.com';</script>
 <script src="api-client.js"></script>
+<script>
+(function ensureLuxApiFallback(w){
+  if (w.__luxApiFallbackInstalled) return;
+  w.__luxApiFallbackInstalled = true;
+
+  function lsGet(key, def){
+    try { return JSON.parse(localStorage.getItem('lux_' + key)) ?? def; } catch { return def; }
+  }
+  function lsSet(key, val){
+    localStorage.setItem('lux_' + key, JSON.stringify(val));
+  }
+
+  function installFallback(){
+    if (w.LuxAPI) return;
+    console.warn('[LUX] api-client.js indisponible (ex: HTTP 502). Mode local activé.');
+    w.LuxAPI = {
+      isOnline: () => false,
+      hasAuth: () => false,
+      login: async () => ({ token: null }),
+      logout: () => {},
+      init: async () => false,
+      checkHealth: async () => null,
+      _flushPending: async () => {},
+
+      getOrders: async () => lsGet('web_orders', []),
+      createOrder: async (order) => {
+        const all = lsGet('web_orders', []);
+        const local = { ...order, id: Date.now(), status: 'pending', _local: true };
+        all.unshift(local); lsSet('web_orders', all);
+        return local;
+      },
+      updateOrderStatus: async (id, status) => {
+        const all = lsGet('web_orders', []);
+        const row = all.find(o => o.id === id);
+        if (row) { row.status = status; lsSet('web_orders', all); }
+      },
+
+      getMenu: async () => lsGet('menu_cache', []),
+      getCustomer: async (phone) => (lsGet('web_customers', {})[phone] || null),
+      updateCustomer: async (phone, updates) => {
+        const all = lsGet('web_customers', {});
+        if (!all[phone]) all[phone] = { phone, points: 0, orders: [] };
+        Object.assign(all[phone], updates); lsSet('web_customers', all);
+      },
+
+      getReservations: async () => lsGet('reservations', []),
+      createReservation: async (res) => {
+        const all = lsGet('reservations', []);
+        const local = { ...res, id: Date.now(), status: 'confirmed', _local: true };
+        all.unshift(local); lsSet('reservations', all);
+        return local;
+      },
+
+      getReviews: async () => lsGet('reviews', []),
+      createReview: async (review) => {
+        const all = lsGet('reviews', []);
+        const local = { ...review, id: Date.now(), _local: true };
+        all.unshift(local); lsSet('reviews', all);
+        return local;
+      },
+
+      getAnalytics: async () => null,
+      trackEvent: async (category, action, label) => {
+        const events = lsGet('analytics_events', []);
+        events.unshift({ category, action, label, ts: new Date().toISOString() });
+        lsSet('analytics_events', events.slice(0, 500));
+      },
+
+      getStock: async () => ({ items: [], alerts: [] }),
+      updateStock: async () => {},
+      createGiftCard: async (gc) => {
+        const all = lsGet('gift_cards', []);
+        const local = { ...gc, id: Date.now(), status: 'active' };
+        all.unshift(local); lsSet('gift_cards', all);
+        return local;
+      },
+      checkGiftCard: async (code) => lsGet('gift_cards', []).find(g => g.code === String(code || '').toUpperCase()) || null,
+      validateCoupon: async () => ({ valid: false, error: 'Mode hors ligne' }),
+      saveTransaction: async (tx) => {
+        const all = lsGet('transactions', []);
+        all.unshift(tx); lsSet('transactions', all.slice(0, 500));
+      },
+      getTransactions: async () => lsGet('transactions', []),
+      getStaff: async () => lsGet('employees', []),
+      logAttendance: async () => {}
+    };
+  }
+
+  installFallback();
+})(window);
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 
