@@ -2040,11 +2040,11 @@ function closeSuccess(){
 }
 
 // ─── TRACKING ─────────────────────────────────────────────
-async function trackOrders(){ // أضفنا async هنا
+async function trackOrders(){ // أضفنا كلمة async هنا
   const phone = document.getElementById('track-phone').value.trim();
-  // ...
+  // ... كود آخر ...
   if(typeof LuxAPI !== 'undefined') {
-     cust = await LuxAPI.getCustomer(phone); // الآن سيعمل!
+      cust = await LuxAPI.getCustomer(phone); // الآن await تعمل بشكل سليم
   }
   } catch {}
   if(!cust){ const custs=getLS('lux_web_customers',{}); cust=custs[phone]; }
