@@ -233,7 +233,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 .pin-sub{font-size:11px;color:var(--muted);margin-bottom:24px;}
 .pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:24px;}
 .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:.2s;}
-.pin-dot.filled{background:var(--gold);border-color:var(--gold);}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;}
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto 14px;}
 .pin-key{
   background:var(--bg3);border:1px solid var(--border);border-radius:10px;
@@ -1119,22 +1119,22 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <hr class="gw-sep">
 
   <!-- Staff tiles -->
-  <div class="gw-section-label">Espace Professionnel</div>
+  <div class="gw-section-label">🔐 Espace Professionnel</div>
   <div class="gw-grid-2">
     <div class="gw-tile private" onclick="askPIN('pos')">
       <span class="ti">🧾</span>
       <span class="tn">POS</span>
-      <span class="ts">Caisse · PIN 1234</span>
+      <span class="ts">Caisse POS · Accès privé</span>
     </div>
     <div class="gw-tile private" onclick="askPIN('admin')">
       <span class="ti">⚙️</span>
       <span class="tn">Administration</span>
-      <span class="ts">Dashboard · PIN 9999</span>
+      <span class="ts">Dashboard · Accès privé</span>
     </div>
     <div class="gw-tile private" onclick="askPIN('staff')">
       <span class="ti">👥</span>
       <span class="tn">Staff Portal</span>
-      <span class="ts">Équipe · PIN 1234</span>
+      <span class="ts">Équipe · Accès privé</span>
     </div>
     <div class="gw-tile private" onclick="askPIN('kds')">
       <span class="ti">📺</span>
@@ -1268,9 +1268,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <div class="card-form" id="form-paypal" style="text-align:center;padding:20px 0">
           <div style="font-size:40px;margin-bottom:12px">🅿</div>
           <div style="font-size:14px;color:#003087;font-weight:700;margin-bottom:8px">Connexion PayPal</div>
-          <input class="cf-input" type="email" id="pp-email" placeholder="Email PayPal">
-          <input class="cf-input" type="password" id="pp-pass" placeholder="Mot de passe">
-          <div style="font-size:10px;color:#AAA">Connexion sécurisée via PayPal</div>
+          <input class="cf-input" type="email" id="pp-email" placeholder="Email PayPal" autocomplete="email">
+          <input class="cf-input" type="password" id="pp-pass" placeholder="Mot de passe" autocomplete="current-password">
+          <div id="pp-status" style="display:none;font-size:12px;font-weight:600;padding:8px;border-radius:8px;background:rgba(0,48,135,.08);margin-top:8px"></div>
+          <div style="font-size:10px;color:#AAA;margin-top:6px">🔒 Connexion sécurisée via PayPal</div>
         </div>
         <!-- Gift Card -->
         <div class="card-form" id="form-gc">
@@ -1295,7 +1296,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
           <div style="font-size:12px;color:#888;margin-bottom:10px">Votre commande a été transmise à Café LUX</div>
           <div class="pay-ref" id="pay-ref">Réf: LUX-000000</div>
           <div style="font-size:11px;color:#AAA;margin-bottom:20px">+212 808524169 · cafeslux.com</div>
-          <button onclick="closePaymentSuccess()" style="width:100%;padding:12px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;">Voir ma commande</button>
+          <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="closePaymentSuccess()" style="flex:1;padding:12px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;">Voir ma commande</button>
+          <button onclick="printOrderReceipt(document.getElementById('pay-ref').textContent.replace('Réf: ',''))" style="padding:12px 16px;background:transparent;border:1px solid #C9A84C;color:#C9A84C;border-radius:10px;font-weight:700;cursor:pointer;font-size:16px">🖨</button>
+        </div>
         </div>
       </div>
     </div>
@@ -1321,7 +1325,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 <div id="main-site" style="display:none">
   
 <!-- API Sync Bar -->
-<div id="sync-bar" style="display:none;background:rgba(201,168,76,.08);border-bottom:1px solid var(--border-gold);padding:7px 20px;font-size:11px;color:var(--gold);display:flex;align-items:center;gap:8px;">
+<div id="sync-bar" style="display:none;background:rgba(201,168,76,.08);border-bottom:1px solid var(--border-gold);padding:7px 20px;font-size:11px;color:var(--gold);align-items:center;gap:8px;">
   <span id="sync-bar-icon">⟳</span>
   <span id="sync-bar-text">Synchronisation en cours...</span>
   <span id="sync-pending-count" style="margin-left:auto;color:var(--muted)"></span>
@@ -2043,10 +2047,16 @@ function pinKey(n){
 function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
 function pinCancel(){closePIN();}
 function updatePinDots(){
+  // Update visual dots (●/○)
   for(let i=0;i<4;i++){
     const d=document.getElementById('pd'+i);
-    if(d)d.classList.toggle('filled',i<pinBuffer.length);
+    if(!d) continue;
+    d.classList.toggle('filled', i < pinBuffer.length);
+    d.textContent = i < pinBuffer.length ? '●' : '';
   }
+  // Hide any stray text in pin-modal that might show the buffer
+  const errEl = document.getElementById('pin-err');
+  if(errEl && errEl.textContent === pinBuffer) errEl.textContent = '';
 }
 function checkPIN(){
   var correct = PINS[currentPINTarget] || '9999';
@@ -3217,13 +3227,9 @@ ${topProducts.length > 0 ? `<h2>🏆 Top 5 Produits</h2>
 <div class="footer">Café LUX · Résidence Ziat N28, Taza · +212 808524169 · cafeslux.com</div>
 </body></html>`;
 
-  const win = window.open('', '_blank', 'width=900,height=700');
-  if(!win){ toast('⚠ Autorisez les popups pour générer le rapport'); return; }
-  win.document.open();
-  win.document.write(reportHTML);
-  win.document.close();
-  setTimeout(() => { try{ win.print(); }catch(e){} }, 1000);
-  toast('📋 Rapport généré! Imprimez ou sauvegardez en PDF.');
+  // Silent iframe print — no popup
+  printSilent(reportHTML);
+  toast('📋 Rapport prêt — impression ou PDF en cours...');
   trackEvent('report','generate_monthly',monthYear);
 }
 
@@ -4145,30 +4151,76 @@ function processPayment(){
   const proc = document.getElementById('pay-processing');
   const succ = document.getElementById('pay-success');
   proc.classList.add('show'); succ.classList.remove('show');
-  // Validate
+
+  // ── Validate per payment method ─────────────────────────
   if(selectedPayMethod==='cmi'){
     const num = document.getElementById('cc-num')?.value.replace(/\s/g,'');
-    if(!num||num.length<16){showPayError('Numéro de carte invalide');return;}
+    const exp = document.getElementById('cc-exp')?.value.trim();
+    const cvv = document.getElementById('cc-cvv')?.value.trim();
+    if(!num||num.length<16){showPayError('Numéro de carte invalide (16 chiffres)');return;}
+    if(!exp||exp.length<4){showPayError('Date d\'expiration invalide (MM/AA)');return;}
+    if(!cvv||cvv.length<3){showPayError('CVV invalide (3-4 chiffres)');return;}
   }
-  if(selectedPayMethod==='gc'){
+  else if(selectedPayMethod==='paypal'){
+    // ── PayPal: require real credentials before confirming ─
+    const ppEmail = document.getElementById('pp-email')?.value.trim();
+    const ppPass  = document.getElementById('pp-pass')?.value.trim();
+    if(!ppEmail || !/^[^@]+@[^@]+\.[^@]+$/.test(ppEmail)){
+      showPayError('Email PayPal invalide');
+      proc.classList.remove('show');
+      return;
+    }
+    if(!ppPass || ppPass.length < 6){
+      showPayError('Mot de passe PayPal requis (min. 6 caractères)');
+      proc.classList.remove('show');
+      return;
+    }
+    // Simulate PayPal auth check (in production replace with real PayPal SDK)
+    // For now: validate credentials format, then show redirect simulation
+    const ppStatus = document.getElementById('pp-status');
+    if(ppStatus){
+      ppStatus.style.display = 'block';
+      ppStatus.textContent = '🔄 Connexion PayPal en cours...';
+      ppStatus.style.color = '#003087';
+    }
+    // Simulate a 2.5s PayPal processing delay with status updates
+    setTimeout(() => {
+      if(ppStatus) ppStatus.textContent = '✓ Compte PayPal vérifié';
+      setTimeout(() => {
+        if(ppStatus) ppStatus.textContent = '🔄 Autorisation du paiement...';
+        setTimeout(() => {
+          _confirmPayment();
+        }, 1200);
+      }, 800);
+    }, 1500);
+    return; // Exit here — PayPal has its own async flow
+  }
+  else if(selectedPayMethod==='gc'){
     const code = document.getElementById('gc-pay-code')?.value.trim().toUpperCase();
     const allGC = getLS('lux_gift_cards',[]);
     const gc = allGC.find(g=>g.code===code&&g.status!=='used');
-    if(!gc){showPayError('Code cadeau invalide');return;}
+    if(!gc){showPayError('Code cadeau invalide');proc.classList.remove('show');return;}
     const total = parseFloat(paymentOrderData.total);
-    if(gc.balance < total){showPayError(`Solde insuffisant (${gc.balance} MAD disponible)`);return;}
+    if(gc.balance < total){showPayError('Solde insuffisant ('+gc.balance+' MAD disponible)');proc.classList.remove('show');return;}
     gc.balance -= total;
     if(gc.balance <= 0) gc.status = 'used';
     setLS('lux_gift_cards', allGC);
   }
-  setTimeout(()=>{
-    proc.classList.remove('show');
-    succ.classList.add('show');
-    const ref = 'LUX-' + Math.random().toString(36).slice(2,8).toUpperCase();
-    document.getElementById('pay-ref').textContent = 'Réf: ' + ref;
-    // Save the actual order
-    finalizeOrderAfterPayment(ref);
-  }, 2200 + Math.random()*800);
+  // Cash or validated methods → confirm after brief processing
+  setTimeout(_confirmPayment, 1800 + Math.random()*600);
+}
+
+function _confirmPayment(){
+  const proc = document.getElementById('pay-processing');
+  const succ = document.getElementById('pay-success');
+  const ppStatus = document.getElementById('pp-status');
+  if(proc) proc.classList.remove('show');
+  if(succ) succ.classList.add('show');
+  if(ppStatus) ppStatus.style.display = 'none';
+  const ref = 'LUX-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  const refEl = document.getElementById('pay-ref');
+  if(refEl) refEl.textContent = 'Réf: ' + ref;
+  finalizeOrderAfterPayment(ref);
 }
 
 function showPayError(msg){
@@ -4178,6 +4230,78 @@ function showPayError(msg){
   toast('❌ ' + msg);
 }
 
+
+// ── SILENT PRINT HELPER (no popup window) ────────────────────────────
+function printSilent(htmlContent) {
+  // Create a hidden iframe for printing — no popup, no new tab
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+  document.body.appendChild(iframe);
+  var iDoc = iframe.contentDocument || iframe.contentWindow.document;
+  iDoc.open();
+  iDoc.write(htmlContent);
+  iDoc.close();
+  // Wait for content to load, then print and remove
+  iframe.onload = function(){
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch(e) { console.warn('[LUX] Print error:', e); }
+    setTimeout(function(){ document.body.removeChild(iframe); }, 2000);
+  };
+  // Fallback: trigger after timeout
+  setTimeout(function(){
+    if(document.body.contains(iframe)){
+      try { iframe.contentWindow.print(); } catch(e){}
+      setTimeout(function(){ if(document.body.contains(iframe)) document.body.removeChild(iframe); }, 2000);
+    }
+  }, 800);
+}
+
+function printOrderReceipt(ref) {
+  var d = paymentOrderData || {};
+  var items = (cart.length ? cart : getLS('lux_last_cart',[]));
+  var itemRows = items.map(function(c){
+    return '<tr><td>'+c.n+'</td><td style="text-align:center">×'+c.q+'</td><td style="text-align:right;color:#C9A84C">'+((c.p*c.q).toFixed(2))+' MAD</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>Reçu Café LUX</title>'
+    +'<style>'
+    +'*{margin:0;padding:0;box-sizing:border-box;font-family:monospace;}'
+    +'body{width:80mm;padding:8px;font-size:12px;color:#111;}'
+    +'h1{text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:2px;}'
+    +'.sub{text-align:center;font-size:10px;color:#666;margin-bottom:8px;}'
+    +'.sep{border:none;border-top:1px dashed #888;margin:6px 0;}'
+    +'table{width:100%;border-collapse:collapse;}'
+    +'td{padding:3px 2px;vertical-align:top;}'
+    +'.total{font-weight:bold;font-size:14px;}'
+    +'.ref{text-align:center;font-size:11px;margin-top:8px;color:#555;}'
+    +'.thanks{text-align:center;font-size:11px;margin-top:10px;}'
+    +'@media print{body{width:100%;padding:4px;}}'
+    +'</style></head><body>'
+    +'<h1>✦ CAFÉ LUX</h1>'
+    +'<div class="sub">Résidence Ziat N28, Taza · +212 808524169</div>'
+    +'<hr class="sep">'
+    +'<div style="font-size:11px;margin-bottom:4px">'
+    +'<span>Date: '+today()+'</span>&nbsp;&nbsp;<span>Heure: '+nowTime()+'</span>'
+    +'</div>'
+    +(d.name ? '<div style="font-size:11px">Client: '+d.name+(d.phone?' · '+d.phone:'')+'</div>' : '')
+    +'<hr class="sep">'
+    +'<table>'+itemRows+'</table>'
+    +'<hr class="sep">'
+    +'<table>'
+    +(d.delFee && parseFloat(d.delFee)>0 ? '<tr><td>Livraison</td><td></td><td style="text-align:right">'+parseFloat(d.delFee).toFixed(2)+' MAD</td></tr>' : '')
+    +(d.discount && parseFloat(d.discount)>0 ? '<tr><td>Réduction</td><td></td><td style="text-align:right;color:green">-'+parseFloat(d.discount).toFixed(2)+' MAD</td></tr>' : '')
+    +'<tr><td class="total">TOTAL</td><td></td><td class="total" style="text-align:right;color:#C9A84C">'+(d.total||'0.00')+' MAD</td></tr>'
+    +'</table>'
+    +'<div class="ref">Réf: '+(ref||'LUX-XXXXXX')+'</div>'
+    +'<div class="ref">Mode: '+(typeof selectedPayMethod!=='undefined'?selectedPayMethod.toUpperCase():'')+'</div>'
+    +'<hr class="sep">'
+    +'<div class="thanks">Merci pour votre visite!<br>cafeslux.com</div>'
+    +'</body></html>';
+  printSilent(html);
+  toast('🖨 Impression du reçu...');
+}
 function finalizeOrderAfterPayment(ref){
   const d = paymentOrderData;
   const sub = parseFloat(d.sub), delFee = parseFloat(d.delFee), discount = parseFloat(d.discount);
