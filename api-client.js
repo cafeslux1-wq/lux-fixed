@@ -296,8 +296,10 @@
 
     // ── SMART SYNC ────────────────────────────────────────────────
     async _flushPending() {
+      if (window._luxFlushing) return; // prevent concurrent flushes
       const queue = _ls('pending_sync',[]);
       if (!queue.length || !_isOnline) return;
+      window._luxFlushing = true;
       const remaining = [];
       for (const item of queue) {
         try {
@@ -313,17 +315,25 @@
         } catch { remaining.push(item); }
       }
       _lsSet('pending_sync', remaining);
+      window._luxFlushing = false;
       if (queue.length - remaining.length > 0)
         console.log('[LUX API] Synced', queue.length - remaining.length, 'items');
     },
 
     // ── HEALTH CHECK ──────────────────────────────────────────────
     async checkHealth() {
+      if (window._luxHealthChecking) return null; // debounce concurrent health checks
+      window._luxHealthChecking = true;
       try {
         const data = await fetch(API_BASE+'/health', { signal:AbortSignal.timeout(4000) }).then(r=>r.json());
         _isOnline = true;
+        window._luxHealthChecking = false;
         return data;
-      } catch { _isOnline = false; return null; }
+      } catch {
+        _isOnline = false;
+        window._luxHealthChecking = false;
+        return null;
+      }
     },
 
     // ── INIT ──────────────────────────────────────────────────────

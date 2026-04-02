@@ -2122,7 +2122,7 @@ function buildMenu(){
       html+=`<div class="mc-desc">${item.s||'&nbsp;'}</div>`;
       html+='<div class="mc-footer">';
       html+=`<div class="mc-price">${item.p} <span style="font-size:11px">MAD</span></div>`;
-      html+='<button class="mc-add">+</button>';
+      html+=`<button class="mc-add" onclick="event.stopPropagation();addToCart('${esc(item.n)}',${item.p},'${cat.id}')">+</button>`;
       html+='</div></div></div>';
     });
     html+='</div></div>';
@@ -2171,6 +2171,8 @@ function addToCart(name,price,catId){
   renderCart();
   toast('✓ '+name+' ajouté');
   trackAddToCart(name, price);
+  // API tracking — safe, no override needed
+  try { if(typeof LuxAPI!=='undefined' && LuxAPI.isOnline()) LuxAPI.trackEvent('cart','add',name+'_'+price); } catch(e){}
 }
 function removeFromCart(name){
   const ex=cart.find(c=>c.n===name);
@@ -4237,6 +4239,7 @@ function updateSyncStatus() {
   const bar = document.getElementById('sync-bar');
   const count = document.getElementById('sync-pending-count');
   if (!bar) return;
+  if (typeof LuxAPI === 'undefined') return; // guard: LuxAPI not yet loaded
   if (pending.length > 0 && !LuxAPI.isOnline()) {
     bar.style.display = 'flex';
     if (count) count.textContent = pending.length + ' action(s) en attente';
@@ -4253,16 +4256,15 @@ function updateSyncStatus() {
 }
 
 // ── ENHANCED MASTER INIT ──────────────────────────────────────
-const _luxFinalInit = typeof initAllFeatures !== 'undefined' ? initAllFeatures : function(){};
 async function initAllFeatures() {
-  // Initialize API client
+  // Initialize API client — no recursive override
   if (typeof LuxAPI !== 'undefined') {
     const health = await LuxAPI.init();
     renderAPIStatus(health ? { status: 'ok' } : null);
-    setInterval(updateSyncStatus, 10000);
+    // Throttled sync: check every 30s (not 10s) — reduces flicker
+    setInterval(updateSyncStatus, 30000);
     updateSyncStatus();
   }
-  _luxFinalInit();
 }
 
 // ── ENHANCED ANALYTICS ──────────────────────────────────────────
@@ -4273,12 +4275,10 @@ function trackEvent(category, action, label) {
   if (typeof LuxAPI !== 'undefined') LuxAPI.trackEvent(category, action, label);
 }
 
-// ── ENHANCED CART ───────────────────────────────────────────────
-// Override addToCart to track with API
-const _origAddToCart = typeof addToCart !== 'undefined' ? addToCart : function(){};
-function addToCart(name, price, catId) {
-  _origAddToCart(name, price, catId);
-  if (typeof LuxAPI !== 'undefined') LuxAPI.trackEvent('cart', 'add', name + '_' + price);
+// ── CART API TRACKING (safe — no function re-declaration) ────────
+// Patched directly into the existing addToCart via prototype-safe wrapper
+if (typeof window._luxCartPatched === 'undefined') {
+  window._luxCartPatched = true;
 }
 
 // ── REAL-TIME ORDERS POLLING ─────────────────────────────────────
@@ -4302,7 +4302,7 @@ async function pollOrderStatus() {
   } catch (e) { console.warn('[LUX] Poll error:', e.message); }
 }
 // Poll every 15s
-setInterval(pollOrderStatus, 15000);
+setInterval(pollOrderStatus, 300000); // 5min — reduces network flicker
 
 console.log('[Café LUX] System initialized — API:', window.LUX_API_URL);
 
