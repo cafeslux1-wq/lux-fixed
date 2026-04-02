@@ -1718,7 +1718,9 @@ function esc(s){
 window.addEventListener('DOMContentLoaded', function(){
   initImgs();
   buildTables();
-  showPage('home');
+  // handleMode() already called below — it will override 'home'
+  var mode = new URLSearchParams(window.location.search).get('mode');
+  showPage(mode && ['pos','admin','staff','kds','stock','web','site','ext'].includes(mode) ? mode : 'home');
 });
 
 
@@ -1790,44 +1792,11 @@ window.renderAdmin=function(p){orig(p);if(p==='recipes')renderAdminRecipes();if(
 
 
 // ── URL MODE HANDLER — reads ?mode=pos/admin/staff/kds from index.html ──
-(function handleMode() {
-  var params = new URLSearchParams(window.location.search);
-  var mode   = params.get('mode') || params.get('tab');
-  if (!mode) return;
-
-  // Clean URL
-  history.replaceState(null, '', window.location.pathname);
-
-  // Wait for app to init then show correct page
-  var MAX = 30, tries = 0;
-  var timer = setInterval(function() {
-    tries++;
-    if (tries > MAX) { clearInterval(timer); return; }
-
-    var ready = typeof showPage === 'function';
-    if (!ready) return;
-    clearInterval(timer);
-
-    switch(mode) {
-      case 'pos':
-        showPage('pos');
-        break;
-      case 'admin':
-        showPage('admin');
-        if (typeof renderAdmin === 'function') renderAdmin('orders');
-        break;
-      case 'staff':
-        showPage('staff');
-        break;
-      case 'kds':
-        showPage('kds');
-        break;
-      case 'stock':
-        showPage('admin');
-        if (typeof renderAdmin === 'function') renderAdmin('stock');
-        break;
-    }
-  }, 100);
+// handleMode: already handled in DOMContentLoaded above
+// URL clean-up only
+(function(){
+  var mode = new URLSearchParams(window.location.search).get('mode');
+  if(mode) history.replaceState(null,'',window.location.pathname);
 })();
 
 

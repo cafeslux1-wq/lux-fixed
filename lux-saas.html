@@ -84,7 +84,14 @@ section{padding:80px 32px;max-width:1100px;margin:0 auto;}
 .price-features li::before{content:'✓';color:var(--gold);font-weight:700;flex-shrink:0;}
 .price-features li.locked{opacity:.4;}
 .price-features li.locked::before{content:'✕';color:var(--muted);}
-.price-btn{width:100%;padding:13px;border:1px solid var(--border-gold);border-radius:10px;background:transparent;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.price-btn{
+  width:100%;padding:14px;border:1px solid var(--border-gold);border-radius:10px;
+  background:transparent;color:var(--gold);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;letter-spacing:.5px;font-family:'DM Sans',sans-serif;
+}
+.price-btn:hover{background:rgba(201,168,76,.15);transform:translateY(-1px);}
+.featured-btn{background:var(--gold)!important;color:#000!important;border-color:var(--gold)!important;}
+.featured-btn:hover{background:#E8C97A!important;box-shadow:0 6px 24px rgba(201,168,76,.3);}
 .price-btn:hover,.price-card.featured .price-btn{background:var(--gold);color:#000;border-color:var(--gold);}
 
 /* SETUP STEPS */
@@ -138,7 +145,7 @@ footer{border-top:1px solid var(--border);padding:48px 32px 28px;display:grid;gr
   <div class="nav-links">
     <a class="nav-link" href="#features">Fonctionnalités</a>
     <a class="nav-link" href="#modules">Modules</a>
-    <a class="nav-link" href="#pricing">Tarifs</a>
+    <a class="nav-link" href="#pricing" style="color:var(--gold);font-weight:600">✦ Tarifs</a>
     <a class="nav-link" href="#demo">Démo</a>
   </div>
   <button class="nav-cta" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">Essai Gratuit 30j</button>
@@ -276,7 +283,7 @@ footer{border-top:1px solid var(--border);padding:48px 32px 28px;display:grid;gr
         <li class="locked">Glovo/Jumia integration</li>
         <li class="locked">Multi-postes POS</li>
       </ul>
-      <button class="price-btn">Commencer Starter</button>
+      <button class="price-btn" onclick="choosePlan('starter',299)">Commencer Starter →</button>
     </div>
     <div class="price-card featured">
       <div class="price-badge">⭐ POPULAIRE</div>
@@ -296,7 +303,7 @@ footer{border-top:1px solid var(--border);padding:48px 32px 28px;display:grid;gr
         <li>Rapport mensuel PDF auto</li>
         <li>Portail Staff complet</li>
       </ul>
-      <button class="price-btn">Commencer Pro</button>
+      <button class="price-btn featured-btn" onclick="choosePlan('pro',599)">Commencer Pro →</button>
     </div>
     <div class="price-card">
       <div class="price-plan">Enterprise</div>
@@ -315,7 +322,7 @@ footer{border-top:1px solid var(--border);padding:48px 32px 28px;display:grid;gr
         <li>Données illimitées</li>
         <li>SLA garanti 99.9%</li>
       </ul>
-      <button class="price-btn">Contacter</button>
+      <button class="price-btn" onclick="choosePlan('enterprise',999)">Contacter →</button>
     </div>
   </div>
 </section>
@@ -445,6 +452,29 @@ function updatePreview(){
   const city = document.getElementById('demo-city')?.value || 'Taza';
   document.getElementById('dp-logo').textContent = '✦ ' + name.toUpperCase().slice(0,12);
   document.getElementById('dp-sub').textContent = city.toUpperCase() + ' · CAFÉ & PÂTISSERIE';
+}
+
+function choosePlan(plan, price) {
+  var planNames = {starter:'Starter – 299 MAD/mois', pro:'Professional – 599 MAD/mois', enterprise:'Enterprise – 999 MAD/mois'};
+  var waMsg = encodeURIComponent(
+    '✦ Bonjour Café LUX!\n\nJe suis intéressé(e) par le plan *' + planNames[plan] + '*\n\nPouvez-vous me contacter pour démarrer?'
+  );
+  // Highlight demo section
+  var demo = document.getElementById('demo');
+  if(demo) {
+    demo.scrollIntoView({behavior:'smooth'});
+    demo.style.border = '2px solid #C9A84C';
+    demo.style.borderRadius = '24px';
+    demo.style.padding = '4px';
+    setTimeout(function(){ demo.style.border = 'none'; demo.style.padding = '0'; }, 3000);
+  }
+  // Pre-select plan in demo form
+  var planSelect = document.getElementById('demo-plan');
+  if(planSelect) planSelect.value = plan;
+  // Open WA for immediate contact
+  setTimeout(function(){
+    window.open('https://wa.me/212677717201?' + waMsg, '_blank');
+  }, 800);
 }
 
 function startDemo(){
