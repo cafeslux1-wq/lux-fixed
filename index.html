@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Café LUX v2.4 — Tiles:fixed | PayPal:WhatsApp | Print:@media | Steps:fixed -->
+<!-- Café LUX v2.5 — ProLinks:fixed | Steps:rAF | Print:btn | PayPal:WA -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Café LUX Taza · v2.4</title>
+<title>Café LUX Taza · v2.5</title>
 <meta name="description" content="Café LUX Taza — Savourez les meilleures créations café & pâtisserie au cœur de Taza. Commander en ligne, livraison disponible.">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -1295,13 +1295,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
           <div style="font-size:12px;color:#888;line-height:1.6">Le livreur accepte les espèces.<br>Préparez l'appoint si possible.</div>
         </div>
         <!-- PayPal -->
-        <div class="card-form" id="form-paypal" style="text-align:center;padding:20px 0">
-          <div style="font-size:40px;margin-bottom:12px">🅿</div>
-          <div style="font-size:14px;color:#003087;font-weight:700;margin-bottom:8px">Connexion PayPal</div>
-          <input class="cf-input" type="email" id="pp-email" placeholder="Email PayPal" autocomplete="email">
-          <input class="cf-input" type="password" id="pp-pass" placeholder="Mot de passe" autocomplete="current-password">
-          <div id="pp-status" style="display:none;font-size:12px;font-weight:600;padding:8px;border-radius:8px;background:rgba(0,48,135,.08);margin-top:8px"></div>
-          <div style="font-size:10px;color:#AAA;margin-top:6px">🔒 Connexion sécurisée via PayPal</div>
+        <div class="card-form" id="form-paypal" style="text-align:center;padding:16px 0">
+          <div style="font-size:38px;margin-bottom:10px">📲</div>
+          <div style="font-size:15px;font-weight:800;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>
+          <div style="font-size:12px;color:#666;margin-bottom:16px;line-height:1.5">
+            PayPal direct n'est pas encore disponible.<br>
+            Cliquez sur le bouton ci-dessous pour finaliser<br>
+            votre paiement via WhatsApp.
+          </div>
+          <div style="font-size:10px;color:#25D366;font-weight:600">✓ Réponse garantie sous 5 minutes</div>
         </div>
         <!-- Gift Card -->
         <div class="card-form" id="form-gc">
@@ -1736,9 +1738,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       </div>
       <div>
         <div class="footer-heading">Accès Interne</div>
-        <a class="footer-link" onclick="askPIN('pos')">🧾 Système POS</a>
-        <a class="footer-link" onclick="askPIN('admin')">⚙️ Administration</a>
-        <a class="footer-link" onclick="askPIN('staff')">👥 Staff Portal</a>
+        <a class="footer-link" href="javascript:void(0)" onclick="askPIN('pos')">🧾 Système POS</a>
+        <a class="footer-link" href="javascript:void(0)" onclick="askPIN('admin')">⚙️ Administration</a>
+        <a class="footer-link" href="javascript:void(0)" onclick="askPIN('staff')">👥 Staff Portal</a>
         <a class="footer-link" onclick="window.open('cafe-lux.html')">🔧 Système Intégré</a>
         <a class="footer-link" onclick="window.open('lux-saas.html')" style="color:var(--gold)">✦ LUX SaaS Platform</a>
         <a class="footer-link" onclick="setupWhatsApp()">📲 Config WhatsApp <span id="wa-status" style="font-size:9px;margin-left:4px;color:var(--muted)">Inactif</span></a>
@@ -2065,11 +2067,11 @@ function askPIN(target){
   if(errEl) errEl.textContent = '';
   var labels = {pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
   var subEl = document.getElementById('pin-modal-sub');
-  if(subEl) subEl.textContent = 'Accès: ' + (labels[target]||target);
+  if(subEl) subEl.textContent = 'Accès : ' + (labels[target]||target);
   var modal = document.getElementById('pin-modal');
   if(modal) modal.classList.add('open');
-  // Focus hidden input to capture keyboard on mobile
-  setTimeout(function(){ if(realInput) realInput.focus(); }, 100);
+  // DO NOT call realInput.focus() here — causes iOS scroll/viewport jump
+  // Users can tap the dots area to focus keyboard input
 }
 function closePIN(){
   var modal = document.getElementById('pin-modal');
@@ -2345,6 +2347,7 @@ function sendOrder(){
   else if(orderType==='takeaway')etaEl.textContent='🕐 Prêt dans: 15-20 minutes';
   else etaEl.textContent='🪑 Commande transmise à la salle';
   document.getElementById('success-ov').classList.add('open');
+  if(typeof activeCoupon!=='undefined'&&activeCoupon) removeCoupon();
   // WA + GA tracking
   trackPurchase(order.id, order.total);
   // Save via API (with offline fallback)
@@ -4170,8 +4173,18 @@ function openPayment(){
   const total = sub + delFee - discount;
   paymentOrderData = {name,phone,addr,notes:document.getElementById('wo-notes')?.value.trim()||'',total:total.toFixed(2),sub:sub.toFixed(2),delFee:delFee.toFixed(2),discount:discount.toFixed(2)};
   document.getElementById('pay-amount').textContent = total.toFixed(2) + ' MAD';
-  goPayStep(1);
-  document.getElementById('payment-modal').classList.add('open');
+  // OPEN modal FIRST, then goPayStep — so children render correctly
+  var modal = document.getElementById('payment-modal');
+  if(modal) modal.classList.add('open');
+  // Use requestAnimationFrame so the modal is rendered before we toggle steps
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      goPayStep(1);
+    });
+  });
+  // Also close cart panel if open
+  var cartPanel = document.getElementById('cart-panel');
+  if(cartPanel) cartPanel.classList.remove('open');
 }
 
 function closePayment(){document.getElementById('payment-modal').classList.remove('open');}
@@ -4372,33 +4385,38 @@ function showPayError(msg){
 
 // ── SILENT PRINT HELPER (no popup window) ────────────────────────────
 function printSilent(htmlContent) {
-  // Get or create the print area
+  // Show a print preview page with a direct print button
+  // This avoids the popup warning because window.print() is in user gesture
   var printArea = document.getElementById('lux-print-area');
   if(!printArea){
     printArea = document.createElement('div');
     printArea.id = 'lux-print-area';
     document.body.appendChild(printArea);
   }
-  // Inject content
-  printArea.innerHTML = htmlContent;
-  printArea.style.display = 'block';
-  printArea.style.position = 'fixed';
-  printArea.style.top = '0';
-  printArea.style.left = '0';
-  printArea.style.width = '100%';
-  printArea.style.background = '#fff';
-  printArea.style.zIndex = '99999';
-  // Trigger native print dialog
+
+  // Inject content + a close/print button
+  printArea.innerHTML =
+    '<div id="lux-print-overlay" style="position:fixed;inset:0;background:#fff;z-index:99999;overflow:auto;padding:20px">' +
+    '<div style="display:flex;gap:10px;margin-bottom:16px;justify-content:center">' +
+    '<button id="lux-print-btn" style="padding:12px 28px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🖨 Imprimer</button>' +
+    '<button onclick="document.getElementById(\'lux-print-area\').innerHTML=\'\'" style="padding:12px 20px;background:#eee;color:#333;border:none;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer">✕ Fermer</button>' +
+    '</div>' +
+    htmlContent +
+    '</div>';
+
+  // Attach print button with direct click → preserves user gesture on iOS
   setTimeout(function(){
-    window.print();
-    // Restore after print dialog closes
-    setTimeout(function(){
-      printArea.style.display = 'none';
-      printArea.style.position = 'fixed';
-      printArea.style.top = '-9999px';
-      printArea.innerHTML = '';
-    }, 500);
-  }, 100);
+    var btn = document.getElementById('lux-print-btn');
+    if(btn){
+      btn.onclick = function(){
+        // Hide the buttons before printing
+        var btns = document.querySelector('#lux-print-overlay > div');
+        if(btns) btns.style.display='none';
+        window.print();
+        if(btns) btns.style.display='flex';
+      };
+    }
+  }, 50);
 }
 
 function printOrderReceipt(ref) {
