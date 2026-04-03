@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Café LUX v2.3 — PIN:secured | PayPal:WhatsApp | Print:@media -->
+<!-- Café LUX v2.4 — Tiles:fixed | PayPal:WhatsApp | Print:@media | Steps:fixed -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Café LUX Taza · v2.3</title>
+<title>Café LUX Taza · v2.4</title>
 <meta name="description" content="Café LUX Taza — Savourez les meilleures créations café & pâtisserie au cœur de Taza. Commander en ligne, livraison disponible.">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -1072,11 +1072,25 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 
 /* ── PRINT STYLES ── */
 @media print {
-  body > *:not(#lux-print-area) { display: none !important; }
-  #lux-print-area { display: block !important; margin: 0; padding: 0; }
-  #lux-print-area * { visibility: visible !important; }
+  /* Hide entire page content */
+  body > * { display: none !important; }
+  /* Show only print area */
+  body > #lux-print-area,
+  body.printing #lux-print-area { 
+    display: block !important; 
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100%; 
+    background: white;
+    z-index: 99999;
+  }
 }
-#lux-print-area { display: none; }
+#lux-print-area { 
+  display: none; 
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+}
 </style>
 </head>
 <body>
@@ -1093,33 +1107,33 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- Public tiles -->
   <div class="gw-section-label">Espace Client</div>
   <div class="gw-grid">
-    <div class="gw-tile public" ontouchstart="enterPublic()" onclick="enterPublic()">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterPublic()" onclick="enterPublic()">
       <span class="ti">☕</span>
       <span class="tn">Commander</span>
       <span class="ts">Menu &amp; Livraison</span>
       <span class="badge-new">Live</span>
     </div>
-    <div class="gw-tile public" ontouchstart="enterPublicOffers()" onclick="enterPublicOffers()">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterPublicOffers()" onclick="enterPublicOffers()">
       <span class="ti">🎁</span>
       <span class="tn">Offres du Jour</span>
       <span class="ts">Promotions &amp; coupons</span>
     </div>
-    <div class="gw-tile public" ontouchstart="enterTracking()" onclick="enterTracking()">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterTracking()" onclick="enterTracking()">
       <span class="ti">🛵</span>
       <span class="tn">Suivi Livraison</span>
       <span class="ts">Mes commandes</span>
     </div>
-    <div class="gw-tile public" ontouchstart="enterReservation()" onclick="enterReservation()">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterReservation()" onclick="enterReservation()">
       <span class="ti">📅</span>
       <span class="tn">Réserver</span>
       <span class="ts">Table &amp; événements</span>
     </div>
-    <div class="gw-tile public" ontouchstart="enterQR()" onclick="enterQR()">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterQR()" onclick="enterQR()">
       <span class="ti">📲</span>
       <span class="tn">QR Tables</span>
       <span class="ts">Commander à table</span>
     </div>
-    <div class="gw-tile public" ontouchstart="enterPublic(); switchTab('account', null);" onclick="enterPublic(); switchTab('account', null);">
+    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();enterPublic(); switchTab('account', null);" onclick="enterPublic(); switchTab('account', null);">
       <span class="ti">👤</span>
       <span class="tn">Mon Espace</span>
       <span class="ts">Fidélité &amp; wallet</span>
@@ -1131,22 +1145,22 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- Staff tiles -->
   <div class="gw-section-label">🔐 Espace Professionnel</div>
   <div class="gw-grid-2">
-    <div class="gw-tile private" ontouchstart="askPIN('pos')" onclick="askPIN('pos')">
+    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();askPIN('pos')" onclick="askPIN('pos')">
       <span class="ti">🧾</span>
       <span class="tn">POS</span>
       <span class="ts">Caisse POS · Accès privé</span>
     </div>
-    <div class="gw-tile private" ontouchstart="askPIN('admin')" onclick="askPIN('admin')">
+    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();askPIN('admin')" onclick="askPIN('admin')">
       <span class="ti">⚙️</span>
       <span class="tn">Administration</span>
       <span class="ts">Dashboard · Accès privé</span>
     </div>
-    <div class="gw-tile private" ontouchstart="askPIN('staff')" onclick="askPIN('staff')">
+    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();askPIN('staff')" onclick="askPIN('staff')">
       <span class="ti">👥</span>
       <span class="tn">Staff Portal</span>
       <span class="ts">Équipe · Accès privé</span>
     </div>
-    <div class="gw-tile private" ontouchstart="askPIN('kds')" onclick="askPIN('kds')">
+    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();askPIN('kds')" onclick="askPIN('kds')">
       <span class="ti">📺</span>
       <span class="tn">Cuisine KDS</span>
       <span class="ts">Affichage cuisine</span>
@@ -1157,9 +1171,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <div class="gw-footer">
     <div>📍 Résidence Ziat N28, Taza &nbsp;·&nbsp; ⏰ 07:00–23:00</div>
     <div>
-      <a href="https://wa.me/212677717201">📲 WhatsApp</a>
+      <a href="https://wa.me/212677717201" target="_blank">📲 WhatsApp</a>
       &nbsp;·&nbsp;
-      <a href="https://cafeslux.com">cafeslux.com</a>
+      <a href="https://cafeslux.com" target="_blank">cafeslux.com</a>
     </div>
   </div>
 
@@ -1183,10 +1197,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-pad" id="pin-pad">
-      <button class="pin-key" ontouchstart="pinKey(1)" onclick="pinKey(1)">1</button><button class="pin-key" ontouchstart="pinKey(2)" onclick="pinKey(2)">2</button><button class="pin-key" ontouchstart="pinKey(3)" onclick="pinKey(3)">3</button>
-      <button class="pin-key" ontouchstart="pinKey(4)" onclick="pinKey(4)">4</button><button class="pin-key" ontouchstart="pinKey(5)" onclick="pinKey(5)">5</button><button class="pin-key" ontouchstart="pinKey(6)" onclick="pinKey(6)">6</button>
-      <button class="pin-key" ontouchstart="pinKey(7)" onclick="pinKey(7)">7</button><button class="pin-key" ontouchstart="pinKey(8)" onclick="pinKey(8)">8</button><button class="pin-key" ontouchstart="pinKey(9)" onclick="pinKey(9)">9</button>
-      <button class="pin-key sm" ontouchstart="pinCancel()" onclick="pinCancel()">✕</button><button class="pin-key" ontouchstart="pinKey(0)" onclick="pinKey(0)">0</button><button class="pin-key sm" ontouchstart="pinDel()" onclick="pinDel()">⌫</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(1)" onclick="pinKey(1)">1</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(2)" onclick="pinKey(2)">2</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(3)" onclick="pinKey(3)">3</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(4)" onclick="pinKey(4)">4</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(5)" onclick="pinKey(5)">5</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(6)" onclick="pinKey(6)">6</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(7)" onclick="pinKey(7)">7</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(8)" onclick="pinKey(8)">8</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(9)" onclick="pinKey(9)">9</button>
+      <button class="pin-key sm" ontouchstart="event.preventDefault();event.stopPropagation();pinCancel()" onclick="pinCancel()">✕</button><button class="pin-key" ontouchstart="event.preventDefault();event.stopPropagation();pinKey(0)" onclick="pinKey(0)">0</button><button class="pin-key sm" ontouchstart="event.preventDefault();event.stopPropagation();pinDel()" onclick="pinDel()">⌫</button>
     </div>
     <div class="pin-err" id="pin-err"></div>
     <a class="pin-cancel" onclick="closePIN()">Annuler</a>
@@ -1260,7 +1274,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <!-- Step 2: Details -->
       <div id="pay-step-2" style="display:none">
         <!-- CMI Card Form -->
-        <div class="card-form" id="form-cmi">
+        <div class="card-form" id="form-cmi" style="display:none">
           <div class="cmi-logo">
             <span class="cmi-badge">CMI</span>
             <span class="cmi-secure">🔒 Paiement sécurisé SSL · Centre Monétique Interbancaire</span>
@@ -4181,44 +4195,66 @@ function selectPayMethod(m, btn){
 }
 
 function goPayStep(step){
-  [1,2,3].forEach(s=>{
-    const el = document.getElementById('pay-step-'+s);
-    if(el) el.style.display = s===step?'block':'none';
-    const ps = document.getElementById('ps-'+s);
-    if(ps){ ps.classList.remove('active','done'); if(s<step) ps.classList.add('done'); else if(s===step) ps.classList.add('active'); }
+  // Update step content visibility
+  [1,2,3].forEach(function(s){
+    var el = document.getElementById('pay-step-'+s);
+    if(el) el.style.display = (s === step) ? 'block' : 'none';
+    // Update step indicator
+    var ps = document.getElementById('ps-'+s);
+    if(ps){
+      ps.classList.remove('active','done');
+      if(s < step) ps.classList.add('done');
+      else if(s === step) ps.classList.add('active');
+    }
   });
-  if(step===2){
-    ['cmi','cash','paypal','gc'].forEach(m=>{
-      const f=document.getElementById('form-'+m);
-      if(f) f.classList.toggle('show', m===selectedPayMethod);
+
+  // Step 2: show correct payment form
+  if(step === 2){
+    ['cmi','cash','paypal','gc'].forEach(function(m){
+      var f = document.getElementById('form-'+m);
+      if(f) f.style.display = (m === selectedPayMethod) ? 'block' : 'none';
     });
+    // Update confirm button text for PayPal
+    var confirmBtn = document.getElementById('btn-pay-confirm');
+    if(confirmBtn){
+      if(selectedPayMethod === 'paypal'){
+        confirmBtn.textContent = 'Payer via WhatsApp →';
+        confirmBtn.style.background = '#25D366';
+        confirmBtn.style.color = '#fff';
+      } else {
+        confirmBtn.textContent = 'Confirmer le paiement →';
+        confirmBtn.style.background = '#C9A84C';
+        confirmBtn.style.color = '#000';
+      }
+    }
   }
-  if(step===3){
-    // Block PayPal from going to payment confirmation step
+
+  // Step 3: PayPal BLOCKED — use WhatsApp instead
+  if(step === 3){
     if(selectedPayMethod === 'paypal'){
-      // Block PayPal fake confirmation — redirect to WhatsApp
       var total = paymentOrderData ? paymentOrderData.total : '?';
       var name  = paymentOrderData ? paymentOrderData.name  : 'Client';
-      var waMsg = encodeURIComponent('✦ Paiement Café LUX\n\nClient: '+name+'\nMontant: '+total+' MAD\nMode: PayPal\n\nMerci de confirmer.');
+      var waMsg = encodeURIComponent('✦ Paiement Café LUX\n\nClient: '+name+'\nMontant: '+total+' MAD\nMode: PayPal');
       var waUrl = 'https://wa.me/212677717201?text=' + waMsg;
+      // Stay on step 2 — show WhatsApp button
+      [1,2,3].forEach(function(s){
+        var el=document.getElementById('pay-step-'+s);
+        if(el) el.style.display = s===2?'block':'none';
+      });
       var ppForm = document.getElementById('form-paypal');
       if(ppForm){
         ppForm.innerHTML =
-          '<div style="padding:20px;text-align:center">' +
-          '<div style="font-size:36px;margin-bottom:10px">\u{1F4F2}</div>' +
-          '<div style="font-weight:800;font-size:15px;margin-bottom:8px;color:#1A0A00">Paiement via WhatsApp</div>' +
-          '<div style="font-size:12px;color:#666;margin-bottom:16px">Votre commande sera confirm\u00e9e apr\u00e8s validation.</div>' +
-          '<button id="wa-pay-btn" style="padding:13px 24px;background:#25D366;color:#fff;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:14px;width:100%">' +
-          '\u{1F4F2} Contacter via WhatsApp</button>' +
-          '<div style="font-size:10px;color:#AAA;margin-top:10px">PayPal direct disponible prochainement.</div>' +
+          '<div style="padding:16px;text-align:center">' +
+          '<div style="font-size:32px;margin-bottom:10px">📲</div>' +
+          '<div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#1A0A00">Paiement via WhatsApp</div>' +
+          '<div style="font-size:12px;color:#666;margin-bottom:14px">Cliquez pour nous contacter et finaliser votre paiement.</div>' +
+          '<button id="wa-pay-btn" style="padding:13px;background:#25D366;color:#fff;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:14px;width:100%">📲 Payer via WhatsApp →</button>' +
+          '<div style="font-size:10px;color:#AAA;margin-top:8px">PayPal direct disponible prochainement.</div>' +
           '</div>';
-        // Attach onclick after DOM insert to avoid quote escaping
         setTimeout(function(){
           var wab = document.getElementById('wa-pay-btn');
-          if(wab) wab.onclick = function(){ window.open(waUrl,'_blank'); };
-        }, 50);
-      } else {
-        window.open(waUrl, '_blank');
+          if(wab) wab.onclick = function(){ window.open(waUrl, '_blank'); };
+        }, 30);
       }
       return;
     }
@@ -4336,19 +4372,33 @@ function showPayError(msg){
 
 // ── SILENT PRINT HELPER (no popup window) ────────────────────────────
 function printSilent(htmlContent) {
-  // @media print approach — no popup, no iframe issues
+  // Get or create the print area
   var printArea = document.getElementById('lux-print-area');
   if(!printArea){
     printArea = document.createElement('div');
     printArea.id = 'lux-print-area';
     document.body.appendChild(printArea);
   }
+  // Inject content
   printArea.innerHTML = htmlContent;
-  // Trigger print
-  window.print();
-  // Clean up after print dialog closes
-  setTimeout(function(){ printArea.innerHTML = ''; }, 2000);
-  toast('🖨 Impression...');
+  printArea.style.display = 'block';
+  printArea.style.position = 'fixed';
+  printArea.style.top = '0';
+  printArea.style.left = '0';
+  printArea.style.width = '100%';
+  printArea.style.background = '#fff';
+  printArea.style.zIndex = '99999';
+  // Trigger native print dialog
+  setTimeout(function(){
+    window.print();
+    // Restore after print dialog closes
+    setTimeout(function(){
+      printArea.style.display = 'none';
+      printArea.style.position = 'fixed';
+      printArea.style.top = '-9999px';
+      printArea.innerHTML = '';
+    }, 500);
+  }, 100);
 }
 
 function printOrderReceipt(ref) {
