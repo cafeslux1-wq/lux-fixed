@@ -2015,41 +2015,33 @@ function esc(s){
 //  INIT
 // ══════════════════════════
 window.addEventListener('DOMContentLoaded', function(){
-  var params = new URLSearchParams(window.location.search);
-  var mode   = params.get('mode') || 'home';
-
-  // ── Auth Guard (skip for public modes) ────────────────────────
-  var publicModes = ['web','site','ext','home'];
-  var needsAuth   = !publicModes.includes(mode);
-
-  if(needsAuth){
+  // ── Auth Guard — block access if no valid session ────────────
+  (function(){
     try {
       var raw = localStorage.getItem('lux_session');
       var session = raw ? JSON.parse(raw) : null;
       if(!session || !session.expires || Date.now() > session.expires){
         localStorage.removeItem('lux_auth_token');
         localStorage.removeItem('lux_session');
-        // If opened in new tab, close it. Else redirect to index.
-        if(window.opener) { window.close(); }
-        else { window.location.replace('index.html'); }
+        window.location.replace('index.html');
         return;
       }
     } catch(e) {
-      if(window.opener) { window.close(); }
-      else { window.location.replace('index.html'); }
+      window.location.replace('index.html');
       return;
     }
-  }
+  })();
 
   // ── Init API client ──────────────────────────────────────────
   if(window.LuxAPI) LuxAPI.init().catch(function(){});
 
   initImgs();
   buildTables();
-  // Clean URL without reload
-  if(params.get('mode')) history.replaceState(null,'',window.location.pathname);
+  var mode = new URLSearchParams(window.location.search).get('mode');
+  // Clean URL without redirect
+  if(mode) history.replaceState(null,'',window.location.pathname);
   showPage(mode && ['pos','admin','staff','kds','stock','web','site','ext'].includes(mode) ? mode : 'home');
-}););
+});
 
 
 // ── RECIPE COSTS ─────────────────────────────────────────────────────
