@@ -2,173 +2,88 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Café LUX Taza · v2.9</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Café LUX Taza · v3.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #C9A84C; --bg: #080808; --card: #111; --border: #222; --text: #F2EFE9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
         
-        #gateway { padding: 60px 20px; max-width: 800px; margin: 0 auto; text-align: center; }
-        
-        /* الشعار - ثابت وبدون تأثيرات تسبب ثقل */
-        .logo-main { width: 120px; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(201,168,76,0.2)); }
-        
-        h1 { font-family: 'Cinzel', serif; font-size: 32px; color: var(--gold); margin-bottom: 10px; }
-        .slogan { font-size: 13px; color: #777; margin-bottom: 50px; letter-spacing: 3px; text-transform: uppercase; }
+        #gateway { padding: 40px 20px; max-width: 500px; margin: 0 auto; text-align: center; }
+        .logo-main { width: 110px; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(201,168,76,0.3)); }
+        h1 { font-family: 'Cinzel', serif; font-size: 24px; color: var(--gold); margin-bottom: 5px; }
+        .slogan { font-size: 11px; color: #777; margin-bottom: 40px; letter-spacing: 2px; text-transform: uppercase; }
 
-        .section-title { font-family: 'Cinzel', serif; font-size: 18px; margin: 40px 0 25px; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .section-title { font-family: 'Cinzel', serif; font-size: 14px; margin: 30px 0 15px; color: #555; border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
 
-        .gateway-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
-        
-        /* الأزرار - تحسين الأداء للحاسوب */
-        .tile-card { 
-            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
-            padding: 35px 20px; cursor: pointer; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; transition: all 0.2s ease-in-out;
-            text-decoration: none;
-        }
-        .tile-card:hover { border-color: var(--gold); background: #161616; transform: translateY(-5px); }
-        
-        .tile-icon { font-size: 40px; margin-bottom: 15px; }
-        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 14px; font-weight: 600; text-align: center; }
+        /* تنظيم الأيقونات v2.7 المفضل لديك */
+        .gateway-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .tile-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px 10px; transition: 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .tile-card:hover { border-color: var(--gold); background: #161616; }
+        .tile-icon { font-size: 30px; margin-bottom: 12px; }
+        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 12px; font-weight: 600; text-align: center; line-height: 1.2; }
 
-        .tile-saas { grid-column: span 2; border: 1px dashed var(--gold); background: rgba(201,168,76,0.05); }
-
-        /* الأغطية والمودال */
+        /* Overlay & PIN (v2.6 Logic) */
         #pro-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #000; }
-        .close-btn { position: absolute; top: 20px; right: 20px; z-index: 10000; background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .close-btn { position: absolute; top: 15px; right: 15px; z-index: 10000; background: var(--gold); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10001; align-items: center; justify-content: center; }
+        .pin-box { background: #111; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); width: 320px; text-align: center; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .num-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 10px; font-size: 20px; cursor: pointer; }
         iframe { width: 100%; height: 100%; border: none; }
-
-        #pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10001; align-items: center; justify-content: center; }
-        .pin-box { background: #111; padding: 40px; border-radius: 15px; border: 1px solid var(--gold); width: 350px; text-align: center; }
-        .pin-dots { display: flex; justify-content: center; gap: 15px; margin: 30px 0; }
-        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); }
-        .dot.filled { background: var(--gold); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .num-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 20px; border-radius: 8px; font-size: 20px; cursor: pointer; }
-        .num-btn:hover { background: var(--gold); color: #000; }
     </style>
 </head>
 <body>
-
     <div id="gateway">
-        <img src="https://cafeslux.com/logo.png" class="logo-main" alt="Lux Logo">
+        <img src="https://cafeslux.com/logo.png" class="logo-main">
         <h1>Café LUX</h1>
-        <p class="slogan">L'ART DU CAFÉ À TAZA</p>
+        <p class="slogan">L'art du café, à Taza</p>
 
         <h2 class="section-title">Espace Client</h2>
         <div class="gateway-grid">
-            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=menu')">
-                <span class="tile-icon">🛒</span>
-                <span class="tile-title">Menu & Livraison</span>
-            </div>
-            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=offers')">
-                <span class="tile-icon">🎁</span>
-                <span class="tile-title">Offres & Fidélité</span>
-            </div>
-            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=booking')">
-                <span class="tile-icon">📅</span>
-                <span class="tile-title">Réserver une Table</span>
-            </div>
-            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=account')">
-                <span class="tile-icon">👤</span>
-                <span class="tile-title">Mon Espace LUX</span>
-            </div>
-            <div class="tile-card tile-saas" onclick="forceNavigate('lux-saas.html')">
-                <span class="tile-icon">✦</span>
-                <span class="tile-title">LUX SaaS Solution</span>
-            </div>
+            <div class="tile-card" onclick="safeJump('cafe-lux.html?view=menu')"><span class="tile-icon">🛒</span><span class="tile-title">Commander</span></div>
+            <div class="tile-card" onclick="safeJump('cafe-lux.html?view=offers')"><span class="tile-icon">🎁</span><span class="tile-title">Offres</span></div>
+            <div class="tile-card" onclick="safeJump('cafe-lux.html?view=booking')"><span class="tile-icon">📅</span><span class="tile-title">Réservations</span></div>
+            <div class="tile-card" onclick="safeJump('cafe-lux.html?view=account')"><span class="tile-icon">👤</span><span class="tile-title">Mon Espace</span></div>
         </div>
 
         <h2 class="section-title">Accès Pro 🔐</h2>
         <div class="gateway-grid">
-            <div class="tile-card" onclick="openPin('pos')">
-                <span class="tile-icon">🧾</span>
-                <span class="tile-title">Caisse</span>
-            </div>
-            <div class="tile-card" onclick="openPin('admin')">
-                <span class="tile-icon">📊</span>
-                <span class="tile-title">Admin</span>
-            </div>
-            <div class="tile-card" onclick="openPin('kitchen')">
-                <span class="tile-icon">📺</span>
-                <span class="tile-title">Cuisine</span>
-            </div>
-            <div class="tile-card" onclick="openPin('staff')">
-                <span class="tile-icon">👥</span>
-                <span class="tile-title">Staff</span>
-            </div>
+            <div class="tile-card" onclick="openGate('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse</span></div>
+            <div class="tile-card" onclick="openGate('admin')"><span class="tile-icon">📊</span><span class="tile-title">Admin</span></div>
         </div>
     </div>
 
-    <div id="pro-overlay">
-        <button class="close-btn" onclick="closeOverlay()">✕ Quitter</button>
-        <iframe id="pro-iframe"></iframe>
-    </div>
+    <div id="pro-overlay"><button class="close-btn" onclick="location.reload()">✕ Fermer</button><iframe id="pro-iframe"></iframe></div>
 
     <div id="pin-modal">
         <div class="pin-box">
-            <h3 style="color:var(--gold); font-family:Cinzel;">Code PIN</h3>
-            <div class="pin-dots" id="dots">
-                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            </div>
+            <div id="pin-display" style="font-size:24px; letter-spacing:10px; margin-bottom:20px; color:var(--gold)">____</div>
             <div class="numpad">
-                <script>
-                    for(let i=1; i<=9; i++) document.write(`<button class="num-btn" onclick="addNum(${i})">${i}</button>`);
-                </script>
-                <button class="num-btn" style="background:#211" onclick="clearPin()">C</button>
-                <button class="num-btn" onclick="addNum(0)">0</button>
-                <button class="num-btn" onclick="hidePin()">✕</button>
+                <script>for(let i=1;i<=9;i++) document.write(`<button class="num-btn" onclick="addN(${i})">${i}</button>`);</script>
+                <button class="num-btn" onclick="addN(0)">0</button>
+                <button class="num-btn" style="background:#311" onclick="resetP()">C</button>
+                <button class="num-btn" onclick="document.getElementById('pin-modal').style.display='none'">✕</button>
             </div>
         </div>
     </div>
 
     <script>
-        let pin = "";
-        let role = "";
-
-        // الحل الجوهري للرجفة: فرض التنقل المباشر وتجاوز السكربتات المعلقة
-        function forceNavigate(url) {
-            window.stop(); // إيقاف أي عمليات تحميل جارية تسبب الرجفة
-            window.location.assign(url);
-        }
-
-        function openPin(r) {
-            role = r; pin = ""; updateDots();
-            document.getElementById('pin-modal').style.display = 'flex';
-        }
-
-        function hidePin() { document.getElementById('pin-modal').style.display = 'none'; }
-
-        function addNum(n) {
-            if(pin.length < 4) {
-                pin += n; updateDots();
-                if(pin.length === 4) setTimeout(validate, 200);
-            }
-        }
-
-        function updateDots() {
-            const d = document.getElementById('dots').children;
-            for(let i=0; i<4; i++) d[i].className = i < pin.length ? 'dot filled' : 'dot';
-        }
-
-        function clearPin() { pin = ""; updateDots(); }
-
-        function validate() {
-            if((role==='admin' && pin==='9999') || (role!=='admin' && pin==='1234')) {
-                document.getElementById('pro-iframe').src = `cafe-lux.html?mode=${role}`;
+        let p = ""; let r = "";
+        // منع الرعشة بالحاسوب عبر إيقاف العمليات المعلقة قبل الانتقال
+        function safeJump(u) { window.stop(); location.href = u; }
+        
+        function openGate(role) { r = role; p = ""; updateD(); document.getElementById('pin-modal').style.display = 'flex'; }
+        function addN(n) { if(p.length < 4) { p += n; updateD(); if(p.length === 4) setTimeout(verify, 200); } }
+        function updateD() { document.getElementById('pin-display').innerText = "●".repeat(p.length) + "_".repeat(4-p.length); }
+        function resetP() { p = ""; updateD(); }
+        function verify() {
+            if((r==='admin' && p==='9999') || (r!=='admin' && p==='1234')) {
+                document.getElementById('pro-iframe').src = `cafe-lux.html?mode=${r}`;
                 document.getElementById('pro-overlay').style.display = 'block';
-                hidePin();
-            } else {
-                alert("PIN incorrect"); clearPin();
-            }
-        }
-
-        function closeOverlay() {
-            document.getElementById('pro-overlay').style.display = 'none';
-            document.getElementById('pro-iframe').src = "";
+                document.getElementById('pin-modal').style.display = 'none';
+            } else { alert("PIN Incorrect"); resetP(); }
         }
     </script>
 </body>
