@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+<!-- Café LUX v2.3 — PIN:secured | PayPal:WhatsApp | Print:@media -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Café LUX — Taza · Café & Pâtisserie</title>
+<title>Café LUX Taza · v2.3</title>
 <meta name="description" content="Café LUX Taza — Savourez les meilleures créations café & pâtisserie au cœur de Taza. Commander en ligne, livraison disponible.">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -232,8 +233,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 .pin-title{font-family:'Cormorant Garamond',serif;color:var(--gold);font-size:22px;margin-bottom:4px;}
 .pin-sub{font-size:11px;color:var(--muted);margin-bottom:24px;}
 .pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:24px;}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:.2s;}
-.pin-dot.filled{background:var(--gold);border-color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(201,168,76,.4);transition:.15s;background:transparent;}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);box-shadow:0 0 8px rgba(201,168,76,.5);}
+.pin-dot.filled::after{content:none;}
 .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto 14px;}
 .pin-key{
   background:var(--bg3);border:1px solid var(--border);border-radius:10px;
@@ -1067,6 +1069,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 .pay-step.active{color:#C9A84C;border-bottom-color:#C9A84C;font-weight:600;}
 .pay-step.done{color:#3DBE7A;border-bottom-color:#3DBE7A;}
 
+
+/* ── PRINT STYLES ── */
+@media print {
+  body > *:not(#lux-print-area) { display: none !important; }
+  #lux-print-area { display: block !important; margin: 0; padding: 0; }
+  #lux-print-area * { visibility: visible !important; }
+}
+#lux-print-area { display: none; }
 </style>
 </head>
 <body>
@@ -1083,33 +1093,33 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- Public tiles -->
   <div class="gw-section-label">Espace Client</div>
   <div class="gw-grid">
-    <div class="gw-tile public" onclick="enterPublic()">
+    <div class="gw-tile public" ontouchstart="enterPublic()" onclick="enterPublic()">
       <span class="ti">☕</span>
       <span class="tn">Commander</span>
       <span class="ts">Menu &amp; Livraison</span>
       <span class="badge-new">Live</span>
     </div>
-    <div class="gw-tile public" onclick="enterPublicOffers()">
+    <div class="gw-tile public" ontouchstart="enterPublicOffers()" onclick="enterPublicOffers()">
       <span class="ti">🎁</span>
       <span class="tn">Offres du Jour</span>
       <span class="ts">Promotions &amp; coupons</span>
     </div>
-    <div class="gw-tile public" onclick="enterTracking()">
+    <div class="gw-tile public" ontouchstart="enterTracking()" onclick="enterTracking()">
       <span class="ti">🛵</span>
       <span class="tn">Suivi Livraison</span>
       <span class="ts">Mes commandes</span>
     </div>
-    <div class="gw-tile public" onclick="enterReservation()">
+    <div class="gw-tile public" ontouchstart="enterReservation()" onclick="enterReservation()">
       <span class="ti">📅</span>
       <span class="tn">Réserver</span>
       <span class="ts">Table &amp; événements</span>
     </div>
-    <div class="gw-tile public" onclick="enterQR()">
+    <div class="gw-tile public" ontouchstart="enterQR()" onclick="enterQR()">
       <span class="ti">📲</span>
       <span class="tn">QR Tables</span>
       <span class="ts">Commander à table</span>
     </div>
-    <div class="gw-tile public" onclick="enterPublic(); switchTab('account', null);">
+    <div class="gw-tile public" ontouchstart="enterPublic(); switchTab('account', null);" onclick="enterPublic(); switchTab('account', null);">
       <span class="ti">👤</span>
       <span class="tn">Mon Espace</span>
       <span class="ts">Fidélité &amp; wallet</span>
@@ -1121,22 +1131,22 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- Staff tiles -->
   <div class="gw-section-label">🔐 Espace Professionnel</div>
   <div class="gw-grid-2">
-    <div class="gw-tile private" onclick="askPIN('pos')">
+    <div class="gw-tile private" ontouchstart="askPIN('pos')" onclick="askPIN('pos')">
       <span class="ti">🧾</span>
       <span class="tn">POS</span>
       <span class="ts">Caisse POS · Accès privé</span>
     </div>
-    <div class="gw-tile private" onclick="askPIN('admin')">
+    <div class="gw-tile private" ontouchstart="askPIN('admin')" onclick="askPIN('admin')">
       <span class="ti">⚙️</span>
       <span class="tn">Administration</span>
       <span class="ts">Dashboard · Accès privé</span>
     </div>
-    <div class="gw-tile private" onclick="askPIN('staff')">
+    <div class="gw-tile private" ontouchstart="askPIN('staff')" onclick="askPIN('staff')">
       <span class="ti">👥</span>
       <span class="tn">Staff Portal</span>
       <span class="ts">Équipe · Accès privé</span>
     </div>
-    <div class="gw-tile private" onclick="askPIN('kds')">
+    <div class="gw-tile private" ontouchstart="askPIN('kds')" onclick="askPIN('kds')">
       <span class="ti">📺</span>
       <span class="tn">Cuisine KDS</span>
       <span class="ts">Affichage cuisine</span>
@@ -1160,17 +1170,23 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <div class="pin-box">
     <div class="pin-title">🔐 Accès Privé</div>
     <div class="pin-sub" id="pin-modal-sub">Entrez votre code PIN</div>
-    <div class="pin-dots" id="pin-dots">
+    <!-- Real password input (hidden visually, captures keyboard on mobile) -->
+    <input type="password" id="pin-real-input" inputmode="numeric" pattern="[0-9]*"
+      maxlength="4" autocomplete="off"
+      style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"
+      oninput="onPinRealInput(this.value)">
+    <!-- Visual dots -->
+    <div class="pin-dots" id="pin-dots" onclick="document.getElementById('pin-real-input').focus()">
       <div class="pin-dot" id="pd0"></div>
       <div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div>
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-pad" id="pin-pad">
-      <button class="pin-key" onclick="pinKey(1)">1</button><button class="pin-key" onclick="pinKey(2)">2</button><button class="pin-key" onclick="pinKey(3)">3</button>
-      <button class="pin-key" onclick="pinKey(4)">4</button><button class="pin-key" onclick="pinKey(5)">5</button><button class="pin-key" onclick="pinKey(6)">6</button>
-      <button class="pin-key" onclick="pinKey(7)">7</button><button class="pin-key" onclick="pinKey(8)">8</button><button class="pin-key" onclick="pinKey(9)">9</button>
-      <button class="pin-key sm" onclick="pinCancel()">✕</button><button class="pin-key" onclick="pinKey(0)">0</button><button class="pin-key sm" onclick="pinDel()">⌫</button>
+      <button class="pin-key" ontouchstart="pinKey(1)" onclick="pinKey(1)">1</button><button class="pin-key" ontouchstart="pinKey(2)" onclick="pinKey(2)">2</button><button class="pin-key" ontouchstart="pinKey(3)" onclick="pinKey(3)">3</button>
+      <button class="pin-key" ontouchstart="pinKey(4)" onclick="pinKey(4)">4</button><button class="pin-key" ontouchstart="pinKey(5)" onclick="pinKey(5)">5</button><button class="pin-key" ontouchstart="pinKey(6)" onclick="pinKey(6)">6</button>
+      <button class="pin-key" ontouchstart="pinKey(7)" onclick="pinKey(7)">7</button><button class="pin-key" ontouchstart="pinKey(8)" onclick="pinKey(8)">8</button><button class="pin-key" ontouchstart="pinKey(9)" onclick="pinKey(9)">9</button>
+      <button class="pin-key sm" ontouchstart="pinCancel()" onclick="pinCancel()">✕</button><button class="pin-key" ontouchstart="pinKey(0)" onclick="pinKey(0)">0</button><button class="pin-key sm" ontouchstart="pinDel()" onclick="pinDel()">⌫</button>
     </div>
     <div class="pin-err" id="pin-err"></div>
     <a class="pin-cancel" onclick="closePIN()">Annuler</a>
@@ -1279,7 +1295,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
           <input class="cf-input" id="gc-pay-code" type="text" placeholder="LUX-XXXX" style="text-transform:uppercase;letter-spacing:2px;font-size:16px;text-align:center">
           <div id="gc-pay-result" style="font-size:11px;margin-top:4px"></div>
         </div>
-        <button onclick="goPayStep(3)" style="width:100%;padding:13px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:12px">Confirmer le paiement →</button>
+        <button onclick="goPayStep(3)" id="btn-pay-confirm" style="width:100%;padding:13px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:12px">Confirmer →</button>
         <button onclick="goPayStep(1)" style="width:100%;padding:10px;background:none;border:none;color:#AAA;cursor:pointer;margin-top:4px;font-size:12px;">← Retour</button>
       </div>
 
@@ -2028,35 +2044,66 @@ function scrollTop(){window.scrollTo({top:0,behavior:'smooth'});}
 function askPIN(target){
   currentPINTarget = target;
   pinBuffer = '';
+  var realInput = document.getElementById('pin-real-input');
+  if(realInput){ realInput.value = ''; }
   updatePinDots();
-  document.getElementById('pin-err').textContent='';
-  const labels={pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
-  document.getElementById('pin-modal-sub').textContent = 'Accès: ' + (labels[target]||target);
-  document.getElementById('pin-modal').classList.add('open');
+  var errEl = document.getElementById('pin-err');
+  if(errEl) errEl.textContent = '';
+  var labels = {pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
+  var subEl = document.getElementById('pin-modal-sub');
+  if(subEl) subEl.textContent = 'Accès: ' + (labels[target]||target);
+  var modal = document.getElementById('pin-modal');
+  if(modal) modal.classList.add('open');
+  // Focus hidden input to capture keyboard on mobile
+  setTimeout(function(){ if(realInput) realInput.focus(); }, 100);
 }
 function closePIN(){
-  document.getElementById('pin-modal').classList.remove('open');
-  pinBuffer='';currentPINTarget=null;
+  var modal = document.getElementById('pin-modal');
+  if(modal) modal.classList.remove('open');
+  var realInput = document.getElementById('pin-real-input');
+  if(realInput) realInput.value = '';
+  pinBuffer = '';
+  currentPINTarget = null;
 }
 function pinKey(n){
-  if(pinBuffer.length>=4)return;
-  pinBuffer+=String(n);
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += String(n);
+  // Sync hidden real input (keeps browser from showing value)
+  var realInput = document.getElementById('pin-real-input');
+  if(realInput) realInput.value = pinBuffer;
   updatePinDots();
-  if(pinBuffer.length===4) setTimeout(checkPIN,150);
+  if(pinBuffer.length === 4) setTimeout(checkPIN, 150);
 }
-function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
-function pinCancel(){closePIN();}
+function pinDel(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  var realInput = document.getElementById('pin-real-input');
+  if(realInput) realInput.value = pinBuffer;
+  updatePinDots();
+}
+function pinCancel(){ closePIN(); }
 function updatePinDots(){
-  // Update visual dots (●/○)
-  for(let i=0;i<4;i++){
-    const d=document.getElementById('pd'+i);
-    if(!d) continue;
-    d.classList.toggle('filled', i < pinBuffer.length);
-    d.textContent = i < pinBuffer.length ? '●' : '';
+  for(var i=0;i<4;i++){
+    var dot = document.getElementById('pd'+i);
+    if(!dot) continue;
+    if(i < pinBuffer.length){
+      dot.classList.add('filled');
+      dot.setAttribute('aria-label','●');
+      // Show filled dot — never show the digit
+      dot.textContent = '';  // CSS ::after handles the ● via background
+    } else {
+      dot.classList.remove('filled');
+      dot.textContent = '';
+    }
   }
-  // Hide any stray text in pin-modal that might show the buffer
-  const errEl = document.getElementById('pin-err');
-  if(errEl && errEl.textContent === pinBuffer) errEl.textContent = '';
+}
+function onPinRealInput(val){
+  // Sync from real keyboard input to pinBuffer (digits only)
+  var clean = val.replace(/\D/g,'').slice(0,4);
+  var realInput = document.getElementById('pin-real-input');
+  if(realInput) realInput.value = clean;  // keep in sync
+  pinBuffer = clean;
+  updatePinDots();
+  if(pinBuffer.length === 4) setTimeout(checkPIN, 150);
 }
 function checkPIN(){
   var correct = PINS[currentPINTarget] || '9999';
@@ -4119,6 +4166,18 @@ function selectPayMethod(m, btn){
   selectedPayMethod = m;
   document.querySelectorAll('.pay-method').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
+
+  // Update confirm button label based on payment method
+  var confirmBtn = document.getElementById('btn-pay-confirm');
+  if(confirmBtn){
+    if(m === 'paypal'){
+      confirmBtn.textContent = 'Payer via WhatsApp →';
+      confirmBtn.style.background = '#25D366';
+    } else {
+      confirmBtn.textContent = 'Confirmer →';
+      confirmBtn.style.background = '#C9A84C';
+    }
+  }
 }
 
 function goPayStep(step){
@@ -4134,7 +4193,37 @@ function goPayStep(step){
       if(f) f.classList.toggle('show', m===selectedPayMethod);
     });
   }
-  if(step===3) processPayment();
+  if(step===3){
+    // Block PayPal from going to payment confirmation step
+    if(selectedPayMethod === 'paypal'){
+      // Block PayPal fake confirmation — redirect to WhatsApp
+      var total = paymentOrderData ? paymentOrderData.total : '?';
+      var name  = paymentOrderData ? paymentOrderData.name  : 'Client';
+      var waMsg = encodeURIComponent('✦ Paiement Café LUX\n\nClient: '+name+'\nMontant: '+total+' MAD\nMode: PayPal\n\nMerci de confirmer.');
+      var waUrl = 'https://wa.me/212677717201?text=' + waMsg;
+      var ppForm = document.getElementById('form-paypal');
+      if(ppForm){
+        ppForm.innerHTML =
+          '<div style="padding:20px;text-align:center">' +
+          '<div style="font-size:36px;margin-bottom:10px">\u{1F4F2}</div>' +
+          '<div style="font-weight:800;font-size:15px;margin-bottom:8px;color:#1A0A00">Paiement via WhatsApp</div>' +
+          '<div style="font-size:12px;color:#666;margin-bottom:16px">Votre commande sera confirm\u00e9e apr\u00e8s validation.</div>' +
+          '<button id="wa-pay-btn" style="padding:13px 24px;background:#25D366;color:#fff;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:14px;width:100%">' +
+          '\u{1F4F2} Contacter via WhatsApp</button>' +
+          '<div style="font-size:10px;color:#AAA;margin-top:10px">PayPal direct disponible prochainement.</div>' +
+          '</div>';
+        // Attach onclick after DOM insert to avoid quote escaping
+        setTimeout(function(){
+          var wab = document.getElementById('wa-pay-btn');
+          if(wab) wab.onclick = function(){ window.open(waUrl,'_blank'); };
+        }, 50);
+      } else {
+        window.open(waUrl, '_blank');
+      }
+      return;
+    }
+    processPayment();
+  }
 }
 
 function formatCard(input){
@@ -4148,69 +4237,83 @@ function formatExp(input){
 }
 
 function processPayment(){
-  const proc = document.getElementById('pay-processing');
-  const succ = document.getElementById('pay-success');
-  proc.classList.add('show'); succ.classList.remove('show');
+  var proc = document.getElementById('pay-processing');
+  var succ = document.getElementById('pay-success');
+  if(proc){ proc.classList.add('show'); }
+  if(succ){ succ.classList.remove('show'); }
 
-  // ── Validate per payment method ─────────────────────────
-  if(selectedPayMethod==='cmi'){
-    const num = document.getElementById('cc-num')?.value.replace(/\s/g,'');
-    const exp = document.getElementById('cc-exp')?.value.trim();
-    const cvv = document.getElementById('cc-cvv')?.value.trim();
-    if(!num||num.length<16){showPayError('Numéro de carte invalide (16 chiffres)');return;}
-    if(!exp||exp.length<4){showPayError('Date d\'expiration invalide (MM/AA)');return;}
-    if(!cvv||cvv.length<3){showPayError('CVV invalide (3-4 chiffres)');return;}
+  // ── CMI Card: validate fields ─────────────────────────
+  if(selectedPayMethod === 'cmi'){
+    var num = (document.getElementById('cc-num')?.value||'').replace(/\s/g,'');
+    var exp = (document.getElementById('cc-exp')?.value||'').trim();
+    var cvv = (document.getElementById('cc-cvv')?.value||'').trim();
+    if(!num || num.length < 16){ showPayError('Numéro de carte invalide (16 chiffres)'); return; }
+    if(!exp || exp.length < 4){  showPayError("Date d'expiration invalide (MM/AA)"); return; }
+    if(!cvv || cvv.length < 3){  showPayError('CVV invalide'); return; }
+    // Valid card → confirm
+    setTimeout(_confirmPayment, 1800);
+    return;
   }
-  else if(selectedPayMethod==='paypal'){
-    // ── PayPal: require real credentials before confirming ─
-    const ppEmail = document.getElementById('pp-email')?.value.trim();
-    const ppPass  = document.getElementById('pp-pass')?.value.trim();
-    if(!ppEmail || !/^[^@]+@[^@]+\.[^@]+$/.test(ppEmail)){
-      showPayError('Email PayPal invalide');
-      proc.classList.remove('show');
-      return;
+
+  // ── PayPal: NO simulation — redirect to real WhatsApp payment ─
+  if(selectedPayMethod === 'paypal'){
+    if(proc) proc.classList.remove('show');
+    var total = paymentOrderData ? paymentOrderData.total : '?';
+    var name  = paymentOrderData ? paymentOrderData.name  : '';
+    var msg = encodeURIComponent(
+      '✦ Paiement Café LUX\n\n' +
+      'Client: ' + name + '\n' +
+      'Montant: ' + total + ' MAD\n' +
+      'Mode: PayPal\n\n' +
+      'Merci de confirmer votre virement ou paiement.'
+    );
+    // Show a clear message before redirecting
+    var ppForm = document.getElementById('form-paypal');
+    if(ppForm){
+      ppForm.innerHTML = '<div style="padding:20px;text-align:center">' +
+        '<div style="font-size:32px;margin-bottom:12px">📱</div>' +
+        '<div style="font-weight:700;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>' +
+        '<div style="font-size:12px;color:#666;margin-bottom:16px">PayPal non disponible directement.<br>Nous allons vous contacter sur WhatsApp pour finaliser le paiement.</div>' +
+        '<button onclick="window.open(\'https://wa.me/212677717201?text='+msg+'\',\'_blank\')" ' +
+        'style="padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px">📲 Ouvrir WhatsApp</button>' +
+        '</div>';
     }
-    if(!ppPass || ppPass.length < 6){
-      showPayError('Mot de passe PayPal requis (min. 6 caractères)');
-      proc.classList.remove('show');
-      return;
-    }
-    // Simulate PayPal auth check (in production replace with real PayPal SDK)
-    // For now: validate credentials format, then show redirect simulation
-    const ppStatus = document.getElementById('pp-status');
-    if(ppStatus){
-      ppStatus.style.display = 'block';
-      ppStatus.textContent = '🔄 Connexion PayPal en cours...';
-      ppStatus.style.color = '#003087';
-    }
-    // Simulate a 2.5s PayPal processing delay with status updates
-    setTimeout(() => {
-      if(ppStatus) ppStatus.textContent = '✓ Compte PayPal vérifié';
-      setTimeout(() => {
-        if(ppStatus) ppStatus.textContent = '🔄 Autorisation du paiement...';
-        setTimeout(() => {
-          _confirmPayment();
-        }, 1200);
-      }, 800);
-    }, 1500);
-    return; // Exit here — PayPal has its own async flow
+    toast('📲 Redirection WhatsApp pour finaliser le paiement...');
+    setTimeout(function(){
+      window.open('https://wa.me/212677717201?text='+msg, '_blank');
+    }, 800);
+    // Do NOT show fake confirmation
+    return;
   }
-  else if(selectedPayMethod==='gc'){
-    const code = document.getElementById('gc-pay-code')?.value.trim().toUpperCase();
-    const allGC = getLS('lux_gift_cards',[]);
-    const gc = allGC.find(g=>g.code===code&&g.status!=='used');
-    if(!gc){showPayError('Code cadeau invalide');proc.classList.remove('show');return;}
-    const total = parseFloat(paymentOrderData.total);
-    if(gc.balance < total){showPayError('Solde insuffisant ('+gc.balance+' MAD disponible)');proc.classList.remove('show');return;}
-    gc.balance -= total;
+
+  // ── Gift Card: validate balance ───────────────────────
+  if(selectedPayMethod === 'gc'){
+    var code = (document.getElementById('gc-pay-code')?.value||'').trim().toUpperCase();
+    var allGC = getLS('lux_gift_cards',[]);
+    var gc = allGC.find(function(g){ return g.code===code && g.status!=='used'; });
+    if(!gc){ showPayError('Code cadeau invalide'); proc.classList.remove('show'); return; }
+    var total2 = parseFloat(paymentOrderData.total);
+    if(gc.balance < total2){ showPayError('Solde insuffisant ('+gc.balance+' MAD)'); proc.classList.remove('show'); return; }
+    gc.balance -= total2;
     if(gc.balance <= 0) gc.status = 'used';
     setLS('lux_gift_cards', allGC);
+    setTimeout(_confirmPayment, 1200);
+    return;
   }
-  // Cash or validated methods → confirm after brief processing
-  setTimeout(_confirmPayment, 1800 + Math.random()*600);
+
+  // ── Cash / default: instant confirm ──────────────────
+  setTimeout(_confirmPayment, 1000);
 }
 
 function _confirmPayment(){
+  // ABSOLUTE BLOCK: PayPal must NEVER confirm via this function
+  if(typeof selectedPayMethod !== 'undefined' && selectedPayMethod === 'paypal'){
+    console.error('[LUX] PayPal confirmation blocked — use onApprove callback only');
+    var proc2 = document.getElementById('pay-processing');
+    if(proc2) proc2.classList.remove('show');
+    toast('❌ PayPal: veuillez utiliser le bouton WhatsApp pour finaliser.');
+    return;
+  }
   const proc = document.getElementById('pay-processing');
   const succ = document.getElementById('pay-success');
   const ppStatus = document.getElementById('pp-status');
@@ -4233,74 +4336,46 @@ function showPayError(msg){
 
 // ── SILENT PRINT HELPER (no popup window) ────────────────────────────
 function printSilent(htmlContent) {
-  // Create a hidden iframe for printing — no popup, no new tab
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
-  document.body.appendChild(iframe);
-  var iDoc = iframe.contentDocument || iframe.contentWindow.document;
-  iDoc.open();
-  iDoc.write(htmlContent);
-  iDoc.close();
-  // Wait for content to load, then print and remove
-  iframe.onload = function(){
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch(e) { console.warn('[LUX] Print error:', e); }
-    setTimeout(function(){ document.body.removeChild(iframe); }, 2000);
-  };
-  // Fallback: trigger after timeout
-  setTimeout(function(){
-    if(document.body.contains(iframe)){
-      try { iframe.contentWindow.print(); } catch(e){}
-      setTimeout(function(){ if(document.body.contains(iframe)) document.body.removeChild(iframe); }, 2000);
-    }
-  }, 800);
+  // @media print approach — no popup, no iframe issues
+  var printArea = document.getElementById('lux-print-area');
+  if(!printArea){
+    printArea = document.createElement('div');
+    printArea.id = 'lux-print-area';
+    document.body.appendChild(printArea);
+  }
+  printArea.innerHTML = htmlContent;
+  // Trigger print
+  window.print();
+  // Clean up after print dialog closes
+  setTimeout(function(){ printArea.innerHTML = ''; }, 2000);
+  toast('🖨 Impression...');
 }
 
 function printOrderReceipt(ref) {
   var d = paymentOrderData || {};
-  var items = (cart.length ? cart : getLS('lux_last_cart',[]));
-  var itemRows = items.map(function(c){
-    return '<tr><td>'+c.n+'</td><td style="text-align:center">×'+c.q+'</td><td style="text-align:right;color:#C9A84C">'+((c.p*c.q).toFixed(2))+' MAD</td></tr>';
+  var items = cart.length ? cart : getLS('lux_last_cart',[]);
+  var rows = items.map(function(c){
+    return '<tr><td>'+c.n+'</td><td align="center">x'+c.q+'</td><td align="right" style="color:#C9A84C">'+((c.p*c.q).toFixed(2))+' MAD</td></tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<title>Reçu Café LUX</title>'
-    +'<style>'
-    +'*{margin:0;padding:0;box-sizing:border-box;font-family:monospace;}'
-    +'body{width:80mm;padding:8px;font-size:12px;color:#111;}'
-    +'h1{text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:2px;}'
-    +'.sub{text-align:center;font-size:10px;color:#666;margin-bottom:8px;}'
-    +'.sep{border:none;border-top:1px dashed #888;margin:6px 0;}'
-    +'table{width:100%;border-collapse:collapse;}'
-    +'td{padding:3px 2px;vertical-align:top;}'
-    +'.total{font-weight:bold;font-size:14px;}'
-    +'.ref{text-align:center;font-size:11px;margin-top:8px;color:#555;}'
-    +'.thanks{text-align:center;font-size:11px;margin-top:10px;}'
-    +'@media print{body{width:100%;padding:4px;}}'
-    +'</style></head><body>'
-    +'<h1>✦ CAFÉ LUX</h1>'
-    +'<div class="sub">Résidence Ziat N28, Taza · +212 808524169</div>'
-    +'<hr class="sep">'
-    +'<div style="font-size:11px;margin-bottom:4px">'
-    +'<span>Date: '+today()+'</span>&nbsp;&nbsp;<span>Heure: '+nowTime()+'</span>'
-    +'</div>'
-    +(d.name ? '<div style="font-size:11px">Client: '+d.name+(d.phone?' · '+d.phone:'')+'</div>' : '')
-    +'<hr class="sep">'
-    +'<table>'+itemRows+'</table>'
-    +'<hr class="sep">'
-    +'<table>'
-    +(d.delFee && parseFloat(d.delFee)>0 ? '<tr><td>Livraison</td><td></td><td style="text-align:right">'+parseFloat(d.delFee).toFixed(2)+' MAD</td></tr>' : '')
-    +(d.discount && parseFloat(d.discount)>0 ? '<tr><td>Réduction</td><td></td><td style="text-align:right;color:green">-'+parseFloat(d.discount).toFixed(2)+' MAD</td></tr>' : '')
-    +'<tr><td class="total">TOTAL</td><td></td><td class="total" style="text-align:right;color:#C9A84C">'+(d.total||'0.00')+' MAD</td></tr>'
-    +'</table>'
-    +'<div class="ref">Réf: '+(ref||'LUX-XXXXXX')+'</div>'
-    +'<div class="ref">Mode: '+(typeof selectedPayMethod!=='undefined'?selectedPayMethod.toUpperCase():'')+'</div>'
-    +'<hr class="sep">'
-    +'<div class="thanks">Merci pour votre visite!<br>cafeslux.com</div>'
-    +'</body></html>';
+  var html =
+    '<div style="font-family:monospace;width:300px;padding:12px;color:#111">' +
+    '<div style="text-align:center;font-size:18px;font-weight:900;letter-spacing:4px;margin-bottom:4px">✦ CAFÉ LUX</div>' +
+    '<div style="text-align:center;font-size:10px;color:#666;margin-bottom:12px">Résidence Ziat N28, Taza · +212 808524169</div>' +
+    '<div style="border-top:1px dashed #888;margin:8px 0"></div>' +
+    '<div style="font-size:11px">Date: '+today()+'&nbsp;&nbsp;Heure: '+nowTime()+'</div>' +
+    (d.name?'<div style="font-size:11px">Client: '+d.name+(d.phone?' · '+d.phone:'')+'</div>':'') +
+    '<div style="border-top:1px dashed #888;margin:8px 0"></div>' +
+    '<table style="width:100%;font-size:12px;border-collapse:collapse">'+rows+'</table>' +
+    '<div style="border-top:1px dashed #888;margin:8px 0"></div>' +
+    '<table style="width:100%;font-size:12px">' +
+    (d.delFee&&parseFloat(d.delFee)>0?'<tr><td>Livraison</td><td align="right">'+parseFloat(d.delFee).toFixed(2)+' MAD</td></tr>':'') +
+    (d.discount&&parseFloat(d.discount)>0?'<tr><td>Réduction</td><td align="right" style="color:green">-'+parseFloat(d.discount).toFixed(2)+' MAD</td></tr>':'') +
+    '<tr><td style="font-weight:900;font-size:14px">TOTAL</td><td align="right" style="font-weight:900;font-size:14px;color:#C9A84C">'+parseFloat(d.total||0).toFixed(2)+' MAD</td></tr>' +
+    '</table>' +
+    '<div style="text-align:center;font-size:10px;color:#777;margin-top:12px">Réf: '+(ref||'LUX-XXXXXX')+'</div>' +
+    '<div style="text-align:center;font-size:11px;margin-top:8px;border-top:1px dashed #888;padding-top:8px">Merci pour votre visite!<br>cafeslux.com</div>' +
+    '</div>';
   printSilent(html);
-  toast('🖨 Impression du reçu...');
 }
 function finalizeOrderAfterPayment(ref){
   const d = paymentOrderData;
