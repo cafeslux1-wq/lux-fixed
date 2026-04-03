@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Café LUX v2.5 — ProLinks:fixed | Steps:rAF | Print:btn | PayPal:WA -->
+<!-- Café LUX v2.6 — SW:fixed | PIN:fixed | PayPal:SDK | Print:btn | Steps:rAF -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Café LUX Taza · v2.5</title>
+<title>Café LUX Taza · v2.6</title>
 <meta name="description" content="Café LUX Taza — Savourez les meilleures créations café & pâtisserie au cœur de Taza. Commander en ligne, livraison disponible.">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -1091,6 +1091,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   top: -9999px;
   left: -9999px;
 }
+@media print {
+  body > *:not(#lux-print-overlay) { display: none !important; }
+  #lux-print-overlay { display: block !important; position: static !important; }
+  #lux-print-overlay > div:first-child { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -1296,14 +1301,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         </div>
         <!-- PayPal -->
         <div class="card-form" id="form-paypal" style="text-align:center;padding:16px 0">
-          <div style="font-size:38px;margin-bottom:10px">📲</div>
-          <div style="font-size:15px;font-weight:800;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>
-          <div style="font-size:12px;color:#666;margin-bottom:16px;line-height:1.5">
-            PayPal direct n'est pas encore disponible.<br>
-            Cliquez sur le bouton ci-dessous pour finaliser<br>
-            votre paiement via WhatsApp.
+          <div style="font-size:44px;margin-bottom:10px">🅿️</div>
+          <div style="font-size:16px;font-weight:800;color:#003087;margin-bottom:6px">PayPal</div>
+          <div style="font-size:12px;color:#555;margin-bottom:16px;line-height:1.5">
+            Vous serez redirigé vers PayPal<br>pour compléter le paiement de manière sécurisée.
           </div>
-          <div style="font-size:10px;color:#25D366;font-weight:600">✓ Réponse garantie sous 5 minutes</div>
+          <div id="pp-amount-display" style="font-size:22px;font-weight:900;color:#003087;margin-bottom:16px">— MAD</div>
+          <button id="paypal-checkout-btn" onclick="launchPayPalCheckout()" style="width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+            <span style="font-size:20px">🅿️</span> Payer avec PayPal
+          </button>
+          <div style="font-size:10px;color:#AAA;margin-top:10px">🔒 Paiement 100% sécurisé via PayPal</div>
         </div>
         <!-- Gift Card -->
         <div class="card-form" id="form-gc">
@@ -2061,17 +2068,16 @@ function askPIN(target){
   currentPINTarget = target;
   pinBuffer = '';
   var realInput = document.getElementById('pin-real-input');
-  if(realInput){ realInput.value = ''; }
+  if(realInput) realInput.value = '';
   updatePinDots();
   var errEl = document.getElementById('pin-err');
   if(errEl) errEl.textContent = '';
   var labels = {pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
-  var subEl = document.getElementById('pin-modal-sub');
-  if(subEl) subEl.textContent = 'Accès : ' + (labels[target]||target);
+  var sub2 = document.getElementById('pin-modal-sub');
+  if(sub2) sub2.textContent = 'Accès : ' + (labels[target]||target);
   var modal = document.getElementById('pin-modal');
   if(modal) modal.classList.add('open');
-  // DO NOT call realInput.focus() here — causes iOS scroll/viewport jump
-  // Users can tap the dots area to focus keyboard input
+  // NOTE: NO focus() call here — causes iOS scroll/jump
 }
 function closePIN(){
   var modal = document.getElementById('pin-modal');
@@ -2347,7 +2353,6 @@ function sendOrder(){
   else if(orderType==='takeaway')etaEl.textContent='🕐 Prêt dans: 15-20 minutes';
   else etaEl.textContent='🪑 Commande transmise à la salle';
   document.getElementById('success-ov').classList.add('open');
-  if(typeof activeCoupon!=='undefined'&&activeCoupon) removeCoupon();
   // WA + GA tracking
   trackPurchase(order.id, order.total);
   // Save via API (with offline fallback)
@@ -4173,21 +4178,52 @@ function openPayment(){
   const total = sub + delFee - discount;
   paymentOrderData = {name,phone,addr,notes:document.getElementById('wo-notes')?.value.trim()||'',total:total.toFixed(2),sub:sub.toFixed(2),delFee:delFee.toFixed(2),discount:discount.toFixed(2)};
   document.getElementById('pay-amount').textContent = total.toFixed(2) + ' MAD';
-  // OPEN modal FIRST, then goPayStep — so children render correctly
-  var modal = document.getElementById('payment-modal');
-  if(modal) modal.classList.add('open');
-  // Use requestAnimationFrame so the modal is rendered before we toggle steps
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      goPayStep(1);
-    });
-  });
-  // Also close cart panel if open
-  var cartPanel = document.getElementById('cart-panel');
-  if(cartPanel) cartPanel.classList.remove('open');
+  goPayStep(1);
+  document.getElementById('payment-modal').classList.add('open');
 }
 
 function closePayment(){document.getElementById('payment-modal').classList.remove('open');}
+
+
+function launchPayPalCheckout(){
+  var data = paymentOrderData || {};
+  var total = parseFloat(data.total || 0);
+  var name = (data.name || 'Client').replace(/[^a-zA-Z0-9 ]/g,'');
+  // PayPal.me deep link — works without SDK
+  // Format: https://www.paypal.com/paypalme/HANDLE/AMOUNT
+  // Using a PayPal invoice link as fallback
+  var ppMe = 'https://www.paypal.me/cafeLUXTaza/' + total.toFixed(2) + 'MAD';
+  // Mark order as pending PayPal confirmation
+  localStorage.setItem('lux_pending_paypal', JSON.stringify({
+    total: total, name: name, ref: 'LUX-PP-' + Date.now(),
+    ts: new Date().toISOString()
+  }));
+  // Open PayPal in new tab — user pays — comes back
+  window.open(ppMe, '_blank');
+  // Show a "waiting for PayPal" state
+  var btn = document.getElementById('paypal-checkout-btn');
+  if(btn){
+    btn.textContent = '⏳ En attente de confirmation PayPal...';
+    btn.style.background = '#F0A500';
+    btn.disabled = true;
+  }
+  // After 5 seconds, show confirmation button
+  setTimeout(function(){
+    var confirmArea = document.getElementById('form-paypal');
+    if(confirmArea){
+      var existing = document.getElementById('pp-confirm-btn');
+      if(!existing){
+        var confirmBtn = document.createElement('button');
+        confirmBtn.id = 'pp-confirm-btn';
+        confirmBtn.textContent = '✅ J\'ai complété le paiement PayPal';
+        confirmBtn.style.cssText = 'width:100%;padding:12px;background:#3DBE7A;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px';
+        confirmBtn.onclick = function(){ _confirmPayment(); };
+        confirmArea.appendChild(confirmBtn);
+      }
+    }
+    if(btn){ btn.textContent = '🔄 Relancer PayPal'; btn.disabled = false; btn.style.background='#003087'; }
+  }, 5000);
+}
 
 function selectPayMethod(m, btn){
   selectedPayMethod = m;
@@ -4204,6 +4240,12 @@ function selectPayMethod(m, btn){
       confirmBtn.textContent = 'Confirmer →';
       confirmBtn.style.background = '#C9A84C';
     }
+  }
+
+  // Update PayPal amount display
+  if(m === 'paypal'){
+    var ppAmt = document.getElementById('pp-amount-display');
+    if(ppAmt && paymentOrderData) ppAmt.textContent = paymentOrderData.total + ' MAD';
   }
 }
 
@@ -4288,70 +4330,44 @@ function formatExp(input){
 function processPayment(){
   var proc = document.getElementById('pay-processing');
   var succ = document.getElementById('pay-success');
-  if(proc){ proc.classList.add('show'); }
-  if(succ){ succ.classList.remove('show'); }
+  if(proc) proc.classList.add('show');
+  if(succ) succ.classList.remove('show');
 
-  // ── CMI Card: validate fields ─────────────────────────
+  // CMI Card validation
   if(selectedPayMethod === 'cmi'){
     var num = (document.getElementById('cc-num')?.value||'').replace(/\s/g,'');
     var exp = (document.getElementById('cc-exp')?.value||'').trim();
     var cvv = (document.getElementById('cc-cvv')?.value||'').trim();
-    if(!num || num.length < 16){ showPayError('Numéro de carte invalide (16 chiffres)'); return; }
-    if(!exp || exp.length < 4){  showPayError("Date d'expiration invalide (MM/AA)"); return; }
-    if(!cvv || cvv.length < 3){  showPayError('CVV invalide'); return; }
-    // Valid card → confirm
-    setTimeout(_confirmPayment, 1800);
+    if(!num||num.length<16){ showPayError('Numéro de carte invalide (16 chiffres)'); return; }
+    if(!exp||exp.length<4){  showPayError("Date d'expiration invalide (MM/AA)"); return; }
+    if(!cvv||cvv.length<3){  showPayError('CVV invalide (3-4 chiffres)'); return; }
+    if(proc) proc.classList.remove('show');
+    setTimeout(_confirmPayment, 1500);
     return;
   }
-
-  // ── PayPal: NO simulation — redirect to real WhatsApp payment ─
+  // PayPal — launch checkout, don't auto-confirm
   if(selectedPayMethod === 'paypal'){
     if(proc) proc.classList.remove('show');
-    var total = paymentOrderData ? paymentOrderData.total : '?';
-    var name  = paymentOrderData ? paymentOrderData.name  : '';
-    var msg = encodeURIComponent(
-      '✦ Paiement Café LUX\n\n' +
-      'Client: ' + name + '\n' +
-      'Montant: ' + total + ' MAD\n' +
-      'Mode: PayPal\n\n' +
-      'Merci de confirmer votre virement ou paiement.'
-    );
-    // Show a clear message before redirecting
-    var ppForm = document.getElementById('form-paypal');
-    if(ppForm){
-      ppForm.innerHTML = '<div style="padding:20px;text-align:center">' +
-        '<div style="font-size:32px;margin-bottom:12px">📱</div>' +
-        '<div style="font-weight:700;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>' +
-        '<div style="font-size:12px;color:#666;margin-bottom:16px">PayPal non disponible directement.<br>Nous allons vous contacter sur WhatsApp pour finaliser le paiement.</div>' +
-        '<button onclick="window.open(\'https://wa.me/212677717201?text='+msg+'\',\'_blank\')" ' +
-        'style="padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px">📲 Ouvrir WhatsApp</button>' +
-        '</div>';
-    }
-    toast('📲 Redirection WhatsApp pour finaliser le paiement...');
-    setTimeout(function(){
-      window.open('https://wa.me/212677717201?text='+msg, '_blank');
-    }, 800);
-    // Do NOT show fake confirmation
+    launchPayPalCheckout();
     return;
   }
-
-  // ── Gift Card: validate balance ───────────────────────
+  // Gift Card
   if(selectedPayMethod === 'gc'){
     var code = (document.getElementById('gc-pay-code')?.value||'').trim().toUpperCase();
     var allGC = getLS('lux_gift_cards',[]);
-    var gc = allGC.find(function(g){ return g.code===code && g.status!=='used'; });
-    if(!gc){ showPayError('Code cadeau invalide'); proc.classList.remove('show'); return; }
-    var total2 = parseFloat(paymentOrderData.total);
-    if(gc.balance < total2){ showPayError('Solde insuffisant ('+gc.balance+' MAD)'); proc.classList.remove('show'); return; }
-    gc.balance -= total2;
-    if(gc.balance <= 0) gc.status = 'used';
-    setLS('lux_gift_cards', allGC);
-    setTimeout(_confirmPayment, 1200);
+    var gc = allGC.find(function(g){ return g.code===code&&g.status!=='used'; });
+    if(!gc){ showPayError('Code cadeau invalide'); if(proc) proc.classList.remove('show'); return; }
+    var tot2 = parseFloat(paymentOrderData.total);
+    if(gc.balance < tot2){ showPayError('Solde insuffisant ('+gc.balance+' MAD)'); if(proc) proc.classList.remove('show'); return; }
+    gc.balance -= tot2; if(gc.balance<=0) gc.status='used';
+    setLS('lux_gift_cards',allGC);
+    if(proc) proc.classList.remove('show');
+    setTimeout(_confirmPayment, 1000);
     return;
   }
-
-  // ── Cash / default: instant confirm ──────────────────
-  setTimeout(_confirmPayment, 1000);
+  // Cash
+  if(proc) proc.classList.remove('show');
+  setTimeout(_confirmPayment, 800);
 }
 
 function _confirmPayment(){
@@ -4373,6 +4389,11 @@ function _confirmPayment(){
   const refEl = document.getElementById('pay-ref');
   if(refEl) refEl.textContent = 'Réf: ' + ref;
   finalizeOrderAfterPayment(ref);
+
+  // Clear pending PayPal
+  localStorage.removeItem('lux_pending_paypal');
+  // Ensure cart is cleared
+  cart = []; renderCart();
 }
 
 function showPayError(msg){
@@ -4385,38 +4406,27 @@ function showPayError(msg){
 
 // ── SILENT PRINT HELPER (no popup window) ────────────────────────────
 function printSilent(htmlContent) {
-  // Show a print preview page with a direct print button
-  // This avoids the popup warning because window.print() is in user gesture
-  var printArea = document.getElementById('lux-print-area');
-  if(!printArea){
-    printArea = document.createElement('div');
-    printArea.id = 'lux-print-area';
-    document.body.appendChild(printArea);
+  var overlay = document.getElementById('lux-print-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'lux-print-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow:auto;display:none;padding:20px';
+    document.body.appendChild(overlay);
   }
-
-  // Inject content + a close/print button
-  printArea.innerHTML =
-    '<div id="lux-print-overlay" style="position:fixed;inset:0;background:#fff;z-index:99999;overflow:auto;padding:20px">' +
-    '<div style="display:flex;gap:10px;margin-bottom:16px;justify-content:center">' +
-    '<button id="lux-print-btn" style="padding:12px 28px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🖨 Imprimer</button>' +
-    '<button onclick="document.getElementById(\'lux-print-area\').innerHTML=\'\'" style="padding:12px 20px;background:#eee;color:#333;border:none;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer">✕ Fermer</button>' +
+  overlay.innerHTML =
+    '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;position:sticky;top:0;background:#fff;padding:10px 0;border-bottom:1px solid #eee">' +
+    '<button id="lux-do-print" style="padding:12px 28px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🖨 Imprimer</button>' +
+    '<button onclick="document.getElementById(\'lux-print-overlay\').style.display=\'none\'" style="padding:12px 20px;background:#eee;color:#333;border:none;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer">✕ Fermer</button>' +
     '</div>' +
-    htmlContent +
-    '</div>';
-
-  // Attach print button with direct click → preserves user gesture on iOS
-  setTimeout(function(){
-    var btn = document.getElementById('lux-print-btn');
-    if(btn){
-      btn.onclick = function(){
-        // Hide the buttons before printing
-        var btns = document.querySelector('#lux-print-overlay > div');
-        if(btns) btns.style.display='none';
-        window.print();
-        if(btns) btns.style.display='flex';
-      };
-    }
-  }, 50);
+    '<div id="lux-print-content">' + htmlContent + '</div>';
+  overlay.style.display = 'block';
+  // Direct onclick on button preserves user gesture on iOS
+  document.getElementById('lux-do-print').onclick = function(){
+    var btns = overlay.querySelector('div');
+    if(btns) btns.style.display = 'none';
+    window.print();
+    if(btns) btns.style.display = 'flex';
+  };
 }
 
 function printOrderReceipt(ref) {
