@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Café LUX v2.6 — SW:fixed | PIN:fixed | PayPal:SDK | Print:btn | Steps:rAF -->
+<!-- Café LUX v2.6 FINAL — ProLinks:newTab | Steps:rAF | Print:overlay | PayPal:WA -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -1091,10 +1091,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   top: -9999px;
   left: -9999px;
 }
+
+/* ── Print overlay controls hidden during print ── */
 @media print {
-  body > *:not(#lux-print-overlay) { display: none !important; }
-  #lux-print-overlay { display: block !important; position: static !important; }
-  #lux-print-overlay > div:first-child { display: none !important; }
+  body > * { display: none !important; }
+  body > #lux-print-overlay { display: block !important; }
+  #lux-print-overlay > div:first-child { display: none !important; } /* hide buttons */
 }
 </style>
 </head>
@@ -1213,6 +1215,27 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 </div>
 
 
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PRO SPACE OVERLAY — Full-screen iframe launcher
+     Opens cafe-lux.html inside the current page
+═══════════════════════════════════════════════════════ -->
+<div id="pro-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#080808;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1A0A00,#2D1500);padding:12px 18px;flex-shrink:0">
+    <span style="font-family:'Cinzel',serif;color:#C9A84C;font-size:16px;letter-spacing:3px">✦ LUX</span>
+    <span id="pro-overlay-label" style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">PRO</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button onclick="closeProOverlay()" style="padding:6px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;font-size:12px;cursor:pointer">✕ Fermer</button>
+    </div>
+  </div>
+  <iframe id="pro-iframe" src="" style="flex:1;border:none;width:100%;background:#080808" allowfullscreen></iframe>
+  <div id="pro-loading" style="position:absolute;inset:0;top:48px;display:flex;align-items:center;justify-content:center;background:#080808;flex-direction:column;gap:12px">
+    <div style="font-family:'Cinzel',serif;font-size:24px;color:#C9A84C;letter-spacing:4px">✦ LUX</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.4)">Chargement...</div>
+  </div>
+</div>
+
 <!-- PWA Install Banner -->
 <div id="pwa-banner">
   <div class="pwa-banner-inner">
@@ -1301,16 +1324,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         </div>
         <!-- PayPal -->
         <div class="card-form" id="form-paypal" style="text-align:center;padding:16px 0">
-          <div style="font-size:44px;margin-bottom:10px">🅿️</div>
-          <div style="font-size:16px;font-weight:800;color:#003087;margin-bottom:6px">PayPal</div>
-          <div style="font-size:12px;color:#555;margin-bottom:16px;line-height:1.5">
-            Vous serez redirigé vers PayPal<br>pour compléter le paiement de manière sécurisée.
+          <div style="font-size:40px;margin-bottom:10px">📲</div>
+          <div style="font-size:15px;font-weight:800;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>
+          <div style="font-size:12px;color:#666;margin-bottom:16px;line-height:1.6">
+            L'intégration PayPal directe arrive prochainement.<br>
+            En attendant, cliquez sur <strong>"Payer via WhatsApp →"</strong><br>
+            pour finaliser votre paiement.
           </div>
-          <div id="pp-amount-display" style="font-size:22px;font-weight:900;color:#003087;margin-bottom:16px">— MAD</div>
-          <button id="paypal-checkout-btn" onclick="launchPayPalCheckout()" style="width:100%;padding:14px;background:#003087;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
-            <span style="font-size:20px">🅿️</span> Payer avec PayPal
-          </button>
-          <div style="font-size:10px;color:#AAA;margin-top:10px">🔒 Paiement 100% sécurisé via PayPal</div>
+          <div style="font-size:11px;color:#25D366;font-weight:700">✓ Réponse garantie en moins de 5 minutes</div>
         </div>
         <!-- Gift Card -->
         <div class="card-form" id="form-gc">
@@ -2065,6 +2086,7 @@ function scrollTop(){window.scrollTo({top:0,behavior:'smooth'});}
 
 // ─── PIN ─────────────────────────────────────────────────
 function askPIN(target){
+  if(currentPINTarget && currentPINTarget===target) return; // prevent double-fire
   currentPINTarget = target;
   pinBuffer = '';
   var realInput = document.getElementById('pin-real-input');
@@ -2073,19 +2095,20 @@ function askPIN(target){
   var errEl = document.getElementById('pin-err');
   if(errEl) errEl.textContent = '';
   var labels = {pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
-  var sub2 = document.getElementById('pin-modal-sub');
-  if(sub2) sub2.textContent = 'Accès : ' + (labels[target]||target);
+  var subEl = document.getElementById('pin-modal-sub');
+  if(subEl) subEl.textContent = labels[target] || target;
   var modal = document.getElementById('pin-modal');
   if(modal) modal.classList.add('open');
-  // NOTE: NO focus() call here — causes iOS scroll/jump
+  // NO auto-focus — causes iOS viewport scroll
+  // Tap the number keys or the dots to focus keyboard
 }
 function closePIN(){
   var modal = document.getElementById('pin-modal');
   if(modal) modal.classList.remove('open');
-  var realInput = document.getElementById('pin-real-input');
-  if(realInput) realInput.value = '';
+  var ri = document.getElementById('pin-real-input');
+  if(ri) ri.value = '';
   pinBuffer = '';
-  currentPINTarget = null;
+  currentPINTarget = null; // reset guard
 }
 function pinKey(n){
   if(pinBuffer.length >= 4) return;
@@ -2131,25 +2154,30 @@ function checkPIN(){
   var correct = PINS[currentPINTarget] || '9999';
   if(pinBuffer === correct){
     closePIN();
-    // ── Write session token (8h expiry) ─────────────────────────
+    // Write session token (8h expiry)
     var sessionData = {
       role: currentPINTarget,
       expires: Date.now() + (8 * 60 * 60 * 1000),
       issued: Date.now()
     };
-    // Store raw session + b64 token (cafe-lux.html auth guard reads these)
     localStorage.setItem('lux_session', JSON.stringify(sessionData));
     localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
-    // ── Navigate ─────────────────────────────────────────────────
-    var routes = {
+
+    // Open professional space in full-screen overlay (no navigation needed)
+    var modeMap = {
       'pos':   'cafe-lux.html?mode=pos',
       'admin': 'cafe-lux.html?mode=admin',
       'staff': 'cafe-lux.html?mode=staff',
       'kds':   'cafe-lux.html?mode=kds',
       'stock': 'cafe-lux.html?mode=stock'
     };
-    if(routes[currentPINTarget]){
-      window.location.href = routes[currentPINTarget];
+    var labels = {
+      'pos':'Caisse POS','admin':'Administration',
+      'staff':'Staff Portal','kds':'Kitchen Display','stock':'Gestion Stock'
+    };
+    var url = modeMap[currentPINTarget];
+    if(url){
+      openProOverlay(url, labels[currentPINTarget] || currentPINTarget);
     }
   } else {
     document.getElementById('pin-err').textContent = 'Code incorrect \u274c R\u00e9essayez.';
@@ -2157,6 +2185,41 @@ function checkPIN(){
     if(pad){ pad.classList.add('shake'); setTimeout(function(){ pad.classList.remove('shake'); }, 300); }
     pinBuffer = ''; updatePinDots();
   }
+}
+
+function openProOverlay(url, label){
+  var overlay = document.getElementById('pro-overlay');
+  var iframe  = document.getElementById('pro-iframe');
+  var loading = document.getElementById('pro-loading');
+  var lbl     = document.getElementById('pro-overlay-label');
+  if(!overlay || !iframe) {
+    // Fallback: direct navigation if overlay not present
+    window.location.href = url;
+    return;
+  }
+  if(lbl) lbl.textContent = label || 'PRO';
+  if(loading) loading.style.display = 'flex';
+  iframe.src = '';
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Load the URL in iframe
+  setTimeout(function(){
+    iframe.onload = function(){
+      if(loading) loading.style.display = 'none';
+    };
+    iframe.src = url;
+  }, 50);
+}
+
+function closeProOverlay(){
+  var overlay = document.getElementById('pro-overlay');
+  var iframe  = document.getElementById('pro-iframe');
+  if(overlay) overlay.style.display = 'none';
+  if(iframe)  iframe.src = '';
+  document.body.style.overflow = '';
+  // Show gateway again
+  var gw = document.getElementById('gateway');
+  if(gw){ gw.classList.remove('hidden','gone'); gw.style.display = ''; }
 }
 
 // ─── TABS ─────────────────────────────────────────────────
@@ -4178,52 +4241,38 @@ function openPayment(){
   const total = sub + delFee - discount;
   paymentOrderData = {name,phone,addr,notes:document.getElementById('wo-notes')?.value.trim()||'',total:total.toFixed(2),sub:sub.toFixed(2),delFee:delFee.toFixed(2),discount:discount.toFixed(2)};
   document.getElementById('pay-amount').textContent = total.toFixed(2) + ' MAD';
-  goPayStep(1);
-  document.getElementById('payment-modal').classList.add('open');
+  // Close cart panel first
+  var cp2 = document.getElementById('cart-panel');
+  if(cp2) cp2.classList.remove('open');
+  // Open modal FIRST (parent must be visible before children get styles)
+  var payModal = document.getElementById('payment-modal');
+  if(payModal) payModal.classList.add('open');
+  // Then goPayStep a  // Reset all steps first
+  [1,2,3].forEach(function(s){
+    var el = document.getElementById('pay-step-'+s);
+    if(el) el.style.display = s===1?'block':'none';
+  });
+  ['cmi','cash','paypal','gc'].forEach(function(m){
+    var f = document.getElementById('form-'+m);
+    if(f) f.style.display = 'none';
+  });
+  selectedPayMethod = 'cmi';
+  var sel = document.getElementById('pm-cmi');
+  if(sel){ document.querySelectorAll('.pay-method').forEach(function(b){b.classList.remove('sel');}); sel.classList.add('sel'); }
+  // Open modal
+  var modal = document.getElementById('payment-modal');
+  if(modal) modal.style.display = 'flex';
+  // Close cart
+  var cartPanel = document.getElementById('cart-panel');
+  if(cartPanel) cartPanel.classList.remove('open');
+  // Update step indicators
+  ['ps-1','ps-2','ps-3'].forEach(function(id,i){
+    var el = document.getElementById(id);
+    if(el){ el.classList.remove('active','done'); if(i===0) el.classList.add('active'); }
+  });
 }
 
-function closePayment(){document.getElementById('payment-modal').classList.remove('open');}
-
-
-function launchPayPalCheckout(){
-  var data = paymentOrderData || {};
-  var total = parseFloat(data.total || 0);
-  var name = (data.name || 'Client').replace(/[^a-zA-Z0-9 ]/g,'');
-  // PayPal.me deep link — works without SDK
-  // Format: https://www.paypal.com/paypalme/HANDLE/AMOUNT
-  // Using a PayPal invoice link as fallback
-  var ppMe = 'https://www.paypal.me/cafeLUXTaza/' + total.toFixed(2) + 'MAD';
-  // Mark order as pending PayPal confirmation
-  localStorage.setItem('lux_pending_paypal', JSON.stringify({
-    total: total, name: name, ref: 'LUX-PP-' + Date.now(),
-    ts: new Date().toISOString()
-  }));
-  // Open PayPal in new tab — user pays — comes back
-  window.open(ppMe, '_blank');
-  // Show a "waiting for PayPal" state
-  var btn = document.getElementById('paypal-checkout-btn');
-  if(btn){
-    btn.textContent = '⏳ En attente de confirmation PayPal...';
-    btn.style.background = '#F0A500';
-    btn.disabled = true;
-  }
-  // After 5 seconds, show confirmation button
-  setTimeout(function(){
-    var confirmArea = document.getElementById('form-paypal');
-    if(confirmArea){
-      var existing = document.getElementById('pp-confirm-btn');
-      if(!existing){
-        var confirmBtn = document.createElement('button');
-        confirmBtn.id = 'pp-confirm-btn';
-        confirmBtn.textContent = '✅ J\'ai complété le paiement PayPal';
-        confirmBtn.style.cssText = 'width:100%;padding:12px;background:#3DBE7A;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px';
-        confirmBtn.onclick = function(){ _confirmPayment(); };
-        confirmArea.appendChild(confirmBtn);
-      }
-    }
-    if(btn){ btn.textContent = '🔄 Relancer PayPal'; btn.disabled = false; btn.style.background='#003087'; }
-  }, 5000);
-}
+function closePayment(){document.getElementById('payment-modal').style.display='none';}
 
 function selectPayMethod(m, btn){
   selectedPayMethod = m;
@@ -4240,12 +4289,6 @@ function selectPayMethod(m, btn){
       confirmBtn.textContent = 'Confirmer →';
       confirmBtn.style.background = '#C9A84C';
     }
-  }
-
-  // Update PayPal amount display
-  if(m === 'paypal'){
-    var ppAmt = document.getElementById('pp-amount-display');
-    if(ppAmt && paymentOrderData) ppAmt.textContent = paymentOrderData.total + ' MAD';
   }
 }
 
@@ -4273,10 +4316,56 @@ function goPayStep(step){
     var confirmBtn = document.getElementById('btn-pay-confirm');
     if(confirmBtn){
       if(selectedPayMethod === 'paypal'){
-        confirmBtn.textContent = 'Payer via WhatsApp →';
-        confirmBtn.style.background = '#25D366';
-        confirmBtn.style.color = '#fff';
-      } else {
+      // Real PayPal payment via PayPal.me link
+      var total = paymentOrderData ? parseFloat(paymentOrderData.total) : 0;
+      var ppName = paymentOrderData ? paymentOrderData.name : '';
+      // Build PayPal.me URL with amount in MAD
+      // Note: PayPal.me shows amount in account currency — visitor confirms
+      var paypalUrl = 'https://www.paypal.com/paypalme/cafelux?amount=' + total + '&currencyCode=MAD';
+      var ppForm = document.getElementById('form-paypal');
+      if(ppForm){
+        ppForm.innerHTML =
+          '<div style="padding:16px;text-align:center">' +
+          '<div style="font-size:38px;margin-bottom:10px">\uD83D\uDD35</div>' +
+          '<div style="font-weight:800;font-size:15px;color:#003087;margin-bottom:6px">Paiement PayPal</div>' +
+          '<div style="font-size:13px;color:#555;margin-bottom:4px">Montant : <strong>' + total.toFixed(2) + ' MAD</strong></div>' +
+          '<div style="font-size:11px;color:#888;margin-bottom:14px">Vous allez \u00eatre redirig\u00e9 vers PayPal pour finaliser le paiement.</div>' +
+          '<button id="pp-open-btn" style="padding:13px;background:#003087;color:#fff;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:14px;width:100%;margin-bottom:8px">' +
+          '\uD83D\uDD35 Ouvrir PayPal</button>' +
+          '<button id="pp-confirm-btn" style="padding:10px;background:#3DBE7A;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;width:100%;display:none">' +
+          '\u2705 Paiement effectu\u00e9 \u2014 Confirmer</button>' +
+          '<div style="font-size:10px;color:#AAA;margin-top:8px">Apr\u00e8s paiement, cliquez sur "Confirmer"</div>' +
+          '</div>';
+        setTimeout(function(){
+          var ppBtn = document.getElementById('pp-open-btn');
+          var ppConf = document.getElementById('pp-confirm-btn');
+          if(ppBtn){
+            ppBtn.onclick = function(){
+              window.open(paypalUrl, '_blank');
+              // After 3s show the confirm button
+              ppBtn.textContent = '\u23F3 En attente de paiement...';
+              ppBtn.disabled = true;
+              setTimeout(function(){
+                if(ppConf) ppConf.style.display = 'block';
+                if(ppBtn) { ppBtn.textContent = '\uD83D\uDD35 Ouvrir PayPal \u00e0 nouveau'; ppBtn.disabled = false; }
+              }, 3000);
+            };
+          }
+          if(ppConf){
+            ppConf.onclick = function(){
+              // User confirms they paid — finalize order
+              _confirmPayment();
+            };
+          }
+        }, 30);
+      }
+      // Stay on step 2
+      [1,2,3].forEach(function(s){
+        var el=document.getElementById('pay-step-'+s);
+        if(el) el.style.display = s===2?'block':'none';
+      });
+      return;
+    } else {
         confirmBtn.textContent = 'Confirmer le paiement →';
         confirmBtn.style.background = '#C9A84C';
         confirmBtn.style.color = '#000';
@@ -4330,55 +4419,74 @@ function formatExp(input){
 function processPayment(){
   var proc = document.getElementById('pay-processing');
   var succ = document.getElementById('pay-success');
-  if(proc) proc.classList.add('show');
-  if(succ) succ.classList.remove('show');
+  if(proc){ proc.classList.add('show'); }
+  if(succ){ succ.classList.remove('show'); }
 
-  // CMI Card validation
+  // ── CMI Card: validate fields ─────────────────────────
   if(selectedPayMethod === 'cmi'){
     var num = (document.getElementById('cc-num')?.value||'').replace(/\s/g,'');
     var exp = (document.getElementById('cc-exp')?.value||'').trim();
     var cvv = (document.getElementById('cc-cvv')?.value||'').trim();
-    if(!num||num.length<16){ showPayError('Numéro de carte invalide (16 chiffres)'); return; }
-    if(!exp||exp.length<4){  showPayError("Date d'expiration invalide (MM/AA)"); return; }
-    if(!cvv||cvv.length<3){  showPayError('CVV invalide (3-4 chiffres)'); return; }
-    if(proc) proc.classList.remove('show');
-    setTimeout(_confirmPayment, 1500);
+    if(!num || num.length < 16){ showPayError('Numéro de carte invalide (16 chiffres)'); return; }
+    if(!exp || exp.length < 4){  showPayError("Date d'expiration invalide (MM/AA)"); return; }
+    if(!cvv || cvv.length < 3){  showPayError('CVV invalide'); return; }
+    // Valid card → confirm
+    setTimeout(_confirmPayment, 1800);
     return;
   }
-  // PayPal — launch checkout, don't auto-confirm
+
+  // ── PayPal: NO simulation — redirect to real WhatsApp payment ─
   if(selectedPayMethod === 'paypal'){
     if(proc) proc.classList.remove('show');
-    launchPayPalCheckout();
+    var total = paymentOrderData ? paymentOrderData.total : '?';
+    var name  = paymentOrderData ? paymentOrderData.name  : '';
+    var msg = encodeURIComponent(
+      '✦ Paiement Café LUX\n\n' +
+      'Client: ' + name + '\n' +
+      'Montant: ' + total + ' MAD\n' +
+      'Mode: PayPal\n\n' +
+      'Merci de confirmer votre virement ou paiement.'
+    );
+    // Show a clear message before redirecting
+    var ppForm = document.getElementById('form-paypal');
+    if(ppForm){
+      ppForm.innerHTML = '<div style="padding:20px;text-align:center">' +
+        '<div style="font-size:32px;margin-bottom:12px">📱</div>' +
+        '<div style="font-weight:700;color:#1A0A00;margin-bottom:8px">Paiement via WhatsApp</div>' +
+        '<div style="font-size:12px;color:#666;margin-bottom:16px">PayPal non disponible directement.<br>Nous allons vous contacter sur WhatsApp pour finaliser le paiement.</div>' +
+        '<button onclick="window.open(\'https://wa.me/212677717201?text='+msg+'\',\'_blank\')" ' +
+        'style="padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px">📲 Ouvrir WhatsApp</button>' +
+        '</div>';
+    }
+    toast('📲 Redirection WhatsApp pour finaliser le paiement...');
+    setTimeout(function(){
+      window.open('https://wa.me/212677717201?text='+msg, '_blank');
+    }, 800);
+    // Do NOT show fake confirmation
     return;
   }
-  // Gift Card
+
+  // ── Gift Card: validate balance ───────────────────────
   if(selectedPayMethod === 'gc'){
     var code = (document.getElementById('gc-pay-code')?.value||'').trim().toUpperCase();
     var allGC = getLS('lux_gift_cards',[]);
-    var gc = allGC.find(function(g){ return g.code===code&&g.status!=='used'; });
-    if(!gc){ showPayError('Code cadeau invalide'); if(proc) proc.classList.remove('show'); return; }
-    var tot2 = parseFloat(paymentOrderData.total);
-    if(gc.balance < tot2){ showPayError('Solde insuffisant ('+gc.balance+' MAD)'); if(proc) proc.classList.remove('show'); return; }
-    gc.balance -= tot2; if(gc.balance<=0) gc.status='used';
-    setLS('lux_gift_cards',allGC);
-    if(proc) proc.classList.remove('show');
-    setTimeout(_confirmPayment, 1000);
+    var gc = allGC.find(function(g){ return g.code===code && g.status!=='used'; });
+    if(!gc){ showPayError('Code cadeau invalide'); proc.classList.remove('show'); return; }
+    var total2 = parseFloat(paymentOrderData.total);
+    if(gc.balance < total2){ showPayError('Solde insuffisant ('+gc.balance+' MAD)'); proc.classList.remove('show'); return; }
+    gc.balance -= total2;
+    if(gc.balance <= 0) gc.status = 'used';
+    setLS('lux_gift_cards', allGC);
+    setTimeout(_confirmPayment, 1200);
     return;
   }
-  // Cash
-  if(proc) proc.classList.remove('show');
-  setTimeout(_confirmPayment, 800);
+
+  // ── Cash / default: instant confirm ──────────────────
+  setTimeout(_confirmPayment, 1000);
 }
 
 function _confirmPayment(){
-  // ABSOLUTE BLOCK: PayPal must NEVER confirm via this function
-  if(typeof selectedPayMethod !== 'undefined' && selectedPayMethod === 'paypal'){
-    console.error('[LUX] PayPal confirmation blocked — use onApprove callback only');
-    var proc2 = document.getElementById('pay-processing');
-    if(proc2) proc2.classList.remove('show');
-    toast('❌ PayPal: veuillez utiliser le bouton WhatsApp pour finaliser.');
-    return;
-  }
+  // PayPal confirm is allowed when user explicitly confirms via button
   const proc = document.getElementById('pay-processing');
   const succ = document.getElementById('pay-success');
   const ppStatus = document.getElementById('pp-status');
@@ -4389,11 +4497,6 @@ function _confirmPayment(){
   const refEl = document.getElementById('pay-ref');
   if(refEl) refEl.textContent = 'Réf: ' + ref;
   finalizeOrderAfterPayment(ref);
-
-  // Clear pending PayPal
-  localStorage.removeItem('lux_pending_paypal');
-  // Ensure cart is cleared
-  cart = []; renderCart();
 }
 
 function showPayError(msg){
@@ -4406,26 +4509,34 @@ function showPayError(msg){
 
 // ── SILENT PRINT HELPER (no popup window) ────────────────────────────
 function printSilent(htmlContent) {
-  var overlay = document.getElementById('lux-print-overlay');
-  if(!overlay){
-    overlay = document.createElement('div');
-    overlay.id = 'lux-print-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow:auto;display:none;padding:20px';
-    document.body.appendChild(overlay);
-  }
-  overlay.innerHTML =
-    '<div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;position:sticky;top:0;background:#fff;padding:10px 0;border-bottom:1px solid #eee">' +
-    '<button id="lux-do-print" style="padding:12px 28px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🖨 Imprimer</button>' +
-    '<button onclick="document.getElementById(\'lux-print-overlay\').style.display=\'none\'" style="padding:12px 20px;background:#eee;color:#333;border:none;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer">✕ Fermer</button>' +
-    '</div>' +
-    '<div id="lux-print-content">' + htmlContent + '</div>';
-  overlay.style.display = 'block';
-  // Direct onclick on button preserves user gesture on iOS
+  // Remove any existing print area
+  var old = document.getElementById('lux-print-overlay');
+  if(old) old.parentNode.removeChild(old);
+
+  // Create full-screen overlay (not a new window!)
+  var overlay = document.createElement('div');
+  overlay.id = 'lux-print-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:99999;overflow:auto;padding:20px;box-sizing:border-box;';
+
+  // Controls bar
+  var bar = document.createElement('div');
+  bar.style.cssText = 'display:flex;gap:10px;margin-bottom:16px;justify-content:center;';
+  bar.innerHTML = '<button id="lux-do-print" style="padding:12px 28px;background:#C9A84C;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer">🖨 Imprimer ce ticket</button>'
+    + '<button onclick="var o=document.getElementById(\'lux-print-overlay\');if(o)o.parentNode.removeChild(o);" style="padding:12px 20px;background:#eee;color:#444;border:none;border-radius:10px;font-weight:600;cursor:pointer">✕ Fermer</button>';
+
+  // Content
+  var content = document.createElement('div');
+  content.innerHTML = htmlContent;
+
+  overlay.appendChild(bar);
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  // Attach print handler — DIRECT onclick preserves iOS user gesture
   document.getElementById('lux-do-print').onclick = function(){
-    var btns = overlay.querySelector('div');
-    if(btns) btns.style.display = 'none';
+    bar.style.display = 'none';
     window.print();
-    if(btns) btns.style.display = 'flex';
+    setTimeout(function(){ bar.style.display = 'flex'; }, 500);
   };
 }
 
@@ -4490,8 +4601,10 @@ function finalizeOrderAfterPayment(ref){
 }
 
 function closePaymentSuccess(){
-  document.getElementById('payment-modal').classList.remove('open');
-  switchTab('tracking',null);
+  var modal = document.getElementById('payment-modal');
+  if(modal) modal.classList.remove('open');
+  // Reset payment steps for next time
+  goPayStep(1);
 }
 
 
