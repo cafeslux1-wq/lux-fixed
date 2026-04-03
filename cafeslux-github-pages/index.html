@@ -2,45 +2,53 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Café LUX Taza · v2.6.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Café LUX Taza · v2.9</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #C9A84C; --bg: #080808; --card: #111; --border: #222; --text: #F2EFE9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
         
-        #gateway { padding: 40px 20px; max-width: 500px; margin: 0 auto; text-align: center; }
-        .logo-main { width: 90px; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(201,168,76,0.3)); }
-        h1 { font-family: 'Cinzel', serif; font-size: 22px; color: var(--gold); margin-bottom: 5px; }
-        .slogan { font-size: 11px; color: #777; margin-bottom: 30px; letter-spacing: 2px; }
+        #gateway { padding: 60px 20px; max-width: 800px; margin: 0 auto; text-align: center; }
+        
+        /* الشعار - ثابت وبدون تأثيرات تسبب ثقل */
+        .logo-main { width: 120px; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(201,168,76,0.2)); }
+        
+        h1 { font-family: 'Cinzel', serif; font-size: 32px; color: var(--gold); margin-bottom: 10px; }
+        .slogan { font-size: 13px; color: #777; margin-bottom: 50px; letter-spacing: 3px; text-transform: uppercase; }
 
-        .section-title { font-family: 'Cinzel', serif; font-size: 15px; margin: 25px 0 15px; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { font-family: 'Cinzel', serif; font-size: 18px; margin: 40px 0 25px; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 
-        .gateway-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .tile-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px 12px; transition: 0.3s; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .tile-card:active { transform: scale(0.96); border-color: var(--gold); }
-        .tile-icon { font-size: 30px; margin-bottom: 10px; }
-        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 12px; font-weight: 600; }
-        .lock-icon { position: absolute; top: 8px; right: 8px; font-size: 10px; opacity: 0.5; }
+        .gateway-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+        
+        /* الأزرار - تحسين الأداء للحاسوب */
+        .tile-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 35px 20px; cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; transition: all 0.2s ease-in-out;
+            text-decoration: none;
+        }
+        .tile-card:hover { border-color: var(--gold); background: #161616; transform: translateY(-5px); }
+        
+        .tile-icon { font-size: 40px; margin-bottom: 15px; }
+        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 14px; font-weight: 600; text-align: center; }
 
-        /* Pro Grid - 2 columns for better readability */
-        .pro-grid { grid-template-columns: repeat(2, 1fr); }
-        .pro-grid .tile-card { padding: 18px 10px; background: #0d0d0d; }
+        .tile-saas { grid-column: span 2; border: 1px dashed var(--gold); background: rgba(201,168,76,0.05); }
 
-        /* Overlay & Modals */
+        /* الأغطية والمودال */
         #pro-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #000; }
-        .close-btn { position: absolute; top: 15px; right: 15px; z-index: 10000; background: var(--gold); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .close-btn { position: absolute; top: 20px; right: 20px; z-index: 10000; background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        #pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10001; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .pin-box { background: #111; padding: 30px; border-radius: 24px; border: 1px solid var(--gold); width: 90%; max-width: 320px; text-align: center; box-shadow: 0 0 30px rgba(201,168,76,0.15); }
-        .pin-dots { display: flex; justify-content: center; gap: 15px; margin: 25px 0; }
-        .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gold); transition: 0.2s; }
-        .dot.filled { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .num-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 18px; border-radius: 12px; font-size: 22px; cursor: pointer; transition: 0.2s; font-family: 'Cinzel', serif; }
-        .num-btn:active { background: var(--gold); color: #000; border-color: var(--gold); }
+        #pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10001; align-items: center; justify-content: center; }
+        .pin-box { background: #111; padding: 40px; border-radius: 15px; border: 1px solid var(--gold); width: 350px; text-align: center; }
+        .pin-dots { display: flex; justify-content: center; gap: 15px; margin: 30px 0; }
+        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); }
+        .dot.filled { background: var(--gold); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .num-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 20px; border-radius: 8px; font-size: 20px; cursor: pointer; }
+        .num-btn:hover { background: var(--gold); color: #000; }
     </style>
 </head>
 <body>
@@ -52,138 +60,115 @@
 
         <h2 class="section-title">Espace Client</h2>
         <div class="gateway-grid">
-            <div class="tile-card" onclick="location.href='#menu'">
-                <span class="tile-icon">☕</span>
-                <span class="tile-title">Menu & Commande</span>
+            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=menu')">
+                <span class="tile-icon">🛒</span>
+                <span class="tile-title">Menu & Livraison</span>
             </div>
-            <div class="tile-card" onclick="location.href='#reserva'">
+            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=offers')">
+                <span class="tile-icon">🎁</span>
+                <span class="tile-title">Offres & Fidélité</span>
+            </div>
+            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=booking')">
                 <span class="tile-icon">📅</span>
-                <span class="tile-title">Réservations</span>
+                <span class="tile-title">Réserver une Table</span>
+            </div>
+            <div class="tile-card" onclick="forceNavigate('cafe-lux.html?view=account')">
+                <span class="tile-icon">👤</span>
+                <span class="tile-title">Mon Espace LUX</span>
+            </div>
+            <div class="tile-card tile-saas" onclick="forceNavigate('lux-saas.html')">
+                <span class="tile-icon">✦</span>
+                <span class="tile-title">LUX SaaS Solution</span>
             </div>
         </div>
 
-        <h2 class="section-title" style="color: #666;">Accès Professionnel 🔐</h2>
-        <div class="gateway-grid pro-grid">
-            <div class="tile-card" onclick="askPIN('pos')">
-                <span class="lock-icon">🔒</span>
+        <h2 class="section-title">Accès Pro 🔐</h2>
+        <div class="gateway-grid">
+            <div class="tile-card" onclick="openPin('pos')">
                 <span class="tile-icon">🧾</span>
-                <span class="tile-title">POS Caisse</span>
+                <span class="tile-title">Caisse</span>
             </div>
-            <div class="tile-card" onclick="askPIN('admin')">
-                <span class="lock-icon">🔒</span>
+            <div class="tile-card" onclick="openPin('admin')">
                 <span class="tile-icon">📊</span>
-                <span class="tile-title">Administration</span>
+                <span class="tile-title">Admin</span>
             </div>
-            <div class="tile-card" onclick="askPIN('kitchen')">
-                <span class="lock-icon">🔒</span>
+            <div class="tile-card" onclick="openPin('kitchen')">
                 <span class="tile-icon">📺</span>
-                <span class="tile-title">Cuisine KDS</span>
+                <span class="tile-title">Cuisine</span>
             </div>
-            <div class="tile-card" onclick="askPIN('staff')">
-                <span class="lock-icon">🔒</span>
+            <div class="tile-card" onclick="openPin('staff')">
                 <span class="tile-icon">👥</span>
-                <span class="tile-title">Staff Portal</span>
+                <span class="tile-title">Staff</span>
             </div>
         </div>
     </div>
 
     <div id="pro-overlay">
-        <button class="close-btn" onclick="closeProOverlay()">✕ Fermer</button>
-        <iframe id="pro-iframe" src=""></iframe>
+        <button class="close-btn" onclick="closeOverlay()">✕ Quitter</button>
+        <iframe id="pro-iframe"></iframe>
     </div>
 
     <div id="pin-modal">
         <div class="pin-box">
-            <h3 id="pin-label" style="color:var(--gold); font-family:'Cinzel'; font-size:18px;">ACCÈS PRIVÉ</h3>
-            <p id="pin-sub" style="font-size:10px; color:#666; margin-top:5px; text-transform:uppercase;">Entrez votre code secret</p>
-            <div class="pin-dots" id="pin-dots">
+            <h3 style="color:var(--gold); font-family:Cinzel;">Code PIN</h3>
+            <div class="pin-dots" id="dots">
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
             <div class="numpad">
-                <button class="num-btn" onclick="press(1)">1</button>
-                <button class="num-btn" onclick="press(2)">2</button>
-                <button class="num-btn" onclick="press(3)">3</button>
-                <button class="num-btn" onclick="press(4)">4</button>
-                <button class="num-btn" onclick="press(5)">5</button>
-                <button class="num-btn" onclick="press(6)">6</button>
-                <button class="num-btn" onclick="press(7)">7</button>
-                <button class="num-btn" onclick="press(8)">8</button>
-                <button class="num-btn" onclick="press(9)">9</button>
-                <button class="num-btn" style="background:#221111" onclick="resetPin()">C</button>
-                <button class="num-btn" onclick="press(0)">0</button>
-                <button class="num-btn" style="background:#111" onclick="closePinModal()">✕</button>
+                <script>
+                    for(let i=1; i<=9; i++) document.write(`<button class="num-btn" onclick="addNum(${i})">${i}</button>`);
+                </script>
+                <button class="num-btn" style="background:#211" onclick="clearPin()">C</button>
+                <button class="num-btn" onclick="addNum(0)">0</button>
+                <button class="num-btn" onclick="hidePin()">✕</button>
             </div>
         </div>
     </div>
 
     <script>
-        let currentPin = "";
-        let targetRole = "";
+        let pin = "";
+        let role = "";
 
-        function askPIN(role) {
-            targetRole = role;
-            currentPin = "";
-            updateDots();
+        // الحل الجوهري للرجفة: فرض التنقل المباشر وتجاوز السكربتات المعلقة
+        function forceNavigate(url) {
+            window.stop(); // إيقاف أي عمليات تحميل جارية تسبب الرجفة
+            window.location.assign(url);
+        }
+
+        function openPin(r) {
+            role = r; pin = ""; updateDots();
             document.getElementById('pin-modal').style.display = 'flex';
         }
 
-        function press(n) {
-            if(currentPin.length < 4) {
-                currentPin += n;
-                updateDots();
-                if(currentPin.length === 4) {
-                    setTimeout(checkPin, 200);
-                }
+        function hidePin() { document.getElementById('pin-modal').style.display = 'none'; }
+
+        function addNum(n) {
+            if(pin.length < 4) {
+                pin += n; updateDots();
+                if(pin.length === 4) setTimeout(validate, 200);
             }
         }
 
         function updateDots() {
-            const dots = document.getElementById('pin-dots').children;
-            for(let i=0; i<4; i++) {
-                dots[i].className = i < currentPin.length ? 'dot filled' : 'dot';
-            }
+            const d = document.getElementById('dots').children;
+            for(let i=0; i<4; i++) d[i].className = i < pin.length ? 'dot filled' : 'dot';
         }
 
-        function resetPin() { currentPin = ""; updateDots(); }
-        function closePinModal() { document.getElementById('pin-modal').style.display = 'none'; }
+        function clearPin() { pin = ""; updateDots(); }
 
-        function checkPin() {
-            // الرموز: 1234 للموظفين والمطبخ، 9999 للمدير والـ POS (يمكنك تغييرها)
-            const isAdmin = (currentPin === '9999');
-            const isStaff = (currentPin === '1234');
-
-            if (isAdmin || isStaff) {
-                // فتح صفحة cafe-lux.html مع تمرير الـ mode المناسب
-                // الـ Admin يفتح كل شيء، الـ Staff يفتح الأقسام المحددة له فقط
-                let finalMode = targetRole;
-                if (targetRole === 'admin' && !isAdmin) {
-                    alert("Accès Admin Refusé");
-                    resetPin();
-                    return;
-                }
-                
-                openProOverlay(`cafe-lux.html?mode=${finalMode}`);
-                closePinModal();
+        function validate() {
+            if((role==='admin' && pin==='9999') || (role!=='admin' && pin==='1234')) {
+                document.getElementById('pro-iframe').src = `cafe-lux.html?mode=${role}`;
+                document.getElementById('pro-overlay').style.display = 'block';
+                hidePin();
             } else {
-                alert("Code PIN Incorrect");
-                resetPin();
+                alert("PIN incorrect"); clearPin();
             }
         }
 
-        function openProOverlay(url) {
-            const overlay = document.getElementById('pro-overlay');
-            const iframe = document.getElementById('pro-iframe');
-            iframe.src = url;
-            overlay.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeProOverlay() {
-            const overlay = document.getElementById('pro-overlay');
-            const iframe = document.getElementById('pro-iframe');
-            iframe.src = "";
-            overlay.style.display = 'none';
-            document.body.style.overflow = 'auto';
+        function closeOverlay() {
+            document.getElementById('pro-overlay').style.display = 'none';
+            document.getElementById('pro-iframe').src = "";
         }
     </script>
 </body>
