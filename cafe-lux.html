@@ -390,10 +390,8 @@ body{
     <div class="t-tab" data-page="pos" onclick="showPage('pos')">🧾 Caisse</div>
     <div class="t-tab" data-page="web" onclick="showPage('web')">🌐 Commandes Web <span id="web-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
     <div class="t-tab" data-page="admin" onclick="showPage('admin')">📊 Administration</div>
-    <div class="t-tab" data-page="staffportal" onclick="showPage('staffportal')">👥 Staff Portal</div>
-    <div class="t-tab" data-page="site" onclick="showPage('site')">🛒 Commander</div>
-    <div class="t-tab" data-page="qr" onclick="showPage('qr')">📲 QR Tables</div>
-    <div class="t-tab" data-page="kds" onclick="showPage('kds')">📺 Cuisine KDS</div>
+    <div class="t-tab" data-page="staff" onclick="showPage('staff')">👥 Employes</div>
+    <div class="t-tab" data-page="site" onclick="showPage('site')">🛒 Site Public</div>
     <div class="t-tab" data-page="ext" onclick="showPage('ext')">🛵 Ext. Delivery <span id="ext-badge" style="background:var(--orange);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
   </div>
   <div class="topbar-right"><div class="mode-badge" id="mode-badge">✦ Mode: HUB</div>
@@ -721,9 +719,9 @@ body{
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      PAGE: EMPLOYES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div class="page scroll" id="p-staffportal" style="flex-direction:column;padding:20px;gap:16px">
+<div class="page scroll" id="p-staff" style="flex-direction:column;padding:20px;gap:16px">
   <div style="display:flex;align-items:center;justify-content:space-between">
-    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">👥 Staff Portal</h2>
+    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">👥 Gestion des Employes</h2>
     <button class="btn sm solid" onclick="addEmployee()">+ Ajouter</button>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -751,7 +749,7 @@ body{
   <div class="site-body">
     <!-- Categories -->
     <div class="site-cats">
-      <h4>LUX Taza</h4><button class="cat-nav active" data-public="menu" onclick="routePublicTab('menu',this)">🛒 Commander</button><button class="cat-nav" data-public="offers" onclick="routePublicTab('offers',this)">🎁 Offres & Fidélité</button><button class="cat-nav" data-public="reservation" onclick="routePublicTab('reservation',this)">📅 Réservations</button><button class="cat-nav" data-public="account" onclick="routePublicTab('account',this)">👤 Mon Espace LUX</button><a class="cat-nav" href="lux-saas.html" style="text-decoration:none">✦ LUX SaaS</a>
+      <h4>Menu</h4><button class="cat-nav active" onclick="scrollToWsCat('pdej',this)">🍳 Petit-Déjeuner</button><button class="cat-nav" onclick="scrollToWsCat('cafes',this)">☕ Cafes Classiques</button><button class="cat-nav" onclick="scrollToWsCat('cremeux',this)">🥛 Les Cremeux</button><button class="cat-nav" onclick="scrollToWsCat('infusions',this)">🍵 Infusions</button><button class="cat-nav" onclick="scrollToWsCat('jus',this)">🥤 Jus Purs Frais</button><button class="cat-nav" onclick="scrollToWsCat('sig',this)">⭐ Signature Lux</button><button class="cat-nav" onclick="scrollToWsCat('crepes',this)">🥞 Crepes</button><button class="cat-nav" onclick="scrollToWsCat('resto',this)">🍽 Restaurant</button><button class="cat-nav" onclick="scrollToWsCat('soft',this)">🥫 Soft & Shakes</button>
     </div>
     <!-- Menu content -->
     <div class="site-menu scroll" id="site-menu-content"></div>
@@ -782,29 +780,6 @@ body{
       </div>
     </div>
   </div>
-</div>
-
-
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     PAGE: QR TABLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div class="page scroll" id="p-qr" style="flex-direction:column;padding:20px;gap:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📲 QR Tables</h2>
-    <button class="btn sm" onclick="renderQrTables()">🔄 Actualiser</button>
-  </div>
-  <div id="qr-tables-grid" class="grid3"></div>
-</div>
-
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     PAGE: CUISINE KDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div class="page scroll" id="p-kds" style="flex-direction:column;padding:20px;gap:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📺 Cuisine KDS</h2>
-    <button class="btn sm" onclick="renderKDS()">🔄 Actualiser</button>
-  </div>
-  <div id="kds-list" class="grid3"></div>
 </div>
 
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -968,8 +943,8 @@ updateClock();
 // ══════════════════════════
 //  NAVIGATION
 // ══════════════════════════
-const PAGES = ['home','pos','web','admin','staffportal','site','qr','kds','ext'];
-const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staffportal', staffportal:'staffportal', kds:'kds', stock:'admin', qr:'qr', web:'web', site:'site', ext:'ext' };
+const PAGES = ['home','pos','web','admin','staff','site','ext'];
+const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staff', kds:'staff', stock:'admin', qr:'site', web:'web', site:'site', ext:'ext' };
 function showPage(id){
   id = MODE_PAGE_MAP[id] || id;
   PAGES.forEach(function(p){
@@ -983,10 +958,8 @@ function showPage(id){
   if(id === 'pos'){ buildMenuSections(); renderTicket(); }
   if(id === 'web') renderWebOrders();
   if(id === 'admin'){ renderAdmin('dash'); }
-  if(id === 'staffportal'){ renderStaff(); }
-  if(id === 'site'){ buildSiteMenu(); renderSiteCart(); routePublicTab((new URLSearchParams(window.location.search)).get('tab') || 'menu'); }
-  if(id === 'qr'){ renderQrTables(); }
-  if(id === 'kds'){ renderKDS(); }
+  if(id === 'staff'){ renderStaff(); }
+  if(id === 'site'){ buildSiteMenu(); renderSiteCart(); }
   if(id === 'ext'){ renderExtDelivery(); }
 }
 
@@ -1921,8 +1894,6 @@ function addEmployee(){
 // ══════════════════════════
 function buildSiteMenu(){
   let h = '';
-  h += '<section class="public-section" id="public-menu">';
-  h += '<div class="ws-cat-title">🛒 Commander (Menu & Livraison)</div><div class="ws-cat-sub">Menu interactif, livraison et suivi des commandes.</div>';
   MENU.forEach(function(cat){
     h += '<div class="ws-cat-section" id="wcat-' + cat.id + '">';
     h += '<div class="ws-cat-title">' + cat.icon + ' ' + cat.title + '</div>';
@@ -1931,76 +1902,43 @@ function buildSiteMenu(){
     cat.items.forEach(function(it){
       const imgSrc = it.img && IMGS[it.img] ? IMGS[it.img] : null;
       const sigCls = it.sig ? ' sig' : '';
-      const imgHtml = imgSrc ? '<img class="ws-img" src="' + imgSrc + '">' : '<div class="ws-img-ph">' + cat.icon + '</div>';
+      const imgHtml = imgSrc
+        ? '<img class="ws-img" src="' + imgSrc + '">'
+        : '<div class="ws-img-ph">' + cat.icon + '</div>';
       h += '<div class="ws-card' + sigCls + '" data-n="' + esc(it.n) + '" data-p="' + it.p + '">';
       if(it.sig) h += '<div style="background:var(--gold);color:#000;font-size:9px;font-weight:700;padding:2px 8px">⭐ SIGNATURE</div>';
-      h += imgHtml + '<div class="ws-body"><div class="ws-name">' + it.n + '</div>';
+      h += imgHtml;
+      h += '<div class="ws-body">';
+      h += '<div class="ws-name">' + it.n + '</div>';
       if(it.s) h += '<div class="ws-sub">' + it.s + '</div>';
-      h += '<div class="ws-footer"><div class="ws-price">' + it.p + ' DH</div><button class="ws-add" data-n="' + esc(it.n) + '" data-p="' + it.p + '">+</button></div></div></div>';
+      h += '<div class="ws-footer"><div class="ws-price">' + it.p + ' DH</div>';
+      h += '<button class="ws-add" data-n="' + esc(it.n) + '" data-p="' + it.p + '">+</button>';
+      h += '</div></div></div>';
     });
     h += '</div></div>';
   });
-  h += '</section>';
-  h += '<section class="public-section" id="public-offers" style="display:none"><div class="ws-cat-title">🎁 ✦ Offres Spéciales</div><div class="ws-cat-sub">Coupons, fidélité et avantages LUX.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><div><strong>Coupon Bienvenue</strong><div class="ws-sub">-10% sur votre première commande</div></div><div><strong>Fidélité LUX</strong><div class="ws-sub">1 point par 10 DH dépensés</div></div><div><strong>Offre du jour</strong><div class="ws-sub">Queen's Rose Coffee + douceur</div></div></div></div></section>';
-  h += '<section class="public-section" id="public-reservation" style="display:none"><div class="ws-cat-title">📅 Réserver une Table</div><div class="ws-cat-sub">Réservation simple pour table ou événement spécial.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><input class="of-input" id="res-name" placeholder="Nom complet"><input class="of-input" id="res-phone" placeholder="Téléphone"><input class="of-input" id="res-date" type="date"><input class="of-input" id="res-time" type="time"><input class="of-input" id="res-guests" type="number" min="1" value="2" placeholder="Personnes"><input class="of-input" id="res-event" placeholder="Anniversaire, réunion..."></div><button class="order-send" style="margin-top:10px" onclick="submitReservation()">✓ Confirmer la réservation</button></div></section>';
-  h += '<section class="public-section" id="public-account" style="display:none"><div class="ws-cat-title">👤 Mon Espace LUX</div><div class="ws-cat-sub">Profil, historique, points et carte cadeau.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><div><strong>Mes commandes</strong><div class="ws-sub">Historique et suivi Live Tracking.</div></div><div><strong>Points fidélité</strong><div class="ws-sub">Suivi des points et récompenses.</div></div><div><strong>Carte cadeau</strong><div class="ws-sub">Utilisez ou offrez une carte cadeau LUX.</div></div><div><strong>LUX SaaS</strong><div class="ws-sub"><a href="lux-saas.html" style="color:var(--gold-d);font-weight:600">Découvrir la solution B2B</a></div></div></div></div></section>';
   const el = document.getElementById('site-menu-content');
   if(el){
     el.innerHTML = h;
-    el.querySelectorAll('.ws-add').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p'))); }); });
-    el.querySelectorAll('.ws-card').forEach(function(card){ card.addEventListener('click', function(){ addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p'))); }); });
+    el.querySelectorAll('.ws-add').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
+      });
+    });
+    el.querySelectorAll('.ws-card').forEach(function(card){
+      card.addEventListener('click', function(){
+        addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
+      });
+    });
   }
 }
 
-function routePublicTab(tab, btn){
-  var safe = ['menu','offers','reservation','account'].includes(tab) ? tab : 'menu';
-  document.querySelectorAll('.cat-nav[data-public]').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-public') === safe); });
-  if(btn) btn.classList.add('active');
-  document.querySelectorAll('.public-section').forEach(function(sec){ sec.style.display = 'none'; });
-  var target = document.getElementById('public-' + safe);
-  if(target){ target.style.display = 'block'; target.scrollIntoView({behavior:'smooth',block:'start'}); }
-  var url = new URL(window.location.href);
-  url.searchParams.set('mode','site');
-  url.searchParams.set('tab', safe);
-  history.replaceState(null,'',url.pathname + '?' + url.searchParams.toString());
-}
-
 function scrollToWsCat(catId, btn){
-  routePublicTab('menu');
+  document.querySelectorAll('.cat-nav').forEach(function(n){n.classList.remove('active');});
+  if(btn) btn.classList.add('active');
   const el = document.getElementById('wcat-' + catId);
   if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function submitReservation(){
-  const name = val('res-name'); const phone = val('res-phone'); const date = val('res-date'); const time = val('res-time');
-  if(!name || !phone || !date || !time){ toast('Complétez les champs de réservation'); return; }
-  const bookings = getLS('lux_reservations', []);
-  bookings.unshift({id:Date.now(), name:name, phone:phone, date:date, time:time, guests:val('res-guests')||'2', event:val('res-event')||'', createdAt:new Date().toISOString()});
-  setLS('lux_reservations', bookings);
-  toast('Réservation enregistrée');
-}
-
-function publicTableUrl(n){
-  if(location.protocol === 'file:') return 'cafe-lux.html?mode=site&tab=menu&table=' + n;
-  return location.origin + location.pathname.replace(/[^/]*$/, 'cafe-lux.html') + '?mode=site&tab=menu&table=' + n;
-}
-
-function renderQrTables(){
-  const grid = document.getElementById('qr-tables-grid'); if(!grid) return;
-  let h='';
-  for(let i=1;i<=12;i++){ const link = publicTableUrl(i); h += '<div class="card"><div class="card-title">Table ' + i + '</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">QR Tables</div><code style="display:block;white-space:normal;word-break:break-all;background:var(--bg3);padding:10px;border-radius:8px;font-size:11px">' + esc(link) + '</code><div style="display:flex;gap:8px;margin-top:10px"><a class="btn sm solid" href="' + link + '">Ouvrir</a><button class="btn sm" onclick="copyQrLink(' + i + ')">Copier</button></div></div>'; }
-  grid.innerHTML = h;
-}
-
-function copyQrLink(n){ const link = publicTableUrl(n); navigator.clipboard && navigator.clipboard.writeText(link); toast('Lien de table copié'); }
-
-function renderKDS(){
-  const list = document.getElementById('kds-list'); if(!list) return;
-  const web = getLS('lux_web_orders', []).slice(0,12);
-  const tx = getLS('lux_transactions', []).slice(0,8).map(function(t){ return {id:t.id||Date.now(), source:'POS', items:t.items||[], status:'encaisse', table:t.table||'-'}; });
-  const all = web.concat(tx);
-  if(!all.length){ list.innerHTML = '<div class="card" style="grid-column:1/-1">Aucune commande en préparation</div>'; return; }
-  list.innerHTML = all.map(function(o){ return '<div class="card"><div class="card-title">' + (o.source||'WEB') + ' #' + String(o.id).slice(-6) + '</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">' + (o.table ? ('Table: ' + o.table) : 'Préparation') + '</div><div style="font-size:12px">' + (o.items||[]).map(function(i){ return (i.q||i.qty||1) + '× ' + (i.n||i.name||'Article'); }).join('<br>') + '</div></div>'; }).join('');
 }
 
 function addToSiteCart(n, p){
@@ -2169,14 +2107,12 @@ window.addEventListener('DOMContentLoaded', function(){
 
   initImgs();
   buildTables();
-  var params = new URLSearchParams(window.location.search);
-  var mode = params.get('mode');
-  var tab = params.get('tab') || 'menu';
-  showPage(mode && ['pos','admin','staff','staffportal','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
+  var mode = new URLSearchParams(window.location.search).get('mode');
+  // Clean URL without redirect
+  if(mode) history.replaceState(null,'',window.location.pathname);
+  showPage(mode && ['pos','admin','staff','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
   if(mode === 'stock'){ setTimeout(function(){ renderAdmin('stock'); }, 50); }
-  if(mode === 'site'){ setTimeout(function(){ routePublicTab(tab); }, 80); }
-  if(mode === 'qr'){ setTimeout(function(){ renderQrTables(); }, 50); }
-  if(mode === 'kds'){ setTimeout(function(){ renderKDS(); }, 50); }
+  if(mode === 'qr'){ setTimeout(function(){ buildSiteMenu(); renderSiteCart(); }, 50); }
 });
 
 
@@ -2246,6 +2182,14 @@ function adminCycleShift(emp,date,td){
 (function(){var orig=typeof renderAdmin!=='undefined'?renderAdmin:function(){};
 window.renderAdmin=function(p){orig(p);if(p==='recipes')renderAdminRecipes();if(p==='schedule')renderAdminSchedule();};})();
 
+
+// ── URL MODE HANDLER — reads ?mode=pos/admin/staff/kds from index.html ──
+// handleMode: already handled in DOMContentLoaded above
+// URL clean-up only
+(function(){
+  var mode = new URLSearchParams(window.location.search).get('mode');
+  if(mode) history.replaceState(null,'',window.location.pathname);
+})();
 
 
 // ── CAMPAIGNS HISTORY (Admin) ─────────────────────────────────────────
@@ -2345,7 +2289,7 @@ function renderAdminCampHistory() {
   function setModeBadge(){
     try{
       var mode = new URLSearchParams(location.search).get('mode') || 'hub';
-      var map = {pos:'POS',admin:'ADMIN',stock:'STOCK',kds:'KDS',staff:'STAFF',staffportal:'STAFF PORTAL',qr:'QR TABLES',site:'ESPACE CLIENT',web:'WEB'};
+      var map = {pos:'POS',admin:'ADMIN',stock:'STOCK',kds:'KDS',staff:'STAFF',qr:'QR',site:'SITE',web:'WEB'};
       var el = document.getElementById('mode-badge');
       if(el) el.textContent = '✦ Mode: ' + (map[mode] || mode.toUpperCase());
     }catch(e){}
