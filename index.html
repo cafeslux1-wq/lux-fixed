@@ -3,87 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Café LUX Taza · v3.5 Platinum</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <title>Café LUX Taza · v3.7 Gateway Luxury Pro</title>
+    <meta name="description" content="Café LUX Gateway — Client & Pro unified access with premium navigation, secure pro entry, and resilient routing.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #C9A84C; --bg: #050505; --card: rgba(25, 25, 25, 0.9); --border: rgba(201, 168, 76, 0.3); --text: #F2EFE9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
-        #gateway { padding: 40px 20px; max-width: 550px; margin: 0 auto; text-align: center; min-height: 100vh; }
-        .logo-main { width: 110px; margin-bottom: 15px; filter: drop-shadow(0 0 15px rgba(201,168,76,0.4)); }
-        h1 { font-family: 'Cinzel', serif; font-size: 26px; color: var(--gold); letter-spacing: 2px; }
-        .slogan { font-size: 11px; color: #888; margin-bottom: 35px; letter-spacing: 3px; text-transform: uppercase; }
-        .section-title { font-family: 'Cinzel', serif; font-size: 13px; margin: 25px 0 15px; color: rgba(255,255,255,0.4); border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
-        .gateway-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .tile-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 25px 10px; transition: 0.3s; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .tile-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #161616; }
-        .tile-icon { font-size: 30px; margin-bottom: 10px; }
-        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 11px; font-weight: 600; text-align: center; }
-        #pin-modal { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .pin-box { background: #000; padding: 30px; border-radius: 25px; border: 1px solid var(--gold); width: 320px; text-align: center; }
-        .pin-dots { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--gold); }
-        .dot.filled { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .num-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; font-size: 20px; cursor: pointer; }
-        #pro-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { position: absolute; top: 15px; right: 15px; background: var(--gold); color: #000; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; z-index: 10001; }
+        :root{
+            --gold:#C9A84C; --gold2:#E8C97A; --gold3:#8B6E2F;
+            --bg:#040404; --card:rgba(17,17,17,.74); --card2:rgba(255,255,255,.03);
+            --border:rgba(201,168,76,.22); --text:#F2EFE9; --muted:#A6A099; --glass:rgba(255,255,255,.04);
+            --ok:#46c17b; --danger:#ff6b6b;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;outline:none;-webkit-tap-highlight-color:transparent}
+        html,body{min-height:100%}
+        body{
+            background:
+              radial-gradient(circle at top, rgba(201,168,76,.18), transparent 28%),
+              radial-gradient(circle at bottom right, rgba(201,168,76,.08), transparent 30%),
+              linear-gradient(180deg, #050505, #0b0b0b 52%, #040404);
+            color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;
+        }
+        body::before{
+            content:""; position:fixed; inset:0; pointer-events:none;
+            background:
+              linear-gradient(rgba(255,255,255,.025), rgba(255,255,255,0)),
+              url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='rgba(201,168,76,0.06)' stroke-width='1'%3E%3Cpath d='M0 70h140M70 0v140'/%3E%3C/g%3E%3C/svg%3E");
+            opacity:.6;
+        }
+        #gateway{padding:48px 20px 30px;max-width:920px;margin:0 auto;text-align:center;min-height:100vh;position:relative;z-index:1}
+        .lux-badge{
+            display:inline-flex;align-items:center;gap:10px;padding:7px 18px;border-radius:999px;
+            border:1px solid var(--border); color:var(--gold2); letter-spacing:3px; text-transform:uppercase;
+            font-size:10px; margin-bottom:16px; background:rgba(201,168,76,.06); backdrop-filter:blur(12px);
+            box-shadow:0 12px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);
+        }
+        .logo-main{width:122px;margin-bottom:18px;filter:drop-shadow(0 0 22px rgba(201,168,76,.32))}
+        h1{font-family:'Cinzel',serif;font-size:34px;color:var(--gold);letter-spacing:6px}
+        .slogan{font-family:'Cormorant Garamond',serif;font-size:19px;color:#d7d0c7;margin:8px 0 10px}
+        .subline{font-size:12px;color:#8f877d;margin-bottom:34px;letter-spacing:2px;text-transform:uppercase}
+        .hero-panel{
+            background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+            border:1px solid rgba(201,168,76,.18); border-radius:28px; padding:28px 20px 22px; margin-bottom:28px;
+            backdrop-filter: blur(20px); box-shadow: 0 24px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .hero-kpis{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+        .hero-kpi{
+            min-width:150px;padding:12px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.05);
+            background:rgba(255,255,255,.03); backdrop-filter:blur(8px);
+        }
+        .hero-kpi strong{display:block;font-family:'Cinzel',serif;color:var(--gold);font-size:13px;margin-bottom:4px}
+        .hero-kpi span{font-size:11px;color:var(--muted)}
+        .section-title{
+            font-family:'Cinzel',serif;font-size:13px;margin:30px 0 14px;color:rgba(255,255,255,.42);
+            padding-bottom:10px;text-transform:uppercase;letter-spacing:3px;position:relative
+        }
+        .section-title::after{
+            content:""; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+            width:160px; height:1px; background:linear-gradient(90deg, transparent, rgba(201,168,76,.42), transparent);
+        }
+        .gateway-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+        .tile-card{
+            background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.025));
+            border:1px solid var(--border); border-radius:24px; padding:24px 14px; transition:.28s; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+            backdrop-filter:blur(16px); position:relative; overflow:hidden;
+            box-shadow:0 20px 50px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05);
+        }
+        .tile-card::before{
+            content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(201,168,76,.12), transparent 45%, rgba(255,255,255,.04));
+            opacity:0; transition:.28s;
+        }
+        .tile-card:hover,.tile-card:focus-visible{border-color:rgba(201,168,76,.52);transform:translateY(-6px) scale(1.015)}
+        .tile-card:hover::before,.tile-card:focus-visible::before{opacity:1}
+        .tile-icon{font-size:32px;margin-bottom:4px;filter:drop-shadow(0 0 12px rgba(201,168,76,.18))}
+        .tile-title{font-family:'Cinzel',serif;color:var(--gold);font-size:12px;font-weight:700;text-align:center;letter-spacing:1px}
+        .tile-sub{font-size:10px;color:var(--muted);text-align:center;line-height:1.45;max-width:150px}
+        .tile-chip{
+            position:absolute; top:10px; right:10px; font-size:9px; padding:4px 8px; border-radius:999px;
+            background:rgba(201,168,76,.12); color:var(--gold2); border:1px solid rgba(201,168,76,.18)
+        }
+        .quick-links{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+        .quick-link{
+            border:1px solid rgba(255,255,255,.08);background:var(--card2);color:var(--muted);padding:10px 14px;border-radius:999px;
+            font-size:11px;text-decoration:none;transition:.2s;
+        }
+        .quick-link:hover{color:var(--gold);border-color:var(--border)}
+        #pin-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);align-items:center;justify-content:center;backdrop-filter:blur(16px);padding:16px}
+        .pin-box{
+            background:linear-gradient(180deg, rgba(20,20,20,.95), rgba(7,7,7,.98));padding:34px;border-radius:28px;
+            border:1px solid rgba(201,168,76,.4);width:340px;max-width:100%;text-align:center; box-shadow:0 30px 90px rgba(0,0,0,.6);
+        }
+        .pin-title{font-family:'Cinzel',serif;color:var(--gold);font-size:17px;letter-spacing:2px;margin-bottom:8px}
+        .pin-sub{font-size:11px;color:var(--muted);margin-bottom:8px}
+        .pin-hint{font-size:10px;color:#7f7a74;margin-bottom:14px}
+        .pin-dots{display:flex;justify-content:center;gap:15px;margin:20px 0}
+        .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold)}
+        .dot.filled{background:var(--gold);box-shadow:0 0 12px rgba(201,168,76,.72)}
+        .pin-error{min-height:18px;font-size:11px;color:var(--danger);margin-bottom:10px}
+        .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .num-btn{
+            background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#fff;padding:15px;border-radius:14px;
+            font-size:20px;cursor:pointer;transition:.18s
+        }
+        .num-btn:hover,.num-btn:focus-visible{border-color:rgba(201,168,76,.42);color:var(--gold);transform:translateY(-2px)}
+        #pro-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#050505}
+        iframe{width:100%;height:100%;border:none;background:#050505}
+        .overlay-top{
+            position:absolute; top:0; left:0; right:0; z-index:10001; display:flex; justify-content:space-between; align-items:center; gap:12px;
+            padding:14px 18px; background:linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.18)); backdrop-filter:blur(10px)
+        }
+        .overlay-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .overlay-label{
+            display:flex; align-items:center; gap:12px; color:var(--text); font-size:12px;
+            border:1px solid rgba(201,168,76,.18); padding:9px 14px; border-radius:999px; background:rgba(10,10,10,.55)
+        }
+        .overlay-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .ghost-btn,.close-btn,.fallback-btn{
+            padding:11px 16px; border:none; border-radius:12px; cursor:pointer; font-weight:800; z-index:10001; text-decoration:none;
+            display:inline-flex; align-items:center; justify-content:center; font-size:12px;
+        }
+        .ghost-btn{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.08)}
+        .close-btn,.fallback-btn{background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#000; box-shadow:0 10px 30px rgba(201,168,76,.24)}
+        .frame-status{
+            position:absolute;left:50%;transform:translateX(-50%);top:78px;z-index:10001;padding:9px 14px;border-radius:999px;
+            background:rgba(10,10,10,.72);border:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--muted);display:none;
+        }
+        .frame-status.show{display:block}
+        .footer-note{margin-top:24px;font-size:11px;color:#857e77;line-height:1.8}
+        @media(max-width:760px){.gateway-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:640px){
+            .overlay-top{padding:12px;align-items:flex-start;flex-direction:column}
+            .overlay-actions{width:100%;justify-content:stretch}
+            .ghost-btn,.close-btn,.fallback-btn{flex:1}
+            .frame-status{top:120px;width:calc(100% - 24px);text-align:center}
+        }
+        @media(max-width:520px){
+            .gateway-grid{grid-template-columns:1fr 1fr}
+            h1{font-size:28px;letter-spacing:4px}
+            .hero-kpi{min-width:unset; flex:1}
+        }
     </style>
 </head>
 <body>
     <div id="gateway">
-        <img src="https://cafeslux.com/logo.png" class="logo-main">
-        <h1>Café LUX</h1>
-        <p class="slogan">L'art du café, à Taza</p>
+        <div class="lux-badge">✦ Final Luxury Ultra · v3.7</div>
+        <div class="hero-panel">
+            <img src="https://cafeslux.com/logo.png" class="logo-main" alt="Café LUX logo">
+            <h1>Café LUX</h1>
+            <p class="slogan">L'art du café, à Taza</p>
+            <div class="subline">Gateway unifié · Client & Pro · Expérience premium</div>
+            <div class="hero-kpis">
+                <div class="hero-kpi"><strong>Client</strong><span>Carte, privilèges, réservation et expérience premium</span></div>
+                <div class="hero-kpi"><strong>Pro</strong><span>POS, stock, KDS, staff et QR dans la même logique</span></div>
+                <div class="hero-kpi"><strong>Luxury</strong><span>Glassmorphism, or raffiné et navigation plus claire</span></div>
+            </div>
+            <div class="quick-links">
+                <a class="quick-link" href="#" onclick="goPublic('menu');return false;">Ouvrir le menu</a>
+                <a class="quick-link" href="#" onclick="goPublic('reservation');return false;">Réserver</a>
+                <a class="quick-link" href="#" onclick="askPIN('pos');return false;">Accès POS</a>
+            </div>
+        </div>
+
         <h2 class="section-title">Espace Client</h2>
         <div class="gateway-grid">
-            <div class="tile-card" onclick="openSPA('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span></div>
-            <div class="tile-card" onclick="openSPA('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span></div>
-            <div class="tile-card" onclick="openSPA('booking')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span></div>
-            <div class="tile-card" onclick="window.open('lux-saas.html', '_blank')"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span></div>
+            <button class="tile-card" type="button" onclick="goPublic('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span><span class="tile-sub">Menu visuel, produits et commande publique</span><span class="tile-chip">Public</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span><span class="tile-sub">Offres, fidélité et promotions élégantes</span><span class="tile-chip">VIP</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('reservation')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span><span class="tile-sub">Réserver une table sans quitter l’écosystème</span><span class="tile-chip">Table</span></button>
+            <button class="tile-card" type="button" onclick="goSaaS()"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span><span class="tile-sub">Accès rapide vers la vitrine SaaS LUX</span><span class="tile-chip">Brand</span></button>
         </div>
+
         <h2 class="section-title">Services Pro 🔐</h2>
         <div class="gateway-grid">
-            <div class="tile-card" onclick="askPIN('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse POS</span></div>
-            <div class="tile-card" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Gestion</span></div>
-            <div class="tile-card" onclick="askPIN('stock')"><span class="tile-icon">📦</span><span class="tile-title">Stock</span></div>
-            <div class="tile-card" onclick="askPIN('kitchen')"><span class="tile-icon">📺</span><span class="tile-title">Cuisine KDS</span></div>
-            <div class="tile-card" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span></div>
-            <div class="tile-card" onclick="askPIN('qr')"><span class="tile-icon">📲</span><span class="tile-title">QR Tables</span></div>
+            <button class="tile-card" type="button" onclick="askPIN('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse POS</span><span class="tile-sub">Encaissement rapide et tickets intégrés</span><span class="tile-chip">Core</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Gestion</span><span class="tile-sub">Dashboard, rapports et outils manager</span><span class="tile-chip">Admin</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('stock')"><span class="tile-icon">📦</span><span class="tile-title">Stock</span><span class="tile-sub">Quantités, alertes et mise à jour directe</span><span class="tile-chip">Ops</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('kds')"><span class="tile-icon">📺</span><span class="tile-title">Cuisine KDS</span><span class="tile-sub">Suivi cuisine et flux de préparation</span><span class="tile-chip">Live</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span><span class="tile-sub">Présence, équipe et accès du personnel</span><span class="tile-chip">Staff</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('qr')"><span class="tile-icon">📲</span><span class="tile-title">QR Tables</span><span class="tile-sub">Impression QR et gestion des tables</span><span class="tile-chip">QR</span></button>
         </div>
     </div>
-    <div id="pin-modal">
-        <div class="pin-box">
+
+    <div id="pin-modal" aria-hidden="true">
+        <div class="pin-box" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+            <div class="pin-title" id="pin-title">Accès sécurisé</div>
+            <div class="pin-sub">Saisissez votre code PIN pour ouvrir l’espace professionnel.</div>
+            <div class="pin-hint">Admin: code dédié · autres espaces: code staff</div>
             <div id="pin-display" class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div id="pin-error" class="pin-error"></div>
             <div class="numpad">
-                <button class="num-btn" onclick="press(1)">1</button><button class="num-btn" onclick="press(2)">2</button><button class="num-btn" onclick="press(3)">3</button>
-                <button class="num-btn" onclick="press(4)">4</button><button class="num-btn" onclick="press(5)">5</button><button class="num-btn" onclick="press(6)">6</button>
-                <button class="num-btn" onclick="press(7)">7</button><button class="num-btn" onclick="press(8)">8</button><button class="num-btn" onclick="press(9)">9</button>
-                <button class="num-btn" style="background:#211" onclick="resetP()">C</button><button class="num-btn" onclick="press(0)">0</button>
-                <button class="num-btn" onclick="closeM()">✕</button>
+                <button class="num-btn" type="button" onclick="press(1)">1</button><button class="num-btn" type="button" onclick="press(2)">2</button><button class="num-btn" type="button" onclick="press(3)">3</button>
+                <button class="num-btn" type="button" onclick="press(4)">4</button><button class="num-btn" type="button" onclick="press(5)">5</button><button class="num-btn" type="button" onclick="press(6)">6</button>
+                <button class="num-btn" type="button" onclick="press(7)">7</button><button class="num-btn" type="button" onclick="press(8)">8</button><button class="num-btn" type="button" onclick="press(9)">9</button>
+                <button class="num-btn" type="button" style="background:#211" onclick="resetP()">C</button><button class="num-btn" type="button" onclick="press(0)">0</button>
+                <button class="num-btn" type="button" onclick="closeM()">✕</button>
             </div>
         </div>
     </div>
-    <div id="pro-overlay"><button class="close-btn" onclick="location.reload()">✕ Fermer</button><iframe id="ifr"></iframe></div>
+
+    <div id="pro-overlay" aria-hidden="true">
+        <div class="overlay-top">
+            <div class="overlay-left">
+                <div class="overlay-label"><span>✦</span><span id="overlay-mode-label">Mode Professionnel</span></div>
+                <div class="overlay-label"><span>↗</span><span id="overlay-target-label">Chargement interne</span></div>
+            </div>
+            <div class="overlay-actions">
+                <a id="fallback-link" class="fallback-btn" href="#" target="_self">Ouvrir directement</a>
+                <button class="ghost-btn" type="button" onclick="refreshFrame()">Actualiser</button>
+                <button class="close-btn" type="button" onclick="closeOverlay()">✕ Fermer</button>
+            </div>
+        </div>
+        <div id="frame-status" class="frame-status">Chargement…</div>
+        <iframe id="ifr" title="Café LUX Pro Interface" loading="eager"></iframe>
+    </div>
+
+    <div class="footer-note">Café LUX · Taza · v3.7 Gateway Luxury Pro</div>
+
     <script>
-        let p = ""; let r = "";
-        function openSPA(v) { 
-            document.getElementById('ifr').src = `cafe-lux.html?view=${v}&mode=web`;
-            document.getElementById('pro-overlay').style.display = 'block';
+        let p = "";
+        let r = "";
+        let currentFrameUrl = "";
+        let loadTimer = null;
+        let pinFailureCount = 0;
+
+        function resolveFile(standardName, ultraName) {
+            const here = (location.pathname.split('/').pop() || '').toLowerCase();
+            return here.includes('ultra') ? ultraName : standardName;
         }
-        function askPIN(role) { r = role; p = ""; updateD(); document.getElementById('pin-modal').style.display = 'flex'; }
-        function press(n) { if(p.length < 4) { p += n; updateD(); if(p.length === 4) setTimeout(verify, 250); } }
-        function updateD() { const dots = document.getElementById('pin-display').children; for(let i=0; i<4; i++) dots[i].classList.toggle('filled', i < p.length); }
-        function resetP() { p = ""; updateD(); }
-        function closeM() { document.getElementById('pin-modal').style.display = 'none'; }
+
+        function resolvePublicPage() {
+            return resolveFile('index.html', 'index-ultra.html');
+        }
+
+        function resolveProPage() {
+            return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
+        }
+
+        function goPublic(tab) {
+            const page = resolvePublicPage();
+            window.location.href = `${page}?tab=${encodeURIComponent(tab)}`;
+        }
+
+        function goSaaS() {
+            window.location.href = 'lux-saas.html';
+        }
+
+        function askPIN(role) {
+            r = role; p = ""; updateD(); clearPinError();
+            const modal = document.getElementById('pin-modal');
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function press(n) {
+            if (p.length < 4) {
+                p += String(n);
+                updateD();
+                clearPinError();
+                if (p.length === 4) setTimeout(verify, 180);
+            }
+        }
+
+        function updateD() {
+            const dots = document.getElementById('pin-display').children;
+            for (let i = 0; i < 4; i++) dots[i].classList.toggle('filled', i < p.length);
+        }
+
+        function setPinError(msg) {
+            document.getElementById('pin-error').textContent = msg || '';
+        }
+
+        function clearPinError() {
+            setPinError('');
+        }
+
+        function resetP() {
+            p = "";
+            updateD();
+        }
+
+        function closeM() {
+            const modal = document.getElementById('pin-modal');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            resetP();
+            clearPinError();
+        }
+
+        function buildProUrl(mode) {
+            const proPage = resolveProPage();
+            const isPosMode = mode === 'pos';
+            if (location.hostname.includes('cafeslux.com') && isPosMode) {
+                return `https://cafeslux.com/${proPage}?mode=pos`;
+            }
+            return `${proPage}?mode=${encodeURIComponent(mode)}`;
+        }
+
+        function openOverlay(url, label) {
+            currentFrameUrl = url;
+            const overlay = document.getElementById('pro-overlay');
+            const iframe = document.getElementById('ifr');
+            const status = document.getElementById('frame-status');
+            document.getElementById('overlay-target-label').textContent = label || 'Chargement interne';
+            document.getElementById('fallback-link').href = url;
+            overlay.style.display = 'block';
+            overlay.setAttribute('aria-hidden', 'false');
+            status.textContent = 'Chargement…';
+            status.classList.add('show');
+            iframe.src = url;
+            clearTimeout(loadTimer);
+            loadTimer = setTimeout(() => {
+                status.textContent = 'Si l’affichage tarde, utilisez “Ouvrir directement”.';
+            }, 2200);
+        }
+
+        function closeOverlay() {
+            const overlay = document.getElementById('pro-overlay');
+            const iframe = document.getElementById('ifr');
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+            iframe.src = 'about:blank';
+            currentFrameUrl = '';
+            clearTimeout(loadTimer);
+        }
+
+        function refreshFrame() {
+            if (!currentFrameUrl) return;
+            document.getElementById('ifr').src = currentFrameUrl;
+            document.getElementById('frame-status').textContent = 'Actualisation…';
+            document.getElementById('frame-status').classList.add('show');
+        }
+
         function verify() {
-            if ((r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234')) {
-                document.getElementById('ifr').src = `cafe-lux.html?mode=${r}`;
-                document.getElementById('pro-overlay').style.display = 'block';
+            const ok = (r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234');
+            if (ok) {
+                pinFailureCount = 0;
+                document.getElementById('overlay-mode-label').textContent = 'Mode ' + r.toUpperCase();
+                openOverlay(buildProUrl(r), 'Chargement interne');
                 closeM();
-            } else { alert("Code PIN Incorrect"); resetP(); }
+            } else {
+                pinFailureCount += 1;
+                setPinError(pinFailureCount >= 3 ? 'Code incorrect. Vérifiez le PIN avant de réessayer.' : 'Code PIN incorrect.');
+                resetP();
+            }
         }
+
+        document.getElementById('ifr').addEventListener('load', () => {
+            clearTimeout(loadTimer);
+            const status = document.getElementById('frame-status');
+            status.textContent = 'Interface chargée.';
+            status.classList.add('show');
+            setTimeout(() => status.classList.remove('show'), 1200);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const pinOpen = document.getElementById('pin-modal').style.display === 'flex';
+            const overlayOpen = document.getElementById('pro-overlay').style.display === 'block';
+            if (e.key === 'Escape') {
+                if (pinOpen) closeM();
+                else if (overlayOpen) closeOverlay();
+                return;
+            }
+            if (pinOpen) {
+                if (/^[0-9]$/.test(e.key)) press(e.key);
+                else if (e.key === 'Backspace') {
+                    p = p.slice(0, -1);
+                    updateD();
+                }
+                else if (e.key.toLowerCase() === 'c') resetP();
+            }
+        });
     </script>
 </body>
 </html>
