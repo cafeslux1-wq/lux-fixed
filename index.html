@@ -2067,6 +2067,7 @@ function enterMonEspace(){
 }
 
 function openStaffPortal(){
+  // Opens the Arabic staff gateway in a new tab
   window.open('portal.html','_blank');
 }
 
@@ -2122,16 +2123,15 @@ function closePIN(){
   var realInput = document.getElementById('pin-real-input');
   if(realInput) realInput.value = '';
   pinBuffer = '';
-  currentPINTarget = null;
+  // NE PAS réinitialiser currentPINTarget ici — checkPIN le fait après
 }
 function pinKey(n){
   if(pinBuffer.length >= 4) return;
   pinBuffer += String(n);
-  // Sync hidden real input (keeps browser from showing value)
   var realInput = document.getElementById('pin-real-input');
   if(realInput) realInput.value = pinBuffer;
   updatePinDots();
-  if(pinBuffer.length === 4) setTimeout(checkPIN, 150);
+  if(pinBuffer.length === 4) checkPIN(); // direct call — no setTimeout
 }
 function pinDel(){
   pinBuffer = pinBuffer.slice(0,-1);
@@ -2156,25 +2156,17 @@ function updatePinDots(){
   }
 }
 function onPinRealInput(val){
-  // Sync from real keyboard input to pinBuffer (digits only)
   var clean = val.replace(/\D/g,'').slice(0,4);
   var realInput = document.getElementById('pin-real-input');
-  if(realInput) realInput.value = clean;  // keep in sync
+  if(realInput) realInput.value = clean;
   pinBuffer = clean;
   updatePinDots();
-  if(pinBuffer.length === 4) setTimeout(checkPIN, 150);
+  if(pinBuffer.length === 4) checkPIN(); // direct call — no setTimeout
 }
 function checkPIN(){
   var correct = PINS[currentPINTarget] || '9999';
   if(pinBuffer === correct){
-    closePIN();
-    var sessionData = {
-      role: currentPINTarget,
-      expires: Date.now() + (8 * 60 * 60 * 1000),
-      issued: Date.now()
-    };
-    localStorage.setItem('lux_session', JSON.stringify(sessionData));
-    localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
+    // Sauvegarder la route AVANT closePIN (qui reset currentPINTarget)
     var routes = {
       'pos':   'cafe-lux.html?mode=pos',
       'admin': 'cafe-lux.html?mode=admin',
@@ -2182,11 +2174,30 @@ function checkPIN(){
       'kds':   'cafe-lux.html?mode=kds',
       'stock': 'cafe-lux.html?mode=admin'
     };
-    var url = routes[currentPINTarget];
-    if(url){
-      // Use location.href — no popup blocker issue (session already written)
-      // Staff uses separate portal.html so no auth guard conflict
-      window.location.href = url;
+    var targetUrl = routes[currentPINTarget];
+    var targetRole = currentPINTarget;
+
+    // Écrire la session AVANT de fermer/naviguer
+    var sessionData = {
+      role: targetRole,
+      expires: Date.now() + (8 * 60 * 60 * 1000),
+      issued: Date.now()
+    };
+    localStorage.setItem('lux_session', JSON.stringify(sessionData));
+    localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
+
+    // Fermer le modal
+    closePIN();
+
+    // Naviguer — window.location.href évite le popup blocker mobile
+    if(targetUrl){
+      if(targetRole === 'staff'){
+        // Staff portal: nouveau onglet (pas de auth guard)
+        window.open(targetUrl, '_blank');
+      } else {
+        // POS, KDS, Admin: même page (session déjà écrite, auth guard passe)
+        window.location.href = targetUrl;
+      }
     }
   } else {
     var errEl = document.getElementById('pin-err');
