@@ -147,7 +147,7 @@
 </head>
 <body>
     <div id="gateway">
-        <div class="lux-badge">✦ Final Luxury Ultra · v3.7</div>
+        <div class="lux-badge">✦ Café LUX · v3.8 Gold</div>
         <div class="hero-panel">
             <img src="https://cafeslux.com/logo.png" class="logo-main" alt="Café LUX logo">
             <h1>Café LUX</h1>
@@ -159,9 +159,9 @@
                 <div class="hero-kpi"><strong>Luxury</strong><span>Glassmorphism, or raffiné et navigation plus claire</span></div>
             </div>
             <div class="quick-links">
-                <a class="quick-link" href="#" onclick="goPublic('menu');return false;">Ouvrir le menu</a>
-                <a class="quick-link" href="#" onclick="goPublic('reservation');return false;">Réserver</a>
-                <a class="quick-link" href="#" onclick="askPIN('pos');return false;">Accès POS</a>
+                <a class="quick-link" href="#" onclick="goPublic('menu');return false;">&#x1F6D2; Commander</a>
+                <a class="quick-link" href="#" onclick="goPublic('reservation');return false;">&#x1F4C5; Réserver</a>
+                <a class="quick-link" href="#" onclick="askPIN('pos');return false;">&#x1F510; Accès Pro</a>
             </div>
         </div>
 
@@ -170,7 +170,8 @@
             <button class="tile-card" type="button" onclick="goPublic('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span><span class="tile-sub">Menu visuel, produits et commande publique</span><span class="tile-chip">Public</span></button>
             <button class="tile-card" type="button" onclick="goPublic('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span><span class="tile-sub">Offres, fidélité et promotions élégantes</span><span class="tile-chip">VIP</span></button>
             <button class="tile-card" type="button" onclick="goPublic('reservation')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span><span class="tile-sub">Réserver une table sans quitter l’écosystème</span><span class="tile-chip">Table</span></button>
-            <button class="tile-card" type="button" onclick="goSaaS()"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span><span class="tile-sub">Accès rapide vers la vitrine SaaS LUX</span><span class="tile-chip">Brand</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('account')"><span class="tile-icon">👤</span><span class="tile-title">Mon Espace LUX</span><span class="tile-sub">Profil, commandes, carte cadeau</span><span class="tile-chip">VIP</span></button>
+            <button class="tile-card" type="button" onclick="goSaaS()"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span><span class="tile-sub">Plateforme SaaS pour cafés marocains</span><span class="tile-chip">B2B</span></button>
         </div>
 
         <h2 class="section-title">Services Pro 🔐</h2>
@@ -232,20 +233,32 @@
         }
 
         function resolvePublicPage() {
-            return resolveFile('index.html', 'index-ultra.html');
+            return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
         }
 
         function resolveProPage() {
             return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
         }
 
-        function goPublic(tab) {
+        function normalizePublicTab(tab) {
+            return ['menu','offers','reservation','account'].includes(tab) ? tab : 'menu';
+        }
+
+        function buildPublicUrl(tab) {
             const page = resolvePublicPage();
-            window.location.href = `${page}?tab=${encodeURIComponent(tab)}`;
+            return `${page}?mode=site&tab=${encodeURIComponent(normalizePublicTab(tab))}`;
+        }
+
+        function goPublic(tab) {
+            // window.open keeps index.html open; mode=site bypasses cafe-lux auth guard
+            var t = normalizePublicTab(tab);
+            var page = resolvePublicPage();
+            var url  = page + '?mode=site&tab=' + encodeURIComponent(t);
+            window.open(url, '_blank');
         }
 
         function goSaaS() {
-            window.location.href = 'lux-saas.html';
+            window.open('lux-saas.html', '_blank');
         }
 
         function askPIN(role) {
@@ -292,11 +305,11 @@
 
         function buildProUrl(mode) {
             const proPage = resolveProPage();
-            const isPosMode = mode === 'pos';
-            if (location.hostname.includes('cafeslux.com') && isPosMode) {
+            const normalized = ['pos','admin','stock','kds','staff','qr','web','site','ext'].includes(mode) ? mode : 'admin';
+            if (location.hostname.includes('cafeslux.com') && normalized === 'pos') {
                 return `https://cafeslux.com/${proPage}?mode=pos`;
             }
-            return `${proPage}?mode=${encodeURIComponent(mode)}`;
+            return `${proPage}?mode=${encodeURIComponent(normalized)}`;
         }
 
         function openOverlay(url, label) {
@@ -338,9 +351,18 @@
             const ok = (r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234');
             if (ok) {
                 pinFailureCount = 0;
-                document.getElementById('overlay-mode-label').textContent = 'Mode ' + r.toUpperCase();
-                openOverlay(buildProUrl(r), 'Chargement interne');
+                const targetUrl = buildProUrl(r);
+                // Write session BEFORE navigation so auth guard finds it
+                const sessionData = {
+                    role: r,
+                    expires: Date.now() + (8 * 60 * 60 * 1000),
+                    issued: Date.now()
+                };
+                localStorage.setItem('lux_session', JSON.stringify(sessionData));
+                localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
                 closeM();
+                // Open in new tab — index.html stays, cafe-lux.html opens fresh
+                window.open(targetUrl, '_blank');
             } else {
                 pinFailureCount += 1;
                 setPinError(pinFailureCount >= 3 ? 'Code incorrect. Vérifiez le PIN avant de réessayer.' : 'Code PIN incorrect.');
@@ -355,6 +377,25 @@
             status.classList.add('show');
             setTimeout(() => status.classList.remove('show'), 1200);
         });
+
+        
+
+        function autoOpenFromQuery() {
+            const qs = new URLSearchParams(window.location.search);
+            const tab = qs.get('tab');
+            const mode = qs.get('mode');
+            if (tab) {
+                window.location.replace(buildPublicUrl(tab));
+                return;
+            }
+            if (mode && ['pos','admin','stock','kds','staff','qr','web','site','ext'].includes(mode)) {
+                if (mode === 'site') {
+                    window.location.replace(buildPublicUrl(qs.get('tab') || 'menu'));
+                    return;
+                }
+                window.location.replace(buildProUrl(mode));
+            }
+        }
 
         document.addEventListener('keydown', (e) => {
             const pinOpen = document.getElementById('pin-modal').style.display === 'flex';
@@ -373,6 +414,8 @@
                 else if (e.key.toLowerCase() === 'c') resetP();
             }
         });
+
+        autoOpenFromQuery();
     </script>
 </body>
 </html>
