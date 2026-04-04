@@ -1,383 +1,111 @@
 <!DOCTYPE html>
-<!-- Cafe LUX v3.2 Platinum -->
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#050505">
-<title>Caf&#xE9; LUX Taza &middot; Platinum</title>
-<link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{--gold:#C9A84C;--gold-l:#E8C97A;--bg:#050505;--c1:rgba(25,25,25,.85);--c2:rgba(35,35,35,.9);--bd:rgba(201,168,76,.2);--text:#F2EFE9;--mu:#888;--gr:#3DBE7A;--re:#E05252;}
-*{margin:0;padding:0;box-sizing:border-box;outline:none;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;overflow-x:hidden;}
-body::before{content:"";position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 50% 30%,rgba(201,168,76,.06) 0%,transparent 65%);z-index:-1;pointer-events:none;}
-.scr{position:fixed;inset:0;overflow-y:auto;background:var(--bg);display:none;flex-direction:column;}
-.scr.on{display:flex;}
-#G{align-items:center;}
-.gw-inner{padding:40px 20px 60px;width:100%;max-width:500px;text-align:center;}
-.logo-lux{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a1200,#2d1e00);border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:"Cinzel",serif;font-size:32px;color:var(--gold);margin:0 auto;box-shadow:0 0 40px rgba(201,168,76,.2),0 0 80px rgba(201,168,76,.08);}
-h1{font-family:"Cinzel",serif;font-size:28px;color:var(--gold);letter-spacing:4px;margin:16px 0 5px;}
-.slogan{font-size:10px;color:var(--mu);letter-spacing:4px;text-transform:uppercase;margin-bottom:40px;}
-.sec-t{font-family:"Cinzel",serif;font-size:11px;color:rgba(255,255,255,.35);border-bottom:1px solid var(--bd);padding-bottom:10px;margin:28px 0 18px;text-transform:uppercase;letter-spacing:3px;text-align:left;}
-.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;}
-.g1{grid-template-columns:1fr;}
-.tile{background:var(--c1);border:1px solid var(--bd);border-radius:20px;padding:28px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.5);transition:all .4s cubic-bezier(.175,.885,.32,1.275);}
-.tile:hover{border-color:var(--gold);background:rgba(30,30,30,.9);transform:translateY(-8px);box-shadow:0 15px 40px rgba(201,168,76,.2);}
-.tile:active{transform:scale(.96);}
-.ti{font-size:32px;margin-bottom:12px;line-height:1;}
-.tl{font-family:"Cinzel",serif;color:var(--gold);font-size:11px;font-weight:600;text-align:center;line-height:1.4;}
-.ts{font-size:9px;color:var(--mu);text-align:center;margin-top:4px;line-height:1.4;}
-.tile-row{padding:16px 18px;flex-direction:row;gap:16px;align-items:center;justify-content:flex-start;}
-.tile-row .tl{font-size:13px;text-align:left;}
-.tile-row .ts{text-align:left;}
-.tile-row .ti{font-size:24px;margin:0;min-width:32px;}
-.tile-saas{border:1px solid rgba(201,168,76,.35);background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.02));}
-.tile-pro{background:rgba(15,15,15,.9);}
-.gw-foot{margin-top:40px;font-size:10px;color:var(--mu);line-height:2.4;text-align:center;}
-.gw-foot a{color:var(--mu);}
-.ph{background:rgba(5,5,5,.95);border-bottom:1px solid var(--bd);padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;flex-shrink:0;backdrop-filter:blur(10px);}
-.bk{background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;padding:2px 8px 2px 0;}
-.pt{font-family:"Cinzel",serif;font-size:14px;color:var(--gold);letter-spacing:1px;}
-.ci-btn{margin-left:auto;position:relative;background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);}
-.ci-badge{position:absolute;top:-5px;right:-5px;background:var(--gold);color:#000;font-size:9px;font-weight:800;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
-.cat-bar{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;background:rgba(5,5,5,.8);border-bottom:1px solid var(--bd);flex-shrink:0;backdrop-filter:blur(6px);}
-.cat-bar::-webkit-scrollbar{display:none;}
-.cat-pill{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--bd);background:none;color:var(--mu);font-size:11px;cursor:pointer;white-space:nowrap;transition:.2s;}
-.cat-pill.on,.cat-pill:hover{border-color:var(--gold);color:var(--gold);}
-.mbody{flex:1;padding:14px 16px;overflow-y:auto;}
-.mbody::-webkit-scrollbar{width:3px;}
-.mbody::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
-.cat-sec{margin-bottom:28px;}
-.cat-hd{font-family:"Cinzel",serif;font-size:12px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.ig{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-.ic{background:var(--c1);border:1px solid var(--bd);border-radius:14px;padding:14px 12px;cursor:pointer;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden;}
-.ic::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.3),transparent);}
-.ic:hover,.ic:active{border-color:rgba(201,168,76,.5);background:var(--c2);transform:translateY(-2px);}
-.in{font-weight:600;font-size:12px;margin-bottom:4px;line-height:1.3;}
-.id2{font-size:10px;color:var(--mu);line-height:1.4;margin-bottom:8px;}
-.ifoot{display:flex;align-items:center;justify-content:space-between;}
-.ip{font-family:"Cinzel",serif;font-size:13px;color:var(--gold);font-weight:700;}
-.iadd{width:30px;height:30px;border-radius:50%;background:var(--gold);border:none;color:#000;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;box-shadow:0 4px 12px rgba(201,168,76,.3);}
-.iadd:active{transform:scale(.85);}
-.sig-l{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#000;font-size:7px;font-weight:800;padding:2px 7px;border-radius:10px;letter-spacing:.5px;}
-#cp{position:fixed;bottom:0;left:0;right:0;max-width:500px;margin:0 auto;background:rgba(10,8,0,.97);border-top:1px solid var(--bd);border-radius:20px 20px 0 0;padding:18px 20px;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);z-index:50;backdrop-filter:blur(20px);}
-#cp.on{transform:translateY(0);}
-.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.ct2{font-family:"Cinzel",serif;font-size:14px;color:var(--gold);}
-.cits{max-height:180px;overflow-y:auto;margin-bottom:12px;}
-.cit{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);}
-.cit:last-child{border:none;}
-.cin{flex:1;font-size:12px;}
-.ciq{display:flex;align-items:center;gap:6px;}
-.ciq button{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--text);width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;}
-.ciq span{font-size:13px;font-weight:600;min-width:18px;text-align:center;}
-.cpr{font-family:"Cinzel",serif;font-size:12px;color:var(--gold);font-weight:700;min-width:56px;text-align:right;}
-.ctot{display:flex;justify-content:space-between;font-weight:700;margin-bottom:10px;font-size:15px;}
-.ctot span:last-child{color:var(--gold);font-family:"Cinzel",serif;}
-.otbs{display:flex;gap:8px;margin-bottom:12px;}
-.ot{flex:1;padding:8px;border:1px solid var(--bd);border-radius:10px;background:none;color:var(--mu);font-size:11px;cursor:pointer;transition:.2s;}
-.ot.on{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.06);}
-.fi{background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;color:var(--text);font-size:13px;font-family:"DM Sans",sans-serif;width:100%;margin-bottom:8px;transition:.2s;}
-.fi:focus{border-color:rgba(201,168,76,.5);}
-.bo{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#000;border:none;border-radius:14px;font-family:"Cinzel",serif;font-weight:700;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:0 8px 24px rgba(201,168,76,.3);}
-.bo:active{transform:scale(.98);}
-.bo:disabled{opacity:.5;cursor:not-allowed;}
-.fw{padding:20px;max-width:500px;margin:0 auto;width:100%;}
-.fc{background:var(--c1);border:1px solid var(--bd);border-radius:20px;padding:22px;backdrop-filter:blur(10px);}
-.fl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;}
-.fg{margin-bottom:14px;}
-.bwa{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:14px;font:700 15px/1 "DM Sans",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(37,211,102,.25);margin-top:4px;}
-.aw{padding:20px;max-width:500px;margin:0 auto;width:100%;}
-.as{background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:16px;backdrop-filter:blur(8px);}
-.ar{display:flex;gap:8px;}
-.ab{padding:11px 16px;background:var(--gold);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;}
-.ocd{background:var(--c1);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:10px;backdrop-filter:blur(6px);}
-.och{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.ocr{font-family:"Cinzel",serif;font-size:11px;color:var(--gold);}
-.ocs{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;}
-.sp{background:rgba(201,168,76,.12);color:var(--gold);}
-.sd{background:rgba(61,190,122,.12);color:var(--gr);}
-.lyc{background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:22px;text-align:center;backdrop-filter:blur(8px);margin-top:16px;background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));}
-#pm{position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(15px);z-index:100;display:none;align-items:center;justify-content:center;}
-#pm.on{display:flex;}
-.pb{background:#000;padding:36px 28px;border-radius:28px;border:1px solid var(--gold);width:320px;text-align:center;box-shadow:0 0 60px rgba(201,168,76,.15);}
-.ph2{font-family:"Cinzel",serif;font-size:16px;color:var(--gold);letter-spacing:2px;margin-bottom:4px;}
-.prl{font-size:11px;color:var(--mu);margin-bottom:6px;}
-.pds{display:flex;justify-content:center;gap:18px;margin:24px 0;}
-.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold);transition:.2s;}
-.dot.on{background:var(--gold);box-shadow:0 0 15px var(--gold),0 0 30px rgba(201,168,76,.4);}
-.np{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-.nb{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:50%;font-size:22px;cursor:pointer;width:70px;height:70px;margin:auto;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-.nb:hover{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.3);}
-.nb:active{background:var(--gold);color:#000;border-color:var(--gold);transform:scale(.92);}
-.nb.clr{background:rgba(255,0,0,.08);border-color:rgba(255,0,0,.1);color:#ff6b6b;font-size:14px;}
-.perr{font-size:11px;color:var(--re);margin-top:12px;min-height:16px;}
-.pcnl{margin-top:14px;background:none;border:none;color:var(--mu);font-size:12px;cursor:pointer;width:100%;padding:8px;}
-#SO{position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(15px);z-index:99;display:none;align-items:center;justify-content:center;}
-#SO.on{display:flex;}
-.sbox{background:#000;border:1px solid var(--gr);border-radius:26px;padding:36px 28px;width:300px;text-align:center;box-shadow:0 0 60px rgba(61,190,122,.15);}
-.sic{font-size:48px;margin-bottom:16px;}
-.stl{font-family:"Cinzel",serif;font-size:20px;color:var(--gr);margin-bottom:10px;}
-.ssb{font-size:12px;color:var(--mu);margin-bottom:6px;line-height:1.6;}
-.srf{font-family:"Cinzel",serif;font-size:14px;color:var(--gold);margin-bottom:22px;}
-.scl{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#000;border:none;border-radius:14px;font:700 14px "Cinzel",serif;letter-spacing:1px;cursor:pointer;}
-#TT{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:rgba(20,20,20,.95);border:1px solid var(--bd);color:var(--text);padding:10px 22px;border-radius:24px;font-size:12px;opacity:0;transition:.25s;z-index:200;pointer-events:none;white-space:nowrap;backdrop-filter:blur(10px);}
-#TT.on{opacity:1;transform:translateX(-50%) translateY(0);}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAFE LUX — Engine v3.5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #C9A84C; --bg: #0D0D0D; --text: #F0EDE8; --card: #161616; --border: #222; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; margin: 0; padding: 20px; }
+        
+        /* تحسين مظهر المنيو مع الصور */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; transition: 0.3s; }
+        .product-img { width: 100%; height: 120px; background: #222 url('https://cafeslux.com/logo.png') center/contain no-repeat; object-fit: cover; }
+        .product-info { padding: 12px; }
+        .product-price { color: var(--gold); font-weight: bold; margin-top: 5px; }
+
+        /* وسائل الدفع العالمية */
+        .payment-methods { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .pay-badge { padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--border); background: #111; display: flex; align-items: center; gap: 5px; }
+        .pay-badge.active { border-color: var(--gold); color: var(--gold); }
+
+        /* زر الطباعة المباشر بدون صفحات جديدة */
+        .print-btn { background: var(--gold); color: #000; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding: 0; }
+            .lux-ticket { width: 80mm; margin: 0; padding: 5mm; border: none; }
+        }
+    </style>
 </head>
 <body>
+    <div class="no-print">
+        <h2 id="page-title" style="font-family:Cinzel; color:var(--gold);">Café LUX Engine</h2>
+        <div id="public-view" style="display:none;">
+            <p>Bienvenue sur le Site Public & Menu</p>
+            <div class="payment-methods">
+                <div class="pay-badge">💵 Cash</div>
+                <div class="pay-badge">💳 Carte</div>
+                <div class="pay-badge">🅿️ PayPal</div>
+                <div class="pay-badge">📱 G-Pay</div>
+                <div class="pay-badge">📟 TPE</div>
+            </div>
+            <div class="product-grid" id="menu-container">
+                </div>
+        </div>
 
-<!-- GATEWAY -->
-<div id="G" class="scr on">
-<div class="gw-inner">
-  <div class="logo-lux">&#x2736;</div>
-  <h1>Caf&#xE9; LUX</h1>
-  <p class="slogan">L'art du caf&#xE9; &middot; Taza, Maroc</p>
-  <div class="sec-t">Exp&#xE9;rience Client</div>
-  <div class="g2 g1">
-    <div class="tile tile-row" onclick="go('M')"><span class="ti">&#x2615;</span><div><div class="tl">La Carte</div><div class="ts">Menu &middot; Livraison &middot; &#xC0; emporter</div></div></div>
-    <div class="tile tile-row" onclick="go('M')"><span class="ti">&#x1F381;</span><div><div class="tl">Privil&#xE8;ges</div><div class="ts">Offres &middot; Coupons &middot; Fid&#xE9;lit&#xE9;</div></div></div>
-    <div class="tile tile-row" onclick="go('R')"><span class="ti">&#x1F4C5;</span><div><div class="tl">R&#xE9;servation</div><div class="ts">Table &middot; &#xC9;v&#xE9;nements sp&#xE9;ciaux</div></div></div>
-    <div class="tile tile-row" onclick="go('A')"><span class="ti">&#x1F464;</span><div><div class="tl">Mon Espace</div><div class="ts">Commandes &middot; Points fid&#xE9;lit&#xE9;</div></div></div>
-    <div class="tile tile-row tile-saas" onclick="ot('lux-saas.html')"><span class="ti" style="font-size:20px">&#x2736;</span><div><div class="tl">LUX SaaS Solution</div><div class="ts">Syst&#xE8;me pour caf&#xE9;s marocains</div></div></div>
-  </div>
-  <div class="sec-t">Services Pro &#x1F510;</div>
-  <div class="g2">
-    <div class="tile tile-pro" onclick="op('pos')"><span class="ti">&#x1F9FE;</span><div class="tl">Caisse POS</div><div class="ts">Ventes &middot; Tickets</div></div>
-    <div class="tile tile-pro" onclick="op('admin')"><span class="ti">&#x1F4CA;</span><div class="tl">Gestion</div><div class="ts">Dashboard &middot; Analytics</div></div>
-    <div class="tile tile-pro" onclick="op('admin')"><span class="ti">&#x1F4E6;</span><div class="tl">Stock</div><div class="ts">Inventaire &middot; Alertes</div></div>
-    <div class="tile tile-pro" onclick="op('pos')"><span class="ti">&#x1F373;</span><div class="tl">Cuisine KDS</div><div class="ts">Display &middot; Commandes</div></div>
-    <div class="tile tile-pro" onclick="op('staff')"><span class="ti">&#x1F465;</span><div class="tl">Staff Portal</div><div class="ts">&#xC9;quipe &middot; Pr&#xE9;sences</div></div>
-    <div class="tile tile-pro" onclick="op('admin')"><span class="ti">&#x1F4F2;</span><div class="tl">QR Tables</div><div class="ts">G&#xE9;n&#xE9;ration &middot; Print</div></div>
-  </div>
-  <div class="gw-foot">
-    &#x1F4CD; R&#xE9;sidence Ziat N28, Taza &nbsp;&middot;&nbsp; &#x23F0; 07:00&ndash;23:00<br>
-    <a href="tel:+212808524169">&#x1F4DE; +212 808524169</a> &nbsp;&middot;&nbsp;
-    <a href="https://cafeslux.com" target="_blank">&#x1F310; cafeslux.com</a>
-  </div>
-</div>
-</div><!-- END GATEWAY -->
-
-<!-- MENU -->
-<div id="M" class="scr">
-  <div class="ph"><button class="bk" onclick="go('G')">&#x2190;</button><span class="pt">&#x2736; La Carte LUX</span><button class="ci-btn" onclick="tgCart()">&#x1F6D2;<span class="ci-badge" id="cbg"></span></button></div>
-  <div class="cat-bar" id="cats"></div>
-  <div class="mbody" id="mbody"></div>
-  <div id="cp">
-    <div class="ch"><span class="ct2">Mon Panier</span><button onclick="tgCart()" style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:20px">&#x2715;</button></div>
-    <div class="cits" id="cits"></div>
-    <div class="ctot"><span>Total TTC</span><span id="ctot">0 MAD</span></div>
-    <div class="otbs"><button class="ot on" onclick="sType('table',this)">&#x1FA51; Sur Place</button><button class="ot" onclick="sType('takeaway',this)">&#x1F96A; Emporter</button><button class="ot" onclick="sType('delivery',this)">&#x1F6F5; Livraison</button></div>
-    <input class="fi" id="on" placeholder="Votre nom *" type="text">
-    <input class="fi" id="oph" placeholder="T&#xE9;l&#xE9;phone *" type="tel">
-    <input class="fi" id="oad" placeholder="Adresse livraison *" type="text" style="display:none">
-    <button class="bo" onclick="sendOrd()" id="bord">&#x2714; Commander &mdash; <span id="btot">0</span> MAD</button>
-  </div>
-</div><!-- END MENU -->
-
-<!-- RESERVATION -->
-<div id="R" class="scr">
-  <div class="ph"><button class="bk" onclick="go('G')">&#x2190;</button><span class="pt">&#x1F4C5; R&#xE9;servation</span></div>
-  <div class="fw">
-    <div class="fc">
-      <p style="font-size:12px;color:var(--mu);margin-bottom:18px;line-height:1.7">Remplissez le formulaire et nous confirmons votre table par WhatsApp.</p>
-      <div class="fg"><label class="fl">Nom complet *</label><input class="fi" id="rn" type="text" placeholder="Votre nom" style="margin:0"></div>
-      <div class="fg"><label class="fl">T&#xE9;l&#xE9;phone *</label><input class="fi" id="rp" type="tel" placeholder="+212 6XX XXX XXX" style="margin:0"></div>
-      <div class="fg"><label class="fl">Date *</label><input class="fi" id="rd" type="date" style="margin:0;background:rgba(255,255,255,.04)"></div>
-      <div class="fg"><label class="fl">Heure</label><select class="fi" id="rh" style="margin:0;background:#0a0a0a"><option>07:30</option><option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option><option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option><option>18:00</option><option>19:00</option><option>20:00</option><option>21:00</option></select></div>
-      <div class="fg"><label class="fl">Personnes</label><select class="fi" id="rg" style="margin:0;background:#0a0a0a"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
-      <div class="fg"><label class="fl">Notes (optionnel)</label><input class="fi" id="rno" type="text" placeholder="Occasion sp&#xE9;ciale..." style="margin:0"></div>
-      <button class="bwa" onclick="sendRes()">&#x1F4F2; Confirmer via WhatsApp</button>
+        <div id="pro-view" style="display:none;">
+            <h3>Module Professionnel: <span id="mode-name"></span></h3>
+            <button class="print-btn" onclick="printTicket()">⎙ Imprimer Ticket Direct</button>
+            <div style="margin-top:20px; padding:15px; border:1px dashed var(--gold); border-radius:12px;">
+                <p>🛠 Outils d'administration: Ajouter / Modifier / Supprimer</p>
+                <button onclick="alert('Ajouter Produit')" style="background:#222; color:var(--gold); border:1px solid var(--gold); padding:5px 10px; cursor:pointer;">+ Ajouter</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div><!-- END RESERVATION -->
 
-<!-- ACCOUNT -->
-<div id="A" class="scr">
-  <div class="ph"><button class="bk" onclick="go('G')">&#x2190;</button><span class="pt">&#x1F464; Mon Espace</span></div>
-  <div class="aw">
-    <div class="as">
-      <p style="font-size:12px;color:var(--mu);margin-bottom:12px">Entrez votre num&#xE9;ro pour voir vos commandes</p>
-      <div class="ar"><input class="fi" id="aph" type="tel" placeholder="T&#xE9;l&#xE9;phone" style="margin:0;flex:1"><button class="ab" onclick="lookupOrd()">&#x1F50D;</button></div>
+    <div id="ticket-template" class="lux-ticket" style="display:none;">
+        <center>
+            <h2 style="font-family:Cinzel;">Café LUX</h2>
+            <p>Taza, Maroc</p>
+            <hr>
+            <div id="ticket-items"></div>
+            <hr>
+            <h3>Total: 0.00 DH</h3>
+        </center>
     </div>
-    <div id="aords"></div>
-    <div class="lyc"><div style="font-size:36px;margin-bottom:12px">&#x2B50;</div><div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:10px">Programme Fid&#xE9;lit&#xE9;</div><div style="font-size:11px;color:var(--mu);line-height:1.8">10 MAD d&#xE9;pens&#xE9;s = 1 point<br>Points &#xE9;changeables contre des r&#xE9;compenses</div></div>
-  </div>
-</div><!-- END ACCOUNT -->
 
-<!-- PIN -->
-<div id="pm">
-  <div class="pb">
-    <div class="ph2">Authentification</div>
-    <div class="prl" id="prl">Code PIN requis</div>
-    <div class="pds"><div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div></div>
-    <div class="np">
-      <button class="nb" onclick="pp(1)">1</button><button class="nb" onclick="pp(2)">2</button><button class="nb" onclick="pp(3)">3</button>
-      <button class="nb" onclick="pp(4)">4</button><button class="nb" onclick="pp(5)">5</button><button class="nb" onclick="pp(6)">6</button>
-      <button class="nb" onclick="pp(7)">7</button><button class="nb" onclick="pp(8)">8</button><button class="nb" onclick="pp(9)">9</button>
-      <button class="nb clr" onclick="cp2()">C</button><button class="nb" onclick="pp(0)">0</button><button class="nb" onclick="dp()">&#x232B;</button>
-    </div>
-    <div class="perr" id="perr"></div>
-    <button class="pcnl" onclick="cp()">Annuler</button>
-  </div>
-</div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');
+        const view = params.get('view');
 
-<!-- SUCCESS -->
-<div id="SO">
-  <div class="sbox"><div class="sic">&#x2705;</div><div class="stl">Commande envoy&#xE9;e!</div><div class="ssb">Votre commande a &#xE9;t&#xE9; transmise &#xE0; Caf&#xE9; LUX.</div><div class="ssb">Nous vous contacterons sous peu.</div><div class="srf" id="srf"></div><button class="scl" onclick="cSuc()">Parfait &#x2714;</button></div>
-</div>
+        if(mode === 'web' || !mode) {
+            document.getElementById('public-view').style.display = 'block';
+            document.getElementById('page-title').innerText = "La Carte & Site Public";
+        } else {
+            document.getElementById('pro-view').style.display = 'block';
+            document.getElementById('mode-name').innerText = mode.toUpperCase();
+        }
 
-<div id="TT"></div>
+        function printTicket() {
+            const ticket = document.getElementById('ticket-template');
+            ticket.style.display = 'block';
+            window.print();
+            ticket.style.display = 'none';
+        }
 
-<script src="api-client.js" defer></script>
-<script>
-var WA='212677717201';
-const MENU = [{"id": "pdej", "icon": "&#x1F373;", "title": "Petit-D&#xE9;jeuner", "sub": "Caf&#xE9; noir offert", "items": [{"n": "Classic Breakfast", "p": 22, "s": "Pain, oeuf, olives, fromage, confiture, Danone, JO", "img": "classic_bfast"}, {"n": "Chamali", "p": 27, "s": "2 oeufs, fromage, pain, jben, olives, JO, boisson chaude", "img": "chamali"}, {"n": "Omelette au Fromage", "p": 30, "s": "Pain, omelette fromage rouge & mozzarella, JO", "img": "omelette"}, {"n": "Moroccan Breakfast", "p": 35, "s": "Khlii, 2 oeufs, pain, olives, JO, boisson chaude", "img": "moroccan_bfast", "sig": true}, {"n": "Morning Lux", "p": 35, "s": "2 oeufs, fromage, pain, salade de fruits, JO", "img": "morning_lux", "sig": true}]}, {"id": "cafes", "icon": "&#x2615;", "title": "Cafes Classiques", "items": [{"n": "Espresso", "p": 7, "img": "espresso2"}, {"n": "Espresso Prestige", "p": 9, "img": "esp_prestige"}, {"n": "Double Espresso", "p": 14, "img": "double_esp"}, {"n": "Cafe Separe", "p": 12, "img": "cafe_separe"}, {"n": "Capsule", "p": 10, "img": "capsule"}, {"n": "Lait Chocolat", "p": 12, "img": "lait_choc"}, {"n": "Lait Chaud", "p": 9, "img": "lait_chaud"}, {"n": "Lait Verveine", "p": 12, "img": "lait_verveine"}, {"n": "Lait Aromatise", "p": 10, "img": "lait_aromatise"}]}, {"id": "cremeux", "icon": "&#x1F95B;", "title": "Les Cremeux", "items": [{"n": "Cafe Creme", "p": 10, "img": "cafe_creme"}, {"n": "Cappuccino", "p": 12, "img": "cappuccino"}, {"n": "Cafe Chocolat", "p": 14, "img": "cafe_choc"}, {"n": "Chocolat Fondu", "p": 20, "img": "choc_fondu"}]}, {"id": "infusions", "icon": "&#x1F375;", "title": "Infusions", "items": [{"n": "The Marocain", "p": 9, "img": "the_marocain"}, {"n": "Golden Tea", "p": 9, "img": "golden_tea", "s": "Tisane, Verveine, Lipton"}, {"n": "The Royal", "p": 20, "img": "the_royal", "sig": true, "s": "+7 gateaux marocains"}]}, {"id": "jus", "icon": "&#x1F964;", "title": "Jus Purs Frais", "items": [{"n": "Banane", "p": 15, "img": "banane"}, {"n": "Pomme", "p": 15, "img": "pomme"}, {"n": "Orange", "p": 16, "img": "orange"}, {"n": "Citron", "p": 16, "img": "citron"}, {"n": "Fruits Saison", "p": 18, "img": "fruits_saison"}, {"n": "Mangue", "p": 19, "img": "mangue"}, {"n": "Ananas", "p": 19, "img": "ananas"}, {"n": "Avocat", "p": 20, "img": "avocat"}, {"n": "Avocat Royal", "p": 25, "img": "avocat_royal", "sig": true, "s": "+ fruits secs"}]}, {"id": "sig", "icon": "&#x2B50;", "title": "Signature Lux", "items": [{"n": "Lux Matcha Bloom", "p": 20, "img": "matcha_bloom", "sig": true, "s": "Matcha premium + cremeux, avec 2 gateaux"}, {"n": "Queen's Rose Coffee", "p": 30, "img": "queen_rose", "sig": true, "s": "Cafe lait, Milka, dattes, amandes, gateaux"}, {"n": "Mojito", "p": 25, "img": "mojito"}, {"n": "Panache LUX", "p": 25, "img": "panache", "s": "Orange ou lait"}, {"n": "Cocktail Royal", "p": 30, "img": "cocktail_royal"}, {"n": "Zaazaa Lux", "p": 35, "img": "zaazaa", "sig": true, "s": "Must Try!"}]}, {"id": "crepes", "icon": "&#x1F95E;", "title": "Crepes", "items": [{"n": "Crepe Nutella", "p": 23, "img": "crepe_nutella"}, {"n": "Crepe Fruits", "p": 26, "img": "crepe_fruits"}, {"n": "Crepe Royale", "p": 30, "img": "crepe_royale", "sig": true, "s": "Chocolat, banane, noix"}, {"n": "Crepe Fromage", "p": 25, "img": "crepe_fromage"}, {"n": "Crepe Thon Fromage", "p": 35, "img": "crepe_thon"}, {"n": "Pack Crepes", "p": 35, "img": "pack_crepes", "s": "5 crepes nature"}]}, {"id": "resto", "icon": "&#x1F37D;", "title": "Restaurant", "items": [{"n": "LUX Power Toast", "p": 25, "img": "lux_toast", "sig": true, "s": "Oeufs, thon, fromage, pain de mie, legumes"}, {"n": "Harira", "p": 14, "img": "harira"}, {"n": "Meskouta", "p": 5, "img": "meskouta2"}, {"n": "Cake Prestige", "p": 10, "img": "cake_prestige"}, {"n": "Sables 7pcs", "p": 13, "img": "sables"}, {"n": "Sellou Portion", "p": 10, "img": "sellou_portion"}, {"n": "Plateau Gateaux", "p": 100, "img": "plateau_gateaux"}, {"n": "Sellou 1 Kg", "p": 100, "img": "sellou_1kg"}, {"n": "Salade Fruits Royale", "p": 40, "img": "salade_royale", "s": "Citron, Orange, Ananas, Mangue, Avocat, Banane"}]}, {"id": "soft", "icon": "&#x1F96B;", "title": "Soft & Shakes", "items": [{"n": "Soda", "p": 12, "img": "soda", "s": "Coca, 7up, Fanta"}, {"n": "Red Bull", "p": 20, "img": "redbull"}, {"n": "Milkshake Classic", "p": 35, "img": "milkshake", "s": "Fraise, Banane ou Vanille"}]}];;
-
-function go(id){document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});document.getElementById(id).classList.add('on');window.scrollTo(0,0);if(id==='M'&&!_mb){_mb=true;bPills();bCards();}}
-function ot(url){window.open(url,'_blank');}
-function toast(m,d){var t=document.getElementById('TT');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},d||2200);}
-
-var cart=[],oT='table',_mb=false,_imap={};
-
-function bPills(){
-  var el=document.getElementById('cats');
-  var h='<button class="cat-pill on" onclick="sC(event,null)">Tout</button>';
-  MENU.forEach(function(c){h+='<button class="cat-pill" onclick="sC(event,\''+c.id+'\')">'+c.icon+' '+c.title+'</button>';});
-  el.innerHTML=h;
-}
-
-function bCards(){
-  var el=document.getElementById('mbody');var h='';
-  MENU.forEach(function(cat){
-    h+='<div class="cat-sec" id="cat-'+cat.id+'">';
-    h+='<div class="cat-hd">'+cat.icon+' '+cat.title;
-    if(cat.sub)h+=' <span style="font-size:9px;color:var(--mu);font-weight:400">&mdash; '+cat.sub+'</span>';
-    h+='</div><div class="ig">';
-    cat.items.forEach(function(item,i){
-      var k=cat.id+'-'+i;_imap[k]=item;
-      h+='<div class="ic" data-k="'+k+'" onclick="aK(this)">';
-      if(item.sig)h+='<div class="sig-l">SIGNATURE</div>';
-      h+='<div class="in">'+item.n+'</div>';
-      if(item.s)h+='<div class="id2">'+item.s+'</div>';
-      h+='<div class="ifoot"><span class="ip">'+item.p+' MAD</span>';
-      h+='<button class="iadd" data-k="'+k+'" onclick="event.stopPropagation();aK(this)">+</button>';
-      h+='</div></div>';
-    });
-    h+='</div></div>';
-  });
-  el.innerHTML=h;
-}
-
-function aK(el){var i=_imap[el.getAttribute('data-k')];if(i)aC(i.n,i.p);}
-function sC(e,id){document.querySelectorAll('.cat-pill').forEach(function(p){p.classList.remove('on');});e.target.classList.add('on');if(!id){document.getElementById('mbody').scrollTop=0;return;}var el=document.getElementById('cat-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
-
-function aC(n,p){var ex=cart.find(function(i){return i.n===n;});if(ex)ex.q++;else cart.push({n:n,p:p,q:1});rC();toast('\u2714 '+n);var cp=document.getElementById('cp');if(!cp.classList.contains('on'))setTimeout(function(){cp.classList.add('on');},300);}
-function rC2(n){var ex=cart.find(function(i){return i.n===n;});if(ex&&ex.q>1)ex.q--;else cart=cart.filter(function(i){return i.n!==n;});rC();}
-
-var _cm={};
-function rC(){
-  var tot=cart.reduce(function(s,i){return s+i.p*i.q;},0);
-  var qty=cart.reduce(function(s,i){return s+i.q;},0);
-  document.getElementById('cbg').textContent=qty||'';
-  document.getElementById('ctot').textContent=tot+' MAD';
-  document.getElementById('btot').textContent=tot;
-  var ad=document.getElementById('oad');if(ad)ad.style.display=oT==='delivery'?'block':'none';
-  if(!cart.length){document.getElementById('cits').innerHTML='<div style="text-align:center;padding:14px;color:var(--mu);font-size:12px">Panier vide</div>';return;}
-  _cm={};
-  document.getElementById('cits').innerHTML=cart.map(function(i,idx){
-    var k='c'+idx;_cm[k]=i;
-    return '<div class="cit"><span class="cin">'+i.n+'</span><div class="ciq"><button data-k="'+k+'" onclick="rK(this)">\u2212</button><span>'+i.q+'</span><button data-k="'+k+'" onclick="aK2(this)">+</button></div><span class="cpr">'+(i.p*i.q)+' MAD</span></div>';
-  }).join('');
-}
-function rK(el){var i=_cm[el.getAttribute('data-k')];if(i)rC2(i.n);}
-function aK2(el){var i=_cm[el.getAttribute('data-k')];if(i)aC(i.n,i.p);}
-function tgCart(){document.getElementById('cp').classList.toggle('on');}
-function sType(t,btn){oT=t;document.querySelectorAll('.ot').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');rC();}
-
-function sendOrd(){
-  var n=document.getElementById('on').value.trim();
-  var ph=document.getElementById('oph').value.trim();
-  var ad=(document.getElementById('oad')||{}).value||'';ad=ad.trim();
-  if(!n||!ph){toast('\u26A0 Nom et t\u00E9l\u00E9phone requis');return;}
-  if(!cart.length){toast('\u26A0 Panier vide');return;}
-  if(oT==='delivery'&&!ad){toast('\u26A0 Adresse requise');return;}
-  var btn=document.getElementById('bord');btn.disabled=true;
-  var tot=cart.reduce(function(s,i){return s+i.p*i.q;},0);
-  var df=(oT==='delivery'&&tot<200)?15:0;var grand=tot+df;
-  var oid=Date.now();var ref='LUX-'+String(oid).slice(-6);
-  var order={id:oid,ref:ref,name:n,phone:ph,type:oT,address:ad,items:cart.map(function(i){return{n:i.n,p:i.p,q:i.q};}),subtotal:tot,deliveryFee:df,total:grand,status:'pending',date:new Date().toLocaleDateString('fr-MA')};
-  var ords=JSON.parse(localStorage.getItem('lux_web_orders')||'[]');
-  ords.unshift(order);localStorage.setItem('lux_web_orders',JSON.stringify(ords.slice(0,100)));
-  if(window.LuxAPI)LuxAPI.createOrder({customer:n,phone:ph,type:oT,address:ad,items:order.items,subtotal:tot,deliveryFee:df,total:grand}).catch(function(){});
-  var itm=cart.map(function(i){return i.q+'\u00D7 '+i.n+' ('+i.p*i.q+' MAD)';}).join('\n');
-  var msg=encodeURIComponent('\uD83D\uDED2 *Commande '+ref+'*\n\n\uD83D\uDC64 '+n+' \u00B7 \uD83D\uDCDE '+ph+'\n\uD83D\uDCE6 '+oT.toUpperCase()+(ad?' \u00B7 '+ad:'')+'\n\n'+itm+'\n\n\uD83D\uDCB0 Total: '+grand+' MAD'+(df?' (livraison +'+df+' MAD)':''));
-  setTimeout(function(){window.open('https://wa.me/'+WA+'?text='+msg,'_blank');},200);
-  document.getElementById('srf').textContent='R\u00E9f: '+ref;
-  document.getElementById('SO').classList.add('on');
-  document.getElementById('cp').classList.remove('on');
-  cart=[];rC();btn.disabled=false;
-  ['on','oph'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-}
-function cSuc(){document.getElementById('SO').classList.remove('on');}
-
-function sendRes(){
-  var n=document.getElementById('rn').value.trim();
-  var p=document.getElementById('rp').value.trim();
-  var d=document.getElementById('rd').value;
-  if(!n||!p||!d){toast('\u26A0 Nom, t\u00E9l. et date requis');return;}
-  var h=document.getElementById('rh').value;
-  var g=document.getElementById('rg').value;
-  var no=document.getElementById('rno').value.trim();
-  var msg=encodeURIComponent('\uD83D\uDCC5 *Demande R\u00E9servation*\n\n\uD83D\uDC64 '+n+'\n\uD83D\uDCDE '+p+'\n\uD83D\uDCC6 '+d+' \u00E0 '+h+'\n\uD83D\uDC65 '+g+' personne(s)'+(no?'\n\uD83D\uDCDD '+no:''));
-  window.open('https://wa.me/'+WA+'?text='+msg,'_blank');
-  toast('\u2714 Demand\u00E9 envoy\u00E9e!');
-}
-
-function lookupOrd(){
-  var ph=document.getElementById('aph').value.trim();
-  if(!ph){toast('\u26A0 Entrez votre num\u00E9ro');return;}
-  var all=JSON.parse(localStorage.getItem('lux_web_orders')||'[]');
-  var ords=all.filter(function(o){return o.phone&&o.phone.replace(/\D/g,'').includes(ph.replace(/\D/g,''));});
-  var el=document.getElementById('aords');
-  if(!ords.length){el.innerHTML='<div style="text-align:center;padding:14px;color:var(--mu);font-size:12px">Aucune commande trouv\u00E9e.</div>';return;}
-  el.innerHTML=ords.map(function(o){var sc=o.status==='done'?'sd':'sp';var sl=o.status==='done'?'Livr\u00E9':'En cours';var items=(o.items||[]).map(function(i){return i.q+'\u00D7 '+i.n;}).join(', ');return '<div class="ocd"><div class="och"><span class="ocr">'+o.ref+'</span><span class="ocs '+sc+'">'+sl+'</span></div><div style="font-size:12px;color:var(--mu)">'+items+'</div><div style="font-family:Cinzel;font-size:12px;color:var(--gold);margin-top:5px">'+o.total+' MAD</div></div>';}).join('');
-}
-
-var PINS={pos:'1234',admin:'9999',staff:'1234',kds:'1234',stock:'9999'};
-var LBLS={pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Cuisine KDS',stock:'Stock'};
-var pb='',pr='',lk=false;
-
-function op(r){if(lk)return;lk=true;setTimeout(function(){lk=false;},600);pr=r;pb='';ud();document.getElementById('perr').textContent='';document.getElementById('prl').textContent=LBLS[r]||r;document.getElementById('pm').classList.add('on');}
-function cp(){document.getElementById('pm').classList.remove('on');pb='';pr='';ud();}
-function pp(n){if(pb.length>=4)return;pb+=String(n);ud();if(pb.length===4)setTimeout(ck,250);}
-function dp(){pb=pb.slice(0,-1);ud();}
-function cp2(){pb='';ud();}
-function ud(){for(var i=0;i<4;i++){var d=document.getElementById('d'+i);if(d)d.classList.toggle('on',i<pb.length);}}
-function ck(){
-  if(pb===(PINS[pr]||'9999')){
-    var s={role:pr,expires:Date.now()+28800000,issued:Date.now()};
-    localStorage.setItem('lux_session',JSON.stringify(s));
-    localStorage.setItem('lux_auth_token',btoa(JSON.stringify(s)));
-    cp();window.open('cafe-lux.html?mode='+pr,'_blank');
-  } else {
-    document.getElementById('perr').textContent='Code incorrect \u2717  R\u00E9essayez.';
-    var de=document.querySelector('.pds');
-    if(de){de.style.transform='translateX(8px)';setTimeout(function(){de.style.transform='translateX(-8px)';setTimeout(function(){de.style.transform='';},80);},80);}
-    pb='';ud();
-  }
-}
-
-document.addEventListener('keydown',function(e){if(document.getElementById('pm').classList.contains('on')){if(e.key>='0'&&e.key<='9')pp(parseInt(e.key));else if(e.key==='Backspace')dp();else if(e.key==='Escape')cp();}});
-
-(function(){
-  var d=new Date().toISOString().split('T')[0];
-  var rd=document.getElementById('rd');if(rd){rd.min=d;rd.value=d;}
-  if(window.LuxAPI)LuxAPI.init().catch(function(){});
-  console.log('[Cafe LUX v3.2 Platinum] Ready');
-})();
-</script>
+        // محاكي لتحميل المنتجات بالصور
+        const products = [
+            { name: "Espresso Signature", price: "25 DH" },
+            { name: "Croissant Royale", price: "30 DH" },
+            { name: "Latte Art", price: "35 DH" }
+        ];
+        const container = document.getElementById('menu-container');
+        products.forEach(p => {
+            container.innerHTML += `
+                <div class="product-card">
+                    <div class="product-img"></div>
+                    <div class="product-info">
+                        <div style="font-weight:bold">${p.name}</div>
+                        <div class="product-price">${p.price}</div>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
 </body>
 </html>
