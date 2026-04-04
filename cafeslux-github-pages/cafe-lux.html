@@ -389,11 +389,11 @@ body{
     <div class="t-tab active" data-page="home" onclick="showPage('home')">🏠 Accueil</div>
     <div class="t-tab" data-page="pos" onclick="showPage('pos')">🧾 Caisse</div>
     <div class="t-tab" data-page="web" onclick="showPage('web')">🌐 Commandes Web <span id="web-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
-    <div class="t-tab" data-page="kds" onclick="showPage('kds')">📺 Cuisine KDS</div>
     <div class="t-tab" data-page="admin" onclick="showPage('admin')">📊 Administration</div>
-    <div class="t-tab" data-page="staff" onclick="showPage('staff')">👥 Employes</div>
-    <div class="t-tab" data-page="site" onclick="showPage('site')">🛒 Site Public</div>
+    <div class="t-tab" data-page="staffportal" onclick="showPage('staffportal')">👥 Staff Portal</div>
+    <div class="t-tab" data-page="site" onclick="showPage('site')">🛒 Commander</div>
     <div class="t-tab" data-page="qr" onclick="showPage('qr')">📲 QR Tables</div>
+    <div class="t-tab" data-page="kds" onclick="showPage('kds')">📺 Cuisine KDS</div>
     <div class="t-tab" data-page="ext" onclick="showPage('ext')">🛵 Ext. Delivery <span id="ext-badge" style="background:var(--orange);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
   </div>
   <div class="topbar-right"><div class="mode-badge" id="mode-badge">✦ Mode: HUB</div>
@@ -488,20 +488,6 @@ body{
   <div class="web-grid" id="web-orders-grid">
     <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">Aucune commande web</div>
   </div>
-</div>
-
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     PAGE: CUISINE KDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div class="page scroll" id="p-kds" style="flex-direction:column;padding:20px;gap:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div>
-      <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📺 Cuisine KDS</h2>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Suivi des commandes en préparation pour la cuisine.</div>
-    </div>
-    <button class="btn sm" onclick="renderKDS()">🔄 Actualiser</button>
-  </div>
-  <div id="kds-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
 </div>
 
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -735,9 +721,9 @@ body{
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      PAGE: EMPLOYES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div class="page scroll" id="p-staff" style="flex-direction:column;padding:20px;gap:16px">
+<div class="page scroll" id="p-staffportal" style="flex-direction:column;padding:20px;gap:16px">
   <div style="display:flex;align-items:center;justify-content:space-between">
-    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">👥 Gestion des Employes</h2>
+    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">👥 Staff Portal</h2>
     <button class="btn sm solid" onclick="addEmployee()">+ Ajouter</button>
   </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -765,7 +751,7 @@ body{
   <div class="site-body">
     <!-- Categories -->
     <div class="site-cats">
-      <h4>Menu</h4><button class="cat-nav active" onclick="scrollToWsCat('pdej',this)">🍳 Petit-Déjeuner</button><button class="cat-nav" onclick="scrollToWsCat('cafes',this)">☕ Cafes Classiques</button><button class="cat-nav" onclick="scrollToWsCat('cremeux',this)">🥛 Les Cremeux</button><button class="cat-nav" onclick="scrollToWsCat('infusions',this)">🍵 Infusions</button><button class="cat-nav" onclick="scrollToWsCat('jus',this)">🥤 Jus Purs Frais</button><button class="cat-nav" onclick="scrollToWsCat('sig',this)">⭐ Signature Lux</button><button class="cat-nav" onclick="scrollToWsCat('crepes',this)">🥞 Crepes</button><button class="cat-nav" onclick="scrollToWsCat('resto',this)">🍽 Restaurant</button><button class="cat-nav" onclick="scrollToWsCat('soft',this)">🥫 Soft & Shakes</button>
+      <h4>LUX Taza</h4><button class="cat-nav active" data-public="menu" onclick="routePublicTab('menu',this)">🛒 Commander</button><button class="cat-nav" data-public="offers" onclick="routePublicTab('offers',this)">🎁 Offres & Fidélité</button><button class="cat-nav" data-public="reservation" onclick="routePublicTab('reservation',this)">📅 Réservations</button><button class="cat-nav" data-public="account" onclick="routePublicTab('account',this)">👤 Mon Espace LUX</button><a class="cat-nav" href="lux-saas.html" style="text-decoration:none">✦ LUX SaaS</a>
     </div>
     <!-- Menu content -->
     <div class="site-menu scroll" id="site-menu-content"></div>
@@ -798,18 +784,27 @@ body{
   </div>
 </div>
 
+
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      PAGE: QR TABLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <div class="page scroll" id="p-qr" style="flex-direction:column;padding:20px;gap:16px">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div>
-      <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📲 QR Tables</h2>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Accès rapide par table vers le menu public Café LUX.</div>
-    </div>
-    <button class="btn sm" onclick="renderQRTables()">🔄 Actualiser</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📲 QR Tables</h2>
+    <button class="btn sm" onclick="renderQrTables()">🔄 Actualiser</button>
   </div>
-  <div id="qr-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px"></div>
+  <div id="qr-tables-grid" class="grid3"></div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     PAGE: CUISINE KDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page scroll" id="p-kds" style="flex-direction:column;padding:20px;gap:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📺 Cuisine KDS</h2>
+    <button class="btn sm" onclick="renderKDS()">🔄 Actualiser</button>
+  </div>
+  <div id="kds-list" class="grid3"></div>
 </div>
 
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -973,8 +968,8 @@ updateClock();
 // ══════════════════════════
 //  NAVIGATION
 // ══════════════════════════
-const PAGES = ['home','pos','web','kds','admin','staff','site','qr','ext'];
-const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staff', kds:'kds', stock:'admin', qr:'qr', web:'web', site:'site', ext:'ext' };
+const PAGES = ['home','pos','web','admin','staffportal','site','qr','kds','ext'];
+const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staffportal', staffportal:'staffportal', kds:'kds', stock:'admin', qr:'qr', web:'web', site:'site', ext:'ext' };
 function showPage(id){
   id = MODE_PAGE_MAP[id] || id;
   PAGES.forEach(function(p){
@@ -987,11 +982,11 @@ function showPage(id){
   if(id === 'home') renderHome();
   if(id === 'pos'){ buildMenuSections(); renderTicket(); }
   if(id === 'web') renderWebOrders();
-  if(id === 'kds') renderKDS();
   if(id === 'admin'){ renderAdmin('dash'); }
-  if(id === 'staff'){ renderStaff(); }
-  if(id === 'site'){ buildSiteMenu(); ensurePublicSections(); applyPublicTabFromUrl(); renderSiteCart(); }
-  if(id === 'qr') renderQRTables();
+  if(id === 'staffportal'){ renderStaff(); }
+  if(id === 'site'){ buildSiteMenu(); renderSiteCart(); routePublicTab((new URLSearchParams(window.location.search)).get('tab') || 'menu'); }
+  if(id === 'qr'){ renderQrTables(); }
+  if(id === 'kds'){ renderKDS(); }
   if(id === 'ext'){ renderExtDelivery(); }
 }
 
@@ -1926,6 +1921,8 @@ function addEmployee(){
 // ══════════════════════════
 function buildSiteMenu(){
   let h = '';
+  h += '<section class="public-section" id="public-menu">';
+  h += '<div class="ws-cat-title">🛒 Commander (Menu & Livraison)</div><div class="ws-cat-sub">Menu interactif, livraison et suivi des commandes.</div>';
   MENU.forEach(function(cat){
     h += '<div class="ws-cat-section" id="wcat-' + cat.id + '">';
     h += '<div class="ws-cat-title">' + cat.icon + ' ' + cat.title + '</div>';
@@ -1934,43 +1931,76 @@ function buildSiteMenu(){
     cat.items.forEach(function(it){
       const imgSrc = it.img && IMGS[it.img] ? IMGS[it.img] : null;
       const sigCls = it.sig ? ' sig' : '';
-      const imgHtml = imgSrc
-        ? '<img class="ws-img" src="' + imgSrc + '">'
-        : '<div class="ws-img-ph">' + cat.icon + '</div>';
+      const imgHtml = imgSrc ? '<img class="ws-img" src="' + imgSrc + '">' : '<div class="ws-img-ph">' + cat.icon + '</div>';
       h += '<div class="ws-card' + sigCls + '" data-n="' + esc(it.n) + '" data-p="' + it.p + '">';
       if(it.sig) h += '<div style="background:var(--gold);color:#000;font-size:9px;font-weight:700;padding:2px 8px">⭐ SIGNATURE</div>';
-      h += imgHtml;
-      h += '<div class="ws-body">';
-      h += '<div class="ws-name">' + it.n + '</div>';
+      h += imgHtml + '<div class="ws-body"><div class="ws-name">' + it.n + '</div>';
       if(it.s) h += '<div class="ws-sub">' + it.s + '</div>';
-      h += '<div class="ws-footer"><div class="ws-price">' + it.p + ' DH</div>';
-      h += '<button class="ws-add" data-n="' + esc(it.n) + '" data-p="' + it.p + '">+</button>';
-      h += '</div></div></div>';
+      h += '<div class="ws-footer"><div class="ws-price">' + it.p + ' DH</div><button class="ws-add" data-n="' + esc(it.n) + '" data-p="' + it.p + '">+</button></div></div></div>';
     });
     h += '</div></div>';
   });
+  h += '</section>';
+  h += '<section class="public-section" id="public-offers" style="display:none"><div class="ws-cat-title">🎁 ✦ Offres Spéciales</div><div class="ws-cat-sub">Coupons, fidélité et avantages LUX.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><div><strong>Coupon Bienvenue</strong><div class="ws-sub">-10% sur votre première commande</div></div><div><strong>Fidélité LUX</strong><div class="ws-sub">1 point par 10 DH dépensés</div></div><div><strong>Offre du jour</strong><div class="ws-sub">Queen's Rose Coffee + douceur</div></div></div></div></section>';
+  h += '<section class="public-section" id="public-reservation" style="display:none"><div class="ws-cat-title">📅 Réserver une Table</div><div class="ws-cat-sub">Réservation simple pour table ou événement spécial.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><input class="of-input" id="res-name" placeholder="Nom complet"><input class="of-input" id="res-phone" placeholder="Téléphone"><input class="of-input" id="res-date" type="date"><input class="of-input" id="res-time" type="time"><input class="of-input" id="res-guests" type="number" min="1" value="2" placeholder="Personnes"><input class="of-input" id="res-event" placeholder="Anniversaire, réunion..."></div><button class="order-send" style="margin-top:10px" onclick="submitReservation()">✓ Confirmer la réservation</button></div></section>';
+  h += '<section class="public-section" id="public-account" style="display:none"><div class="ws-cat-title">👤 Mon Espace LUX</div><div class="ws-cat-sub">Profil, historique, points et carte cadeau.</div><div class="card" style="background:#fff;color:#1A0A00"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><div><strong>Mes commandes</strong><div class="ws-sub">Historique et suivi Live Tracking.</div></div><div><strong>Points fidélité</strong><div class="ws-sub">Suivi des points et récompenses.</div></div><div><strong>Carte cadeau</strong><div class="ws-sub">Utilisez ou offrez une carte cadeau LUX.</div></div><div><strong>LUX SaaS</strong><div class="ws-sub"><a href="lux-saas.html" style="color:var(--gold-d);font-weight:600">Découvrir la solution B2B</a></div></div></div></div></section>';
   const el = document.getElementById('site-menu-content');
   if(el){
     el.innerHTML = h;
-    el.querySelectorAll('.ws-add').forEach(function(btn){
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
-      });
-    });
-    el.querySelectorAll('.ws-card').forEach(function(card){
-      card.addEventListener('click', function(){
-        addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
-      });
-    });
+    el.querySelectorAll('.ws-add').forEach(function(btn){ btn.addEventListener('click', function(e){ e.stopPropagation(); addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p'))); }); });
+    el.querySelectorAll('.ws-card').forEach(function(card){ card.addEventListener('click', function(){ addToSiteCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p'))); }); });
   }
 }
 
-function scrollToWsCat(catId, btn){
-  document.querySelectorAll('.cat-nav').forEach(function(n){n.classList.remove('active');});
+function routePublicTab(tab, btn){
+  var safe = ['menu','offers','reservation','account'].includes(tab) ? tab : 'menu';
+  document.querySelectorAll('.cat-nav[data-public]').forEach(function(n){ n.classList.toggle('active', n.getAttribute('data-public') === safe); });
   if(btn) btn.classList.add('active');
+  document.querySelectorAll('.public-section').forEach(function(sec){ sec.style.display = 'none'; });
+  var target = document.getElementById('public-' + safe);
+  if(target){ target.style.display = 'block'; target.scrollIntoView({behavior:'smooth',block:'start'}); }
+  var url = new URL(window.location.href);
+  url.searchParams.set('mode','site');
+  url.searchParams.set('tab', safe);
+  history.replaceState(null,'',url.pathname + '?' + url.searchParams.toString());
+}
+
+function scrollToWsCat(catId, btn){
+  routePublicTab('menu');
   const el = document.getElementById('wcat-' + catId);
   if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function submitReservation(){
+  const name = val('res-name'); const phone = val('res-phone'); const date = val('res-date'); const time = val('res-time');
+  if(!name || !phone || !date || !time){ toast('Complétez les champs de réservation'); return; }
+  const bookings = getLS('lux_reservations', []);
+  bookings.unshift({id:Date.now(), name:name, phone:phone, date:date, time:time, guests:val('res-guests')||'2', event:val('res-event')||'', createdAt:new Date().toISOString()});
+  setLS('lux_reservations', bookings);
+  toast('Réservation enregistrée');
+}
+
+function publicTableUrl(n){
+  if(location.protocol === 'file:') return 'cafe-lux.html?mode=site&tab=menu&table=' + n;
+  return location.origin + location.pathname.replace(/[^/]*$/, 'cafe-lux.html') + '?mode=site&tab=menu&table=' + n;
+}
+
+function renderQrTables(){
+  const grid = document.getElementById('qr-tables-grid'); if(!grid) return;
+  let h='';
+  for(let i=1;i<=12;i++){ const link = publicTableUrl(i); h += '<div class="card"><div class="card-title">Table ' + i + '</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">QR Tables</div><code style="display:block;white-space:normal;word-break:break-all;background:var(--bg3);padding:10px;border-radius:8px;font-size:11px">' + esc(link) + '</code><div style="display:flex;gap:8px;margin-top:10px"><a class="btn sm solid" href="' + link + '">Ouvrir</a><button class="btn sm" onclick="copyQrLink(' + i + ')">Copier</button></div></div>'; }
+  grid.innerHTML = h;
+}
+
+function copyQrLink(n){ const link = publicTableUrl(n); navigator.clipboard && navigator.clipboard.writeText(link); toast('Lien de table copié'); }
+
+function renderKDS(){
+  const list = document.getElementById('kds-list'); if(!list) return;
+  const web = getLS('lux_web_orders', []).slice(0,12);
+  const tx = getLS('lux_transactions', []).slice(0,8).map(function(t){ return {id:t.id||Date.now(), source:'POS', items:t.items||[], status:'encaisse', table:t.table||'-'}; });
+  const all = web.concat(tx);
+  if(!all.length){ list.innerHTML = '<div class="card" style="grid-column:1/-1">Aucune commande en préparation</div>'; return; }
+  list.innerHTML = all.map(function(o){ return '<div class="card"><div class="card-title">' + (o.source||'WEB') + ' #' + String(o.id).slice(-6) + '</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">' + (o.table ? ('Table: ' + o.table) : 'Préparation') + '</div><div style="font-size:12px">' + (o.items||[]).map(function(i){ return (i.q||i.qty||1) + '× ' + (i.n||i.name||'Article'); }).join('<br>') + '</div></div>'; }).join('');
 }
 
 function addToSiteCart(n, p){
@@ -2054,73 +2084,6 @@ function findImgKey(name){
     "Avocat":"avocat","Panache LUX":"panache","Cocktail Royal":"cocktail_royal",
   };
   return map[name] || null;
-}
-
-
-function buildPublicSectionsHTML(){
-  return `
-    <div id="public-offers-section" class="card" style="background:#fff;border:1.5px solid #EDE5D5;margin-bottom:16px;color:#1A0A00">
-      <div class="card-title" style="color:#1A0A00;margin-bottom:10px;font-family:Playfair Display,serif">🎁 Privilèges Café LUX</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
-        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Carte Fidélité</strong><span style="font-size:12px;color:#666">Cumulez des points sur vos commandes et profitez d’avantages VIP.</span></div>
-        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Paiement premium</strong><span style="font-size:12px;color:#666">Cash · Carte Bancaire · PayPal · Google Pay · TPE</span></div>
-        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Commande rapide</strong><span style="font-size:12px;color:#666">Menu visuel, ajout au panier et envoi immédiat vers le café.</span></div>
-      </div>
-    </div>
-    <div id="public-reservation-section" class="card" style="background:#fff;border:1.5px solid #EDE5D5;margin-bottom:16px;color:#1A0A00">
-      <div class="card-title" style="color:#1A0A00;margin-bottom:10px;font-family:Playfair Display,serif">📅 Réservation</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px">
-        <input class="of-input" id="res-name" type="text" placeholder="Nom complet *">
-        <input class="of-input" id="res-phone" type="tel" placeholder="Téléphone *">
-        <input class="of-input" id="res-date" type="date">
-        <select class="of-select" id="res-time"><option value="">Heure souhaitée</option><option>08:00</option><option>10:00</option><option>12:00</option><option>16:00</option><option>20:00</option></select>
-        <select class="of-select" id="res-guests"><option>1 personne</option><option>2 personnes</option><option>3 personnes</option><option>4 personnes</option><option>5+ personnes</option></select>
-        <input class="of-input" id="res-notes" type="text" placeholder="Note ou préférence...">
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="order-send" style="max-width:260px" onclick="submitReservation()">✓ Confirmer la réservation</button>
-        <span style="font-size:12px;color:#777">Réservation recommandée pour les heures de pointe.</span>
-      </div>
-    </div>`;
-}
-function ensurePublicSections(){
-  var el=document.getElementById('site-menu-content');
-  if(!el) return;
-  if(!document.getElementById('public-offers-section') || !document.getElementById('public-reservation-section')){
-    buildSiteMenu();
-  }
-}
-function applyPublicTabFromUrl(){
-  var params = new URLSearchParams(window.location.search);
-  var tab = params.get('tab') || 'menu';
-  if(tab === 'offers'){
-    var sec=document.getElementById('public-offers-section'); if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
-    toast('🎁 Privilèges Café LUX');
-  } else if(tab === 'reservation'){
-    var sec2=document.getElementById('public-reservation-section'); if(sec2) sec2.scrollIntoView({behavior:'smooth', block:'start'});
-    toast('📅 Réservation');
-  }
-}
-function submitReservation(){
-  var name = val('res-name'), phone = val('res-phone');
-  if(!name || !phone){ toast('⚠ Nom et téléphone requis'); return; }
-  var reservations = getLS('lux_reservations', []);
-  var reservation = {
-    id: Date.now(),
-    date: val('res-date') || today(),
-    time: val('res-time') || 'À confirmer',
-    guests: val('res-guests') || '2 personnes',
-    customer: name,
-    phone: phone,
-    notes: val('res-notes'),
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
-  reservations.unshift(reservation);
-  setLS('lux_reservations', reservations);
-  setEl('success-id', 'Réservation #' + String(reservation.id).slice(-6));
-  document.getElementById('success-ov').classList.add('open');
-  toast('✅ Réservation enregistrée');
 }
 
 function sendWebOrder(){
@@ -2208,65 +2171,14 @@ window.addEventListener('DOMContentLoaded', function(){
   buildTables();
   var params = new URLSearchParams(window.location.search);
   var mode = params.get('mode');
-  var tab = params.get('tab');
-  showPage(mode && ['pos','admin','staff','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
+  var tab = params.get('tab') || 'menu';
+  showPage(mode && ['pos','admin','staff','staffportal','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
   if(mode === 'stock'){ setTimeout(function(){ renderAdmin('stock'); }, 50); }
-  if(mode === 'qr'){ setTimeout(function(){ renderQRTables(); }, 50); }
+  if(mode === 'site'){ setTimeout(function(){ routePublicTab(tab); }, 80); }
+  if(mode === 'qr'){ setTimeout(function(){ renderQrTables(); }, 50); }
   if(mode === 'kds'){ setTimeout(function(){ renderKDS(); }, 50); }
-  if(mode === 'site'){ setTimeout(function(){ ensurePublicSections(); applyPublicTabFromUrl(); }, 60); }
 });
 
-
-
-function renderKDS(){
-  var el = document.getElementById('kds-grid');
-  if(!el) return;
-  var orders = getLS('lux_web_orders', []).filter(function(o){ return (o.status||'pending') !== 'delivered'; });
-  if(!orders.length){ el.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--muted)">Aucune commande à préparer.</div>'; return; }
-  el.innerHTML = orders.slice(0,12).map(function(o, idx){
-    var items = (o.items||[]).map(function(i){ return '<div style="font-size:12px;color:var(--text);margin-bottom:4px">• '+i.q+' × '+i.n+'</div>'; }).join('');
-    var type = o.type === 'delivery' ? '🛵 Livraison' : (o.type === 'table' ? '🪑 Sur place' : '🥡 Emporter');
-    return '<div class="card" style="border-color:rgba(201,168,76,.3)">'+
-      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px">Commande #'+String(o.id).slice(-6)+'</div><span class="badge gold">'+type+'</span></div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(o.customer||'Client')+' · '+(o.time||'')+'</div>'+
-      '<div style="margin-bottom:12px">'+items+'</div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:var(--gold)">'+(o.total||0)+' DH</strong><button class="btn sm solid" onclick="markKdsReady('+o.id+')">Prête</button></div>'+
-    '</div>';
-  }).join('');
-}
-function markKdsReady(id){
-  var orders = getLS('lux_web_orders', []);
-  orders = orders.map(function(o){ if(o.id===id){ o.status='ready'; } return o; });
-  setLS('lux_web_orders', orders);
-  renderKDS(); renderWebOrders(); toast('✅ Commande marquée prête');
-}
-function renderQRTables(){
-  var el = document.getElementById('qr-grid');
-  if(!el) return;
-  var base = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu';
-  var html='';
-  for(var i=1;i<=12;i++){
-    var url = base + '&table=' + i;
-    html += '<div class="card" style="text-align:center">'+
-      '<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:24px;margin-bottom:6px">Table '+i+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">QR menu public</div>'+
-      '<div style="background:#fff;color:#111;border-radius:10px;padding:10px;font-size:10px;word-break:break-all;margin-bottom:10px">'+url+'</div>'+
-      '<div style="display:flex;gap:8px;justify-content:center"><button class="btn sm" onclick="copyQrLink('+i+')">Copier</button><button class="btn sm solid" onclick="printQrCard('+i+')">Imprimer</button></div>'+
-    '</div>';
-  }
-  el.innerHTML = html;
-}
-function copyQrLink(i){
-  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
-  navigator.clipboard.writeText(url).then(function(){ toast('🔗 Lien table '+i+' copié'); }).catch(function(){ toast(url); });
-}
-function printQrCard(i){
-  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
-  var w = window.open('', '', 'width=420,height=620');
-  if(!w) return;
-  w.document.write('<html><head><title>QR Table '+i+'</title></head><body style="font-family:sans-serif;text-align:center;padding:24px"><h1>Café LUX</h1><h2>Table '+i+'</h2><p>'+url+'</p></body></html>');
-  w.document.close(); w.focus(); w.print();
-}
 
 // ── RECIPE COSTS ─────────────────────────────────────────────────────
 const RECIPE_DATA = [
@@ -2334,8 +2246,6 @@ function adminCycleShift(emp,date,td){
 (function(){var orig=typeof renderAdmin!=='undefined'?renderAdmin:function(){};
 window.renderAdmin=function(p){orig(p);if(p==='recipes')renderAdminRecipes();if(p==='schedule')renderAdminSchedule();};})();
 
-
-// ── URL MODE HANDLER — handled in DOMContentLoaded above; keeping query params for stable routing
 
 
 // ── CAMPAIGNS HISTORY (Admin) ─────────────────────────────────────────
@@ -2435,7 +2345,7 @@ function renderAdminCampHistory() {
   function setModeBadge(){
     try{
       var mode = new URLSearchParams(location.search).get('mode') || 'hub';
-      var map = {pos:'POS',admin:'ADMIN',stock:'STOCK',kds:'KDS',staff:'STAFF',qr:'QR',site:'SITE',web:'WEB'};
+      var map = {pos:'POS',admin:'ADMIN',stock:'STOCK',kds:'KDS',staff:'STAFF',staffportal:'STAFF PORTAL',qr:'QR TABLES',site:'ESPACE CLIENT',web:'WEB'};
       var el = document.getElementById('mode-badge');
       if(el) el.textContent = '✦ Mode: ' + (map[mode] || mode.toUpperCase());
     }catch(e){}
