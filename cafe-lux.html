@@ -2,110 +2,68 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Café LUX Taza · v3.5 Platinum</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAFE LUX — Engine v3.5</title>
     <style>
-        :root { --gold: #C9A84C; --bg: #050505; --card: rgba(25, 25, 25, 0.9); --border: rgba(201, 168, 76, 0.3); --text: #F2EFE9; }
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; height: 100vh; }
-        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(201,168,76,0.08) 0%, transparent 80%); z-index: -1; }
-        
-        #gateway { padding: 40px 20px; max-width: 550px; margin: 0 auto; text-align: center; height: 100vh; overflow-y: auto; scrollbar-width: none; }
-        #gateway::-webkit-scrollbar { display: none; }
-
-        .logo-main { width: 120px; margin-bottom: 15px; filter: drop-shadow(0 0 15px rgba(201,168,76,0.4)); transition: 0.5s; }
-        h1 { font-family: 'Cinzel', serif; font-size: 30px; color: var(--gold); letter-spacing: 4px; margin-bottom: 5px; }
-        .slogan { font-size: 11px; color: #888; margin-bottom: 35px; letter-spacing: 4px; text-transform: uppercase; font-weight: 300; }
-
-        .section-title { font-family: 'Cinzel', serif; font-size: 14px; margin: 25px 0 15px; color: rgba(255,255,255,0.4); border-bottom: 1px solid var(--border); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 3px; }
-
-        .gateway-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .tile-card { 
-            background: var(--card); border: 1px solid var(--border); border-radius: 24px; 
-            padding: 30px 15px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(12px); box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        }
-        .tile-card:hover { border-color: var(--gold); transform: translateY(-8px); box-shadow: 0 20px 45px rgba(201,168,76,0.25); }
-        .tile-card:active { transform: scale(0.92); }
-        .tile-icon { font-size: 38px; margin-bottom: 12px; }
-        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 13px; font-weight: 600; text-align: center; }
-
-        /* PIN Modal */
-        #pin-modal { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.94); backdrop-filter: blur(20px); align-items: center; justify-content: center; }
-        .pin-box { background: #000; padding: 40px; border-radius: 35px; border: 1px solid var(--gold); width: 350px; text-align: center; box-shadow: 0 0 60px rgba(201,168,76,0.3); }
-        .pin-dots { display: flex; justify-content: center; gap: 20px; margin: 30px 0; }
-        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); transition: 0.3s; }
-        .dot.filled { background: var(--gold); box-shadow: 0 0 15px var(--gold); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .num-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #fff; width: 75px; height: 75px; border-radius: 50%; font-size: 24px; cursor: pointer; transition: 0.2s; font-family: 'Cinzel'; margin: auto; }
-        .num-btn:active { background: var(--gold); color: #000; }
-
-        #pro-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { position: absolute; top: 20px; right: 20px; background: var(--gold); color: #000; padding: 12px 25px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; font-family: 'Cinzel'; z-index: 10001; }
+        :root { --gold: #C9A84C; --bg: #0D0D0D; --text: #F0EDE8; --card: #161616; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+        .payment-methods { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .pay-badge { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gold); font-size: 12px; color: var(--gold); }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .product-card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
+        .product-img { width: 100%; height: 100px; background: #333 url('https://cafeslux.com/logo.png') center/contain no-repeat; }
+        .product-info { padding: 10px; text-align: center; }
+        .print-btn { background: var(--gold); color: #000; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        @media print { .no-print { display: none; } body { background: white; color: black; } }
     </style>
 </head>
 <body>
-    <div id="gateway">
-        <img src="https://cafeslux.com/logo.png" class="logo-main">
-        <h1>Café LUX</h1>
-        <p class="slogan">L'art du café, à Taza</p>
-
-        <h2 class="section-title">Espace Client</h2>
-        <div class="gateway-grid">
-            <div class="tile-card" onclick="openFull('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span></div>
-            <div class="tile-card" onclick="openFull('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span></div>
-            <div class="tile-card" onclick="openFull('booking')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span></div>
-            <div class="tile-card" onclick="window.open('lux-saas.html', '_blank')"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span></div>
-        </div>
-
-        <h2 class="section-title">Services Pro 🔐</h2>
-        <div class="gateway-grid">
-            <div class="tile-card" onclick="askPIN('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse POS</span></div>
-            <div class="tile-card" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Gestion</span></div>
-            <div class="tile-card" onclick="askPIN('stock')"><span class="tile-icon">📦</span><span class="tile-title">Stock</span></div>
-            <div class="tile-card" onclick="askPIN('kitchen')"><span class="tile-icon">📺</span><span class="tile-title">Cuisine KDS</span></div>
-            <div class="tile-card" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span></div>
-            <div class="tile-card" onclick="askPIN('qr')"><span class="tile-icon">📲</span><span class="tile-title">QR Tables</span></div>
-        </div>
-    </div>
-
-    <div id="pin-modal">
-        <div class="pin-box">
-            <h3 style="color:var(--gold); font-family:'Cinzel'; letter-spacing:2px; margin-bottom:15px;">AUTHENTIFICATION</h3>
-            <div id="pin-display" class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-            <div class="numpad">
-                <button class="num-btn" onclick="press(1)">1</button><button class="num-btn" onclick="press(2)">2</button><button class="num-btn" onclick="press(3)">3</button>
-                <button class="num-btn" onclick="press(4)">4</button><button class="num-btn" onclick="press(5)">5</button><button class="num-btn" onclick="press(6)">6</button>
-                <button class="num-btn" onclick="press(7)">7</button><button class="num-btn" onclick="press(8)">8</button><button class="num-btn" onclick="press(9)">9</button>
-                <button class="num-btn" style="background:rgba(255,0,0,0.1)" onclick="resetP()">C</button><button class="num-btn" onclick="press(0)">0</button>
-                <button class="num-btn" onclick="closeM()">✕</button>
+    <div class="no-print">
+        <h2 id="title" style="color:var(--gold); font-family:serif;">Chargement...</h2>
+        
+        <div id="payment-ui" style="display:none;">
+            <div class="payment-methods">
+                <span class="pay-badge">💵 Cash</span>
+                <span class="pay-badge">💳 Carte</span>
+                <span class="pay-badge">🅿️ PayPal</span>
+                <span class="pay-badge">📱 G-Pay</span>
+                <span class="pay-badge">📟 TPE</span>
             </div>
         </div>
+
+        <div id="content" class="product-grid"></div>
+        <button class="print-btn" onclick="window.print()">⎙ Imprimer Ticket Direct</button>
     </div>
 
-    <div id="pro-overlay"><button class="close-btn" onclick="location.reload()">✕ Quitter</button><iframe id="ifr" name="ifr"></iframe></div>
-
     <script>
-        let p = ""; let r = "";
-        function openFull(v) { 
-            document.getElementById('ifr').src = `cafe-lux.html?mode=web&view=${v}`;
-            document.getElementById('pro-overlay').style.display = 'block';
-        }
-        function askPIN(role) { r = role; p = ""; updateD(); document.getElementById('pin-modal').style.display = 'flex'; }
-        function press(n) { if(p.length < 4) { p += n; updateD(); if(p.length === 4) setTimeout(verify, 300); } }
-        function updateD() { const dots = document.getElementById('pin-display').children; for(let i=0; i<4; i++) dots[i].classList.toggle('filled', i < p.length); }
-        function resetP() { p = ""; updateD(); }
-        function closeM() { document.getElementById('pin-modal').style.display = 'none'; }
-        function verify() {
-            if ((r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234')) {
-                localStorage.setItem('lux_auth_token', 'session_active_' + Date.now());
-                document.getElementById('ifr').src = `cafe-lux.html?mode=${r}`;
-                document.getElementById('pro-overlay').style.display = 'block';
-                closeM();
-            } else { alert("Code PIN Incorrect"); resetP(); }
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');
+        const view = params.get('view');
+
+        const titles = {
+            'menu': 'La Carte & Site Public',
+            'offers': 'Vos Privilèges LUX',
+            'booking': 'Réservation de Table',
+            'pos': 'Caisse Terminal POS',
+            'admin': 'Administration Dashboard'
+        };
+
+        const target = view || mode;
+        document.getElementById('title').innerText = titles[target] || "Espace LUX";
+
+        if(target === 'menu' || mode === 'web') {
+            document.getElementById('payment-ui').style.display = 'block';
+            // محاكاة عرض المنتجات بالصور
+            const items = ["Espresso", "Croissant", "Latte", "Thé Menthe"];
+            items.forEach(item => {
+                document.getElementById('content').innerHTML += `
+                    <div class="product-card">
+                        <div class="product-img"></div>
+                        <div class="product-info"><strong>${item}</strong><br>25 DH</div>
+                    </div>`;
+            });
+        } else {
+            document.getElementById('content').innerHTML = `<p>Bienvenue dans l'espace ${target.toUpperCase()}. Prêt pour le service.</p>`;
         }
     </script>
 </body>

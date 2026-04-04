@@ -2,110 +2,88 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAFE LUX — Engine v3.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Café LUX Taza · v3.5 Platinum</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #C9A84C; --bg: #0D0D0D; --text: #F0EDE8; --card: #161616; --border: #222; }
-        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; margin: 0; padding: 20px; }
-        
-        /* تحسين مظهر المنيو مع الصور */
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 20px; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; transition: 0.3s; }
-        .product-img { width: 100%; height: 120px; background: #222 url('https://cafeslux.com/logo.png') center/contain no-repeat; object-fit: cover; }
-        .product-info { padding: 12px; }
-        .product-price { color: var(--gold); font-weight: bold; margin-top: 5px; }
-
-        /* وسائل الدفع العالمية */
-        .payment-methods { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-        .pay-badge { padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; border: 1px solid var(--border); background: #111; display: flex; align-items: center; gap: 5px; }
-        .pay-badge.active { border-color: var(--gold); color: var(--gold); }
-
-        /* زر الطباعة المباشر بدون صفحات جديدة */
-        .print-btn { background: var(--gold); color: #000; padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
-
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; color: black !important; padding: 0; }
-            .lux-ticket { width: 80mm; margin: 0; padding: 5mm; border: none; }
-        }
+        :root { --gold: #C9A84C; --bg: #050505; --card: rgba(25, 25, 25, 0.9); --border: rgba(201, 168, 76, 0.3); --text: #F2EFE9; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+        #gateway { padding: 40px 20px; max-width: 550px; margin: 0 auto; text-align: center; min-height: 100vh; }
+        .logo-main { width: 110px; margin-bottom: 15px; filter: drop-shadow(0 0 15px rgba(201,168,76,0.4)); }
+        h1 { font-family: 'Cinzel', serif; font-size: 26px; color: var(--gold); letter-spacing: 2px; }
+        .slogan { font-size: 11px; color: #888; margin-bottom: 35px; letter-spacing: 3px; text-transform: uppercase; }
+        .section-title { font-family: 'Cinzel', serif; font-size: 13px; margin: 25px 0 15px; color: rgba(255,255,255,0.4); border-bottom: 1px solid var(--border); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
+        .gateway-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .tile-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 25px 10px; transition: 0.3s; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .tile-card:hover { border-color: var(--gold); transform: translateY(-5px); background: #161616; }
+        .tile-icon { font-size: 30px; margin-bottom: 10px; }
+        .tile-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 11px; font-weight: 600; text-align: center; }
+        #pin-modal { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .pin-box { background: #000; padding: 30px; border-radius: 25px; border: 1px solid var(--gold); width: 320px; text-align: center; }
+        .pin-dots { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--gold); }
+        .dot.filled { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .num-btn { background: rgba(255,255,255,0.05); border: 1px solid #333; color: #fff; padding: 15px; border-radius: 12px; font-size: 20px; cursor: pointer; }
+        #pro-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .close-btn { position: absolute; top: 15px; right: 15px; background: var(--gold); color: #000; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; z-index: 10001; }
     </style>
 </head>
 <body>
-    <div class="no-print">
-        <h2 id="page-title" style="font-family:Cinzel; color:var(--gold);">Café LUX Engine</h2>
-        <div id="public-view" style="display:none;">
-            <p>Bienvenue sur le Site Public & Menu</p>
-            <div class="payment-methods">
-                <div class="pay-badge">💵 Cash</div>
-                <div class="pay-badge">💳 Carte</div>
-                <div class="pay-badge">🅿️ PayPal</div>
-                <div class="pay-badge">📱 G-Pay</div>
-                <div class="pay-badge">📟 TPE</div>
-            </div>
-            <div class="product-grid" id="menu-container">
-                </div>
+    <div id="gateway">
+        <img src="https://cafeslux.com/logo.png" class="logo-main">
+        <h1>Café LUX</h1>
+        <p class="slogan">L'art du café, à Taza</p>
+        <h2 class="section-title">Espace Client</h2>
+        <div class="gateway-grid">
+            <div class="tile-card" onclick="openSPA('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span></div>
+            <div class="tile-card" onclick="openSPA('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span></div>
+            <div class="tile-card" onclick="openSPA('booking')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span></div>
+            <div class="tile-card" onclick="window.open('lux-saas.html', '_blank')"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span></div>
         </div>
-
-        <div id="pro-view" style="display:none;">
-            <h3>Module Professionnel: <span id="mode-name"></span></h3>
-            <button class="print-btn" onclick="printTicket()">⎙ Imprimer Ticket Direct</button>
-            <div style="margin-top:20px; padding:15px; border:1px dashed var(--gold); border-radius:12px;">
-                <p>🛠 Outils d'administration: Ajouter / Modifier / Supprimer</p>
-                <button onclick="alert('Ajouter Produit')" style="background:#222; color:var(--gold); border:1px solid var(--gold); padding:5px 10px; cursor:pointer;">+ Ajouter</button>
+        <h2 class="section-title">Services Pro 🔐</h2>
+        <div class="gateway-grid">
+            <div class="tile-card" onclick="askPIN('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse POS</span></div>
+            <div class="tile-card" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Gestion</span></div>
+            <div class="tile-card" onclick="askPIN('stock')"><span class="tile-icon">📦</span><span class="tile-title">Stock</span></div>
+            <div class="tile-card" onclick="askPIN('kitchen')"><span class="tile-icon">📺</span><span class="tile-title">Cuisine KDS</span></div>
+            <div class="tile-card" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span></div>
+            <div class="tile-card" onclick="askPIN('qr')"><span class="tile-icon">📲</span><span class="tile-title">QR Tables</span></div>
+        </div>
+    </div>
+    <div id="pin-modal">
+        <div class="pin-box">
+            <div id="pin-display" class="pin-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div class="numpad">
+                <button class="num-btn" onclick="press(1)">1</button><button class="num-btn" onclick="press(2)">2</button><button class="num-btn" onclick="press(3)">3</button>
+                <button class="num-btn" onclick="press(4)">4</button><button class="num-btn" onclick="press(5)">5</button><button class="num-btn" onclick="press(6)">6</button>
+                <button class="num-btn" onclick="press(7)">7</button><button class="num-btn" onclick="press(8)">8</button><button class="num-btn" onclick="press(9)">9</button>
+                <button class="num-btn" style="background:#211" onclick="resetP()">C</button><button class="num-btn" onclick="press(0)">0</button>
+                <button class="num-btn" onclick="closeM()">✕</button>
             </div>
         </div>
     </div>
-
-    <div id="ticket-template" class="lux-ticket" style="display:none;">
-        <center>
-            <h2 style="font-family:Cinzel;">Café LUX</h2>
-            <p>Taza, Maroc</p>
-            <hr>
-            <div id="ticket-items"></div>
-            <hr>
-            <h3>Total: 0.00 DH</h3>
-        </center>
-    </div>
-
+    <div id="pro-overlay"><button class="close-btn" onclick="location.reload()">✕ Fermer</button><iframe id="ifr"></iframe></div>
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
-        const view = params.get('view');
-
-        if(mode === 'web' || !mode) {
-            document.getElementById('public-view').style.display = 'block';
-            document.getElementById('page-title').innerText = "La Carte & Site Public";
-        } else {
-            document.getElementById('pro-view').style.display = 'block';
-            document.getElementById('mode-name').innerText = mode.toUpperCase();
+        let p = ""; let r = "";
+        function openSPA(v) { 
+            document.getElementById('ifr').src = `cafe-lux.html?view=${v}&mode=web`;
+            document.getElementById('pro-overlay').style.display = 'block';
         }
-
-        function printTicket() {
-            const ticket = document.getElementById('ticket-template');
-            ticket.style.display = 'block';
-            window.print();
-            ticket.style.display = 'none';
+        function askPIN(role) { r = role; p = ""; updateD(); document.getElementById('pin-modal').style.display = 'flex'; }
+        function press(n) { if(p.length < 4) { p += n; updateD(); if(p.length === 4) setTimeout(verify, 250); } }
+        function updateD() { const dots = document.getElementById('pin-display').children; for(let i=0; i<4; i++) dots[i].classList.toggle('filled', i < p.length); }
+        function resetP() { p = ""; updateD(); }
+        function closeM() { document.getElementById('pin-modal').style.display = 'none'; }
+        function verify() {
+            if ((r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234')) {
+                document.getElementById('ifr').src = `cafe-lux.html?mode=${r}`;
+                document.getElementById('pro-overlay').style.display = 'block';
+                closeM();
+            } else { alert("Code PIN Incorrect"); resetP(); }
         }
-
-        // محاكي لتحميل المنتجات بالصور
-        const products = [
-            { name: "Espresso Signature", price: "25 DH" },
-            { name: "Croissant Royale", price: "30 DH" },
-            { name: "Latte Art", price: "35 DH" }
-        ];
-        const container = document.getElementById('menu-container');
-        products.forEach(p => {
-            container.innerHTML += `
-                <div class="product-card">
-                    <div class="product-img"></div>
-                    <div class="product-info">
-                        <div style="font-weight:bold">${p.name}</div>
-                        <div class="product-price">${p.price}</div>
-                    </div>
-                </div>
-            `;
-        });
     </script>
 </body>
 </html>
