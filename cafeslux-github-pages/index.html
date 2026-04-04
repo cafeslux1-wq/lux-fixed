@@ -155,33 +155,32 @@
             <div class="subline">Gateway unifié · Client & Pro · Expérience premium</div>
             <div class="hero-kpis">
                 <div class="hero-kpi"><strong>Client</strong><span>Carte, privilèges, réservation et expérience premium</span></div>
-                <div class="hero-kpi"><strong>Pro</strong><span>POS, admin, KDS et staff dans une logique métier claire</span></div>
+                <div class="hero-kpi"><strong>Pro</strong><span>POS, stock, KDS, staff et QR dans la même logique</span></div>
                 <div class="hero-kpi"><strong>Luxury</strong><span>Glassmorphism, or raffiné et navigation plus claire</span></div>
             </div>
             <div class="quick-links">
-                <a class="quick-link" href="#" onclick="goPublic('menu');return false;">Commander</a>
-                <a class="quick-link" href="#" onclick="goPublic('offers');return false;">Fidélité</a>
+                <a class="quick-link" href="#" onclick="goPublic('menu');return false;">Ouvrir le menu</a>
                 <a class="quick-link" href="#" onclick="goPublic('reservation');return false;">Réserver</a>
-                <a class="quick-link" href="#" onclick="goPublic('account');return false;">Mon espace</a>
                 <a class="quick-link" href="#" onclick="askPIN('pos');return false;">Accès POS</a>
             </div>
         </div>
 
         <h2 class="section-title">Espace Client</h2>
         <div class="gateway-grid">
-            <button class="tile-card" type="button" onclick="goPublic('menu')"><span class="tile-icon">🛒</span><span class="tile-title">Commander</span><span class="tile-sub">Menu interactif, livraison et suivi des commandes.</span><span class="tile-chip">Service</span></button>
-            <button class="tile-card" type="button" onclick="goPublic('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Offres &amp; Fidélité</span><span class="tile-sub">Offres spéciales, coupons et programme de points LUX.</span><span class="tile-chip">Fidélité</span></button>
-            <button class="tile-card" type="button" onclick="goPublic('reservation')"><span class="tile-icon">📅</span><span class="tile-title">Réservations</span><span class="tile-sub">Tables, anniversaires et demandes d’occasions spéciales.</span><span class="tile-chip">Réserver</span></button>
-            <button class="tile-card" type="button" onclick="goPublic('account')"><span class="tile-icon">👤</span><span class="tile-title">Mon Espace LUX</span><span class="tile-sub">Profil, historique, points fidélité et carte cadeau.</span><span class="tile-chip">Compte</span></button>
-            <button class="tile-card" type="button" onclick="goSaaS()"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span><span class="tile-sub">Présentation du système B2B pour les autres cafés.</span><span class="tile-chip">B2B</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('menu')"><span class="tile-icon">☕</span><span class="tile-title">La Carte</span><span class="tile-sub">Menu visuel, produits et commande publique</span><span class="tile-chip">Public</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('offers')"><span class="tile-icon">🎁</span><span class="tile-title">Privilèges</span><span class="tile-sub">Offres, fidélité et promotions élégantes</span><span class="tile-chip">VIP</span></button>
+            <button class="tile-card" type="button" onclick="goPublic('reservation')"><span class="tile-icon">📅</span><span class="tile-title">Réservation</span><span class="tile-sub">Réserver une table sans quitter l’écosystème</span><span class="tile-chip">Table</span></button>
+            <button class="tile-card" type="button" onclick="goSaaS()"><span class="tile-icon">✦</span><span class="tile-title">LUX SaaS</span><span class="tile-sub">Accès rapide vers la vitrine SaaS LUX</span><span class="tile-chip">Brand</span></button>
         </div>
 
-        <h2 class="section-title">Espace Professionnel 🔐</h2>
+        <h2 class="section-title">Services Pro 🔐</h2>
         <div class="gateway-grid">
-            <button class="tile-card" type="button" onclick="askPIN('pos')"><span class="tile-icon">🖥️</span><span class="tile-title">POS Caisse</span><span class="tile-sub">Vente directe au comptoir et impression ticket.</span><span class="tile-chip">POS</span></button>
-            <button class="tile-card" type="button" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Tableau de Bord</span><span class="tile-sub">QR Tables, analytics, stock, marketing et administration.</span><span class="tile-chip">Admin</span></button>
-            <button class="tile-card" type="button" onclick="askPIN('kds')"><span class="tile-icon">👨‍🍳</span><span class="tile-title">Écran Cuisine</span><span class="tile-sub">Affichage des commandes à préparer en temps réel.</span><span class="tile-chip">KDS</span></button>
-            <button class="tile-card" type="button" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span><span class="tile-sub">Présence, shifts et communication interne des équipes.</span><span class="tile-chip">Staff</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('pos')"><span class="tile-icon">🧾</span><span class="tile-title">Caisse POS</span><span class="tile-sub">Encaissement rapide et tickets intégrés</span><span class="tile-chip">Core</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('admin')"><span class="tile-icon">📊</span><span class="tile-title">Gestion</span><span class="tile-sub">Dashboard, rapports et outils manager</span><span class="tile-chip">Admin</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('stock')"><span class="tile-icon">📦</span><span class="tile-title">Stock</span><span class="tile-sub">Quantités, alertes et mise à jour directe</span><span class="tile-chip">Ops</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('kds')"><span class="tile-icon">📺</span><span class="tile-title">Cuisine KDS</span><span class="tile-sub">Suivi cuisine et flux de préparation</span><span class="tile-chip">Live</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('staff')"><span class="tile-icon">👥</span><span class="tile-title">Staff Portal</span><span class="tile-sub">Présence, équipe et accès du personnel</span><span class="tile-chip">Staff</span></button>
+            <button class="tile-card" type="button" onclick="askPIN('qr')"><span class="tile-icon">📲</span><span class="tile-title">QR Tables</span><span class="tile-sub">Impression QR et gestion des tables</span><span class="tile-chip">QR</span></button>
         </div>
     </div>
 
@@ -233,7 +232,7 @@
         }
 
         function resolvePublicPage() {
-            return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
+            return resolveFile('index.html', 'index-ultra.html');
         }
 
         function resolveProPage() {
@@ -242,8 +241,7 @@
 
         function goPublic(tab) {
             const page = resolvePublicPage();
-            const safeTab = ['menu','offers','reservation','account'].includes(tab) ? tab : 'menu';
-            window.location.href = `${page}?mode=site&tab=${encodeURIComponent(safeTab)}`;
+            window.location.href = `${page}?tab=${encodeURIComponent(tab)}`;
         }
 
         function goSaaS() {
@@ -294,12 +292,11 @@
 
         function buildProUrl(mode) {
             const proPage = resolveProPage();
-            const modeMap = { pos:'pos', admin:'admin', stock:'stock', kds:'kds', staff:'staffportal', qr:'qr', web:'web', site:'site', ext:'ext' };
-            const normalized = modeMap[mode] || 'admin';
-            if (location.hostname.includes('cafeslux.com') && normalized === 'pos') {
+            const isPosMode = mode === 'pos';
+            if (location.hostname.includes('cafeslux.com') && isPosMode) {
                 return `https://cafeslux.com/${proPage}?mode=pos`;
             }
-            return `${proPage}?mode=${encodeURIComponent(normalized)}`;
+            return `${proPage}?mode=${encodeURIComponent(mode)}`;
         }
 
         function openOverlay(url, label) {
@@ -341,9 +338,9 @@
             const ok = (r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234');
             if (ok) {
                 pinFailureCount = 0;
-                const target = buildProUrl(r);
+                document.getElementById('overlay-mode-label').textContent = 'Mode ' + r.toUpperCase();
+                openOverlay(buildProUrl(r), 'Chargement interne');
                 closeM();
-                window.location.href = target;
             } else {
                 pinFailureCount += 1;
                 setPinError(pinFailureCount >= 3 ? 'Code incorrect. Vérifiez le PIN avant de réessayer.' : 'Code PIN incorrect.');
