@@ -232,16 +232,24 @@
         }
 
         function resolvePublicPage() {
-            return resolveFile('index.html', 'index-ultra.html');
+            return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
         }
 
         function resolveProPage() {
             return resolveFile('cafe-lux.html', 'cafe-lux-ultra.html');
         }
 
-        function goPublic(tab) {
+        function normalizePublicTab(tab) {
+            return ['menu','offers','reservation'].includes(tab) ? tab : 'menu';
+        }
+
+        function buildPublicUrl(tab) {
             const page = resolvePublicPage();
-            window.location.href = `${page}?tab=${encodeURIComponent(tab)}`;
+            return `${page}?mode=site&tab=${encodeURIComponent(normalizePublicTab(tab))}`;
+        }
+
+        function goPublic(tab) {
+            window.location.href = buildPublicUrl(tab);
         }
 
         function goSaaS() {
@@ -292,11 +300,11 @@
 
         function buildProUrl(mode) {
             const proPage = resolveProPage();
-            const isPosMode = mode === 'pos';
-            if (location.hostname.includes('cafeslux.com') && isPosMode) {
+            const normalized = ['pos','admin','stock','kds','staff','qr','web','site','ext'].includes(mode) ? mode : 'admin';
+            if (location.hostname.includes('cafeslux.com') && normalized === 'pos') {
                 return `https://cafeslux.com/${proPage}?mode=pos`;
             }
-            return `${proPage}?mode=${encodeURIComponent(mode)}`;
+            return `${proPage}?mode=${encodeURIComponent(normalized)}`;
         }
 
         function openOverlay(url, label) {
@@ -356,6 +364,26 @@
             setTimeout(() => status.classList.remove('show'), 1200);
         });
 
+        
+
+        function autoOpenFromQuery() {
+            const qs = new URLSearchParams(window.location.search);
+            const tab = qs.get('tab');
+            const mode = qs.get('mode');
+            if (tab) {
+                const url = buildPublicUrl(tab);
+                window.location.replace(url);
+                return;
+            }
+            if (mode && ['pos','admin','stock','kds','staff','qr','web','site','ext'].includes(mode)) {
+                if (mode === 'site') {
+                    window.location.replace(buildPublicUrl(qs.get('tab') || 'menu'));
+                    return;
+                }
+                openOverlay(buildProUrl(mode), 'Chargement interne');
+            }
+        }
+
         document.addEventListener('keydown', (e) => {
             const pinOpen = document.getElementById('pin-modal').style.display === 'flex';
             const overlayOpen = document.getElementById('pro-overlay').style.display === 'block';
@@ -373,6 +401,8 @@
                 else if (e.key.toLowerCase() === 'c') resetP();
             }
         });
+
+        autoOpenFromQuery();
     </script>
 </body>
 </html>

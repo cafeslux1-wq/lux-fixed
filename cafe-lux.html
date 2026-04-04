@@ -959,7 +959,7 @@ function showPage(id){
   if(id === 'web') renderWebOrders();
   if(id === 'admin'){ renderAdmin('dash'); }
   if(id === 'staff'){ renderStaff(); }
-  if(id === 'site'){ buildSiteMenu(); renderSiteCart(); }
+  if(id === 'site'){ buildSiteMenu(); ensurePublicSections(); applyPublicTabFromUrl(); renderSiteCart(); }
   if(id === 'ext'){ renderExtDelivery(); }
 }
 
@@ -2024,6 +2024,73 @@ function findImgKey(name){
   return map[name] || null;
 }
 
+
+function buildPublicSectionsHTML(){
+  return `
+    <div id="public-offers-section" class="card" style="background:#fff;border:1.5px solid #EDE5D5;margin-bottom:16px;color:#1A0A00">
+      <div class="card-title" style="color:#1A0A00;margin-bottom:10px;font-family:Playfair Display,serif">🎁 Privilèges Café LUX</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Carte Fidélité</strong><span style="font-size:12px;color:#666">Cumulez des points sur vos commandes et profitez d’avantages VIP.</span></div>
+        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Paiement premium</strong><span style="font-size:12px;color:#666">Cash · Carte Bancaire · PayPal · Google Pay · TPE</span></div>
+        <div style="padding:12px;border:1px solid #EDE5D5;border-radius:12px;background:#FAFAF5"><strong style="display:block;color:#8B6E2F;margin-bottom:4px">Commande rapide</strong><span style="font-size:12px;color:#666">Menu visuel, ajout au panier et envoi immédiat vers le café.</span></div>
+      </div>
+    </div>
+    <div id="public-reservation-section" class="card" style="background:#fff;border:1.5px solid #EDE5D5;margin-bottom:16px;color:#1A0A00">
+      <div class="card-title" style="color:#1A0A00;margin-bottom:10px;font-family:Playfair Display,serif">📅 Réservation</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px">
+        <input class="of-input" id="res-name" type="text" placeholder="Nom complet *">
+        <input class="of-input" id="res-phone" type="tel" placeholder="Téléphone *">
+        <input class="of-input" id="res-date" type="date">
+        <select class="of-select" id="res-time"><option value="">Heure souhaitée</option><option>08:00</option><option>10:00</option><option>12:00</option><option>16:00</option><option>20:00</option></select>
+        <select class="of-select" id="res-guests"><option>1 personne</option><option>2 personnes</option><option>3 personnes</option><option>4 personnes</option><option>5+ personnes</option></select>
+        <input class="of-input" id="res-notes" type="text" placeholder="Note ou préférence...">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="order-send" style="max-width:260px" onclick="submitReservation()">✓ Confirmer la réservation</button>
+        <span style="font-size:12px;color:#777">Réservation recommandée pour les heures de pointe.</span>
+      </div>
+    </div>`;
+}
+function ensurePublicSections(){
+  var el=document.getElementById('site-menu-content');
+  if(!el) return;
+  if(!document.getElementById('public-offers-section') || !document.getElementById('public-reservation-section')){
+    buildSiteMenu();
+  }
+}
+function applyPublicTabFromUrl(){
+  var params = new URLSearchParams(window.location.search);
+  var tab = params.get('tab') || 'menu';
+  if(tab === 'offers'){
+    var sec=document.getElementById('public-offers-section'); if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+    toast('🎁 Privilèges Café LUX');
+  } else if(tab === 'reservation'){
+    var sec2=document.getElementById('public-reservation-section'); if(sec2) sec2.scrollIntoView({behavior:'smooth', block:'start'});
+    toast('📅 Réservation');
+  }
+}
+function submitReservation(){
+  var name = val('res-name'), phone = val('res-phone');
+  if(!name || !phone){ toast('⚠ Nom et téléphone requis'); return; }
+  var reservations = getLS('lux_reservations', []);
+  var reservation = {
+    id: Date.now(),
+    date: val('res-date') || today(),
+    time: val('res-time') || 'À confirmer',
+    guests: val('res-guests') || '2 personnes',
+    customer: name,
+    phone: phone,
+    notes: val('res-notes'),
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  reservations.unshift(reservation);
+  setLS('lux_reservations', reservations);
+  setEl('success-id', 'Réservation #' + String(reservation.id).slice(-6));
+  document.getElementById('success-ov').classList.add('open');
+  toast('✅ Réservation enregistrée');
+}
+
 function sendWebOrder(){
   const name = val('wo-name'), phone = val('wo-phone');
   if(!siteCart.length){ toast('⚠ Panier vide'); return; }
@@ -2107,12 +2174,19 @@ window.addEventListener('DOMContentLoaded', function(){
 
   initImgs();
   buildTables();
-  var mode = new URLSearchParams(window.location.search).get('mode');
-  // Clean URL without redirect
-  if(mode) history.replaceState(null,'',window.location.pathname);
+  var params = new URLSearchParams(window.location.search);
+  var mode = params.get('mode');
+  var tab = params.get('tab');
   showPage(mode && ['pos','admin','staff','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
   if(mode === 'stock'){ setTimeout(function(){ renderAdmin('stock'); }, 50); }
-  if(mode === 'qr'){ setTimeout(function(){ buildSiteMenu(); renderSiteCart(); }, 50); }
+  if(mode === 'qr'){ setTimeout(function(){ buildSiteMenu(); ensurePublicSections(); renderSiteCart(); }, 50); }
+  if(mode === 'site'){ setTimeout(function(){ ensurePublicSections(); applyPublicTabFromUrl(); }, 60); }
+  if(mode || tab){
+    var clean = new URL(window.location.href);
+    clean.searchParams.delete('mode');
+    clean.searchParams.delete('tab');
+    history.replaceState(null,'',clean.pathname + (clean.searchParams.toString()?('?'+clean.searchParams.toString()):'') + clean.hash);
+  }
 });
 
 
