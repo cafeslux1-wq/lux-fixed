@@ -346,9 +346,9 @@
             const ok = (r === 'admin' && p === '9999') || (r !== 'admin' && p === '1234');
             if (ok) {
                 pinFailureCount = 0;
-                document.getElementById('overlay-mode-label').textContent = 'Mode ' + r.toUpperCase();
-                openOverlay(buildProUrl(r), 'Chargement interne');
+                const targetUrl = buildProUrl(r);
                 closeM();
+                window.location.href = targetUrl;
             } else {
                 pinFailureCount += 1;
                 setPinError(pinFailureCount >= 3 ? 'Code incorrect. Vérifiez le PIN avant de réessayer.' : 'Code PIN incorrect.');
@@ -371,8 +371,7 @@
             const tab = qs.get('tab');
             const mode = qs.get('mode');
             if (tab) {
-                const url = buildPublicUrl(tab);
-                window.location.replace(url);
+                window.location.replace(buildPublicUrl(tab));
                 return;
             }
             if (mode && ['pos','admin','stock','kds','staff','qr','web','site','ext'].includes(mode)) {
@@ -380,7 +379,7 @@
                     window.location.replace(buildPublicUrl(qs.get('tab') || 'menu'));
                     return;
                 }
-                openOverlay(buildProUrl(mode), 'Chargement interne');
+                window.location.replace(buildProUrl(mode));
             }
         }
 

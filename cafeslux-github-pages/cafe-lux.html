@@ -389,9 +389,11 @@ body{
     <div class="t-tab active" data-page="home" onclick="showPage('home')">🏠 Accueil</div>
     <div class="t-tab" data-page="pos" onclick="showPage('pos')">🧾 Caisse</div>
     <div class="t-tab" data-page="web" onclick="showPage('web')">🌐 Commandes Web <span id="web-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
+    <div class="t-tab" data-page="kds" onclick="showPage('kds')">📺 Cuisine KDS</div>
     <div class="t-tab" data-page="admin" onclick="showPage('admin')">📊 Administration</div>
     <div class="t-tab" data-page="staff" onclick="showPage('staff')">👥 Employes</div>
     <div class="t-tab" data-page="site" onclick="showPage('site')">🛒 Site Public</div>
+    <div class="t-tab" data-page="qr" onclick="showPage('qr')">📲 QR Tables</div>
     <div class="t-tab" data-page="ext" onclick="showPage('ext')">🛵 Ext. Delivery <span id="ext-badge" style="background:var(--orange);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;display:none;margin-left:3px">0</span></div>
   </div>
   <div class="topbar-right"><div class="mode-badge" id="mode-badge">✦ Mode: HUB</div>
@@ -486,6 +488,20 @@ body{
   <div class="web-grid" id="web-orders-grid">
     <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">Aucune commande web</div>
   </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     PAGE: CUISINE KDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page scroll" id="p-kds" style="flex-direction:column;padding:20px;gap:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📺 Cuisine KDS</h2>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Suivi des commandes en préparation pour la cuisine.</div>
+    </div>
+    <button class="btn sm" onclick="renderKDS()">🔄 Actualiser</button>
+  </div>
+  <div id="kds-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
 </div>
 
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -783,6 +799,20 @@ body{
 </div>
 
 <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     PAGE: QR TABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page scroll" id="p-qr" style="flex-direction:column;padding:20px;gap:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="font-family:Playfair Display,serif;color:var(--gold);font-size:18px">📲 QR Tables</h2>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Accès rapide par table vers le menu public Café LUX.</div>
+    </div>
+    <button class="btn sm" onclick="renderQRTables()">🔄 Actualiser</button>
+  </div>
+  <div id="qr-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px"></div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      PAGE: EXTERNAL DELIVERY (Glovo/Jumia)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <div class="page scroll" id="p-ext" style="flex-direction:column;padding:20px;gap:16px">
@@ -943,8 +973,8 @@ updateClock();
 // ══════════════════════════
 //  NAVIGATION
 // ══════════════════════════
-const PAGES = ['home','pos','web','admin','staff','site','ext'];
-const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staff', kds:'staff', stock:'admin', qr:'site', web:'web', site:'site', ext:'ext' };
+const PAGES = ['home','pos','web','kds','admin','staff','site','qr','ext'];
+const MODE_PAGE_MAP = { pos:'pos', admin:'admin', staff:'staff', kds:'kds', stock:'admin', qr:'qr', web:'web', site:'site', ext:'ext' };
 function showPage(id){
   id = MODE_PAGE_MAP[id] || id;
   PAGES.forEach(function(p){
@@ -957,9 +987,11 @@ function showPage(id){
   if(id === 'home') renderHome();
   if(id === 'pos'){ buildMenuSections(); renderTicket(); }
   if(id === 'web') renderWebOrders();
+  if(id === 'kds') renderKDS();
   if(id === 'admin'){ renderAdmin('dash'); }
   if(id === 'staff'){ renderStaff(); }
   if(id === 'site'){ buildSiteMenu(); ensurePublicSections(); applyPublicTabFromUrl(); renderSiteCart(); }
+  if(id === 'qr') renderQRTables();
   if(id === 'ext'){ renderExtDelivery(); }
 }
 
@@ -2179,16 +2211,62 @@ window.addEventListener('DOMContentLoaded', function(){
   var tab = params.get('tab');
   showPage(mode && ['pos','admin','staff','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
   if(mode === 'stock'){ setTimeout(function(){ renderAdmin('stock'); }, 50); }
-  if(mode === 'qr'){ setTimeout(function(){ buildSiteMenu(); ensurePublicSections(); renderSiteCart(); }, 50); }
+  if(mode === 'qr'){ setTimeout(function(){ renderQRTables(); }, 50); }
+  if(mode === 'kds'){ setTimeout(function(){ renderKDS(); }, 50); }
   if(mode === 'site'){ setTimeout(function(){ ensurePublicSections(); applyPublicTabFromUrl(); }, 60); }
-  if(mode || tab){
-    var clean = new URL(window.location.href);
-    clean.searchParams.delete('mode');
-    clean.searchParams.delete('tab');
-    history.replaceState(null,'',clean.pathname + (clean.searchParams.toString()?('?'+clean.searchParams.toString()):'') + clean.hash);
-  }
 });
 
+
+
+function renderKDS(){
+  var el = document.getElementById('kds-grid');
+  if(!el) return;
+  var orders = getLS('lux_web_orders', []).filter(function(o){ return (o.status||'pending') !== 'delivered'; });
+  if(!orders.length){ el.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--muted)">Aucune commande à préparer.</div>'; return; }
+  el.innerHTML = orders.slice(0,12).map(function(o, idx){
+    var items = (o.items||[]).map(function(i){ return '<div style="font-size:12px;color:var(--text);margin-bottom:4px">• '+i.q+' × '+i.n+'</div>'; }).join('');
+    var type = o.type === 'delivery' ? '🛵 Livraison' : (o.type === 'table' ? '🪑 Sur place' : '🥡 Emporter');
+    return '<div class="card" style="border-color:rgba(201,168,76,.3)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px">Commande #'+String(o.id).slice(-6)+'</div><span class="badge gold">'+type+'</span></div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(o.customer||'Client')+' · '+(o.time||'')+'</div>'+
+      '<div style="margin-bottom:12px">'+items+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:var(--gold)">'+(o.total||0)+' DH</strong><button class="btn sm solid" onclick="markKdsReady('+o.id+')">Prête</button></div>'+
+    '</div>';
+  }).join('');
+}
+function markKdsReady(id){
+  var orders = getLS('lux_web_orders', []);
+  orders = orders.map(function(o){ if(o.id===id){ o.status='ready'; } return o; });
+  setLS('lux_web_orders', orders);
+  renderKDS(); renderWebOrders(); toast('✅ Commande marquée prête');
+}
+function renderQRTables(){
+  var el = document.getElementById('qr-grid');
+  if(!el) return;
+  var base = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu';
+  var html='';
+  for(var i=1;i<=12;i++){
+    var url = base + '&table=' + i;
+    html += '<div class="card" style="text-align:center">'+
+      '<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:24px;margin-bottom:6px">Table '+i+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">QR menu public</div>'+
+      '<div style="background:#fff;color:#111;border-radius:10px;padding:10px;font-size:10px;word-break:break-all;margin-bottom:10px">'+url+'</div>'+
+      '<div style="display:flex;gap:8px;justify-content:center"><button class="btn sm" onclick="copyQrLink('+i+')">Copier</button><button class="btn sm solid" onclick="printQrCard('+i+')">Imprimer</button></div>'+
+    '</div>';
+  }
+  el.innerHTML = html;
+}
+function copyQrLink(i){
+  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
+  navigator.clipboard.writeText(url).then(function(){ toast('🔗 Lien table '+i+' copié'); }).catch(function(){ toast(url); });
+}
+function printQrCard(i){
+  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
+  var w = window.open('', '', 'width=420,height=620');
+  if(!w) return;
+  w.document.write('<html><head><title>QR Table '+i+'</title></head><body style="font-family:sans-serif;text-align:center;padding:24px"><h1>Café LUX</h1><h2>Table '+i+'</h2><p>'+url+'</p></body></html>');
+  w.document.close(); w.focus(); w.print();
+}
 
 // ── RECIPE COSTS ─────────────────────────────────────────────────────
 const RECIPE_DATA = [
@@ -2257,13 +2335,7 @@ function adminCycleShift(emp,date,td){
 window.renderAdmin=function(p){orig(p);if(p==='recipes')renderAdminRecipes();if(p==='schedule')renderAdminSchedule();};})();
 
 
-// ── URL MODE HANDLER — reads ?mode=pos/admin/staff/kds from index.html ──
-// handleMode: already handled in DOMContentLoaded above
-// URL clean-up only
-(function(){
-  var mode = new URLSearchParams(window.location.search).get('mode');
-  if(mode) history.replaceState(null,'',window.location.pathname);
-})();
+// ── URL MODE HANDLER — handled in DOMContentLoaded above; keeping query params for stable routing
 
 
 // ── CAMPAIGNS HISTORY (Admin) ─────────────────────────────────────────
