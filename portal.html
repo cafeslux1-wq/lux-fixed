@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>LUX — تازة</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#111;--border:rgba(255,255,255,0.07);--gold:#c8a84b;--dim:#555;--txt:#e8e8e8}
+html,body{height:100%;background:var(--bg);font-family:'Segoe UI',Tahoma,sans-serif;display:flex;align-items:center;justify-content:center}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:28px;padding:24px;width:100%}
+.l1{font-size:36px;font-weight:800;letter-spacing:6px;color:var(--gold);text-align:center}
+.l2{font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-top:4px}
+.deco{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:520px}
+@media(max-width:480px){.cards{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(200,168,75,.08),transparent 70%);
+  opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:1}
+.card:hover{border-color:rgba(200,168,75,.35);transform:translateY(-3px);box-shadow:0 12px 40px rgba(200,168,75,.1)}
+.card:active{transform:scale(.98)}
+.ico{font-size:36px;margin-bottom:12px}
+.cname{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:6px}
+.desc{font-size:11px;color:var(--dim);line-height:1.6}
+.tag{display:inline-block;margin-top:14px;padding:4px 12px;border-radius:20px;
+  font-size:10px;font-weight:600;letter-spacing:1px;
+  border:1px solid rgba(200,168,75,.3);color:var(--gold);text-transform:uppercase}
+.footer{font-size:10px;color:var(--dim);letter-spacing:2px}
+#pin{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:10}
+#pin.on{display:flex}
+.pbox{background:#111;border:1px solid rgba(255,255,255,.07);border-radius:20px;
+  padding:36px 28px;text-align:center;width:min(320px,90vw)}
+.ptit{font-size:14px;font-weight:700;color:#e8e8e8;margin-bottom:4px}
+.psub{font-size:11px;color:#555;margin-bottom:20px}
+.pdots{display:flex;justify-content:center;gap:10px;margin-bottom:20px}
+.pdot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);transition:background .2s}
+.pdot.on{background:#c8a84b}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pbtn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;color:#e8e8e8;font-size:20px;font-weight:600;
+  padding:16px;cursor:pointer;transition:.15s}
+.pbtn:hover{background:rgba(200,168,75,.12);border-color:rgba(200,168,75,.25)}
+.perr{font-size:11px;color:#e04e4e;min-height:16px;margin-top:10px}
+.pcancel{margin-top:14px;font-size:11px;color:#555;cursor:pointer;text-decoration:underline}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="deco"></div>
+    <div class="l1">✦ LUX</div>
+    <div class="l2">مقهى تازة</div>
+    <div class="deco" style="margin-top:14px"></div>
+  </div>
+  <div class="cards">
+    <div class="card" onclick="openAdmin()">
+      <div class="ico">⚙️</div>
+      <div class="cname">نظام الإدارة</div>
+      <div class="desc">الصندوق · الحسابات<br>الموظفون · التقارير</div>
+      <div class="tag">Admin</div>
+    </div>
+    <div class="card" onclick="location.href='portal.html'">
+      <div class="ico">👥</div>
+      <div class="cname">بوابة الموظفين</div>
+      <div class="desc">الراتب · السلف<br>الطلبات · الحساب</div>
+      <div class="tag">Staff</div>
+    </div>
+  </div>
+  <div class="footer">LUX CAFÉ · TAZA · 2026</div>
+</div>
+
+<div id="pin">
+  <div class="pbox">
+    <div class="ptit">🔐 نظام الإدارة</div>
+    <div class="psub">أدخل رمز الدخول</div>
+    <div class="pdots">
+      <div class="pdot" id="d0"></div><div class="pdot" id="d1"></div>
+      <div class="pdot" id="d2"></div><div class="pdot" id="d3"></div>
+    </div>
+    <div class="pgrid">
+      <button class="pbtn" onclick="pk('1')">1</button>
+      <button class="pbtn" onclick="pk('2')">2</button>
+      <button class="pbtn" onclick="pk('3')">3</button>
+      <button class="pbtn" onclick="pk('4')">4</button>
+      <button class="pbtn" onclick="pk('5')">5</button>
+      <button class="pbtn" onclick="pk('6')">6</button>
+      <button class="pbtn" onclick="pk('7')">7</button>
+      <button class="pbtn" onclick="pk('8')">8</button>
+      <button class="pbtn" onclick="pk('9')">9</button>
+      <button class="pbtn" onclick="pk('del')" style="font-size:16px">⌫</button>
+      <button class="pbtn" onclick="pk('0')">0</button>
+      <button class="pbtn" onclick="pk('ok')"
+        style="background:rgba(200,168,75,.15);border-color:rgba(200,168,75,.3);color:#c8a84b;font-size:14px">✓</button>
+    </div>
+    <div class="perr" id="perr"></div>
+    <div class="pcancel" onclick="closePin()">← رجوع</div>
+  </div>
+</div>
+<script>
+var pin='';
+function openAdmin(){document.getElementById('pin').classList.add('on');pin='';upd();document.getElementById('perr').textContent='';}
+function closePin(){document.getElementById('pin').classList.remove('on');pin='';upd();}
+function upd(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('on',i<pin.length);}
+function pk(k){
+  if(k==='del'){pin=pin.slice(0,-1);upd();return;}
+  if(k==='ok'){check();return;}
+  if(pin.length<4){pin+=k;upd();if(pin.length===4)setTimeout(check,120);}
+}
+function check(){
+  if(pin==='9999'){closePin();window.location.href='admin.html';}
+  else{
+    document.getElementById('perr').textContent='❌ رمز خاطئ';
+    var b=document.querySelector('.pbox');b.style.animation='none';
+    setTimeout(function(){b.style.animation='shake .3s ease';pin='';upd();},10);
+    setTimeout(function(){document.getElementById('perr').textContent='';},2000);
+  }
+}
+</script>
+</body>
+</html>
