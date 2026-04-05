@@ -228,6 +228,81 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;dis
 .presence-btn.out{background:rgba(224,82,82,.15);color:var(--red);}
 
 /* ══════════════════════════
+   BOTTOM NAV — MAESTRO Phase 1
+══════════════════════════ */
+#lux-bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:900;
+  display:none;align-items:stretch;height:64px;
+  background:linear-gradient(180deg,rgba(8,8,8,.92),rgba(8,8,8,.98));
+  backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border-top:1px solid rgba(201,168,76,.15);padding:0 4px;
+  padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -4px 32px rgba(0,0,0,.6);
+}
+body.lux-nav-active #lux-bottom-nav{display:flex;}
+body.lux-nav-active #p-site{padding-bottom:72px;}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;cursor:pointer;padding:6px 2px;position:relative;
+  transition:all .25s cubic-bezier(.4,0,.2,1);-webkit-tap-highlight-color:transparent;
+}
+.bnav-btn::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-d));
+  border-radius:0 0 4px 4px;transition:width .3s cubic-bezier(.4,0,.2,1);
+}
+.bnav-btn.active::before{width:28px;}
+.bnav-btn:active{transform:scale(.92);}
+.bnav-icon{font-size:18px;line-height:1;transition:transform .2s;filter:grayscale(1) opacity(.5);}
+.bnav-btn.active .bnav-icon{filter:none;transform:scale(1.15);text-shadow:0 0 12px rgba(201,168,76,.4);}
+.bnav-label{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;letter-spacing:.3px;color:var(--muted);transition:color .2s;}
+.bnav-btn.active .bnav-label{color:var(--gold);font-weight:600;}
+@media(max-width:380px){.bnav-label{font-size:8px;}.bnav-icon{font-size:16px;}#lux-bottom-nav{height:58px;}}
+
+/* ══════════════════════════
+   ENHANCED PAYMENT MODAL — MAESTRO Phase 1
+══════════════════════════ */
+.lux-pay-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;animation:lpfade .3s ease;}
+.lux-pay-overlay.open{display:flex;}
+@keyframes lpfade{from{opacity:0}to{opacity:1}}
+.lux-pay-box{background:#FAFAF5;border-radius:24px;width:92%;max-width:440px;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(201,168,76,.15);animation:lpslide .35s cubic-bezier(.4,0,.2,1);}
+@keyframes lpslide{from{transform:translateY(24px);opacity:0}}
+.lpay-header{background:linear-gradient(135deg,#1A0A00,#0A0500);padding:20px 24px;border-radius:24px 24px 0 0;display:flex;align-items:center;gap:12px;position:relative;}
+.lpay-logo{font-family:'Playfair Display',serif;font-size:18px;color:#C9A84C;letter-spacing:4px;}
+.lpay-secure{font-size:8px;color:rgba(255,255,255,.3);letter-spacing:2px;margin-top:2px;}
+.lpay-amount{margin-left:auto;font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:#E8C97A;}
+.lpay-close{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;}
+.lpay-steps{display:flex;background:#F5F0E8;border-bottom:1px solid #EDE5D5;}
+.lps{flex:1;padding:10px;text-align:center;font-size:10px;color:#999;border-bottom:2px solid transparent;transition:.25s;}
+.lps span{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#DDD;color:#888;font-size:9px;font-weight:700;margin-right:4px;}
+.lps.active{color:#C9A84C;border-bottom-color:#C9A84C;font-weight:600;}
+.lps.active span{background:#C9A84C;color:#000;}
+.lps.done{color:#3DBE7A;}.lps.done span{background:#3DBE7A;color:#fff;}
+.lpay-content{padding:24px;}
+.lpay-methods{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.lpay-method{display:flex;align-items:center;gap:14px;padding:14px 16px;border:2px solid #EDE5D5;border-radius:14px;cursor:pointer;transition:all .2s;background:#fff;}
+.lpay-method:hover{border-color:#C9A84C;}
+.lpay-method.selected{border-color:#C9A84C;background:linear-gradient(135deg,rgba(201,168,76,.04),rgba(201,168,76,.08));box-shadow:0 4px 16px rgba(201,168,76,.12);}
+.lpay-m-icon{font-size:24px;flex-shrink:0;}
+.lpay-m-info{flex:1;}.lpay-m-name{font-size:13px;font-weight:600;color:#1A0A00;}
+.lpay-m-sub{font-size:10px;color:#999;margin-top:1px;}
+.lpay-m-check{width:20px;height:20px;border-radius:50%;border:2px solid #DDD;display:flex;align-items:center;justify-content:center;font-size:0;color:transparent;transition:.2s;}
+.lpay-method.selected .lpay-m-check{background:#C9A84C;border-color:#C9A84C;color:#000;font-size:10px;}
+.lpay-label{display:block;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
+.lpay-input{width:100%;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14px;color:#1A0A00;outline:none;margin-bottom:10px;font-family:'DM Sans',sans-serif;transition:border-color .2s;}
+.lpay-input:focus{border-color:#C9A84C;}
+.lpay-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.lpay-cta{width:100%;padding:14px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#000;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;letter-spacing:.3px;}
+.lpay-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,.3);}
+.lpay-cancel,.lpay-back{width:100%;padding:10px;background:none;border:none;color:#AAA;cursor:pointer;margin-top:8px;font-size:12px;}
+.lpay-processing{text-align:center;padding:32px 0;}
+.lpay-spinner{width:48px;height:48px;margin:0 auto 16px;border:3px solid #EDE5D5;border-top-color:#C9A84C;border-radius:50%;animation:lpspin .8s linear infinite;}
+@keyframes lpspin{to{transform:rotate(360deg)}}
+.lpay-success{text-align:center;padding:20px 0;}
+.lpay-success-icon{font-size:56px;margin-bottom:12px;}
+.lpay-success-title{font-family:'Playfair Display',serif;font-size:24px;color:#1A0A00;margin-bottom:6px;}
+.lpay-ref{background:#F5F0E8;border-radius:10px;padding:12px;font-family:'Playfair Display',serif;font-size:16px;color:#8B6E2F;margin:12px 0;}
+
+/* ══════════════════════════
    PAGE: SITE WEB PUBLIC
 ══════════════════════════ */
 #p-site{flex-direction:column;overflow:hidden;}
@@ -2225,7 +2300,15 @@ function sendWebOrder(payMethod){
   const notes = val('wo-notes');
   const sub = siteCart.reduce(function(s,c){return s+c.p*c.q;},0);
   const tva  = +(sub*0.1).toFixed(2);
-  const total = (sub + tva).toFixed(2);
+  const total = +(sub + tva).toFixed(2);
+
+  // ── FIX: Format items avec name/price/qty pour l'API ──────
+  // siteCart utilise {n,p,q} mais server.js attend {name,price,qty}
+  // On envoie les DEUX formats pour compatibilité locale + API
+  const apiItems = siteCart.map(function(c){
+    return { name:c.n, price:c.p, qty:c.q, n:c.n, p:c.p, q:c.q };
+  });
+
   const order = {
     id: Date.now(),
     date: today(),
@@ -2234,10 +2317,10 @@ function sendWebOrder(payMethod){
     phone,
     type, addr, notes,
     payMethod,
-    items: siteCart.slice(),
-    subtotal: sub.toFixed(2),
-    tva: tva.toFixed(2),
-    total,
+    items: apiItems,           // ✓ contient name/price/qty ET n/p/q
+    subtotal: sub,             // ✓ number (pas string)
+    tva: tva,                  // ✓ number
+    total: total,              // ✓ number
     status: 'pending'
   };
   const orders = getLS('lux_web_orders',[]);
@@ -2269,12 +2352,22 @@ function sendWebOrder(payMethod){
     window.open('https://wa.me/212677717201?text='+adminMsg, '_blank');
   }, 500);
 
-  // Save via API
+  // ── FIX: Save via API avec le format correct ──────────────
+  // customer = objet {name,phone} (pas string)
+  // address (pas addr) — correspond au champ server.js
+  // items avec name/price/qty — correspond au schema Prisma
+  // subtotal/total comme numbers — Prisma attend Float
   if(window.LuxAPI){
     LuxAPI.createOrder({
-      customer:name, phone, type, addr, notes, payMethod,
-      items:order.items, subtotal:order.subtotal, total:order.total
-    }).catch(function(){});
+      customer: { name: name, phone: phone },
+      type: type,
+      address: addr,
+      notes: notes,
+      payMethod: payMethod,
+      items: apiItems,
+      subtotal: sub,
+      total: total
+    }).catch(function(e){ console.warn('[LUX] Order API error:', e.message); });
   }
 
   siteCart = [];
@@ -2628,6 +2721,239 @@ function orderGiftCard(){
 }
 
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     MAESTRO Phase 1: Bottom Navigation Bar
+═══════════════════════════════════════════════════ -->
+<nav id="lux-bottom-nav">
+  <button class="bnav-btn active" data-view="menu" onclick="luxNav('menu')"><span class="bnav-icon">✦</span><span class="bnav-label">Menu</span></button>
+  <button class="bnav-btn" data-view="offers" onclick="luxNav('offers')"><span class="bnav-icon">🌟</span><span class="bnav-label">Offres</span></button>
+  <button class="bnav-btn" data-view="orders" onclick="luxNav('orders')"><span class="bnav-icon">📦</span><span class="bnav-label">Commandes</span></button>
+  <button class="bnav-btn" data-view="account" onclick="luxNav('account')"><span class="bnav-icon">👤</span><span class="bnav-label">Compte</span></button>
+  <button class="bnav-btn" data-view="giftcard" onclick="luxNav('giftcard')"><span class="bnav-icon">🎁</span><span class="bnav-label">Cadeau</span></button>
+  <button class="bnav-btn" data-view="booking" onclick="luxNav('booking')"><span class="bnav-icon">📅</span><span class="bnav-label">Réserver</span></button>
+  <button class="bnav-btn" data-view="saas" onclick="window.open('lux-saas.html','_blank')"><span class="bnav-icon">✦</span><span class="bnav-label">LUX SaaS</span></button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     MAESTRO Phase 1: Enhanced Payment Modal
+═══════════════════════════════════════════════════ -->
+<div id="lux-pay-modal" class="lux-pay-overlay">
+  <div class="lux-pay-box">
+    <div class="lpay-header">
+      <div><div class="lpay-logo">★ LUX</div><div class="lpay-secure">🔒 PAIEMENT SÉCURISÉ</div></div>
+      <div class="lpay-amount" id="lpay-amount">0 MAD</div>
+      <button class="lpay-close" onclick="closeLuxPay()">✕</button>
+    </div>
+    <div class="lpay-steps">
+      <div class="lps active" id="lps-1"><span>1</span> Méthode</div>
+      <div class="lps" id="lps-2"><span>2</span> Détails</div>
+      <div class="lps" id="lps-3"><span>3</span> Confirmation</div>
+    </div>
+    <div class="lpay-content" id="lpay-s1">
+      <div style="font-size:12px;color:#888;margin-bottom:16px">Choisissez votre mode de paiement</div>
+      <div class="lpay-methods" id="lpay-methods"></div>
+      <button class="lpay-cta" onclick="goLuxPayStep(2)">Continuer →</button>
+      <button class="lpay-cancel" onclick="closeLuxPay()">Annuler</button>
+    </div>
+    <div class="lpay-content" id="lpay-s2" style="display:none">
+      <div id="lpf-cash" style="display:none;text-align:center;padding:20px 0"><div style="font-size:48px">💵</div><div style="font-size:16px;font-weight:600;color:#1A0A00;margin:8px 0">Paiement en espèces</div><div style="font-size:12px;color:#888">Le livreur accepte les espèces. Préparez l'appoint.</div></div>
+      <div id="lpf-carte" style="display:none"><div style="display:flex;align-items:center;gap:8px;padding:10px;background:#F5F0E8;border-radius:10px;margin-bottom:16px"><span style="background:#1A6B3C;color:#fff;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700">CMI</span><span style="font-size:10px;color:#888">🔒 Centre Monétique Interbancaire · SSL</span></div><label class="lpay-label">Numéro de carte</label><input class="lpay-input" id="lpay-cc-num" type="text" placeholder="0000 0000 0000 0000" maxlength="19"><div class="lpay-row"><div><label class="lpay-label">Expiration</label><input class="lpay-input" id="lpay-cc-exp" type="text" placeholder="MM/AA" maxlength="5"></div><div><label class="lpay-label">CVV</label><input class="lpay-input" id="lpay-cc-cvv" type="text" placeholder="123" maxlength="3"></div></div><label class="lpay-label">Nom sur la carte</label><input class="lpay-input" id="lpay-cc-name" type="text" placeholder="PRENOM NOM" style="text-transform:uppercase"></div>
+      <div id="lpf-paypal" style="display:none;text-align:center;padding:20px 0"><div style="font-size:48px">🅿️</div><div style="font-size:16px;font-weight:600;color:#003087;margin:8px 0">Paiement PayPal</div><div style="font-size:12px;color:#888">Redirection vers WhatsApp pour finaliser.</div></div>
+      <div id="lpf-tpe" style="display:none;text-align:center;padding:20px 0"><div style="font-size:48px">📟</div><div style="font-size:16px;font-weight:600;color:#1A0A00;margin:8px 0">TPE Mobile</div><div style="font-size:12px;color:#888">Le livreur apportera un terminal TPE.</div><div style="display:flex;gap:8px;justify-content:center;margin-top:16px"><span style="padding:6px 14px;border:1px solid #DDD;border-radius:8px;font-size:11px;font-weight:600;color:#666">Visa</span><span style="padding:6px 14px;border:1px solid #DDD;border-radius:8px;font-size:11px;font-weight:600;color:#666">Mastercard</span><span style="padding:6px 14px;border:1px solid #DDD;border-radius:8px;font-size:11px;font-weight:600;color:#666">CMI</span></div></div>
+      <button class="lpay-cta" id="lpay-confirm-btn" onclick="goLuxPayStep(3)">Confirmer le paiement →</button>
+      <button class="lpay-back" onclick="goLuxPayStep(1)">← Retour</button>
+    </div>
+    <div class="lpay-content" id="lpay-s3" style="display:none">
+      <div class="lpay-processing" id="lpay-proc"><div class="lpay-spinner"></div><div style="font-size:14px;color:#1A0A00;font-weight:500;margin-bottom:6px">Traitement en cours...</div><div style="font-size:11px;color:#AAA">Ne fermez pas cette fenêtre</div></div>
+      <div class="lpay-success" id="lpay-succ" style="display:none"><div class="lpay-success-icon">✅</div><div class="lpay-success-title">Paiement confirmé!</div><div style="font-size:12px;color:#888;margin-bottom:12px">Commande transmise à Café LUX</div><div class="lpay-ref" id="lpay-ref">Réf: LUX-000000</div><div style="font-size:11px;color:#AAA;margin-bottom:16px">+212 808524169 · cafeslux.com</div><button class="lpay-cta" onclick="finishLuxPay()">Voir ma commande →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MAESTRO Phase 1: SPA Router + Auth Guard + Payment Engine
+═══════════════════════════════════════════════════ -->
+<script>
+(function(){
+  // ── 1. SPA ROUTER via URL params (?view=menu, ?view=booking) ──
+  var VIEW_MAP = {
+    menu:     {tab:'menu',     section:null},
+    offers:   {tab:'offers',   section:'public-offers-section'},
+    orders:   {tab:'orders',   section:'public-account-section'},
+    account:  {tab:'account',  section:'public-account-section'},
+    giftcard: {tab:'giftcard', section:'public-account-section'},
+    booking:  {tab:'booking',  section:'public-reservation-section'}
+  };
+
+  function luxNavActivate(view){
+    document.querySelectorAll('.bnav-btn').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-view')===view);
+    });
+  }
+
+  window.luxNav = function(view){
+    if(view==='saas') return;
+    var info = VIEW_MAP[view] || VIEW_MAP.menu;
+    // Ensure we're on site page
+    if(typeof showPage==='function') showPage('site');
+    if(typeof ensurePublicSections==='function') ensurePublicSections();
+    // Update URL without reload
+    var url = new URL(window.location);
+    url.searchParams.set('view', view);
+    url.searchParams.set('mode', 'site');
+    history.pushState({view:view}, '', url);
+    // Scroll to section
+    if(info.section){
+      var sec = document.getElementById(info.section);
+      if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      var mc = document.getElementById('site-menu-content');
+      if(mc) mc.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    luxNavActivate(view);
+    // Show navbar
+    document.body.classList.add('lux-nav-active');
+  };
+
+  // History back/forward
+  window.addEventListener('popstate', function(e){
+    if(e.state && e.state.view) luxNav(e.state.view);
+  });
+
+  // ── 2. SMART AUTH GUARD ──────────────────────────────────────
+  // mode=site → public (no PIN). Other modes → check session.
+  // Already handled by existing auth guard. We just auto-show navbar for site mode.
+
+  // ── 3. ENHANCED PAYMENT ENGINE ───────────────────────────────
+  var _luxPayMethod = 'cash';
+  var _luxPayData = null;
+  var PAY_METHODS = [
+    {key:'cash',  icon:'💵', name:'Espèces',        sub:'Paiement à la livraison'},
+    {key:'carte', icon:'💳', name:'Carte Bancaire',  sub:'CMI · Visa · Mastercard'},
+    {key:'paypal',icon:'🅿️', name:'PayPal',          sub:'Via WhatsApp sécurisé'},
+    {key:'tpe',   icon:'📟', name:'TPE Mobile',       sub:'Terminal à la livraison'}
+  ];
+
+  function buildPayMethods(){
+    var el = document.getElementById('lpay-methods');
+    if(!el) return;
+    el.innerHTML = PAY_METHODS.map(function(m){
+      var sel = m.key===_luxPayMethod ? ' selected' : '';
+      return '<div class="lpay-method'+sel+'" data-m="'+m.key+'" onclick="selectLuxPayMethod(\''+m.key+'\')">'
+        +'<div class="lpay-m-icon">'+m.icon+'</div>'
+        +'<div class="lpay-m-info"><div class="lpay-m-name">'+m.name+'</div><div class="lpay-m-sub">'+m.sub+'</div></div>'
+        +'<div class="lpay-m-check">●</div></div>';
+    }).join('');
+  }
+
+  window.selectLuxPayMethod = function(m){
+    _luxPayMethod = m;
+    document.querySelectorAll('.lpay-method').forEach(function(el){
+      el.classList.toggle('selected', el.getAttribute('data-m')===m);
+    });
+    var btn = document.getElementById('lpay-confirm-btn');
+    if(btn){
+      if(m==='paypal'){btn.textContent='Payer via WhatsApp →';btn.style.background='#25D366';btn.style.color='#fff';}
+      else{btn.textContent='Confirmer le paiement →';btn.style.background='';btn.style.color='';}
+    }
+  };
+
+  window.openLuxPay = function(data){
+    _luxPayData = data;
+    _luxPayMethod = 'cash';
+    document.getElementById('lpay-amount').textContent = (data.total||'0')+' MAD';
+    buildPayMethods();
+    goLuxPayStep(1);
+    document.getElementById('lux-pay-modal').classList.add('open');
+  };
+  window.closeLuxPay = function(){ document.getElementById('lux-pay-modal').classList.remove('open'); };
+
+  window.goLuxPayStep = function(step){
+    [1,2,3].forEach(function(s){
+      var el=document.getElementById('lpay-s'+s); if(el) el.style.display=s===step?'block':'none';
+      var ps=document.getElementById('lps-'+s); if(ps){ps.classList.remove('active','done');if(s<step)ps.classList.add('done');else if(s===step)ps.classList.add('active');}
+    });
+    if(step===2){
+      ['cash','carte','paypal','tpe'].forEach(function(m){
+        var f=document.getElementById('lpf-'+m); if(f) f.style.display=m===_luxPayMethod?'block':'none';
+      });
+    }
+    if(step===3) processLuxPay();
+  };
+
+  function processLuxPay(){
+    var proc=document.getElementById('lpay-proc'),succ=document.getElementById('lpay-succ');
+    if(proc) proc.style.display='block'; if(succ) succ.style.display='none';
+
+    if(_luxPayMethod==='paypal'){
+      if(proc) proc.style.display='none';
+      var t=_luxPayData?_luxPayData.total:'?', n=_luxPayData?(_luxPayData.name||'Client'):'Client';
+      var msg=encodeURIComponent('✦ Paiement Café LUX\n\nClient: '+n+'\nMontant: '+t+' MAD\nMode: PayPal');
+      window.open('https://wa.me/212677717201?text='+msg,'_blank');
+      setTimeout(confirmLuxPay, 1500); return;
+    }
+    if(_luxPayMethod==='carte'){
+      var num=(document.getElementById('lpay-cc-num')||{}).value||'';
+      var exp=(document.getElementById('lpay-cc-exp')||{}).value||'';
+      var cvv=(document.getElementById('lpay-cc-cvv')||{}).value||'';
+      num=num.replace(/\s/g,'');
+      if(!num||num.length<16){toast('❌ Numéro de carte invalide');goLuxPayStep(2);return;}
+      if(!exp||exp.length<4){toast('❌ Expiration invalide');goLuxPayStep(2);return;}
+      if(!cvv||cvv.length<3){toast('❌ CVV invalide');goLuxPayStep(2);return;}
+      setTimeout(confirmLuxPay, 2000); return;
+    }
+    setTimeout(confirmLuxPay, 1200);
+  }
+
+  function confirmLuxPay(){
+    var proc=document.getElementById('lpay-proc'),succ=document.getElementById('lpay-succ');
+    if(proc) proc.style.display='none'; if(succ) succ.style.display='block';
+    var ref='LUX-'+String(Date.now()).slice(-6);
+    document.getElementById('lpay-ref').textContent='Réf: '+ref;
+    // Submit the order
+    if(_luxPayData && _luxPayData.submitFn){
+      _luxPayData.payMethod = _luxPayMethod;
+      _luxPayData.ref = ref;
+      _luxPayData.submitFn(_luxPayMethod);
+    }
+  }
+
+  window.finishLuxPay = function(){
+    closeLuxPay();
+    luxNav('orders');
+  };
+
+  // ── 4. OVERRIDE openPaymentStep → use Enhanced Modal ─────────
+  window.openPaymentStep = function(){
+    var name=val('wo-name'), phone=val('wo-phone');
+    if(!siteCart.length){toast('⚠ Panier vide');return;}
+    if(!name||!phone){toast('⚠ Nom et telephone requis');return;}
+    var sub=siteCart.reduce(function(s,c){return s+c.p*c.q;},0);
+    var tva=+(sub*0.1).toFixed(2);
+    var total=+(sub+tva).toFixed(2);
+    openLuxPay({
+      name:name, phone:phone, total:total, sub:sub, tva:tva,
+      submitFn: function(payMethod){ sendWebOrder(payMethod); }
+    });
+  };
+
+  // ── 5. AUTO-INIT: show navbar if mode=site ───────────────────
+  window.addEventListener('DOMContentLoaded', function(){
+    var params = new URLSearchParams(window.location.search);
+    var mode = params.get('mode');
+    var view = params.get('view');
+    if(mode==='site'){
+      document.body.classList.add('lux-nav-active');
+      if(view && VIEW_MAP[view]){
+        setTimeout(function(){ luxNav(view); }, 200);
+      } else {
+        luxNavActivate('menu');
+      }
+    }
+  });
+})();
 </script>
 
 </body>
