@@ -2,825 +2,152 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#07080d">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>LUX — حسابي</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a0a0a">
+<title>LUX — تازة</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#07080d;--s1:#0e0f16;--s2:#13141d;--s3:#1a1b26;--s4:#252636;
-  --tx:#e8e9f0;--dim:#6b6d80;
-  --gold:#c8a84b;--g2:rgba(200,168,75,.12);--g3:rgba(200,168,75,.28);
-  --gr:#3db870;--rd:#e57373;--pr:#9b6ee0;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-family:'Tajawal',sans-serif}
-.scr{position:fixed;inset:0;display:none;flex-direction:column}
-.scr.on{display:flex}
-.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 80px}
-#ld{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.4s}
-#ld.out{opacity:0;pointer-events:none}
-.ld-logo{font-family:'Cinzel',serif;font-size:28px;color:var(--gold);letter-spacing:4px;margin-bottom:22px}
-.spin{width:34px;height:34px;border:3px solid var(--s3);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-/* login */
-.login-wrap{max-width:360px;margin:0 auto;padding:52px 16px 30px;width:100%}
-.login-logo{text-align:center;margin-bottom:32px}
-.ll{font-family:'Cinzel',serif;font-size:32px;color:var(--gold);letter-spacing:4px}
-.ls{font-size:11px;color:var(--dim);margin-top:6px}
-.ebtns{display:grid;gap:8px}
-.ebtn{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--s4);border-radius:13px;padding:13px 14px;cursor:pointer;transition:.15s;width:100%;text-align:right}
-.ebtn:active,.ebtn.sel{border-color:var(--gold);background:var(--g2)}
-.ei{font-size:24px;width:36px;text-align:center;flex-shrink:0}
-.en{font-size:14px;font-weight:700;color:var(--tx)}
-.er{font-size:10px;color:var(--dim);margin-top:2px}
-/* PIN */
-.pback{display:flex;align-items:center;gap:8px;margin-bottom:18px;cursor:pointer;color:var(--dim);font-size:12px;padding:8px 0}
-.psel{text-align:center;margin-bottom:20px}
-.psel-ico{font-size:38px;margin-bottom:7px}
-.psel-n{font-size:17px;font-weight:700}
-.psel-r{font-size:11px;color:var(--dim);margin-top:3px}
-.pdots{display:flex;justify-content:center;gap:13px;margin-bottom:22px}
-.pd{width:14px;height:14px;border-radius:50%;border:2px solid var(--s4);transition:.2s}
-.pd.f{background:var(--gold);border-color:var(--gold);transform:scale(1.15)}
-.ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:250px;margin:0 auto}
-.pk{background:var(--s2);border:1px solid var(--s4);border-radius:12px;padding:15px;font-size:20px;font-weight:700;color:var(--tx);cursor:pointer;font-family:'Tajawal',sans-serif;transition:.1s;user-select:none;-webkit-user-select:none}
-.pk:active{transform:scale(.88)}
-.pk.sm{font-size:13px;color:var(--dim)}
-.perr{color:var(--rd);font-size:11px;text-align:center;min-height:18px;margin-top:8px}
-.pshake{animation:sh .3s}
-@keyframes sh{0%,100%{transform:translateX(0)}30%{transform:translateX(-8px)}70%{transform:translateX(8px)}}
-/* header */
-header{background:var(--s1);border-bottom:1px solid var(--s4);display:flex;align-items:center;justify-content:space-between;padding:11px 14px;flex-shrink:0}
-.hlogo{font-family:'Cinzel',serif;font-size:15px;color:var(--gold);letter-spacing:2px}
-.huser{cursor:pointer;text-align:left}
-.hun{font-size:12px;font-weight:700;color:var(--tx)}
-.hur{font-size:9px;color:var(--dim)}
-.hout{font-size:9px;color:var(--rd);margin-top:1px}
-/* tabs */
-.tabs{background:var(--s1);border-bottom:1px solid var(--s4);display:flex;overflow-x:auto;gap:4px;padding:7px 10px;flex-shrink:0;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex-shrink:0;padding:7px 15px;border-radius:99px;border:1px solid transparent;background:none;color:var(--dim);font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap}
-.tab.on{background:var(--g2);border-color:var(--g3);color:var(--gold)}
-/* pages */
-.pg{display:none}.pg.on{display:block}
-/* components */
-.stl{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
-.card{background:var(--s2);border:1px solid var(--s4);border-radius:14px;padding:15px;margin-bottom:12px}
-.netbox{background:linear-gradient(135deg,rgba(200,168,75,.1),rgba(200,168,75,.03));border:1px solid var(--g3);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.nv{font-size:26px;font-weight:900;color:var(--gold)}
-.nl{font-size:11px;color:var(--dim);margin-bottom:3px}
-.ns{font-size:10px;color:var(--dim)}
-.kg2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
-.kg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.kbox{background:var(--s2);border:1px solid var(--s4);border-radius:12px;padding:11px;text-align:center}
-.kl{font-size:9px;color:var(--dim);margin-bottom:4px}
-.kv{font-size:17px;font-weight:900}
-.ks{font-size:9px;color:var(--dim);margin-top:2px}
-.c-gr{color:var(--gr)}.c-rd{color:var(--rd)}.c-go{color:var(--gold)}.c-pr{color:var(--pr)}
-.fg{margin-bottom:12px}
-.fg label{display:block;font-size:10px;color:var(--dim);margin-bottom:4px;font-weight:600}
-.fg input,.fg select,.fg textarea{width:100%;background:var(--s3);border:1px solid var(--s4);border-radius:9px;padding:10px 12px;color:var(--tx);font-family:'Tajawal',sans-serif;font-size:13px;outline:none;transition:.15s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--g3)}
-.fg textarea{resize:none;height:70px}
-.btn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;transition:.15s}
-.btn:active{opacity:.8}
-.btn-g{background:var(--g2);color:var(--gold);border:1px solid var(--g3)}
-.btn-gr{background:rgba(61,184,112,.12);color:var(--gr);border:1px solid rgba(61,184,112,.25)}
-.btn-rd{background:rgba(229,115,115,.12);color:var(--rd);border:1px solid rgba(229,115,115,.25)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.rcard{background:var(--s2);border:1px solid var(--s4);border-radius:12px;padding:13px;margin-bottom:9px}
-.rcard-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
-.ramt{font-size:20px;font-weight:900;color:var(--gold)}
-.rm{font-size:10px;color:var(--dim);margin-top:2px}
-.badge{padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700}
-.badge.pending{background:rgba(200,168,75,.15);color:var(--gold)}
-.badge.approved{background:rgba(61,184,112,.15);color:var(--gr)}
-.badge.rejected{background:rgba(229,115,115,.15);color:var(--rd)}
-.tw{overflow-x:auto;border-radius:10px;background:var(--s2);border:1px solid var(--s4)}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th{padding:8px 10px;color:var(--dim);font-weight:600;text-align:right;background:var(--s3);white-space:nowrap}
-td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap}
-tr:last-child td{border-bottom:none}
-.mrow{display:flex;overflow-x:auto;gap:6px;padding:2px 0 10px;scrollbar-width:none;margin-bottom:8px}
-.mrow::-webkit-scrollbar{display:none}
-.ms{flex-shrink:0;padding:5px 13px;border-radius:99px;background:var(--s3);border:1px solid var(--s4);color:var(--dim);font-size:10px;cursor:pointer;transition:.15s;white-space:nowrap;font-family:'Tajawal',sans-serif}
-.ms.on{background:var(--g2);border-color:var(--g3);color:var(--gold)}
-.erow{background:var(--s2);border:1px solid var(--s4);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.fbtn{padding:5px 13px;border-radius:99px;background:var(--s3);border:1px solid var(--s4);color:var(--dim);font-size:10px;cursor:pointer;transition:.15s;font-family:'Tajawal',sans-serif;white-space:nowrap;flex-shrink:0}
-.fbtn.on{background:var(--g2);border-color:var(--g3);color:var(--gold)}
-.infobox{background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.15);border-radius:10px;padding:11px 13px;font-size:11px;color:var(--dim);line-height:1.8;margin-bottom:12px}
-.infobox b{color:var(--gold)}
-.pcard{background:linear-gradient(135deg,rgba(200,168,75,.1),rgba(200,168,75,.04));border:1px solid var(--g3);border-radius:16px;padding:18px;text-align:center;margin-bottom:14px}
-.empty{text-align:center;padding:36px 16px;color:var(--dim);font-size:12px}
-.empty div:first-child{font-size:32px;margin-bottom:10px}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);border:1px solid var(--g3);color:var(--gold);padding:9px 20px;border-radius:99px;font-size:12px;opacity:0;transition:.25s;z-index:9998;white-space:nowrap;pointer-events:none}
-#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:flex-end;justify-content:center}
-.modal.on{display:flex}
-.mbox{background:var(--s1);border:1px solid var(--s4);border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto}
-.mtit{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px;text-align:center}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#111;--border:rgba(255,255,255,0.07);--gold:#c8a84b;--dim:#555;--txt:#e8e8e8}
+html,body{height:100%;background:var(--bg);font-family:'Segoe UI',Tahoma,sans-serif;display:flex;align-items:center;justify-content:center}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:28px;padding:24px;width:100%}
+.l1{font-size:36px;font-weight:800;letter-spacing:6px;color:var(--gold);text-align:center}
+.l2{font-size:11px;color:var(--dim);letter-spacing:3px;text-align:center;margin-top:4px}
+.deco{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:520px}
+@media(max-width:480px){.cards{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(200,168,75,.08),transparent 70%);
+  opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:1}
+.card:hover{border-color:rgba(200,168,75,.35);transform:translateY(-3px);box-shadow:0 12px 40px rgba(200,168,75,.1)}
+.card:active{transform:scale(.98)}
+.ico{font-size:36px;margin-bottom:12px}
+.cname{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:6px}
+.desc{font-size:11px;color:var(--dim);line-height:1.6}
+.tag{display:inline-block;margin-top:14px;padding:4px 12px;border-radius:20px;
+  font-size:10px;font-weight:600;letter-spacing:1px;
+  border:1px solid rgba(200,168,75,.3);color:var(--gold);text-transform:uppercase}
+.footer{font-size:10px;color:var(--dim);letter-spacing:2px}
+#pin{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:10}
+#pin.on{display:flex}
+.pbox{background:#111;border:1px solid rgba(255,255,255,.07);border-radius:20px;
+  padding:36px 28px;text-align:center;width:min(320px,90vw)}
+.ptit{font-size:14px;font-weight:700;color:#e8e8e8;margin-bottom:4px}
+.psub{font-size:11px;color:#555;margin-bottom:20px}
+.pdots{display:flex;justify-content:center;gap:10px;margin-bottom:20px}
+.pdot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);transition:background .2s}
+.pdot.on{background:#c8a84b}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pbtn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;color:#e8e8e8;font-size:20px;font-weight:600;
+  padding:16px;cursor:pointer;transition:.15s}
+.pbtn:hover{background:rgba(200,168,75,.12);border-color:rgba(200,168,75,.25)}
+.perr{font-size:11px;color:#e04e4e;min-height:16px;margin-top:10px}
+.pcancel{margin-top:14px;font-size:11px;color:#555;cursor:pointer;text-decoration:underline}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 </style>
 </head>
 <body>
-
-<div id="ld"><div class="ld-logo">✦ LUX</div><div class="spin"></div></div>
-<div id="toast"></div>
-
-<!-- modal رفض -->
-<div class="modal" id="m-rej">
-  <div class="mbox">
-    <div class="mtit">💬 سبب الرفض</div>
-    <div class="fg"><label>ملاحظة للموظف</label><textarea id="rej-note" placeholder="اختياري..."></textarea></div>
-    <input type="hidden" id="rej-id">
-    <div class="g2">
-      <button class="btn btn-rd" onclick="closeM('m-rej')">إلغاء</button>
-      <button class="btn btn-gr" onclick="doReject()">✓ تأكيد</button>
+<div class="wrap">
+  <div>
+    <div class="deco"></div>
+    <div class="l1">✦ LUX</div>
+    <div class="l2">مقهى تازة</div>
+    <div class="deco" style="margin-top:14px"></div>
+  </div>
+  <div class="cards">
+    <div class="card" onclick="openAdmin()">
+      <div class="ico">⚙️</div>
+      <div class="cname">نظام الإدارة</div>
+      <div class="desc">الصندوق · الحسابات<br>الموظفون · التقارير</div>
+      <div class="tag">Admin</div>
+    </div>
+    <div class="card" onclick="location.href='cafe-lux.html?mode=staff'">
+      <div class="ico">👥</div>
+      <div class="cname">بوابة الموظفين</div>
+      <div class="desc">الراتب · السلف<br>الطلبات · الحساب</div>
+      <div class="tag">Staff</div>
     </div>
   </div>
-</div>
-<!-- modal PIN -->
-<div class="modal" id="m-pin">
-  <div class="mbox">
-    <div class="mtit" id="m-pin-tit">🔑 تغيير PIN</div>
-    <div class="fg"><label>PIN الجديد (4 أرقام)</label><input type="tel" id="new-pin" placeholder="مثال: 5678" maxlength="4" inputmode="numeric"></div>
-    <input type="hidden" id="pin-eid">
-    <div class="g2">
-      <button class="btn btn-rd" onclick="closeM('m-pin')">إلغاء</button>
-      <button class="btn btn-g" onclick="savePIN()">💾 حفظ</button>
-    </div>
-  </div>
+  <div class="footer">LUX CAFÉ · TAZA · 2026</div>
 </div>
 
-<!-- ════ LOGIN ════ -->
-<div id="scr-login" class="scr" style="overflow-y:auto">
-<div class="login-wrap">
-  <div class="login-logo"><a href="index.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">⬅ رجوع</a><div class="ll">✦ LUX</div><div class="ls">مقهى تازة · حسابي</div></div>
-  <div id="s1">
-    <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600">اختر اسمك ↓</div>
-    <div class="ebtns" id="emplist"></div>
-  </div>
-  <div id="s2" style="display:none">
-    <div class="pback" onclick="backToList()"><span>←</span> تغيير الاسم</div>
-    <div class="psel">
-      <div class="psel-ico" id="p-ico">👤</div>
-      <div class="psel-n"   id="p-name"></div>
-      <div class="psel-r"   id="p-role"></div>
+<div id="pin">
+  <div class="pbox">
+    <div class="ptit">🔐 نظام الإدارة</div>
+    <div class="psub">أدخل رمز الدخول</div>
+    <div class="pdots">
+      <div class="pdot" id="d0"></div><div class="pdot" id="d1"></div>
+      <div class="pdot" id="d2"></div><div class="pdot" id="d3"></div>
     </div>
-    <div class="pdots" id="pdots">
-      <div class="pd"></div><div class="pd"></div>
-      <div class="pd"></div><div class="pd"></div>
-    </div>
-    <div class="ppad">
-      <button class="pk" onclick="pk('1')">1</button><button class="pk" onclick="pk('2')">2</button><button class="pk" onclick="pk('3')">3</button>
-      <button class="pk" onclick="pk('4')">4</button><button class="pk" onclick="pk('5')">5</button><button class="pk" onclick="pk('6')">6</button>
-      <button class="pk" onclick="pk('7')">7</button><button class="pk" onclick="pk('8')">8</button><button class="pk" onclick="pk('9')">9</button>
-      <button class="pk sm" onclick="backToList()">↩</button><button class="pk" onclick="pk('0')">0</button><button class="pk sm" onclick="pkDel()">⌫</button>
+    <div class="pgrid">
+      <button class="pbtn" onclick="pk('1')">1</button>
+      <button class="pbtn" onclick="pk('2')">2</button>
+      <button class="pbtn" onclick="pk('3')">3</button>
+      <button class="pbtn" onclick="pk('4')">4</button>
+      <button class="pbtn" onclick="pk('5')">5</button>
+      <button class="pbtn" onclick="pk('6')">6</button>
+      <button class="pbtn" onclick="pk('7')">7</button>
+      <button class="pbtn" onclick="pk('8')">8</button>
+      <button class="pbtn" onclick="pk('9')">9</button>
+      <button class="pbtn" onclick="pk('del')" style="font-size:16px">⌫</button>
+      <button class="pbtn" onclick="pk('0')">0</button>
+      <button class="pbtn" onclick="pk('ok')"
+        style="background:rgba(200,168,75,.15);border-color:rgba(200,168,75,.3);color:#c8a84b;font-size:14px">✓</button>
     </div>
     <div class="perr" id="perr"></div>
+    <div class="pcancel" onclick="closePin()">← رجوع</div>
   </div>
 </div>
-</div>
-
-<!-- ════ EMPLOYEE ════ -->
-<div id="scr-emp" class="scr">
-  <header>
-    <div class="hlogo">✦ LUX</div>
-    <div class="huser" onclick="doLogout()">
-      <div class="hun" id="e-hname"></div>
-      <div class="hur" id="e-hrole"></div>
-      <div class="hout">خروج ↩</div>
-    </div>
-  </header>
-  <div class="tabs">
-    <button class="tab on" onclick="ePg('home',this)">🏠 حسابي</button>
-    <button class="tab"    onclick="ePg('hist',this)">📋 الرواتب</button>
-    <button class="tab"    onclick="ePg('req', this)">💸 طلب تسبيق</button>
-    <button class="tab"    onclick="ePg('reqs',this)">📨 طلباتي</button>
-  </div>
-  <div class="body">
-    <div class="pg on" id="epg-home"></div>
-    <div class="pg"    id="epg-hist">
-      <div class="stl">📋 سجل الرواتب</div>
-      <div class="mrow" id="e-mrow"></div>
-      <div id="epg-hist-b"></div>
-    </div>
-    <div class="pg"    id="epg-req">
-      <div class="stl">💸 طلب تسبيق</div>
-      <div class="infobox" id="req-info"></div>
-      <div class="card">
-        <div class="fg"><label>المبلغ المطلوب (درهم)</label><input type="number" id="rq-amt" placeholder="500" min="50" inputmode="decimal"></div>
-        <div class="fg"><label>الشهر</label><select id="rq-mo" dir="rtl"></select></div>
-        <div class="fg"><label>السبب (اختياري)</label><textarea id="rq-why" placeholder="مصاريف طارئة..."></textarea></div>
-        <button class="btn btn-g" onclick="sendReq()">📤 إرسال للمدير</button>
-      </div>
-    </div>
-    <div class="pg"    id="epg-reqs">
-      <div class="stl">📨 طلباتي</div>
-      <div id="epg-reqs-b"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ════ ADMIN ════ -->
-<div id="scr-admin" class="scr">
-  <header>
-    <div class="hlogo">✦ ADMIN</div>
-    <div class="huser" onclick="doLogout()"><div class="hun">المدير</div><div class="hout">خروج ↩</div></div>
-  </header>
-  <div class="tabs">
-    <button class="tab on" onclick="aPg('reqs',this)">📨 الطلبات <span id="a-dot" style="display:none;background:var(--rd);color:#fff;font-size:9px;padding:1px 6px;border-radius:99px;vertical-align:middle"></span></button>
-    <button class="tab"    onclick="aPg('emps',this)">👥 الموظفون</button>
-    <button class="tab"    onclick="aPg('pins',this)">🔑 PIN</button>
-  </div>
-  <div class="body">
-    <div class="pg on" id="apg-reqs">
-      <div class="stl">📨 طلبات التسبيق</div>
-      <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px">
-        <button class="fbtn on" id="f-all"  onclick="filt('all',this)">الكل</button>
-        <button class="fbtn"    id="f-pend" onclick="filt('pending',this)">⏳ انتظار</button>
-        <button class="fbtn"    id="f-app"  onclick="filt('approved',this)">✅ موافق</button>
-        <button class="fbtn"    id="f-rej"  onclick="filt('rejected',this)">❌ مرفوض</button>
-      </div>
-      <div id="a-reqs-b"></div>
-    </div>
-    <div class="pg" id="apg-emps">
-      <div class="stl">👥 الموظفون</div>
-      <div id="a-emps-b"></div>
-    </div>
-    <div class="pg" id="apg-pins">
-      <div class="stl">🔑 رموز الدخول PIN</div>
-      <div class="infobox"><b>PIN الافتراضي لكل موظف: 1234.</b><br>غيّر PIN كل موظف عند أول استخدام.</div>
-      <div id="a-pins-b"></div>
-    </div>
-  </div>
-</div>
-
 <script>
-// ════════════════════════════════════════════════════════
-//  البيانات — مدمجة مباشرة (محدّثة من الإكسيل)
-// ════════════════════════════════════════════════════════
-var EMPS = [
-  {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:'مخالفة يناير: غيلب يوم التنظيف'},
-  {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',startDate:'2026-01-04',endDate:'',
-   note:'التحقت 04/01/2026 — 27 يوم عمل في يناير'},
-  {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',startDate:'2026-01-01',endDate:'2026-01-03',
-   note:'التحاق: 01/01/2026 | مغادرة: 03/01/2026 | 3 أيام عمل → 1200×3÷30 = 120 د.م'}
- ];
-
-var SALS = [
-  {id:'s01a',empId:'e01',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
-  {id:'s01b',empId:'e01',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'باقي يناير'},
-
-  {id:'s02a',empId:'e02',month:'2026-01',date:'2026-01-15',type:'avance', amount:445,  note:'تسبيق يناير'},
-  {id:'s02b',empId:'e02',month:'2026-01',date:'2026-01-31',type:'reste',  amount:855,  note:'باقي يناير'},
-
-  {id:'s03a',empId:'e03',month:'2026-01',date:'2026-01-15',type:'avance', amount:500,  note:'تسبيق يناير'},
-  {id:'s03b',empId:'e03',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1500, note:'باقي يناير'},
-
-  {id:'s04a',empId:'e04',month:'2026-01',date:'2026-01-15',type:'avance', amount:1100, note:'تسبيق يناير'},
-  {id:'s04b',empId:'e04',month:'2026-01',date:'2026-01-31',type:'reste',  amount:900,  note:'باقي يناير (مخالفة: غيلب يوم التنظيف)'},
-
-  {id:'s05a',empId:'e05',month:'2026-01',date:'2026-01-15',type:'avance', amount:1229, note:'تسبيق يناير'},
-  {id:'s05b',empId:'e05',month:'2026-01',date:'2026-01-31',type:'reste',  amount:271,  note:'باقي يناير'},
-
-  {id:'s06a',empId:'e06',month:'2026-01',date:'2026-01-15',type:'avance', amount:140,  note:'تسبيق يناير'},
-  {id:'s06b',empId:'e06',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1160, note:'باقي يناير'},
-
-  {id:'s07a',empId:'e07',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
-  {id:'s07b',empId:'e07',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'باقي يناير'},
-
-  {id:'s08a',empId:'e08',month:'2026-01',date:'2026-01-15',type:'avance', amount:120,  note:'تسبيق يناير'},
-  {id:'s08b',empId:'e08',month:'2026-01',date:'2026-01-31',type:'reste',  amount:960,  note:'باقي يناير (27 يوم × 40 = 1080 مستحق)'},
-  {id:'s09b',empId:'e09',month:'2026-01',date:'2026-01-03',type:'salaire',amount:120, note:'راتب يناير كامل — 3 أيام عمل (1200×3/30=120) | تاريخ المغادرة: 2026-01-03'},
-
-  {id:'s10a',empId:'e10',month:'2026-01',date:'2026-01-15',type:'avance', amount:235,  note:'تسبيق يناير'},
-  {id:'s10b',empId:'e10',month:'2026-01',date:'2026-01-31',type:'reste',  amount:965,  note:'باقي يناير'},
-  {id:'s01c',empId:'e01',month:'2026-02',date:'2026-02-10',type:'avance', amount:486,  note:'تسبيق فبراير'},
-  {id:'s01d',empId:'e01',month:'2026-02',date:'2026-02-28',type:'reste',  amount:814,  note:'باقي فبراير'},
-
-  {id:'s02c',empId:'e02',month:'2026-02',date:'2026-02-10',type:'avance', amount:343,  note:'تسبيق فبراير'},
-  {id:'s02d',empId:'e02',month:'2026-02',date:'2026-02-28',type:'reste',  amount:957,  note:'باقي فبراير'},
-
-  {id:'s03c',empId:'e03',month:'2026-02',date:'2026-02-10',type:'avance', amount:500,  note:'تسبيق فبراير'},
-  {id:'s03d',empId:'e03',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1500, note:'باقي فبراير'},
-
-  {id:'s04c',empId:'e04',month:'2026-02',date:'2026-02-10',type:'avance', amount:1000, note:'تسبيق فبراير'},
-  {id:'s04d',empId:'e04',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'باقي فبراير'},
-
-  {id:'s05c',empId:'e05',month:'2026-02',date:'2026-02-10',type:'avance', amount:1249, note:'تسبيق فبراير'},
-  {id:'s05d',empId:'e05',month:'2026-02',date:'2026-02-28',type:'reste',  amount:251,  note:'باقي فبراير'},
-
-  {id:'s06c',empId:'e06',month:'2026-02',date:'2026-02-10',type:'avance', amount:300,  note:'تسبيق فبراير'},
-  {id:'s06d',empId:'e06',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'باقي فبراير'},
-
-  {id:'s07c',empId:'e07',month:'2026-02',date:'2026-02-10',type:'avance', amount:1100, note:'تسبيق فبراير'},
-  {id:'s07d',empId:'e07',month:'2026-02',date:'2026-02-28',type:'reste',  amount:200,  note:'باقي فبراير'},
-
-  {id:'s08c',empId:'e08',month:'2026-02',date:'2026-02-10',type:'avance', amount:120,  note:'تسبيق فبراير'},
-  {id:'s08d',empId:'e08',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1080, note:'باقي فبراير'},
-
-  {id:'s10c',empId:'e10',month:'2026-02',date:'2026-02-10',type:'avance', amount:80,   note:'تسبيق فبراير'},
-  {id:'s10d',empId:'e10',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1120, note:'باقي فبراير'},
-  {id:'s01e',empId:'e01',month:'2026-03',date:'2026-03-07',type:'avance', amount:283,  note:'تسبيق جزئي مارس'},
-  {id:'s04e',empId:'e04',month:'2026-03',date:'2026-03-07',type:'avance', amount:200,  note:'تسبيق جزئي مارس'}
- ];
-
-// ════════════════════════════════════════════════════════
-//  CONSTANTS
-// ════════════════════════════════════════════════════════
-var ADMIN_PIN = '9999';
-var PINS_KEY  = 'lux_pins_v1';
-var SESS_KEY  = 'lux_sess_v1';
-var REQS_KEY  = 'lux_reqs_v1';
-var MONTHS    = ['يناير','فبراير','مارس','أبريل','ماي','يونيو',
-                 'يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
-var RICO      = {service:'🍽️',barman:'🍸',cuisine:'👨‍🍳',
-                caissiere:'💼',nettoyage:'🧹',admin:'👑',autre:'👤'};
-
-// ════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════
-var PINS = JSON.parse(localStorage.getItem(PINS_KEY)||'{}');
-var REQS = JSON.parse(localStorage.getItem(REQS_KEY)||'[]');
-var SESS = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
-var SEL  = null;
-var pinB = '';
-var eSel = '2026-02';
-var RF   = 'all';
-
-function savePins(){ localStorage.setItem(PINS_KEY, JSON.stringify(PINS)); }
-function saveReqs(){ localStorage.setItem(REQS_KEY, JSON.stringify(REQS)); }
-function saveSess(){ localStorage.setItem(SESS_KEY, JSON.stringify(SESS)); }
-function getPin(id){ return id==='__admin__' ? ADMIN_PIN : (PINS[id]||'1234'); }
-
-function activeEmps(){
-  return EMPS.filter(function(e){ return !e.endDate; });
+var pin='';
+function openAdmin(){document.getElementById('pin').classList.add('on');pin='';upd();document.getElementById('perr').textContent='';}
+function closePin(){document.getElementById('pin').classList.remove('on');pin='';upd();}
+function upd(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('on',i<pin.length);}
+function pk(k){
+  if(k==='del'){pin=pin.slice(0,-1);upd();return;}
+  if(k==='ok'){check();return;}
+  if(pin.length<4){pin+=k;upd();if(pin.length===4)setTimeout(check,120);}
 }
-
-// ════════════════════════════════════════════════════════
-//  LOGIN
-// ════════════════════════════════════════════════════════
-function buildLoginList(){
-  var emps = activeEmps();
-  var container = document.getElementById('emplist');
-  container.innerHTML = '';
-  var adminBtn = document.createElement('button');
-  adminBtn.className = 'ebtn';
-  adminBtn.innerHTML = '<div class="ei">👑</div><div><div class="en">المدير</div><div class="er">صلاحية كاملة</div></div>';
-  adminBtn.onclick = function(){ pick('__admin__'); };
-  container.appendChild(adminBtn);
-  emps.forEach(function(e){
-    var btn = document.createElement('button');
-    btn.className = 'ebtn';
-    var ico = RICO[e.role] || '👤';
-    btn.innerHTML = '<div class="ei">'+ico+'</div><div><div class="en">'+e.name+'</div><div class="er">'+e.role+'</div></div>';
-    btn.onclick = (function(id){ return function(){ pick(id); }; })(e.id);
-    container.appendChild(btn);
-  });
-}
-
-function pick(id){
-  if(id==='__admin__'){
-    SEL={id:'__admin__',name:'المدير',role:'admin',salary:0,isAdmin:true};
-  } else {
-    SEL=activeEmps().filter(function(e){return e.id===id;})[0];
-    if(!SEL){toast('موظف غير موجود');return;}
-    SEL=Object.assign({},SEL,{isAdmin:false});
-  }
-  pinB='';
-  document.getElementById('p-ico').textContent  = SEL.isAdmin?'👑':(RICO[SEL.role]||'👤');
-  document.getElementById('p-name').textContent = SEL.name;
-  document.getElementById('p-role').textContent = SEL.role;
-  document.getElementById('perr').textContent   = '';
-  updDots();
-  document.getElementById('s1').style.display='none';
-  document.getElementById('s2').style.display='';
-}
-
-function backToList(){
-  pinB='';SEL=null;
-  document.getElementById('s1').style.display='';
-  document.getElementById('s2').style.display='none';
-}
-
-function pk(d){ if(pinB.length>=4)return; pinB+=d; updDots(); if(pinB.length===4)setTimeout(checkPIN,180); }
-function pkDel(){ if(pinB.length){pinB=pinB.slice(0,-1);updDots();} }
-function updDots(){
-  document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('f',i<pinB.length);});
-}
-
-function checkPIN(){
-  if(!SEL)return;
-  if(pinB!==getPin(SEL.id)){
-    document.getElementById('perr').textContent='❌ رمز خاطئ — حاول مجدداً';
-    var pd=document.getElementById('pdots');
-    pd.classList.add('pshake');
-    setTimeout(function(){pd.classList.remove('pshake');},350);
-    pinB='';updDots();return;
-  }
-  SESS={id:SEL.id,name:SEL.name,role:SEL.role,isAdmin:SEL.isAdmin,salary:Number(SEL.salary||0)};
-  saveSess();
-  launch();
-  toast('مرحباً '+SESS.name+' 👋');
-}
-
-function launch(){
-  if(SESS.isAdmin){
-    showScr('scr-admin');
-    renderAdminReqs();
-    updDot();
-  } else {
-    document.getElementById('e-hname').textContent=SESS.name;
-    document.getElementById('e-hrole').textContent=SESS.role;
-    showScr('scr-emp');
-    renderEmpHome();
+function check(){
+  if(pin==='9999'){closePin();window.location.href='admin.html';}
+  else{
+    document.getElementById('perr').textContent='❌ رمز خاطئ';
+    var b=document.querySelector('.pbox');b.style.animation='none';
+    setTimeout(function(){b.style.animation='shake .3s ease';pin='';upd();},10);
+    setTimeout(function(){document.getElementById('perr').textContent='';},2000);
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  EMPLOYEE HELPERS
-// ════════════════════════════════════════════════════════
-function myEmp(){ return EMPS.filter(function(e){return e.id===SESS.id;})[0]||{salary:SESS.salary,role:SESS.role}; }
-function mySals(month){ return SALS.filter(function(s){return s.empId===SESS.id&&(!month||s.month===month);}); }
-function myReqs(){ return REQS.filter(function(r){return r.empId===SESS.id;}); }
-
-function calcMo(empId, month){
-  var emp=EMPS.filter(function(e){return e.id===empId;})[0]||{salary:0};
-  var sals=SALS.filter(function(s){return s.empId===empId&&s.month===month;});
-  var av =sals.filter(function(s){return s.type==='avance';}).reduce(function(a,s){return a+Number(s.amount);},0);
-  var re =sals.filter(function(s){return s.type==='reste'||s.type==='salaire';}).reduce(function(a,s){return a+Number(s.amount);},0);
-  var bon=sals.filter(function(s){return s.type==='bonus';}).reduce(function(a,s){return a+Number(s.amount);},0);
-  var inf=sals.filter(function(s){return s.type==='infraction';}).reduce(function(a,s){return a+Number(s.amount);},0);
-  var net=Number(emp.salary||0)+bon-inf;
-  return {net:net,paid:av+re,av:av,re:re,bon:bon,inf:inf,rem:net-(av+re)};
-}
-
-// ════════════════════════════════════════════════════════
-//  EMPLOYEE HOME
-// ════════════════════════════════════════════════════════
-function renderEmpHome(){
-  var emp=myEmp();
-  var ico=RICO[emp.role]||'👤';
-  // آخر شهر به بيانات
-  var myS=mySals();
-  var months=myS.map(function(s){return s.month;}).sort().reverse();
-  var lastM=months[0]||'2026-02';
-  var c=calcMo(SESS.id,lastM);
-  var req=myReqs()[0];
-  var stM={pending:'⏳ في الانتظار',approved:'✅ موافق عليه',rejected:'❌ مرفوض'};
-
-  var h='<div class="pcard">'
-    +'<div style="font-size:40px;margin-bottom:9px">'+ico+'</div>'
-    +'<div style="font-size:20px;font-weight:900">'+SESS.name+'</div>'
-    +'<div style="font-size:11px;color:var(--dim);margin-top:5px">'+emp.role
-    +' · راتبك: <span style="color:var(--gold);font-weight:700">'+fmt(emp.salary)+' د.م</span></div>'
-    +(emp.startDate?'<div style="font-size:10px;color:var(--dim);margin-top:4px">التحاق: '+emp.startDate+'</div>':'')
-    +'</div>';
-
-  if(myS.length){
-    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">📊 آخر شهر — '+mLbl(lastM)+'</div>';
-    h+='<div class="netbox">'
-      +'<div><div class="nl">الصافي المستحق</div><div class="ns">راتب+مكافأة−خصم</div></div>'
-      +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">د.م</div></div></div>';
-    h+='<div class="kg3">'
-      +'<div class="kbox"><div class="kl">مدفوع</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">د.م</div></div>'
-      +'<div class="kbox"><div class="kl">السلفة</div><div class="kv c-rd">'+fmt(c.av)+'</div><div class="ks">د.م</div></div>'
-      +'<div class="kbox"><div class="kl">الباقي</div>'
-      +'<div class="kv '+(c.rem>0?'c-rd':c.rem===0?'c-gr':'c-pr')+'">'+fmt(Math.abs(c.rem))+'</div>'
-      +'<div class="ks">'+(c.rem>0?'⚠️ غير مدفوع':c.rem===0?'✅ مسوّى':'زيادة')+'</div></div></div>';
-  } else {
-    h+='<div class="infobox"><b>لا توجد بيانات رواتب بعد.</b><br>ستظهر هنا بعد إضافتها من قِبل المدير.</div>';
-  }
-
-  if(req){
-    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">📨 آخر طلب</div>';
-    h+='<div class="rcard"><div class="rcard-h">'
-      +'<div><div class="ramt">'+fmt(req.amount)+' <span style="font-size:11px;color:var(--dim)">د.م</span></div>'
-      +'<div class="rm">'+mLbl(req.month)+' · '+req.date+'</div></div>'
-      +'<span class="badge '+req.status+'">'+stM[req.status]+'</span></div>'
-      +(req.reason?'<div style="font-size:11px;color:var(--dim);margin-top:5px">'+req.reason+'</div>':'')
-      +(req.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">💬 المدير: '+req.adminNote+'</div>':'')
-      +'</div>';
-  } else {
-    h+='<div class="card" style="text-align:center;padding:16px">'
-      +'<div style="font-size:22px;margin-bottom:6px">💸</div>'
-      +'<div style="font-size:12px;color:var(--dim)">اضغط <b style="color:var(--gold)">💸 طلب تسبيق</b> لإرسال طلب للمدير</div></div>';
-  }
-  document.getElementById('epg-home').innerHTML=h;
-}
-
-// ════════════════════════════════════════════════════════
-//  EMPLOYEE HISTORY
-// ════════════════════════════════════════════════════════
-function buildMrow(){
-  var hasMo={};
-  mySals().forEach(function(s){hasMo[s.month]=true;});
-  var all=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
-  Object.keys(hasMo).forEach(function(m){if(all.indexOf(m)<0)all.push(m);});
-  all.sort();
-  var container=document.getElementById('e-mrow');
-  container.innerHTML='';
-  all.forEach(function(m){
-    var div=document.createElement('div');
-    div.className='ms'+(m===eSel?' on':'');
-    div.textContent=MONTHS[parseInt(m.slice(5,7))-1]+(hasMo[m]?' ✓':'');
-    div.onclick=(function(mo){return function(){setEM(mo);};})(m);
-    container.appendChild(div);
-  });
-  renderHist();
-}
-function setEM(m){eSel=m;buildMrow();}
-
-function renderHist(){
-  var c=calcMo(SESS.id,eSel);
-  var sals=mySals(eSel);
-  var h='<div class="netbox">'
-    +'<div><div class="nl">'+mLbl(eSel)+'</div></div>'
-    +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">د.م</div></div></div>';
-  h+='<div class="kg2">'
-    +'<div class="kbox"><div class="kl">مدفوع</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">د.م</div></div>'
-    +'<div class="kbox"><div class="kl">باقي</div><div class="kv '+(c.rem>0?'c-rd':'c-gr')+'">'+fmt(Math.abs(c.rem))+'</div>'
-    +'<div class="ks">'+(c.rem>0?'غير مدفوع':'مسوّى')+'</div></div></div>';
-  if(sals.length){
-    var tm={avance:'💸 سلفة',reste:'✅ باقي',salaire:'💰 راتب كامل',bonus:'🏅 مكافأة',infraction:'⚠️ خصم'};
-    h+='<div class="tw"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>';
-    sals.forEach(function(s){
-      var neg=s.type==='avance'||s.type==='infraction';
-      h+='<tr><td>'+s.date+'</td><td>'+(tm[s.type]||s.type)+'</td>'
-        +'<td style="color:'+(neg?'var(--rd)':'var(--gr)')+'">'+fmt(s.amount)+'</td>'
-        +'<td style="color:var(--dim)">'+(s.note||'—')+'</td></tr>';
+// ═══════════════════════════════════════════════════════
+// AUTO-ROUTE: ?mode=staff → skip choice, load staff view
+// ═══════════════════════════════════════════════════════
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var mode = params.get('mode');
+  if(mode === 'staff'){
+    // Hide the choice gateway immediately
+    document.addEventListener('DOMContentLoaded', function(){
+      var wrap = document.querySelector('.wrap');
+      if(wrap) wrap.innerHTML = '<div style="text-align:center;padding:60px 20px">'
+        + '<div style="font-size:36px;font-weight:800;letter-spacing:6px;color:#c8a84b;margin-bottom:12px">✦ LUX</div>'
+        + '<div style="font-size:12px;color:#555;margin-bottom:24px">بوابة الموظفين · تحميل...</div>'
+        + '<div style="width:40px;height:40px;border:3px solid rgba(200,168,75,.2);border-top-color:#c8a84b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto"></div>'
+        + '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>'
+        + '</div>';
+      // Redirect to staff portal (cafe-lux.html?mode=staff shows the Employes page)
+      setTimeout(function(){
+        window.location.href = 'cafe-lux.html?mode=staff';
+      }, 600);
     });
-    h+='</tbody></table></div>';
-  } else {
-    h+='<div class="empty"><div>📋</div>لا توجد سجلات لهذا الشهر</div>';
   }
-  document.getElementById('epg-hist-b').innerHTML=h;
-}
-
-// ════════════════════════════════════════════════════════
-//  EMPLOYEE REQUEST
-// ════════════════════════════════════════════════════════
-function buildReqForm(){
-  var emp=myEmp();
-  document.getElementById('req-info').innerHTML=
-    '<b>راتبك الأساسي: '+fmt(emp.salary)+' د.م</b><br>يمكنك طلب تسبيق لا يتجاوز الراتب الكامل.';
-  var sel=document.getElementById('rq-mo');
-  sel.innerHTML='';
-  ['2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'].forEach(function(m){
-    var o=document.createElement('option');
-    o.value=m;o.textContent=mLbl(m);sel.appendChild(o);
-  });
-}
-
-function renderMyReqs(){
-  var reqs=myReqs();
-  if(!reqs.length){document.getElementById('epg-reqs-b').innerHTML='<div class="empty"><div>📨</div>لا توجد طلبات بعد</div>';return;}
-  var stM={pending:'⏳ في الانتظار',approved:'✅ موافق عليه',rejected:'❌ مرفوض'};
-  document.getElementById('epg-reqs-b').innerHTML=reqs.map(function(r){
-    return '<div class="rcard"><div class="rcard-h">'
-      +'<div><div class="ramt">'+fmt(r.amount)+' <span style="font-size:11px;color:var(--dim)">د.م</span></div>'
-      +'<div class="rm">'+mLbl(r.month)+' · '+r.date+'</div></div>'
-      +'<span class="badge '+r.status+'">'+stM[r.status]+'</span></div>'
-      +(r.reason?'<div style="font-size:11px;color:var(--dim);margin-top:5px">📝 '+r.reason+'</div>':'')
-      +(r.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">💬 المدير: '+r.adminNote+'</div>':'')
-      +'</div>';
-  }).join('');
-}
-
-function sendReq(){
-  var amt=parseFloat(document.getElementById('rq-amt').value);
-  var mo=document.getElementById('rq-mo').value;
-  var why=document.getElementById('rq-why').value.trim();
-  var emp=myEmp();
-  if(!amt||amt<50){toast('⚠️ الحد الأدنى 50 درهم');return;}
-  if(amt>Number(emp.salary||0)){toast('⚠️ المبلغ أكبر من راتبك ('+fmt(emp.salary)+' د.م)');return;}
-  if(REQS.filter(function(r){return r.empId===SESS.id&&r.month===mo&&r.status==='pending';}).length){
-    toast('⚠️ لديك طلب معلق لهذا الشهر');return;
-  }
-  REQS.unshift({id:'r'+Date.now(),empId:SESS.id,empName:SESS.name,amount:amt,month:mo,reason:why,status:'pending',adminNote:'',date:new Date().toISOString().slice(0,10)});
-  saveReqs();
-  document.getElementById('rq-amt').value='';
-  document.getElementById('rq-why').value='';
-  toast('✅ تم إرسال طلبك للمدير');
-  ePg('reqs',null);
-  document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===3)t.classList.add('on');else t.classList.remove('on');});
-}
-
-// ════════════════════════════════════════════════════════
-//  ADMIN
-// ════════════════════════════════════════════════════════
-function updDot(){
-  var n=REQS.filter(function(r){return r.status==='pending';}).length;
-  var el=document.getElementById('a-dot');
-  if(el){el.style.display=n?'':'none';el.textContent=n;}
-}
-
-function filt(f,el){
-  RF=f;
-  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
-  if(el)el.classList.add('on');
-  renderAdminReqs();
-}
-
-function renderAdminReqs(){
-  var empM={};EMPS.forEach(function(e){empM[e.id]=e;});
-  var list=RF==='all'?REQS:REQS.filter(function(r){return r.status===RF;});
-  var co={pending:0,approved:0,rejected:0};
-  REQS.forEach(function(r){if(co[r.status]!==undefined)co[r.status]++;});
-  document.getElementById('f-pend').textContent='\u23F3 \u0627\u0646\u062A\u0638\u0627\u0631 ('+co.pending+')';
-  document.getElementById('f-app').textContent ='\u2705 \u0645\u0648\u0627\u0641\u0642 ('+co.approved+')';
-  document.getElementById('f-rej').textContent ='\u274C \u0645\u0631\u0641\u0648\u0636 ('+co.rejected+')';
-  updDot();
-  var stM={pending:'\u23F3 \u0627\u0646\u062A\u0638\u0627\u0631',approved:'\u2705 \u0645\u0648\u0627\u0641\u0642',rejected:'\u274C \u0645\u0631\u0641\u0648\u0636'};
-  var container=document.getElementById('a-reqs-b');
-  container.innerHTML='';
-  if(!list.length){
-    container.innerHTML='<div class="empty"><div>\uD83D\uDCE8</div>'+(RF==='all'?'\u0644\u0627 \u062A\u0648\u062C\u062F \u0637\u0644\u0628\u0627\u062A \u0628\u0639\u062F':'\u0644\u0627 \u062A\u0648\u062C\u062F \u0637\u0644\u0628\u0627\u062A \u0641\u064A \u0647\u0630\u0627 \u0627\u0644\u0642\u0633\u0645')+'</div>';
-    return;
-  }
-  list.forEach(function(r){
-    var e=empM[r.empId]||{name:r.empName||r.empId,role:'\u2014',salary:0};
-    var card=document.createElement('div');
-    card.className='rcard';
-    var empIco=RICO[e.role]||'\uD83D\uDC64';
-    var badgeHtml='<span class="badge '+r.status+'">'+stM[r.status]+'</span>';
-    var actHtml='';
-    if(r.status==='pending'){
-      actHtml='<div class="g2" style="margin-top:8px"></div>';
-    }
-    card.innerHTML='<div class="rcard-h">'
-      +'<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
-      +'<span style="font-size:20px">'+empIco+'</span>'
-      +'<div><div style="font-weight:700;font-size:13px">'+e.name+'</div>'
-      +'<div style="font-size:9px;color:var(--dim)">'+e.role+(e.salary?' \u00B7 '+fmt(e.salary)+' \u062F.\u0645':'')+'</div></div></div>'
-      +'<div class="ramt">'+fmt(r.amount)+' <span style="font-size:11px;color:var(--dim)">\u062F.\u0645</span></div>'
-      +'<div class="rm">'+mLbl(r.month)+' \u00B7 '+r.date+'</div></div>'
-      +badgeHtml+'</div>'
-      +(r.reason?'<div style="font-size:11px;color:var(--dim);margin:6px 0">\uD83D\uDCDD '+r.reason+'</div>':'')
-      +(r.adminNote&&r.adminNote!=='\u062A\u0645\u062A \u0627\u0644\u0645\u0648\u0627\u0641\u0642\u0629'?'<div style="font-size:10px;color:var(--dim);margin-bottom:6px">\uD83D\uDCAC '+r.adminNote+'</div>':'')
-      +actHtml;
-    if(r.status==='pending'){
-      var acts=card.querySelector('.g2');
-      if(acts){
-        var appBtn=document.createElement('button');
-        appBtn.className='btn btn-gr';
-        appBtn.style.cssText='padding:9px;margin:0';
-        appBtn.textContent='\u2705 \u0645\u0648\u0627\u0641\u0642\u0629';
-        appBtn.onclick=(function(id){return function(){doApprove(id);};})(r.id);
-        var rejBtn=document.createElement('button');
-        rejBtn.className='btn btn-rd';
-        rejBtn.style.cssText='padding:9px;margin:0';
-        rejBtn.textContent='\u274C \u0631\u0641\u0636';
-        rejBtn.onclick=(function(id){return function(){openRej(id);};})(r.id);
-        acts.appendChild(appBtn);
-        acts.appendChild(rejBtn);
-      }
-    }
-    container.appendChild(card);
-  });
-}
-
-function doApprove(id){
-  REQS.forEach(function(r){if(r.id===id){r.status='approved';r.adminNote='تمت الموافقة';}});
-  saveReqs();renderAdminReqs();toast('✅ تمت الموافقة');
-}
-function openRej(id){
-  document.getElementById('rej-id').value=id;
-  document.getElementById('rej-note').value='';
-  document.getElementById('m-rej').classList.add('on');
-}
-function doReject(){
-  var id=document.getElementById('rej-id').value;
-  var note=document.getElementById('rej-note').value.trim();
-  REQS.forEach(function(r){if(r.id===id){r.status='rejected';r.adminNote=note||'مرفوض';}});
-  saveReqs();closeM('m-rej');renderAdminReqs();toast('❌ تم الرفض');
-}
-
-function renderAdminEmps(){
-  document.getElementById('a-emps-b').innerHTML=EMPS.map(function(e){
-    var pend=REQS.filter(function(r){return r.empId===e.id&&r.status==='pending';}).length;
-    return '<div class="erow">'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<div style="font-size:22px">'+(RICO[e.role]||'👤')+'</div>'
-      +'<div><div style="font-size:13px;font-weight:700">'+e.name+(pend?' <span style="color:var(--rd);font-size:10px">●'+pend+'</span>':'')+'</div>'
-      +'<div style="font-size:10px;color:var(--dim)">'+e.role+' · '+fmt(e.salary)+' د.م</div></div></div>'
-      +'<div style="font-size:9px;color:var(--dim);text-align:left">'
-      +(e.endDate?'<div style="color:var(--rd)">🔴 '+e.endDate+'</div>':'<div style="color:var(--gr)">🟢 نشط</div>')
-      +'<div>'+e.startDate+'</div></div></div>';
-  }).join('');
-}
-
-function renderAdminPins(){
-  var container=document.getElementById('a-pins-b');
-  container.innerHTML='';
-  activeEmps().forEach(function(e){
-    var card=document.createElement('div');
-    card.className='card';
-    card.style.marginBottom='10px';
-    var ico=RICO[e.role]||'👤';
-    card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-      +'<div style="display:flex;align-items:center;gap:9px">'
-      +'<div style="font-size:20px">'+ico+'</div>'
-      +'<div><div style="font-size:13px;font-weight:700">'+e.name+'</div>'
-      +'<div style="font-size:10px;color:var(--dim)">'+e.role+'</div></div></div>'
-      +'<div style="font-size:11px;color:var(--dim)">شفرة: <b style="color:var(--gold)">'+(PINS[e.id]||'1234')+'</b></div></div>';
-    var btn=document.createElement('button');
-    btn.className='btn btn-g';
-    btn.style.cssText='padding:9px;margin:0';
-    btn.textContent='🔑 تغيير PIN';
-    btn.onclick=(function(id,name){return function(){openPIN(id,name);};})(e.id,e.name);
-    card.appendChild(btn);
-    container.appendChild(card);
-  });
-  var info=document.createElement('div');
-  info.className='infobox';
-  info.style.marginTop='4px';
-  info.innerHTML='PIN المدير: <b>'+ADMIN_PIN+'</b>';
-  container.appendChild(info);
-}
-
-function openPIN(id,name){
-  document.getElementById('pin-eid').value=id;
-  document.getElementById('m-pin-tit').textContent='🔑 '+name;
-  document.getElementById('new-pin').value='';
-  document.getElementById('m-pin').classList.add('on');
-}
-function savePIN(){
-  var id=document.getElementById('pin-eid').value;
-  var val=String(document.getElementById('new-pin').value).trim();
-  if(!/^\d{4}$/.test(val)){toast('⚠️ PIN يجب أن يكون 4 أرقام');return;}
-  PINS[id]=val;savePins();closeM('m-pin');renderAdminPins();
-  toast('✅ PIN محفوظ');
-}
-
-// ════════════════════════════════════════════════════════
-//  NAV
-// ════════════════════════════════════════════════════════
-function ePg(p,el){
-  document.querySelectorAll('#scr-emp .pg').forEach(function(x){x.classList.remove('on');});
-  document.querySelectorAll('#scr-emp .tab').forEach(function(t){t.classList.remove('on');});
-  var pg=document.getElementById('epg-'+p);if(pg)pg.classList.add('on');
-  if(el)el.classList.add('on');
-  if(p==='hist')buildMrow();
-  if(p==='reqs')renderMyReqs();
-  if(p==='req') buildReqForm();
-}
-function aPg(p,el){
-  document.querySelectorAll('#scr-admin .pg').forEach(function(x){x.classList.remove('on');});
-  document.querySelectorAll('#scr-admin .tab').forEach(function(t){t.classList.remove('on');});
-  var pg=document.getElementById('apg-'+p);if(pg)pg.classList.add('on');
-  if(el)el.classList.add('on');
-  if(p==='emps')renderAdminEmps();
-  if(p==='pins')renderAdminPins();
-}
-function showScr(id){
-  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
-  document.getElementById(id).classList.add('on');
-}
-function doLogout(){
-  if(!confirm('تسجيل الخروج؟'))return;
-  SESS=null;SEL=null;pinB='';
-  localStorage.removeItem(SESS_KEY);
-  buildLoginList();
-  document.getElementById('s1').style.display='';
-  document.getElementById('s2').style.display='none';
-  showScr('scr-login');
-  toast('تم الخروج');
-}
-function closeM(id){document.getElementById(id).classList.remove('on');}
-function fmt(n){var v=Math.round(Number(n||0));return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
-function mLbl(ym){return MONTHS[parseInt(ym.slice(5,7))-1]+' '+ym.slice(0,4);}
-function toast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('on');
-  clearTimeout(toast._t);
-  toast._t=setTimeout(function(){t.classList.remove('on');},2800);
-}
-
-// ════════════════════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════════════════════
-buildLoginList();
-if(SESS) launch();
-else showScr('scr-login');
-setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
+})();
 </script>
 </body>
 </html>
