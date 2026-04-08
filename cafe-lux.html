@@ -448,6 +448,25 @@ body{
   margin:12px 14px 0; padding:10px 12px; border-radius:12px; font-size:11px;
   border:1px solid rgba(201,168,76,.15); background:rgba(201,168,76,.06); color:var(--text)
 }
+/* ══════════════════════════
+   PRINT STYLES — Ticket fix: no blank pages
+══════════════════════════ */
+@media print {
+  body > * { display: none !important; }
+  body > #lux-print-area {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  #lux-print-area * { page-break-inside: avoid !important; break-inside: avoid !important; }
+  @page { size: 80mm auto; margin: 2mm; }
+  .topbar, .app-body, #lux-bottom-nav, .lux-pay-overlay { display: none !important; }
+}
+#lux-print-area { display: none; position: fixed; top: -9999px; left: -9999px; }
 
 </style>
 </head>
@@ -2448,6 +2467,38 @@ window.addEventListener('DOMContentLoaded', function(){
   if(mode === 'qr'){ setTimeout(function(){ renderQRTables(); }, 50); }
   if(mode === 'kds'){ setTimeout(function(){ renderKDS(); }, 50); }
   if(mode === 'site'){ setTimeout(function(){ ensurePublicSections(); applyPublicTabFromUrl(); }, 60); }
+
+  // ── POS FOCUS MODE: hide non-essential navigation ──────────
+  if(mode === 'pos'){
+    var hideTabs = ['home','admin','staff','site'];
+    document.querySelectorAll('.t-tab').forEach(function(t){
+      var pg = t.getAttribute('data-page');
+      if(hideTabs.indexOf(pg) !== -1) t.style.display = 'none';
+    });
+    // Update mode badge
+    var mb = document.getElementById('mode-badge');
+    if(mb){ mb.textContent = '🧾 Mode: CAISSE POS'; mb.style.borderColor = 'var(--gold)'; }
+  }
+
+  // ── STAFF MODE: focus on employees page ──────────
+  if(mode === 'staff'){
+    var staffHideTabs = ['home','site'];
+    document.querySelectorAll('.t-tab').forEach(function(t){
+      var pg = t.getAttribute('data-page');
+      if(staffHideTabs.indexOf(pg) !== -1) t.style.display = 'none';
+    });
+  }
+
+  // ── KDS MODE: minimal UI ──────────
+  if(mode === 'kds'){
+    var kdsHideTabs = ['home','admin','staff','site','qr','ext'];
+    document.querySelectorAll('.t-tab').forEach(function(t){
+      var pg = t.getAttribute('data-page');
+      if(kdsHideTabs.indexOf(pg) !== -1) t.style.display = 'none';
+    });
+    var mb2 = document.getElementById('mode-badge');
+    if(mb2){ mb2.textContent = '📺 Mode: CUISINE'; }
+  }
 });
 
 
@@ -2955,6 +3006,5 @@ function orderGiftCard(){
   });
 })();
 </script>
-<script src="pos-focus.js"></script>
 </body>
 </html>
