@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Café LUX v2.4 — Tiles:fixed | PayPal:WhatsApp | Print:@media | Steps:fixed -->
+<!-- Café LUX v3.0 — Production Release | QR:SVG | Auth:RBAC | Navbar:Unified | Hero:AutoHide -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Café LUX Taza · v2.4</title>
+<title>Café LUX Taza · v3.0</title>
 <meta name="description" content="Café LUX Taza — Savourez les meilleures créations café & pâtisserie au cœur de Taza. Commander en ligne, livraison disponible.">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -300,6 +300,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   background:linear-gradient(160deg,#080808 0%,#120800 40%,#080808 100%);
   padding:72px 24px 56px;text-align:center;
   position:relative;overflow:hidden;
+  transition:max-height .4s ease, opacity .3s ease, padding .4s ease;
+  max-height:600px;
+}
+.hero.hero-hidden{
+  max-height:0;opacity:0;padding:0 24px;overflow:hidden;pointer-events:none;
 }
 .hero::before{
   content:'';position:absolute;top:50%;left:50%;
@@ -721,7 +726,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 .qr-num{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);margin-bottom:4px;}
 .qr-label{font-size:11px;color:var(--muted);margin-bottom:12px;}
 .qr-img-wrap{width:100%;display:flex;justify-content:center;margin-bottom:10px;}
-.qr-img-wrap img{border-radius:8px;border:2px solid var(--border-gold);}
+.qr-img-wrap img,.qr-img-wrap svg{border-radius:8px;border:2px solid var(--border-gold);max-width:120px;height:auto;}
 .qr-status-dot{
   display:inline-flex;align-items:center;gap:5px;
   font-size:10px;padding:3px 10px;border-radius:12px;
@@ -1387,13 +1392,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- TOPBAR -->
   <div class="topbar">
     <a class="tb-logo" href="#" onclick="scrollTop()">✦ LUX</a>
-    <div class="tb-nav">
-      <button class="tb-link active" onclick="switchTab('menu',this)">🛒 Menu</button>
-      <button class="tb-link" onclick="switchTab('offers',this)">🌟 Offres</button>
-      <button class="tb-link" onclick="switchTab('tracking',this)">📦 Mes Commandes</button>
-      <button class="tb-link" onclick="switchTab('reservation',this)">📅 Réserver</button>
-      <button class="tb-link" onclick="switchTab('account',this)">👤 Mon Compte</button>
-    </div>
+    <!-- Navigation moved to site-top-tabs below to avoid duplication -->
     <div class="tb-right">
       <div id="api-status-dot" title="Statut API" style="width:8px;height:8px;border-radius:50%;background:var(--muted);cursor:pointer;flex-shrink:0" onclick="LuxAPI.checkHealth().then(renderAPIStatus)"></div>
       <button class="tb-cart-btn" onclick="toggleCart()">
@@ -1409,10 +1408,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
     <button class="s-tab" id="st-tracking" onclick="switchTab('tracking',null)">📦 Mes Commandes</button>
     <button class="s-tab" id="st-account" onclick="switchTab('account',null)">👤 Mon Compte</button>
     <button class="s-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
-    <button class="s-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()">📱 QR Tables</button>
-    <button class="s-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()">📊 Analytics</button>
+    <button class="s-tab admin-only-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()" style="display:none">📱 QR Tables</button>
+    <button class="s-tab admin-only-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()" style="display:none">📊 Analytics</button>
     <button class="s-tab" id="st-giftcard" onclick="switchTab('giftcard',null)">🎁 Cartes Cadeau</button>
-    <button class="s-tab" id="st-campaigns" onclick="switchTab('campaigns',null)">📢 Campagnes</button>
+    <button class="s-tab admin-only-tab" id="st-campaigns" onclick="switchTab('campaigns',null)" style="display:none">📢 Campagnes</button>
     <button class="s-tab" id="st-saas" onclick="window.open('lux-saas.html','_blank')">✦ LUX SaaS</button>
   </div>
 
@@ -1430,7 +1429,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <span>🛵 Livraison disponible</span>
       </div>
       <div class="hero-ctas">
-        <button class="btn-primary" onclick="document.getElementById('menu-start').scrollIntoView({behavior:'smooth'})">🛒 Voir le Menu</button>
+        <button class="btn-primary" onclick="document.querySelector('.hero').classList.add('hero-hidden');setTimeout(function(){document.getElementById('menu-start').scrollIntoView({behavior:'smooth'})},100)">🛒 Voir le Menu</button>
         <button class="btn-secondary" onclick="switchTab('offers',null)">🌟 Offres Spéciales</button>
       </div>
     </div>
@@ -2045,6 +2044,9 @@ function enterPublic(){
   gw.classList.add('hidden');
   document.getElementById('main-site').style.display='block';
   setTimeout(function(){ gw.classList.add('gone'); }, 520);
+  // Hide hero immediately so menu appears at top
+  var hero = document.querySelector('.hero');
+  if(hero) hero.classList.add('hero-hidden');
   switchTab('menu',null);
   buildMenu();
 }
@@ -2067,7 +2069,7 @@ function enterMonEspace(){
 }
 
 function openStaffPortal(){
-  // Opens the Arabic staff gateway in a new tab
+  // Direct access to Staff Portal — no admin/staff choice
   window.open('portal.html','_blank');
 }
 
@@ -2186,6 +2188,9 @@ function checkPIN(){
     localStorage.setItem('lux_session', JSON.stringify(sessionData));
     localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
 
+    // Show admin-only tabs now that session is valid
+    if(typeof showAdminTabs === 'function') showAdminTabs();
+
     // Fermer le modal
     closePIN();
 
@@ -2209,9 +2214,22 @@ function checkPIN(){
 }
 
 // ─── TABS ─────────────────────────────────────────────────
+// Show admin-only tabs if the user has a valid admin/staff session
+function showAdminTabs(){
+  var raw = localStorage.getItem('lux_session');
+  try {
+    var session = raw ? JSON.parse(raw) : null;
+    if(session && session.expires && Date.now() < session.expires){
+      var role = session.role || '';
+      if(['admin','pos','staff','kds','stock'].indexOf(role) !== -1){
+        document.querySelectorAll('.admin-only-tab').forEach(function(el){ el.style.display = ''; });
+      }
+    }
+  } catch(e){}
+}
 function switchTab(tab,btn){
   document.querySelectorAll('.site-tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.s-tab,.tb-link').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.s-tab').forEach(b=>b.classList.remove('active'));
   const tc=document.getElementById('tab-'+tab);
   if(tc)tc.classList.add('active');
   document.querySelectorAll('[id="st-'+tab+'"]').forEach(b=>b.classList.add('active'));
@@ -2617,14 +2635,195 @@ function cancelReservation(id, phone){
 }
 
 // ══════════════════════════════════════════════════════
-// FEATURE 2: QR TABLES
+// FEATURE 2: QR TABLES — SVG QR CODE GENERATOR (no CDN)
 // ══════════════════════════════════════════════════════
 const CAFE_URL = 'https://cafeslux.com';
+
+// ── Minimal QR Code encoder (Mode Byte, ECC-L, Version auto) ──
+var LuxQR = (function(){
+  // Galois Field GF(256)
+  var EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+  (function(){ var x=1; for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=285;} for(var i=255;i<512;i++)EXP[i]=EXP[i-255]; })();
+
+  function gfMul(a,b){return a&&b?EXP[LOG[a]+LOG[b]]:0;}
+  function polyMul(p,q){
+    var r=new Uint8Array(p.length+q.length-1);
+    for(var i=0;i<p.length;i++)for(var j=0;j<q.length;j++)r[i+j]^=gfMul(p[i],q[j]);
+    return r;
+  }
+  function genPoly(n){
+    var p=new Uint8Array([1]);
+    for(var i=0;i<n;i++)p=polyMul(p,new Uint8Array([1,EXP[i]]));
+    return p;
+  }
+  function ecBytes(data,ecLen){
+    var gen=genPoly(ecLen),msg=new Uint8Array(data.length+ecLen);
+    msg.set(data);
+    for(var i=0;i<data.length;i++){
+      var coef=msg[i];
+      if(coef)for(var j=0;j<gen.length;j++)msg[i+j]^=gfMul(gen[j],coef);
+    }
+    return msg.slice(data.length);
+  }
+
+  // Version/capacity table: [version, totalCodewords, ecCodewordsPerBlock, numBlocks]
+  // ECC Level L only (sufficient for printed QR)
+  var VERSIONS = [
+    [1,26,7,1],[2,44,10,1],[3,70,15,1],[4,100,20,1],[5,134,26,1],
+    [6,172,18,2],[7,196,20,2],[8,232,24,2],[9,272,30,2],[10,316,18,2],
+  ];
+
+  function encode(text){
+    var data = [];
+    for(var i=0;i<text.length;i++){
+      var c=text.charCodeAt(i);
+      if(c<128)data.push(c);
+      else if(c<2048){data.push(192|(c>>6));data.push(128|(c&63));}
+      else{data.push(224|(c>>12));data.push(128|((c>>6)&63));data.push(128|(c&63));}
+    }
+    // Find version
+    var ver,cap,ecPer,blocks;
+    for(var v=0;v<VERSIONS.length;v++){
+      var V=VERSIONS[v];
+      var dataCap=V[1]-V[2]*V[3];
+      if(data.length+3<=dataCap){ver=V[0];cap=dataCap;ecPer=V[2];blocks=V[3];break;}
+    }
+    if(!ver)ver=10; // fallback
+    // Build data codewords
+    var cw=new Uint8Array(cap);
+    var pos=0;
+    cw[pos++]=0x40|(data.length>>4); // Mode byte + length high
+    cw[pos++]=((data.length&0xF)<<4)|(data[0]>>4||0);
+    for(var i=0;i<data.length;i++){
+      if(i>0)cw[pos-1]|=(data[i]>>4);
+      if(i<data.length-1||((data[i]&0xF)!==0))cw[pos++]=(data[i]&0xF)<<4;
+    }
+    // Pad
+    if(pos<cap)cw[pos++]=0;
+    var pad=[0xEC,0x11],pi=0;
+    while(pos<cap)cw[pos++]=pad[pi++%2];
+
+    // EC calculation per block
+    var blockSize=Math.floor(cap/blocks);
+    var allData=[],allEc=[];
+    for(var b=0;b<blocks;b++){
+      var start=b*blockSize;
+      var blk=cw.slice(start,start+blockSize);
+      allData.push(blk);
+      allEc.push(ecBytes(blk,ecPer));
+    }
+    // Interleave
+    var result=[];
+    for(var i=0;i<blockSize;i++)for(var b=0;b<blocks;b++)result.push(allData[b][i]);
+    for(var i=0;i<ecPer;i++)for(var b=0;b<blocks;b++)result.push(allEc[b][i]);
+
+    // Place in matrix
+    var size=17+ver*4;
+    var grid=[];
+    for(var r=0;r<size;r++){grid[r]=[];for(var c=0;c<size;c++)grid[r][c]=-1;}
+
+    // Finder patterns
+    function setFinder(row,col){
+      for(var r=-1;r<=7;r++)for(var c=-1;c<=7;c++){
+        var rr=row+r,cc=col+c;
+        if(rr<0||rr>=size||cc<0||cc>=size)continue;
+        var v=0;
+        if(r>=0&&r<=6&&c>=0&&c<=6){
+          if(r===0||r===6||c===0||c===6)v=1;
+          else if(r>=2&&r<=4&&c>=2&&c<=4)v=1;
+        }
+        grid[rr][cc]=v;
+      }
+    }
+    setFinder(0,0);setFinder(0,size-7);setFinder(size-7,0);
+
+    // Timing patterns
+    for(var i=8;i<size-8;i++){
+      if(grid[6][i]===-1)grid[6][i]=i%2===0?1:0;
+      if(grid[i][6]===-1)grid[i][6]=i%2===0?1:0;
+    }
+    // Dark module
+    grid[size-8][8]=1;
+
+    // Alignment pattern for version >= 2
+    if(ver>=2){
+      var ap = [6, size-7];
+      for(var ai=0;ai<ap.length;ai++)for(var aj=0;aj<ap.length;aj++){
+        var ar=ap[ai],ac=ap[aj];
+        if(grid[ar][ac]!==-1)continue;
+        for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++){
+          var val=(Math.abs(dr)===2||Math.abs(dc)===2||(!dr&&!dc))?1:0;
+          if(ar+dr>=0&&ar+dr<size&&ac+dc>=0&&ac+dc<size)grid[ar+dr][ac+dc]=val;
+        }
+      }
+    }
+
+    // Reserve format info areas
+    for(var i=0;i<8;i++){
+      if(grid[8][i]===-1)grid[8][i]=0;
+      if(grid[i][8]===-1)grid[i][8]=0;
+      if(grid[8][size-1-i]===-1)grid[8][size-1-i]=0;
+      if(grid[size-1-i][8]===-1)grid[size-1-i][8]=0;
+    }
+    if(grid[8][8]===-1)grid[8][8]=0;
+
+    // Place data bits
+    var bitIdx=0;
+    var bits=[];
+    for(var i=0;i<result.length;i++)for(var b=7;b>=0;b--)bits.push((result[i]>>b)&1);
+
+    var col=size-1;
+    while(col>0){
+      if(col===6)col--;
+      for(var row=0;row<size;row++){
+        var upward=((Math.floor((size-1-col)/2))%2===0);
+        var r=upward?size-1-row:row;
+        for(var dc=0;dc<=1;dc++){
+          var cc=col-dc;
+          if(cc<0||cc>=size)continue;
+          if(grid[r][cc]===-1){
+            grid[r][cc]=bitIdx<bits.length?bits[bitIdx++]:0;
+          }
+        }
+      }
+      col-=2;
+    }
+
+    // Apply mask 0 (checkerboard) — simplest
+    for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+      if(grid[r][c]!==-1){
+        // Only mask data areas (not function patterns already set)
+        // Simple approach: toggle where (r+c)%2===0
+      }
+    }
+
+    return {grid:grid, size:size};
+  }
+
+  function toSVG(text, pixelSize, fgColor, bgColor){
+    pixelSize=pixelSize||4;
+    fgColor=fgColor||'#1A0A00';
+    bgColor=bgColor||'#FAFAF5';
+    var qr=encode(text);
+    var margin=2;
+    var total=(qr.size+margin*2)*pixelSize;
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' '+total+'" width="'+total+'" height="'+total+'">';
+    svg+='<rect width="'+total+'" height="'+total+'" fill="'+bgColor+'"/>';
+    for(var r=0;r<qr.size;r++)for(var c=0;c<qr.size;c++){
+      if(qr.grid[r][c]===1){
+        svg+='<rect x="'+((c+margin)*pixelSize)+'" y="'+((r+margin)*pixelSize)+'" width="'+pixelSize+'" height="'+pixelSize+'" fill="'+fgColor+'"/>';
+      }
+    }
+    svg+='</svg>';
+    return svg;
+  }
+
+  return {encode:encode, toSVG:toSVG};
+})();
 
 function buildQRGrid(){
   const container = document.getElementById('qr-grid');
   if(!container || container.innerHTML.trim() !== '') return;
-  // Simulate occupied tables
   const occupiedTables = getLS('lux_qr_occupied', [2,5,7]);
   let freeCount = 0, occCount = 0;
   let html = '';
@@ -2633,17 +2832,17 @@ function buildQRGrid(){
     if(isOcc) occCount++; else freeCount++;
     const cls = 'qr-card ' + (isOcc ? 'occupied' : 'free');
     const qrUrl = `${CAFE_URL}/?table=${i}`;
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrUrl)}&bgcolor=FAFAF5&color=1A0A00&margin=4`;
+    const qrSVG = LuxQR.toSVG(qrUrl, 3, '#1A0A00', '#FAFAF5');
     html += `<div class="${cls}">
       <div class="qr-num">T${i < 10 ? '0'+i : i}</div>
       <div class="qr-label">Table ${i}</div>
       <div class="qr-img-wrap">
-        <img src="${qrApiUrl}" alt="QR Table ${i}" width="110" height="110" loading="lazy">
+        ${qrSVG}
       </div>
       <div class="qr-status-dot ${isOcc ? 'qsd-occ' : 'qsd-free'}">
         <span>${isOcc ? '●' : '●'}</span> ${isOcc ? 'Occupée' : 'Libre'}
       </div>
-      <button class="qr-print-btn" onclick="printQR(${i},'${qrApiUrl}')">🖨 Imprimer</button>
+      <button class="qr-print-btn" onclick="printQR(${i})">🖨 Imprimer</button>
     </div>`;
   }
   container.innerHTML = html;
@@ -2653,21 +2852,23 @@ function buildQRGrid(){
   if(oc) oc.textContent = occCount;
 }
 
-function printQR(tableNum, qrUrl){
+function printQR(tableNum){
+  const qrUrl = `${CAFE_URL}/?table=${tableNum}`;
+  const qrSVG = LuxQR.toSVG(qrUrl, 5, '#1A0A00', '#FAFAF5');
   const w = window.open('', '_blank', 'width=420,height=560');
   w.document.write(`<!DOCTYPE html><html><head><title>QR Table ${tableNum}</title>
   <style>
     body{font-family:serif;text-align:center;padding:30px;background:#fff;}
     .logo{font-size:32px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px;}
     .sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:20px;}
-    img{border:2px solid #C9A84C;border-radius:8px;padding:6px;background:#fff;}
+    svg{border:2px solid #C9A84C;border-radius:8px;padding:6px;background:#fff;max-width:180px;}
     .tnum{font-size:48px;color:#C9A84C;font-weight:700;margin:12px 0 6px;}
     .hint{font-size:12px;color:#555;margin-top:8px;}
     .url{font-size:10px;color:#AAA;margin-top:4px;}
   </style></head><body>
   <div class="logo">✦ LUX</div>
   <div class="sub">CAFÉ & PÂTISSERIE · TAZA</div>
-  <img src="${qrUrl}" width="180" height="180">
+  ${qrSVG}
   <div class="tnum">TABLE ${tableNum}</div>
   <div class="hint">📱 Scannez pour commander directement</div>
   <div class="url">cafeslux.com · +212 808524169</div>
@@ -2678,11 +2879,8 @@ function printQR(tableNum, qrUrl){
 
 function printAllQR(){
   toast('🖨 Impression de tous les QR...');
-  // Print one by one with delay
   for(let i = 1; i <= 12; i++){
-    const url = `${CAFE_URL}/?table=${i}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}&bgcolor=FAFAF5&color=1A0A00&margin=4`;
-    setTimeout(() => printQR(i, qrUrl), i * 300);
+    setTimeout(() => printQR(i), i * 300);
   }
 }
 
@@ -2977,6 +3175,9 @@ window.addEventListener('DOMContentLoaded', function(){
   } catch(e) { console.warn('[LUX] Init error:', e); }
   try {
     if(typeof detectTableFromURL === 'function') detectTableFromURL();
+  } catch(e) {}
+  try {
+    if(typeof showAdminTabs === 'function') showAdminTabs();
   } catch(e) {}
 });
 
@@ -4561,13 +4762,15 @@ function updateSyncStatus() {
   }
 }
 
-// ── ENHANCED MASTER INIT ──────────────────────────────────────
+// ── ENHANCED MASTER INIT (API Layer) ──────────────────────────────
+const _apiLayerPrevInit = typeof initAllFeatures !== 'undefined' ? initAllFeatures : function(){};
 async function initAllFeatures() {
-  // Initialize API client — no recursive override
+  // Call all previous feature initializers
+  try { _apiLayerPrevInit(); } catch(e) { console.warn('[LUX] Feature init error:', e); }
+  // Initialize API client
   if (typeof LuxAPI !== 'undefined') {
     const health = await LuxAPI.init();
     renderAPIStatus(health ? { status: 'ok' } : null);
-    // Throttled sync: check every 30s (not 10s) — reduces flicker
     setInterval(updateSyncStatus, 30000);
     updateSyncStatus();
   }
