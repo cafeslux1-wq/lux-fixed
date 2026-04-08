@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-//  CAFÉ LUX — SPA Router v3.0 (MAESTRO Phase 1)
+//  CAFÉ LUX — SPA Router v3.0 (Production Release)
 //  • Unified bottom navigation bar (7 tabs)
 //  • URL parameter routing (?view=menu, ?view=booking, etc.)
 //  • Smart Auth Guard: public = free, staff/admin = PIN
@@ -314,6 +314,11 @@
     if (view) {
       currentView = view;
       updateNavbar(view);
+    }
+    // Auto-hide hero when switching to menu tab
+    if(tab === 'menu'){
+      var hero = document.querySelector('.hero');
+      if(hero) hero.classList.add('hero-hidden');
     }
   };
 
