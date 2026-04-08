@@ -266,30 +266,70 @@ tr:last-child td{border-bottom:none}
 
 <script>
 // ════════════════════════════════════════════════════════
-//  البيانات — مدمجة مباشرة (محدّثة من الإكسيل)
+//  البيانات — موحّدة مع cafe-lux.html عبر localStorage
+//  مفتاح التخزين: lux_employees (نفس المفتاح في cafe-lux.html)
 // ════════════════════════════════════════════════════════
-var EMPS = [
-  {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:'مخالفة يناير: غيلب يوم التنظيف'},
-  {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',startDate:'2026-01-04',endDate:'',
-   note:'التحقت 04/01/2026 — 27 يوم عمل في يناير'},
-  {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',startDate:'2026-01-01',endDate:'2026-01-03',
-   note:'التحاق: 01/01/2026 | مغادرة: 03/01/2026 | 3 أيام عمل → 1200×3÷30 = 120 د.م'}
- ];
+
+// Default data — matches portal's real payroll records
+var EMPS_DEFAULT = [
+  {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',note:'مخالفة يناير: غيلب يوم التنظيف'},
+  {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',startDate:'2026-01-04',endDate:'',note:'التحقت 04/01/2026 — 27 يوم عمل في يناير'},
+  {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',startDate:'2026-01-01',endDate:'2026-01-03',note:'التحاق: 01/01/2026 | مغادرة: 03/01/2026 | 3 أيام عمل → 1200×3÷30 = 120 د.م'}
+];
+
+// ── Load from shared localStorage (cafe-lux.html writes to 'lux_employees') ──
+function loadSharedEmployees(){
+  try {
+    var shared = JSON.parse(localStorage.getItem('lux_employees') || '[]');
+    if(shared && shared.length){
+      // Merge: use cafe-lux names/roles but keep portal salary/payroll data
+      shared.forEach(function(se){
+        var match = EMPS.filter(function(e){ return e.id === se.id; })[0];
+        if(!match){
+          // New employee from cafe-lux — add to portal with defaults
+          EMPS.push({
+            id: se.id, name: se.name, role: se.role || 'service',
+            salary: se.salary || 1300, phone: se.phone || '',
+            startDate: se.since || new Date().toISOString().slice(0,10),
+            endDate: se.status === 'off' ? new Date().toISOString().slice(0,10) : '',
+            note: ''
+          });
+        } else {
+          // Update name/role/phone from cafe-lux if changed
+          match.name = se.name || match.name;
+          match.role = se.role || match.role;
+          if(se.phone) match.phone = se.phone;
+          if(se.status === 'off' && !match.endDate) match.endDate = new Date().toISOString().slice(0,10);
+        }
+      });
+    }
+  } catch(e){ console.warn('[Portal] Shared employee load failed:', e); }
+}
+
+// ── Also write portal employees back to shared storage ──
+function syncEmpsToShared(){
+  try {
+    var shared = EMPS.map(function(e){
+      return {
+        id: e.id, name: e.name, initials: e.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2),
+        role: e.role, status: e.endDate ? 'off' : 'active',
+        phone: e.phone || '', since: e.startDate || '', salary: e.salary
+      };
+    });
+    localStorage.setItem('lux_employees', JSON.stringify(shared));
+  } catch(e){}
+}
+
+var EMPS = EMPS_DEFAULT.slice(); // Start with defaults
+loadSharedEmployees(); // Merge with cafe-lux data
+syncEmpsToShared(); // Write back unified data
 
 var SALS = [
   {id:'s01a',empId:'e01',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
