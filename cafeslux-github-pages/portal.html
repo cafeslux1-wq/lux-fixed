@@ -68,7 +68,7 @@ html,body{height:100%;background:var(--bg);font-family:'Segoe UI',Tahoma,sans-se
       <div class="desc">الصندوق · الحسابات<br>الموظفون · التقارير</div>
       <div class="tag">Admin</div>
     </div>
-    <div class="card" onclick="location.href='portal.html'">
+    <div class="card" onclick="location.href='cafe-lux.html?mode=staff'">
       <div class="ico">👥</div>
       <div class="cname">بوابة الموظفين</div>
       <div class="desc">الراتب · السلف<br>الطلبات · الحساب</div>
@@ -124,7 +124,30 @@ function check(){
     setTimeout(function(){document.getElementById('perr').textContent='';},2000);
   }
 }
+
+// ═══════════════════════════════════════════════════════
+// AUTO-ROUTE: ?mode=staff → skip choice, load staff view
+// ═══════════════════════════════════════════════════════
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var mode = params.get('mode');
+  if(mode === 'staff'){
+    // Hide the choice gateway immediately
+    document.addEventListener('DOMContentLoaded', function(){
+      var wrap = document.querySelector('.wrap');
+      if(wrap) wrap.innerHTML = '<div style="text-align:center;padding:60px 20px">'
+        + '<div style="font-size:36px;font-weight:800;letter-spacing:6px;color:#c8a84b;margin-bottom:12px">✦ LUX</div>'
+        + '<div style="font-size:12px;color:#555;margin-bottom:24px">بوابة الموظفين · تحميل...</div>'
+        + '<div style="width:40px;height:40px;border:3px solid rgba(200,168,75,.2);border-top-color:#c8a84b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto"></div>'
+        + '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>'
+        + '</div>';
+      // Redirect to staff portal (cafe-lux.html?mode=staff shows the Employes page)
+      setTimeout(function(){
+        window.location.href = 'cafe-lux.html?mode=staff';
+      }, 600);
+    });
+  }
+})();
 </script>
-<script src="portal-autoroute.js"></script>
 </body>
 </html>
