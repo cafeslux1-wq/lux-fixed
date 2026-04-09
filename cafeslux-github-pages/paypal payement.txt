@@ -1,0 +1,15 @@
+ملاحظة بخصوص CORS: الـ API يجب أن يكون مُعداً على سيرفر Railway بـ:
+
+app.use(cors({ origin: ['https://cafeslux.com', 'http://localhost:3000'] }));
+
+=====
+إذا كان مُعداً بـ cors() بدون قيود فلا مشكلة. الأخطاء إن وجدت ستكون من جهة السيرفر وليس الـ Frontend.
+ملاحظة بخصوص PayPal: لتفعيل الدفع الحقيقي، أضف هذا السكريبت في <head>:
+
+
+
+<script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID&currency=MAD"></script>
+
+
+=========
+ثم أضف كود paypal.Buttons({...}).render('#paypal-button-container') بعد تحميل الصفحة.

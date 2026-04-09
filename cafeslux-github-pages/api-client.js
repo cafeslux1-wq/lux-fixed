@@ -198,6 +198,22 @@
         return data;
       } catch { return _ls('web_customers',{})[phone] || null; }
     },
+    async registerCustomer(customer) {
+      const local = { ...customer, id: customer.id || Date.now(), points: 0 };
+      const all = _ls('web_customers',{}); all[customer.phone] = local; _lsSet('web_customers', all);
+      if (!_isOnline) { _queue('registerCustomer', customer); return local; }
+      try { return await _post('/api/customers', customer); }
+      catch { _queue('registerCustomer', customer); return local; }
+    },
+    async loginCustomer(phone, password) {
+      if (!_isOnline) {
+        const c = _ls('web_customers',{})[phone];
+        if (c && (!c.password || c.password === password)) return c;
+        return null;
+      }
+      try { return await _post('/api/auth/customer', { phone, password }); }
+      catch { const c = _ls('web_customers',{})[phone]; return c || null; }
+    },
 
     // ── RESERVATIONS ──────────────────────────────────────────────
     async getReservations(date) {
@@ -419,6 +435,7 @@
             case 'updatePayrollEntry':await _patch('/api/payroll/'+item.data.id, item.data); break;
             case 'createAdvanceRequest': await _post('/api/advance-requests', item.data); break;
             case 'updateAdvanceRequest': await _patch('/api/advance-requests/'+item.data.id, item.data); break;
+            case 'registerCustomer': await _post('/api/customers', item.data); break;
             default: remaining.push(item);
           }
         } catch { remaining.push(item); }
