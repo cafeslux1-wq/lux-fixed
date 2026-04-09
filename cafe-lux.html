@@ -1955,10 +1955,10 @@ function renderAdminSettings(){
 function renderStaff(){
   const employees = getLS('lux_employees', EMPLOYEES_DEFAULT);
   const presences = getLS('lux_presences',{});
+  const payroll = getLS('lux_payroll',{});
   const el = document.getElementById('staff-grid');
   if(!el) return;
   
-  // Stats
   const active = employees.filter(function(e){return presences[e.id+'_'+today()]&&presences[e.id+'_'+today()].in;}).length;
   setEl('st-total', employees.length);
   setEl('st-present', active);
@@ -1969,18 +1969,56 @@ function renderStaff(){
     const pKey = emp.id + '_' + today();
     const presence = presences[pKey] || {};
     const isIn = !!presence.in;
-    h += '<div class="staff-card">';
-    h += '<div class="staff-av">' + emp.initials + '</div>';
+    const pay = payroll[emp.id] || {};
+    const salary = Number(pay.salary || emp.salary || 0);
+    const avances = Number(pay.avances || 0);
+    const primes = Number(pay.primes || 0);
+    const deductions = Number(pay.deductions || 0);
+    const net = salary + primes - avances - deductions;
+
+    h += '<div class="staff-card" style="position:relative">';
+    // Avatar + Badge
+    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+    h += '<div class="staff-av">' + (emp.initials||emp.name.slice(0,2).toUpperCase()) + '</div>';
+    h += '<div style="flex:1">';
     h += '<div class="staff-name">' + emp.name + '</div>';
-    h += '<div class="staff-role">' + emp.role + '</div>';
-    h += '<div style="font-size:10px;color:var(--muted);margin-top:4px">' + emp.phone + '</div>';
-    if(presence.in) h += '<div style="font-size:10px;color:var(--green);margin-top:2px">Arrive: ' + presence.in + '</div>';
-    if(presence.out) h += '<div style="font-size:10px;color:var(--red)">Parti: ' + presence.out + '</div>';
+    h += '<div class="staff-role">' + (emp.role||'—') + '</div>';
+    h += '</div>';
+    h += '<span class="badge ' + (emp.status==='off'?'r':'g') + '">' + (emp.status==='off'?'Inactif':'Actif') + '</span>';
+    h += '</div>';
+
+    // Personal info
+    h += '<div style="font-size:10px;color:var(--muted);line-height:2;margin-bottom:10px;border-top:1px solid var(--border);padding-top:8px">';
+    h += '📞 ' + (emp.phone||'Non renseigné') + '<br>';
+    h += '🪪 CIN: ' + (emp.cin||'—') + '<br>';
+    h += '📍 ' + (emp.address||'—') + '<br>';
+    h += '📅 Depuis: ' + (emp.since||'—');
+    h += '</div>';
+
+    // Financial section
+    h += '<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px;margin-bottom:10px">';
+    h += '<div style="font-size:9px;color:var(--gold);font-weight:600;letter-spacing:1px;margin-bottom:8px">💰 COMPTE FINANCIER</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">';
+    h += '<div>Salaire de base</div><div style="text-align:right;color:var(--gold);font-weight:600">' + salary.toLocaleString() + ' DH</div>';
+    h += '<div>Avances/Tisbiqat</div><div style="text-align:right;color:var(--red)">-' + avances.toLocaleString() + ' DH</div>';
+    h += '<div>Primes/Bonus</div><div style="text-align:right;color:var(--green)">+' + primes.toLocaleString() + ' DH</div>';
+    h += '<div>Deductions</div><div style="text-align:right;color:var(--red)">-' + deductions.toLocaleString() + ' DH</div>';
+    h += '</div>';
+    h += '<div style="border-top:1px solid rgba(201,168,76,.2);margin-top:8px;padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:12px">';
+    h += '<span>Net a payer</span><span style="color:' + (net>=0?'var(--green)':'var(--red)') + '">' + net.toLocaleString() + ' DH</span>';
+    h += '</div></div>';
+
+    // Presence
+    if(presence.in) h += '<div style="font-size:10px;color:var(--green);margin-bottom:4px">🟢 Arrive: ' + presence.in + '</div>';
+    if(presence.out) h += '<div style="font-size:10px;color:var(--red);margin-bottom:4px">🔴 Parti: ' + presence.out + '</div>';
+
+    // Action buttons
     h += '<button class="presence-btn ' + (isIn&&!presence.out?'out':'in') + '" data-eid="' + emp.id + '" data-ein="' + (isIn?'1':'0') + '" onclick="togglePresence(this)">';
     h += isIn && !presence.out ? '🔴 Marquer depart' : '🟢 Marquer arrivee';
     h += '</button>';
     h += '<div style="display:flex;gap:6px;margin-top:8px">';
-    h += '<button class="btn sm" data-eid="' + emp.id + '" onclick="editEmployee(this)" style="flex:1">✏ Modifier</button>';
+    h += '<button class="btn sm" data-eid="' + emp.id + '" onclick="openEditEmployee(\'' + emp.id + '\')" style="flex:1">✏ Modifier</button>';
+    h += '<button class="btn sm" data-eid="' + emp.id + '" onclick="openPayroll(\'' + emp.id + '\')" style="flex:1;border-color:var(--green);color:var(--green)">💰 Finances</button>';
     h += '</div>';
     h += '</div>';
   });
@@ -1993,48 +2031,136 @@ function togglePresence(btn){
   const presences = getLS('lux_presences',{});
   const pKey = eid + '_' + today();
   if(!presences[pKey]) presences[pKey] = {};
-  if(!isIn){
-    presences[pKey].in = now();
-  } else {
-    presences[pKey].out = now();
-  }
+  if(!isIn){ presences[pKey].in = now(); }
+  else { presences[pKey].out = now(); }
   setLS('lux_presences', presences);
   renderStaff();
   toast(isIn ? '🔴 Depart enregistre' : '🟢 Arrivee enregistree');
+  if(window.LuxAPI) LuxAPI.logAttendance(eid, isIn?'out':'in').catch(function(){});
 }
 
-function editEmployee(btn){
-  const eid = btn.getAttribute('data-eid');
+// ── Employee Edit Modal (replaces prompt-based editing) ──
+function openEditEmployee(eid){
   const emps = getLS('lux_employees', EMPLOYEES_DEFAULT);
-  const emp = emps.filter(function(e){return e.id===eid;})[0];
+  const emp = emps.find(function(e){return e.id===eid;});
   if(!emp) return;
-  const name = prompt('Nom:', emp.name);
-  if(!name) return;
-  const role = prompt('Role:', emp.role);
-  const phone = prompt('Telephone:', emp.phone);
-  emp.name = name; emp.role = role||emp.role; emp.phone = phone||emp.phone;
-  emp.initials = name.split(' ').map(function(x){return x[0];}).join('').slice(0,2).toUpperCase();
-  setLS('lux_employees', emps);
-  renderStaff();
-  toast('✅ ' + name + ' modifie');
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="emp-modal" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto">'
+    +'<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px;margin-bottom:16px">✏ Modifier — '+emp.name+'</div>'
+    +'<div style="display:grid;gap:10px">'
+    +'<div><label style="font-size:10px;color:var(--muted)">Nom complet</label><input id="em-name" value="'+esc(emp.name)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Role</label><input id="em-role" value="'+esc(emp.role||'')+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Telephone</label><input id="em-phone" value="'+esc(emp.phone||'')+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">CIN (Carte Nationale)</label><input id="em-cin" value="'+esc(emp.cin||'')+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;text-transform:uppercase"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Adresse</label><input id="em-addr" value="'+esc(emp.address||'')+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Salaire de base (DH)</label><input id="em-salary" type="number" value="'+(emp.salary||0)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+    +'<button class="btn" onclick="document.getElementById(\'emp-modal\').remove()" style="flex:1">Annuler</button>'
+    +'<button class="btn solid" onclick="saveEditEmployee(\''+eid+'\')" style="flex:1">💾 Enregistrer</button>'
+    +'</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
 }
+
+function saveEditEmployee(eid){
+  var emps = getLS('lux_employees', EMPLOYEES_DEFAULT);
+  var emp = emps.find(function(e){return e.id===eid;});
+  if(!emp) return;
+  emp.name = document.getElementById('em-name').value.trim() || emp.name;
+  emp.role = document.getElementById('em-role').value.trim() || emp.role;
+  emp.phone = document.getElementById('em-phone').value.trim();
+  emp.cin = document.getElementById('em-cin').value.trim().toUpperCase();
+  emp.address = document.getElementById('em-addr').value.trim();
+  emp.salary = Number(document.getElementById('em-salary').value) || emp.salary || 0;
+  emp.initials = emp.name.split(' ').map(function(x){return x[0]||'';}).join('').slice(0,2).toUpperCase();
+  setLS('lux_employees', emps);
+  document.getElementById('emp-modal').remove();
+  renderStaff();
+  toast('✅ ' + emp.name + ' modifie');
+  if(window.LuxAPI) LuxAPI.updateEmployee(eid, emp).catch(function(){});
+}
+
+// ── Payroll Modal ──
+function openPayroll(eid){
+  var emps = getLS('lux_employees', EMPLOYEES_DEFAULT);
+  var emp = emps.find(function(e){return e.id===eid;});
+  if(!emp) return;
+  var payroll = getLS('lux_payroll',{});
+  var pay = payroll[eid] || {};
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="pay-modal" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:420px">'
+    +'<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px;margin-bottom:16px">💰 Finances — '+emp.name+'</div>'
+    +'<div style="display:grid;gap:10px">'
+    +'<div><label style="font-size:10px;color:var(--muted)">Salaire de base (DH)</label><input id="py-sal" type="number" value="'+(pay.salary||emp.salary||0)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Avances / Tisbiqat (DH)</label><input id="py-av" type="number" value="'+(pay.avances||0)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Primes / Bonus (DH)</label><input id="py-pr" type="number" value="'+(pay.primes||0)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Deductions / Sanctions (DH)</label><input id="py-ded" type="number" value="'+(pay.deductions||0)+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Note</label><input id="py-note" value="'+esc(pay.note||'')+'" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+    +'<button class="btn" onclick="document.getElementById(\'pay-modal\').remove()" style="flex:1">Annuler</button>'
+    +'<button class="btn solid" onclick="savePayroll(\''+eid+'\')" style="flex:1">💾 Enregistrer</button>'
+    +'</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function savePayroll(eid){
+  var payroll = getLS('lux_payroll',{});
+  payroll[eid] = {
+    salary: Number(document.getElementById('py-sal').value)||0,
+    avances: Number(document.getElementById('py-av').value)||0,
+    primes: Number(document.getElementById('py-pr').value)||0,
+    deductions: Number(document.getElementById('py-ded').value)||0,
+    note: document.getElementById('py-note').value.trim(),
+    updated: new Date().toISOString()
+  };
+  setLS('lux_payroll', payroll);
+  document.getElementById('pay-modal').remove();
+  renderStaff();
+  toast('✅ Donnees financieres enregistrees');
+  if(window.LuxAPI) LuxAPI.addPayrollEntry({empId:eid,...payroll[eid]}).catch(function(){});
+}
+
+function editEmployee(btn){ openEditEmployee(btn.getAttribute('data-eid')); }
 
 function addEmployee(){
-  const name = prompt('Nom et prenom:');
-  if(!name) return;
-  const role = prompt('Role (Serveur, Barista, Caissier...):') || '';
-  const phone = prompt('Telephone:') || '';
-  const emps = getLS('lux_employees', EMPLOYEES_DEFAULT);
-  const newEmp = {
-    id: 'E' + (Date.now()%10000),
-    name,
-    initials: name.split(' ').map(function(x){return x[0];}).join('').slice(0,2).toUpperCase(),
-    role, phone, status:'active', since: today()
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="add-modal" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:420px">'
+    +'<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px;margin-bottom:16px">+ Nouvel Employe</div>'
+    +'<div style="display:grid;gap:10px">'
+    +'<div><label style="font-size:10px;color:var(--muted)">Nom complet *</label><input id="na-name" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Role *</label><input id="na-role" placeholder="Serveur, Barista, Caissier..." style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Telephone</label><input id="na-phone" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">CIN</label><input id="na-cin" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;text-transform:uppercase"></div>'
+    +'<div><label style="font-size:10px;color:var(--muted)">Salaire (DH)</label><input id="na-salary" type="number" value="1300" style="width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:16px">'
+    +'<button class="btn" onclick="document.getElementById(\'add-modal\').remove()" style="flex:1">Annuler</button>'
+    +'<button class="btn solid" onclick="saveNewEmployee()" style="flex:1">✓ Ajouter</button>'
+    +'</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function saveNewEmployee(){
+  var name = document.getElementById('na-name').value.trim();
+  if(!name){toast('⚠ Nom requis');return;}
+  var emps = getLS('lux_employees', EMPLOYEES_DEFAULT);
+  var newEmp = {
+    id: 'E' + (Date.now()%100000),
+    name: name,
+    initials: name.split(' ').map(function(x){return x[0]||'';}).join('').slice(0,2).toUpperCase(),
+    role: document.getElementById('na-role').value.trim()||'Service',
+    phone: document.getElementById('na-phone').value.trim(),
+    cin: document.getElementById('na-cin').value.trim().toUpperCase(),
+    salary: Number(document.getElementById('na-salary').value)||1300,
+    status:'active', since: today(), address:''
   };
   emps.push(newEmp);
   setLS('lux_employees', emps);
+  document.getElementById('add-modal').remove();
   renderStaff();
   toast('✅ ' + name + ' ajoute!');
+  if(window.LuxAPI) LuxAPI.createEmployee(newEmp).catch(function(){});
 }
 
 // ══════════════════════════
@@ -2532,11 +2658,12 @@ function renderQRTables(){
   var html='';
   for(var i=1;i<=12;i++){
     var url = base + '&table=' + i;
+    var qrImg = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl='+encodeURIComponent(url)+'&choe=UTF-8&chld=H|2';
     html += '<div class="card" style="text-align:center">'+
       '<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:24px;margin-bottom:6px">Table '+i+'</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">QR menu public</div>'+
-      '<div style="background:#fff;color:#111;border-radius:10px;padding:10px;font-size:10px;word-break:break-all;margin-bottom:10px">'+url+'</div>'+
-      '<div style="display:flex;gap:8px;justify-content:center"><button class="btn sm" onclick="copyQrLink('+i+')">Copier</button><button class="btn sm solid" onclick="printQrCard('+i+')">Imprimer</button></div>'+
+      '<div style="background:#fff;border-radius:12px;padding:8px;display:inline-block;margin-bottom:10px"><img src="'+qrImg+'" width="140" height="140" alt="QR Table '+i+'" style="display:block;border-radius:6px"></div>'+
+      '<div style="display:flex;gap:8px;justify-content:center"><button class="btn sm" onclick="copyQrLink('+i+')">📋 Copier</button><button class="btn sm solid" onclick="printQrCard('+i+')">🖨 Imprimer</button></div>'+
     '</div>';
   }
   el.innerHTML = html;
@@ -2547,10 +2674,27 @@ function copyQrLink(i){
 }
 function printQrCard(i){
   var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
+  var qrImg = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='+encodeURIComponent(url)+'&choe=UTF-8&chld=H|2';
   var w = window.open('', '', 'width=420,height=620');
   if(!w) return;
-  w.document.write('<html><head><title>QR Table '+i+'</title></head><body style="font-family:sans-serif;text-align:center;padding:24px"><h1>Café LUX</h1><h2>Table '+i+'</h2><p>'+url+'</p></body></html>');
-  w.document.close(); w.focus(); w.print();
+  w.document.write('<!DOCTYPE html><html><head><title>QR Table '+i+'</title><style>'
+    +'body{font-family:serif;text-align:center;padding:30px;background:#fff;color:#000}'
+    +'.logo{font-size:28px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px}'
+    +'.sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:16px}'
+    +'img{border:3px solid #C9A84C;border-radius:12px;padding:8px;background:#fff}'
+    +'.tnum{font-size:42px;color:#C9A84C;font-weight:700;margin:14px 0 6px}'
+    +'.hint{font-size:12px;color:#555;margin-top:8px}'
+    +'.url{font-size:9px;color:#AAA;margin-top:4px}'
+    +'</style></head><body>'
+    +'<div class="logo">✦ LUX</div>'
+    +'<div class="sub">CAFÉ & PÂTISSERIE · TAZA</div>'
+    +'<img src="'+qrImg+'" width="200" height="200" alt="QR">'
+    +'<div class="tnum">TABLE '+i+'</div>'
+    +'<div class="hint">📱 Scannez pour commander directement</div>'
+    +'<div class="url">cafeslux.com · +212 808524169</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){try{w.focus();w.print();}catch(e){}}, 800);
 }
 
 // ── RECIPE COSTS ─────────────────────────────────────────────────────
@@ -2973,7 +3117,20 @@ function orderGiftCard(){
 
   window.finishLuxPay = function(){
     closeLuxPay();
+    // Reset cart completely
+    siteCart = [];
+    siteStep = 0;
+    renderSiteCart();
+    updateSiteCartCount();
+    // Clear form fields
+    ['wo-name','wo-phone','wo-addr','wo-notes'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+    var pm = document.getElementById('wo-payment-methods');
+    if(pm) pm.style.display='none';
+    // Navigate to orders
     luxNav('orders');
+    toast('✅ Commande confirmee!');
   };
 
   // ── 4. OVERRIDE openPaymentStep → use Enhanced Modal ─────────
