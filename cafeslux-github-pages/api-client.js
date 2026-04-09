@@ -82,6 +82,20 @@
     _lsSet('pending_sync', q);
   }
 
+  // ── SYNC EMPLOYEES TO SHARED KEY (cafe-lux.html reads lux_employees) ──
+  function _syncEmployeesShared(emps) {
+    try {
+      const shared = (emps || []).map(e => ({
+        id: e.id, name: e.name,
+        initials: (e.name||'').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2),
+        role: e.role || 'service', status: e.endDate ? 'off' : 'active',
+        phone: e.phone || '', since: e.startDate || '', salary: e.salary || 0,
+        cin: e.cin || '', address: e.address || ''
+      }));
+      localStorage.setItem('lux_employees', JSON.stringify(shared));
+    } catch(e) { console.warn('[LUX] Shared sync failed:', e); }
+  }
+
   // ────────────────────────────────────────────────────────────────
   const LuxAPI = {
 
@@ -284,6 +298,94 @@
       if (_isOnline) _post('/api/staff/attendance', rec).catch(()=>{});
     },
 
+    // ── EMPLOYEE CRUD ─────────────────────────────────────────────
+    async getEmployees() {
+      if (!_isOnline) return _ls('employees_full', []);
+      try {
+        const d = await _get('/api/employees');
+        _lsSet('employees_full', d);
+        return d;
+      } catch { return _ls('employees_full', []); }
+    },
+    async createEmployee(emp) {
+      const local = { ...emp, id: emp.id || 'e' + Date.now() };
+      const all = _ls('employees_full', []); all.push(local); _lsSet('employees_full', all);
+      // Also sync to shared lux_employees key
+      _syncEmployeesShared(all);
+      if (!_isOnline) { _queue('createEmployee', local); return local; }
+      try { const saved = await _post('/api/employees', emp); return saved; }
+      catch { _queue('createEmployee', local); return local; }
+    },
+    async updateEmployee(id, updates) {
+      const all = _ls('employees_full', []);
+      const idx = all.findIndex(e => e.id === id);
+      if (idx >= 0) { Object.assign(all[idx], updates); _lsSet('employees_full', all); _syncEmployeesShared(all); }
+      if (!_isOnline) { _queue('updateEmployee', { id, ...updates }); return all[idx]; }
+      try { return await _patch('/api/employees/' + id, updates); }
+      catch { _queue('updateEmployee', { id, ...updates }); return all[idx]; }
+    },
+    async deleteEmployee(id) {
+      let all = _ls('employees_full', []);
+      all = all.filter(e => e.id !== id); _lsSet('employees_full', all); _syncEmployeesShared(all);
+      if (!_isOnline) { _queue('deleteEmployee', { id }); return; }
+      try { await _del('/api/employees/' + id); } catch { _queue('deleteEmployee', { id }); }
+    },
+
+    // ── PAYROLL ───────────────────────────────────────────────────
+    async getPayroll(empId, month) {
+      const key = 'payroll_' + (empId || 'all');
+      if (!_isOnline) return _ls(key, []);
+      try {
+        const qs = new URLSearchParams();
+        if (empId) qs.set('empId', empId);
+        if (month) qs.set('month', month);
+        const d = await _get('/api/payroll?' + qs);
+        _lsSet(key, d);
+        return d;
+      } catch { return _ls(key, []); }
+    },
+    async addPayrollEntry(entry) {
+      const local = { ...entry, id: entry.id || 's' + Date.now() };
+      const all = _ls('payroll_all', []); all.unshift(local); _lsSet('payroll_all', all);
+      if (!_isOnline) { _queue('addPayrollEntry', local); return local; }
+      try { return await _post('/api/payroll', entry); }
+      catch { _queue('addPayrollEntry', local); return local; }
+    },
+    async updatePayrollEntry(id, updates) {
+      const all = _ls('payroll_all', []);
+      const e = all.find(x => x.id === id);
+      if (e) { Object.assign(e, updates); _lsSet('payroll_all', all); }
+      if (!_isOnline) { _queue('updatePayrollEntry', { id, ...updates }); return e; }
+      try { return await _patch('/api/payroll/' + id, updates); }
+      catch { _queue('updatePayrollEntry', { id, ...updates }); return e; }
+    },
+
+    // ── ADVANCE REQUESTS ──────────────────────────────────────────
+    async getAdvanceRequests(empId) {
+      if (!_isOnline) return _ls('advance_requests', []);
+      try {
+        const qs = empId ? '?empId=' + empId : '';
+        const d = await _get('/api/advance-requests' + qs);
+        _lsSet('advance_requests', d);
+        return d;
+      } catch { return _ls('advance_requests', []); }
+    },
+    async createAdvanceRequest(req) {
+      const local = { ...req, id: req.id || 'r' + Date.now(), status: 'pending' };
+      const all = _ls('advance_requests', []); all.unshift(local); _lsSet('advance_requests', all);
+      if (!_isOnline) { _queue('createAdvanceRequest', local); return local; }
+      try { return await _post('/api/advance-requests', req); }
+      catch { _queue('createAdvanceRequest', local); return local; }
+    },
+    async updateAdvanceRequest(id, updates) {
+      const all = _ls('advance_requests', []);
+      const r = all.find(x => x.id === id);
+      if (r) { Object.assign(r, updates); _lsSet('advance_requests', all); }
+      if (!_isOnline) { _queue('updateAdvanceRequest', { id, ...updates }); return r; }
+      try { return await _patch('/api/advance-requests/' + id, updates); }
+      catch { _queue('updateAdvanceRequest', { id, ...updates }); return r; }
+    },
+
     // ── SAAS LEADS ────────────────────────────────────────────────
     async saveSaasLead(lead) {
       if (_isOnline) {
@@ -310,6 +412,13 @@
             case 'createReview':      await _post('/api/reviews', item.data); break;
             case 'saveTransaction':   await _post('/api/transactions', item.data); break;
             case 'updateStock':       await _patch('/api/stock/'+item.data.id, { quantity:item.data.qty }); break;
+            case 'createEmployee':    await _post('/api/employees', item.data); break;
+            case 'updateEmployee':    await _patch('/api/employees/'+item.data.id, item.data); break;
+            case 'deleteEmployee':    await _del('/api/employees/'+item.data.id); break;
+            case 'addPayrollEntry':   await _post('/api/payroll', item.data); break;
+            case 'updatePayrollEntry':await _patch('/api/payroll/'+item.data.id, item.data); break;
+            case 'createAdvanceRequest': await _post('/api/advance-requests', item.data); break;
+            case 'updateAdvanceRequest': await _patch('/api/advance-requests/'+item.data.id, item.data); break;
             default: remaining.push(item);
           }
         } catch { remaining.push(item); }

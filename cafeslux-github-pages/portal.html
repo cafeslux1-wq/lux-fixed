@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>LUX — حسابي</title>
+<title>LUX — بوابة الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cinzel:wght@600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -156,29 +156,24 @@ tr:last-child td{border-bottom:none}
 <!-- ════ LOGIN ════ -->
 <div id="scr-login" class="scr" style="overflow-y:auto">
 <div class="login-wrap">
-  <div class="login-logo"><a href="index.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">⬅ رجوع</a><div class="ll">✦ LUX</div><div class="ls">مقهى تازة · حسابي</div></div>
-  <div id="s1">
-    <div style="font-size:10px;color:var(--dim);margin-bottom:10px;font-weight:600">اختر اسمك ↓</div>
-    <div class="ebtns" id="emplist"></div>
-  </div>
-  <div id="s2" style="display:none">
-    <div class="pback" onclick="backToList()"><span>←</span> تغيير الاسم</div>
-    <div class="psel">
-      <div class="psel-ico" id="p-ico">👤</div>
-      <div class="psel-n"   id="p-name"></div>
-      <div class="psel-r"   id="p-role"></div>
+  <div class="login-logo"><a href="index.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">⬅ رجوع</a><div class="ll">✦ LUX</div><div class="ls">مقهى تازة · بوابة الموظفين</div></div>
+  <!-- Secure Login Form — no employee names visible -->
+  <div id="login-form">
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center">أدخل بياناتك للدخول إلى حسابك</div>
+    <div class="fg">
+      <label>اسم المستخدم</label>
+      <input type="text" id="login-user" placeholder="مثال: reda" autocomplete="username" autofocus>
     </div>
-    <div class="pdots" id="pdots">
-      <div class="pd"></div><div class="pd"></div>
-      <div class="pd"></div><div class="pd"></div>
+    <div class="fg">
+      <label>كلمة المرور</label>
+      <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" inputmode="numeric" maxlength="10"
+        onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="ppad">
-      <button class="pk" onclick="pk('1')">1</button><button class="pk" onclick="pk('2')">2</button><button class="pk" onclick="pk('3')">3</button>
-      <button class="pk" onclick="pk('4')">4</button><button class="pk" onclick="pk('5')">5</button><button class="pk" onclick="pk('6')">6</button>
-      <button class="pk" onclick="pk('7')">7</button><button class="pk" onclick="pk('8')">8</button><button class="pk" onclick="pk('9')">9</button>
-      <button class="pk sm" onclick="backToList()">↩</button><button class="pk" onclick="pk('0')">0</button><button class="pk sm" onclick="pkDel()">⌫</button>
+    <div class="perr" id="login-err" style="margin-bottom:8px"></div>
+    <button class="btn btn-g" onclick="doLogin()" style="font-size:14px;padding:14px">🔐 تسجيل الدخول</button>
+    <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--dim)">
+      اسم المستخدم = اسمك الشخصي<br>كلمة المرور = رمز PIN الخاص بك
     </div>
-    <div class="perr" id="perr"></div>
   </div>
 </div>
 </div>
@@ -195,12 +190,24 @@ tr:last-child td{border-bottom:none}
   </header>
   <div class="tabs">
     <button class="tab on" onclick="ePg('home',this)">🏠 حسابي</button>
+    <button class="tab"    onclick="ePg('profile',this)">✏️ بياناتي</button>
     <button class="tab"    onclick="ePg('hist',this)">📋 الرواتب</button>
     <button class="tab"    onclick="ePg('req', this)">💸 طلب تسبيق</button>
     <button class="tab"    onclick="ePg('reqs',this)">📨 طلباتي</button>
   </div>
   <div class="body">
     <div class="pg on" id="epg-home"></div>
+    <div class="pg" id="epg-profile">
+      <div class="stl">✏️ تعديل بياناتي</div>
+      <div class="card">
+        <div class="fg"><label>الاسم الكامل</label><input type="text" id="pf-name" placeholder="الاسم الكامل"></div>
+        <div class="fg"><label>رقم الهاتف</label><input type="tel" id="pf-phone" placeholder="+212 6XX XXX XXX" inputmode="tel"></div>
+        <div class="fg"><label>رقم بطاقة التعريف الوطنية (CIN)</label><input type="text" id="pf-cin" placeholder="مثال: AB123456" style="text-transform:uppercase"></div>
+        <div class="fg"><label>العنوان</label><input type="text" id="pf-addr" placeholder="العنوان الكامل"></div>
+        <div class="fg"><label>ملاحظات</label><textarea id="pf-notes" placeholder="ملاحظات شخصية..."></textarea></div>
+        <button class="btn btn-g" onclick="saveProfile()">💾 حفظ التعديلات</button>
+      </div>
+    </div>
     <div class="pg"    id="epg-hist">
       <div class="stl">📋 سجل الرواتب</div>
       <div class="mrow" id="e-mrow"></div>
@@ -259,30 +266,39 @@ tr:last-child td{border-bottom:none}
 
 <script>
 // ════════════════════════════════════════════════════════
-//  البيانات — مدمجة مباشرة (محدّثة من الإكسيل)
+//  البيانات — موحّدة مع cafe-lux.html
+//  المصدر: localStorage (lux_employees_full) + API
 // ════════════════════════════════════════════════════════
-var EMPS = [
-  {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',startDate:'2025-01-01',endDate:'',
-   note:'مخالفة يناير: غيلب يوم التنظيف'},
-  {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',startDate:'2026-01-04',endDate:'',
-   note:'التحقت 04/01/2026 — 27 يوم عمل في يناير'},
-  {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',startDate:'2025-01-01',endDate:'',
-   note:''},
-  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',startDate:'2026-01-01',endDate:'2026-01-03',
-   note:'التحاق: 01/01/2026 | مغادرة: 03/01/2026 | 3 أيام عمل → 1200×3÷30 = 120 د.م'}
- ];
+var EMPS_DEFAULT = [
+  {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:'مخالفة يناير'},
+  {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',cin:'',address:'',startDate:'2026-01-04',endDate:'',note:''},
+  {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
+  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',cin:'',address:'',startDate:'2026-01-01',endDate:'2026-01-03',note:'3 أيام عمل'}
+];
+
+// Load from shared storage (written by both cafe-lux.html and this portal)
+var _storedEmps = null;
+try { _storedEmps = JSON.parse(localStorage.getItem('lux_employees_full')); } catch(e){}
+var EMPS = (_storedEmps && _storedEmps.length) ? _storedEmps : EMPS_DEFAULT;
+
+// Save back to shared storage
+function saveEmpsToStorage(){
+  localStorage.setItem('lux_employees_full', JSON.stringify(EMPS));
+  // Also sync to lux_employees for cafe-lux.html compatibility
+  try {
+    var shared = EMPS.map(function(e){
+      return {id:e.id, name:e.name, initials:(e.name||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2),
+        role:e.role, status:e.endDate?'off':'active', phone:e.phone||'', since:e.startDate||'', salary:e.salary||0};
+    });
+    localStorage.setItem('lux_employees', JSON.stringify(shared));
+  } catch(e){}
+}
 
 var SALS = [
   {id:'s01a',empId:'e01',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
@@ -375,71 +391,83 @@ function activeEmps(){
 }
 
 // ════════════════════════════════════════════════════════
-//  LOGIN
+//  API Configuration — same as index.html
 // ════════════════════════════════════════════════════════
-function buildLoginList(){
-  var emps = activeEmps();
-  var container = document.getElementById('emplist');
-  container.innerHTML = '';
-  var adminBtn = document.createElement('button');
-  adminBtn.className = 'ebtn';
-  adminBtn.innerHTML = '<div class="ei">👑</div><div><div class="en">المدير</div><div class="er">صلاحية كاملة</div></div>';
-  adminBtn.onclick = function(){ pick('__admin__'); };
-  container.appendChild(adminBtn);
-  emps.forEach(function(e){
-    var btn = document.createElement('button');
-    btn.className = 'ebtn';
-    var ico = RICO[e.role] || '👤';
-    btn.innerHTML = '<div class="ei">'+ico+'</div><div><div class="en">'+e.name+'</div><div class="er">'+e.role+'</div></div>';
-    btn.onclick = (function(id){ return function(){ pick(id); }; })(e.id);
-    container.appendChild(btn);
-  });
+var API_URL = 'https://cafeslux-api-production.up.railway.app';
+
+// Try to load employees from API, fallback to local
+async function fetchEmpsFromAPI(){
+  try {
+    var res = await fetch(API_URL + '/api/employees', {
+      headers: {'Authorization': 'Bearer ' + (localStorage.getItem('lux_auth_token')||'')}
+    });
+    if(res.ok){
+      var data = await res.json();
+      if(data && data.length) { EMPS = data; localStorage.setItem('lux_emps_cache', JSON.stringify(data)); }
+    }
+  } catch(e){ console.warn('[Portal] API offline, using local data'); }
 }
 
-function pick(id){
-  if(id==='__admin__'){
-    SEL={id:'__admin__',name:'المدير',role:'admin',salary:0,isAdmin:true};
-  } else {
-    SEL=activeEmps().filter(function(e){return e.id===id;})[0];
-    if(!SEL){toast('موظف غير موجود');return;}
-    SEL=Object.assign({},SEL,{isAdmin:false});
+// Sync requests to API
+async function syncReqsToAPI(req){
+  try {
+    await fetch(API_URL + '/api/advance-requests', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('lux_auth_token')||'')},
+      body: JSON.stringify(req)
+    });
+  } catch(e){ console.warn('[Portal] Sync failed, stored locally'); }
+}
+
+// ════════════════════════════════════════════════════════
+//  SECURE LOGIN — Username + Password (no name list)
+// ════════════════════════════════════════════════════════
+function doLogin(){
+  var user = (document.getElementById('login-user').value||'').trim().toLowerCase();
+  var pass = (document.getElementById('login-pass').value||'').trim();
+  var errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if(!user || !pass){ errEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور'; return; }
+
+  // Check admin first
+  if(user === 'admin' || user === 'المدير'){
+    if(pass === ADMIN_PIN){
+      SESS = {id:'__admin__',name:'المدير',role:'admin',isAdmin:true,salary:0};
+      saveSess(); launch(); toast('مرحباً بالمدير 👑'); return;
+    } else {
+      errEl.textContent = '❌ كلمة المرور خاطئة'; return;
+    }
   }
-  pinB='';
-  document.getElementById('p-ico').textContent  = SEL.isAdmin?'👑':(RICO[SEL.role]||'👤');
-  document.getElementById('p-name').textContent = SEL.name;
-  document.getElementById('p-role').textContent = SEL.role;
-  document.getElementById('perr').textContent   = '';
-  updDots();
-  document.getElementById('s1').style.display='none';
-  document.getElementById('s2').style.display='';
-}
 
-function backToList(){
-  pinB='';SEL=null;
-  document.getElementById('s1').style.display='';
-  document.getElementById('s2').style.display='none';
-}
+  // Find employee by name (case-insensitive, supports partial match)
+  var emp = EMPS.filter(function(e){
+    if(e.endDate) return false; // skip inactive
+    var n = (e.name||'').toLowerCase();
+    return n === user || n.indexOf(user) === 0;
+  })[0];
 
-function pk(d){ if(pinB.length>=4)return; pinB+=d; updDots(); if(pinB.length===4)setTimeout(checkPIN,180); }
-function pkDel(){ if(pinB.length){pinB=pinB.slice(0,-1);updDots();} }
-function updDots(){
-  document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('f',i<pinB.length);});
-}
+  if(!emp){ errEl.textContent = '❌ اسم المستخدم غير موجود'; return; }
 
-function checkPIN(){
-  if(!SEL)return;
-  if(pinB!==getPin(SEL.id)){
-    document.getElementById('perr').textContent='❌ رمز خاطئ — حاول مجدداً';
-    var pd=document.getElementById('pdots');
-    pd.classList.add('pshake');
-    setTimeout(function(){pd.classList.remove('pshake');},350);
-    pinB='';updDots();return;
-  }
-  SESS={id:SEL.id,name:SEL.name,role:SEL.role,isAdmin:SEL.isAdmin,salary:Number(SEL.salary||0)};
+  // Check PIN/password
+  var pin = getPin(emp.id);
+  if(pass !== pin){ errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
+
+  // Success — create session
+  SESS = {id:emp.id, name:emp.name, role:emp.role, isAdmin:false, salary:Number(emp.salary||0)};
   saveSess();
   launch();
-  toast('مرحباً '+SESS.name+' 👋');
+  toast('مرحباً ' + SESS.name + ' 👋');
 }
+
+// Remove old functions that exposed employee names
+function buildLoginList(){} // disabled — no longer shows name list
+function pick(){} // disabled
+function backToList(){} // disabled
+function pk(){} // disabled
+function pkDel(){} // disabled
+function updDots(){} // disabled
+function checkPIN(){} // disabled — replaced by doLogin()
 
 function launch(){
   if(SESS.isAdmin){
@@ -478,7 +506,7 @@ function calcMo(empId, month){
 function renderEmpHome(){
   var emp=myEmp();
   var ico=RICO[emp.role]||'👤';
-  // آخر شهر به بيانات
+  var profile = JSON.parse(localStorage.getItem('lux_profile_'+SESS.id)||'{}');
   var myS=mySals();
   var months=myS.map(function(s){return s.month;}).sort().reverse();
   var lastM=months[0]||'2026-02';
@@ -487,11 +515,23 @@ function renderEmpHome(){
   var stM={pending:'⏳ في الانتظار',approved:'✅ موافق عليه',rejected:'❌ مرفوض'};
 
   var h='<div class="pcard">'
-    +'<div style="font-size:40px;margin-bottom:9px">'+ico+'</div>'
-    +'<div style="font-size:20px;font-weight:900">'+SESS.name+'</div>'
+    +'<div style="font-size:48px;margin-bottom:9px">'+ico+'</div>'
+    +'<div style="font-size:22px;font-weight:900">'+SESS.name+'</div>'
     +'<div style="font-size:11px;color:var(--dim);margin-top:5px">'+emp.role
-    +' · راتبك: <span style="color:var(--gold);font-weight:700">'+fmt(emp.salary)+' د.م</span></div>'
-    +(emp.startDate?'<div style="font-size:10px;color:var(--dim);margin-top:4px">التحاق: '+emp.startDate+'</div>':'')
+    +' · الراتب: <span style="color:var(--gold);font-weight:700">'+fmt(emp.salary)+' د.م</span></div>'
+    +(emp.startDate?'<div style="font-size:10px;color:var(--dim);margin-top:4px">📅 الالتحاق: '+emp.startDate+'</div>':'')
+    +(emp.endDate?'<div style="font-size:10px;color:var(--rd);margin-top:4px">🔴 المغادرة: '+emp.endDate+'</div>':'')
+    +'</div>';
+
+  // Personal info card
+  h+='<div class="card" style="margin-bottom:12px">'
+    +'<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:10px">📋 المعلومات الشخصية</div>'
+    +'<div style="font-size:12px;line-height:2.2;color:var(--dim)">'
+    +'📞 الهاتف: <b style="color:var(--tx)">'+(profile.phone||emp.phone||'غير محدد')+'</b><br>'
+    +'🪪 CIN: <b style="color:var(--tx)">'+(profile.cin||'غير محدد')+'</b><br>'
+    +'📍 العنوان: <b style="color:var(--tx)">'+(profile.addr||'غير محدد')+'</b>'
+    +'</div>'
+    +'<button class="btn btn-g" onclick="ePg(\'profile\',null);loadProfileForm()" style="margin-top:10px;padding:8px">✏️ تعديل بياناتي</button>'
     +'</div>';
 
   if(myS.length){
@@ -524,6 +564,46 @@ function renderEmpHome(){
       +'<div style="font-size:12px;color:var(--dim)">اضغط <b style="color:var(--gold)">💸 طلب تسبيق</b> لإرسال طلب للمدير</div></div>';
   }
   document.getElementById('epg-home').innerHTML=h;
+}
+
+// ════════════════════════════════════════════════════════
+//  PROFILE MANAGEMENT
+// ════════════════════════════════════════════════════════
+function loadProfileForm(){
+  var emp = myEmp();
+  var profile = JSON.parse(localStorage.getItem('lux_profile_'+SESS.id)||'{}');
+  document.getElementById('pf-name').value = profile.fullName || emp.name || '';
+  document.getElementById('pf-phone').value = profile.phone || emp.phone || '';
+  document.getElementById('pf-cin').value = profile.cin || '';
+  document.getElementById('pf-addr').value = profile.addr || '';
+  document.getElementById('pf-notes').value = profile.notes || '';
+}
+
+function saveProfile(){
+  var profile = {
+    fullName: document.getElementById('pf-name').value.trim(),
+    phone: document.getElementById('pf-phone').value.trim(),
+    cin: document.getElementById('pf-cin').value.trim().toUpperCase(),
+    addr: document.getElementById('pf-addr').value.trim(),
+    notes: document.getElementById('pf-notes').value.trim(),
+    updated: new Date().toISOString()
+  };
+  localStorage.setItem('lux_profile_'+SESS.id, JSON.stringify(profile));
+  // Try to sync with API
+  syncProfileToAPI(profile);
+  toast('✅ تم حفظ بياناتك');
+  ePg('home', null);
+  document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===0)t.classList.add('on');else t.classList.remove('on');});
+}
+
+async function syncProfileToAPI(profile){
+  try {
+    await fetch(API_URL + '/api/employees/' + SESS.id + '/profile', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('lux_auth_token')||'')},
+      body: JSON.stringify(profile)
+    });
+  } catch(e){ console.warn('[Portal] Profile sync offline'); }
 }
 
 // ════════════════════════════════════════════════════════
@@ -614,13 +694,16 @@ function sendReq(){
   if(REQS.filter(function(r){return r.empId===SESS.id&&r.month===mo&&r.status==='pending';}).length){
     toast('⚠️ لديك طلب معلق لهذا الشهر');return;
   }
-  REQS.unshift({id:'r'+Date.now(),empId:SESS.id,empName:SESS.name,amount:amt,month:mo,reason:why,status:'pending',adminNote:'',date:new Date().toISOString().slice(0,10)});
+  var newReq = {id:'r'+Date.now(),empId:SESS.id,empName:SESS.name,amount:amt,month:mo,reason:why,status:'pending',adminNote:'',date:new Date().toISOString().slice(0,10)};
+  REQS.unshift(newReq);
   saveReqs();
+  // Sync with API
+  syncReqsToAPI(newReq);
   document.getElementById('rq-amt').value='';
   document.getElementById('rq-why').value='';
   toast('✅ تم إرسال طلبك للمدير');
   ePg('reqs',null);
-  document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===3)t.classList.add('on');else t.classList.remove('on');});
+  document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===4)t.classList.add('on');else t.classList.remove('on');});
 }
 
 // ════════════════════════════════════════════════════════
@@ -778,6 +861,8 @@ function ePg(p,el){
   document.querySelectorAll('#scr-emp .tab').forEach(function(t){t.classList.remove('on');});
   var pg=document.getElementById('epg-'+p);if(pg)pg.classList.add('on');
   if(el)el.classList.add('on');
+  if(p==='home') renderEmpHome();
+  if(p==='profile') loadProfileForm();
   if(p==='hist')buildMrow();
   if(p==='reqs')renderMyReqs();
   if(p==='req') buildReqForm();
@@ -798,10 +883,11 @@ function doLogout(){
   if(!confirm('تسجيل الخروج؟'))return;
   SESS=null;SEL=null;pinB='';
   localStorage.removeItem(SESS_KEY);
-  buildLoginList();
-  document.getElementById('s1').style.display='';
-  document.getElementById('s2').style.display='none';
   showScr('scr-login');
+  // Clear login form
+  var u=document.getElementById('login-user'); if(u) u.value='';
+  var p=document.getElementById('login-pass'); if(p) p.value='';
+  var e=document.getElementById('login-err');  if(e) e.textContent='';
   toast('تم الخروج');
 }
 function closeM(id){document.getElementById(id).classList.remove('on');}
@@ -815,12 +901,21 @@ function toast(msg){
 }
 
 // ════════════════════════════════════════════════════════
-//  INIT
+//  INIT — API-first, fallback local
 // ════════════════════════════════════════════════════════
-buildLoginList();
-if(SESS) launch();
-else showScr('scr-login');
-setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
+(async function(){
+  // Try to load fresh employee data from API
+  try { await fetchEmpsFromAPI(); } catch(e){}
+  // Also try to load from localStorage cache
+  var cached = localStorage.getItem('lux_emps_cache');
+  if(cached){ try { var c = JSON.parse(cached); if(c && c.length) EMPS = c; } catch(e){} }
+
+  // Check existing session
+  if(SESS) launch();
+  else showScr('scr-login');
+
+  setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
+})();
 </script>
 </body>
 </html>
