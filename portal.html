@@ -171,9 +171,27 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="perr" id="login-err" style="margin-bottom:8px"></div>
     <button class="btn btn-g" onclick="doLogin()" style="font-size:14px;padding:14px">🔐 تسجيل الدخول</button>
-    <div style="text-align:center;margin-top:16px;font-size:10px;color:var(--dim)">
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn btn-g" onclick="showNewEmpForm()" style="font-size:11px;padding:10px;background:none;border:1px solid var(--g3);color:var(--dim)">📝 طلب انضمام موظف جديد</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--dim)">
       اسم المستخدم = اسمك الشخصي<br>كلمة المرور = رمز PIN الخاص بك
     </div>
+  </div>
+
+  <!-- New Employee Registration Form -->
+  <div id="new-emp-form" style="display:none">
+    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px;text-align:center">📝 طلب انضمام جديد</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:12px;text-align:center;line-height:1.7">
+      أرسل طلبك للمدير. سيتم تفعيل الحساب بعد الموافقة.
+    </div>
+    <div class="fg"><label>الاسم الكامل *</label><input type="text" id="ne-name" placeholder="مثال: أحمد المرابط"></div>
+    <div class="fg"><label>رقم الهاتف *</label><input type="tel" id="ne-phone" placeholder="+212 6XX XXX XXX"></div>
+    <div class="fg"><label>رقم بطاقة التعريف (CIN)</label><input type="text" id="ne-cin" placeholder="مثال: AB123456" style="text-transform:uppercase"></div>
+    <div class="fg"><label>اسم المستخدم المطلوب *</label><input type="text" id="ne-user" placeholder="مثال: ahmed"></div>
+    <div class="fg"><label>كلمة المرور *</label><input type="password" id="ne-pass" placeholder="4 أرقام أو أكثر"></div>
+    <button class="btn btn-g" onclick="submitNewEmpRequest()" style="font-size:13px;padding:12px;margin-top:4px">📤 إرسال الطلب</button>
+    <button class="btn btn-rd" onclick="hideNewEmpForm()" style="font-size:11px;padding:9px;margin-top:8px">← رجوع للدخول</button>
   </div>
 </div>
 </div>
@@ -420,9 +438,9 @@ async function syncReqsToAPI(req){
 }
 
 // ════════════════════════════════════════════════════════
-//  SECURE LOGIN — Username + Password (no name list)
+//  SECURE LOGIN — Cloud-first, local fallback
 // ════════════════════════════════════════════════════════
-function doLogin(){
+async function doLogin(){
   var user = (document.getElementById('login-user').value||'').trim().toLowerCase();
   var pass = (document.getElementById('login-pass').value||'').trim();
   var errEl = document.getElementById('login-err');
@@ -430,44 +448,79 @@ function doLogin(){
 
   if(!user || !pass){ errEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور'; return; }
 
-  // Check admin first
+  // Try cloud auth first
+  try {
+    var res = await fetch(API_URL + '/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username: user, password: pass})
+    });
+    if(res.ok){
+      var data = await res.json();
+      if(data.token) localStorage.setItem('lux_auth_token', data.token);
+      if(data.employee){
+        SESS = {id:data.employee.id, name:data.employee.name, role:data.employee.role, isAdmin:data.employee.role==='admin', salary:Number(data.employee.salary||0)};
+        saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋'); return;
+      }
+    }
+  } catch(e){ /* API offline — fallback to local */ }
+
+  // Local auth fallback — check admin
   if(user === 'admin' || user === 'المدير'){
     if(pass === ADMIN_PIN){
       SESS = {id:'__admin__',name:'المدير',role:'admin',isAdmin:true,salary:0};
       saveSess(); launch(); toast('مرحباً بالمدير 👑'); return;
-    } else {
-      errEl.textContent = '❌ كلمة المرور خاطئة'; return;
-    }
+    } else { errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
   }
 
-  // Find employee by name (case-insensitive, supports partial match)
+  // Find employee locally
   var emp = EMPS.filter(function(e){
-    if(e.endDate) return false; // skip inactive
+    if(e.endDate) return false;
     var n = (e.name||'').toLowerCase();
     return n === user || n.indexOf(user) === 0;
   })[0];
-
   if(!emp){ errEl.textContent = '❌ اسم المستخدم غير موجود'; return; }
-
-  // Check PIN/password
   var pin = getPin(emp.id);
   if(pass !== pin){ errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
-
-  // Success — create session
   SESS = {id:emp.id, name:emp.name, role:emp.role, isAdmin:false, salary:Number(emp.salary||0)};
-  saveSess();
-  launch();
-  toast('مرحباً ' + SESS.name + ' 👋');
+  saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋');
 }
 
-// Remove old functions that exposed employee names
-function buildLoginList(){} // disabled — no longer shows name list
-function pick(){} // disabled
-function backToList(){} // disabled
-function pk(){} // disabled
-function pkDel(){} // disabled
-function updDots(){} // disabled
-function checkPIN(){} // disabled — replaced by doLogin()
+// ── New Employee Registration ──
+function showNewEmpForm(){
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('new-emp-form').style.display = 'block';
+}
+function hideNewEmpForm(){
+  document.getElementById('new-emp-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+}
+async function submitNewEmpRequest(){
+  var name = (document.getElementById('ne-name').value||'').trim();
+  var phone = (document.getElementById('ne-phone').value||'').trim();
+  var cin = (document.getElementById('ne-cin').value||'').trim().toUpperCase();
+  var user = (document.getElementById('ne-user').value||'').trim().toLowerCase();
+  var pass = (document.getElementById('ne-pass').value||'').trim();
+  if(!name||!phone||!user||!pass){ toast('⚠️ جميع الحقول المطلوبة (*) إلزامية'); return; }
+  if(pass.length < 4){ toast('⚠️ كلمة المرور: 4 أحرف على الأقل'); return; }
+  var req = {name:name, phone:phone, cin:cin, username:user, password:pass, status:'pending', requestDate:new Date().toISOString()};
+  // Save locally
+  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
+  reqs.push(req); localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
+  // Try API
+  try {
+    await fetch(API_URL + '/api/employees/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(req)
+    });
+  } catch(e){}
+  toast('✅ تم إرسال طلبك — في انتظار موافقة المدير');
+  hideNewEmpForm();
+}
+
+// Disable old functions
+function buildLoginList(){} function pick(){} function backToList(){}
+function pk(){} function pkDel(){} function updDots(){} function checkPIN(){}
 
 function launch(){
   if(SESS.isAdmin){
