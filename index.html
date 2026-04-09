@@ -82,7 +82,11 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
+/* Hide bottom SPA router nav — top tabs only */
+#lux-bottom-nav{display:none !important;}
+#menu-content{min-height:200px;}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:4px;height:4px;}
@@ -1125,61 +1129,50 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 .pay-step.done{color:#3DBE7A;border-bottom-color:#3DBE7A;}
 
 
-/* ── PRINT STYLES — Fixed: no blank pages, no infinite paper ── */
+/* ── PRINT STYLES — Thermal ticket: no blank pages ── */
 @media print {
-  /* Hide EVERYTHING first */
-  body > * { display: none !important; visibility: hidden !important; }
-  
-  /* Show ONLY the print area */
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  /* Hide EVERYTHING */
+  body > * { display: none !important; }
+  /* Show ONLY print area */
   body > #lux-print-area {
     display: block !important;
     visibility: visible !important;
     position: static !important;
-    top: auto !important; left: auto !important;
-    width: 100% !important;
-    max-width: 80mm !important; /* Ticket width for thermal printers */
-    margin: 0 auto !important;
-    padding: 0 !important;
-    background: white !important;
+    float: none !important;
+    width: 72mm !important;
+    max-width: 72mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 2mm 2mm 20mm 2mm !important;
+    background: #fff !important;
     color: #000 !important;
-    z-index: 99999;
     overflow: visible !important;
   }
-  
-  /* Prevent page breaks inside the receipt */
   #lux-print-area * {
+    position: static !important;
+    float: none !important;
+    overflow: visible !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-  }
-  
-  /* Force content to fit ONE page — critical fix */
-  @page {
-    size: 80mm auto; /* Thermal receipt width, auto height */
-    margin: 2mm;
-  }
-  
-  /* Remove all shadows, borders, backgrounds that waste ink */
-  #lux-print-area * {
     box-shadow: none !important;
     text-shadow: none !important;
   }
-  
-  /* Hide floating buttons, modals, nav during print */
+  @page { size: 72mm auto; margin: 0; }
+  /* Kill all fixed/absolute overlays */
+  [style*="position:fixed"], [style*="position: fixed"],
+  .topbar, .site-top-tabs, .delivery-banner,
   #lux-fab-group, #lux-ai-chat, #lux-bottom-nav,
   #pin-modal, #payment-modal, #cart-panel,
-  #gateway, .topbar, .site-top-tabs, .delivery-banner,
-  #pwa-banner, #sync-bar { 
-    display: none !important; 
+  #gateway, #pwa-banner, #sync-bar,
+  #toast, .modal, footer, .footer { 
+    display: none !important;
+    position: static !important;
   }
 }
 
-/* Print area: hidden by default, pulled offscreen */
-#lux-print-area { 
-  display: none; 
-  position: fixed;
-  top: -9999px;
-  left: -9999px;
-}
+#lux-print-area { display:none; position:absolute; top:-99999px; left:-99999px; width:72mm; overflow:visible; }
 
 /* ── SaaS tile spans full width ── */
 .saas-tile { border-color: rgba(201,168,76,.4) !important; background: rgba(201,168,76,.04) !important; }
@@ -1403,14 +1396,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
           <div style="font-size:14px;color:#1A0A00;font-weight:500;margin-bottom:8px">Paiement à la livraison</div>
           <div style="font-size:12px;color:#888;line-height:1.6">Le livreur accepte les espèces.<br>Préparez l'appoint si possible.</div>
         </div>
-        <!-- PayPal -->
+        <!-- PayPal — Real PayPal Checkout -->
         <div class="card-form" id="form-paypal" style="text-align:center;padding:20px 0">
           <div style="font-size:40px;margin-bottom:12px">🅿</div>
-          <div style="font-size:14px;color:#003087;font-weight:700;margin-bottom:8px">Connexion PayPal</div>
-          <input class="cf-input" type="email" id="pp-email" placeholder="Email PayPal" autocomplete="email">
-          <input class="cf-input" type="password" id="pp-pass" placeholder="Mot de passe" autocomplete="current-password">
-          <div id="pp-status" style="display:none;font-size:12px;font-weight:600;padding:8px;border-radius:8px;background:rgba(0,48,135,.08);margin-top:8px"></div>
-          <div style="font-size:10px;color:#AAA;margin-top:6px">🔒 Connexion sécurisée via PayPal</div>
+          <div style="font-size:14px;color:#003087;font-weight:700;margin-bottom:8px">Paiement PayPal</div>
+          <div id="paypal-button-container" style="max-width:300px;margin:12px auto"></div>
+          <div style="font-size:10px;color:#AAA;margin-top:8px">🔒 Paiement sécurisé via PayPal</div>
+          <div id="paypal-fallback" style="display:none;margin-top:12px">
+            <div style="font-size:11px;color:#888;margin-bottom:8px">PayPal non disponible? Payez via WhatsApp:</div>
+            <button onclick="payViaWhatsApp()" style="padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px">📲 Payer via WhatsApp</button>
+          </div>
         </div>
         <!-- Gift Card -->
         <div class="card-form" id="form-gc">
@@ -2572,27 +2567,44 @@ function closeSuccess(){
 async function trackOrders(){
   const phone=document.getElementById('track-phone').value.trim();
   if(!phone){toast('⚠ Entrez votre numéro');return;}
-  // Try API first, fallback to local
-  let cust = null;
-  try {
-    cust = await LuxAPI.getCustomer(phone);
-  } catch {}
-  if(!cust){ const custs=getLS('lux_web_customers',{}); cust=custs[phone]; }
   const res=document.getElementById('track-results');
-  if(!cust||!cust.orders||!cust.orders.length){
-    res.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🔍</div><div>Aucune commande trouvée pour ce numéro</div></div>';
+  res.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">🔍 Recherche en cours...</div>';
+  // Search in ALL web orders by phone number (direct match)
+  const allOrders=getLS('lux_web_orders',[]);
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  const myOrders = allOrders.filter(function(o){
+    var op = String(o.phone||'').replace(/[^0-9]/g,'');
+    return op === cleanPhone || op.endsWith(cleanPhone.slice(-9)) || cleanPhone.endsWith(op.slice(-9));
+  });
+  // Also try API
+  try { 
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      var apiOrders = await LuxAPI.getOrders({phone:phone});
+      if(apiOrders && apiOrders.length){
+        apiOrders.forEach(function(ao){ if(!myOrders.find(function(o){return o.id===ao.id;})) myOrders.push(ao); });
+      }
+    }
+  } catch(e){}
+  // Also check customer record
+  var cust = getLS('lux_web_customers',{})[phone];
+  if(cust && cust.orders){
+    cust.orders.forEach(function(co){ if(!myOrders.find(function(o){return o.id===co.id;})) myOrders.push(co); });
+  }
+  myOrders.sort(function(a,b){ return (b.id||0) - (a.id||0); });
+  if(!myOrders.length){
+    res.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🔍</div><div>Aucune commande trouvée pour ce numéro</div><div style="font-size:11px;margin-top:8px;color:var(--dim)">Vérifiez le numéro ou passez votre première commande!</div></div>';
     return;
   }
-  // Sync status from web orders
-  const allOrders=getLS('lux_web_orders',[]);
-  let html='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+cust.orders.length+' commande(s) · '+(cust.points||0)+' points fidélité</div>';
-  cust.orders.slice(0,10).forEach(o=>{
-    const live=allOrders.find(x=>x.id===o.id);
-    const status=live?live.status:o.status;
-    const statusHtml=status==='pending'?'<span class="status-badge sb-pending">En attente</span>':status==='accepted'?'<span class="status-badge sb-accepted">En préparation</span>':'<span class="status-badge sb-done">Terminée</span>';
-    html+=`<div class="order-status-card"><div class="osc-head"><div class="osc-id">📋 #${String(o.id).slice(-6)}</div><div class="osc-date">${o.date}</div></div>`;
-    html+=`<div class="osc-items">${(live?live.items:o.items||[]).slice(0,3).map(i=>i.q+'x '+i.n).join(' · ')}</div>`;
-    html+=`<div class="osc-footer"><div class="osc-total">${o.total} MAD</div>${statusHtml}</div></div>`;
+  var pts = cust ? (cust.points||0) : 0;
+  var html='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+myOrders.length+' commande(s)'+(pts?' · '+pts+' points fidélité':'')+'</div>';
+  myOrders.slice(0,15).forEach(function(o){
+    var status = o.status||'pending';
+    var statusHtml = status==='pending'?'<span class="status-badge sb-pending">En attente</span>':
+                     status==='accepted'||status==='ready'?'<span class="status-badge sb-accepted">En préparation</span>':
+                     '<span class="status-badge sb-done">Terminée ✓</span>';
+    html+='<div class="order-status-card"><div class="osc-head"><div class="osc-id">📋 #'+String(o.id).slice(-6)+'</div><div class="osc-date">'+(o.date||'')+'</div></div>';
+    html+='<div class="osc-items">'+(o.items||[]).slice(0,4).map(function(i){return (i.q||i.qty||1)+'x '+(i.n||i.name);}).join(' · ')+'</div>';
+    html+='<div class="osc-footer"><div class="osc-total">'+(o.total||0)+' MAD</div>'+statusHtml+'</div></div>';
   });
   res.innerHTML=html;
 }
@@ -2690,7 +2702,9 @@ function changeGuests(delta){
   if(el) el.textContent = guestCount;
 }
 
+var _resSubmitting = false;
 function submitReservation(){
+  if(_resSubmitting) return; // prevent double submit
   const name = document.getElementById('res-name')?.value.trim();
   const phone = document.getElementById('res-phone')?.value.trim();
   const date = document.getElementById('res-date')?.value;
@@ -2699,33 +2713,33 @@ function submitReservation(){
   if(!phone) { toast('⚠ Entrez votre téléphone'); return; }
   if(!date) { toast('⚠ Choisissez une date'); return; }
   if(!selectedTime) { toast('⚠ Choisissez une heure'); return; }
+  _resSubmitting = true;
   const res = {
     id: Date.now(), name, phone, date, time: selectedTime,
     guests: guestCount, notes, status: 'confirmed',
     created: new Date().toISOString()
   };
-  // Save via API + local fallback
   const all = getLS('lux_reservations', []);
   all.unshift(res);
   setLS('lux_reservations', all);
   LuxAPI.createReservation(res).catch(console.warn);
-  // Notify via WhatsApp
-  sendWANotification(
-    `🪑 *Nouvelle Réservation #${String(res.id).slice(-4)}*\n` +
-    `👤 ${name} · 📞 ${phone}\n` +
-    `📅 ${date} à ${selectedTime}\n` +
-    `👥 ${guestCount} pers.${notes?' · '+notes:''}`,
-    'reservation'
+  // Send WA to admin mobile
+  var waMsg = encodeURIComponent(
+    '🪑 *Nouvelle Réservation #'+String(res.id).slice(-4)+'*\n'+
+    '👤 '+name+' · 📞 '+phone+'\n'+
+    '📅 '+date+' à '+selectedTime+'\n'+
+    '👥 '+guestCount+' pers.'+(notes?' · '+notes:'')
   );
-  toast('✅ Réservation confirmée! On vous attend.');
-  // Show confirmation
+  window.open('https://wa.me/212677717201?text='+waMsg, '_blank');
+  toast('✅ Réservation confirmée!');
   document.getElementById('success-order-id').textContent = '📅 Réservation #' + String(res.id).slice(-4);
-  document.getElementById('success-sub').textContent = `${date} à ${selectedTime} · ${guestCount} pers. · Nous vous attendons!`;
-  document.getElementById('success-eta').textContent = '✅ Confirmation envoyée · +212 808524169';
+  document.getElementById('success-sub').textContent = date+' à '+selectedTime+' · '+guestCount+' pers. · Nous vous attendons!';
+  document.getElementById('success-eta').textContent = '✅ Confirmation envoyée · +212 677717201';
   document.getElementById('success-ov').classList.add('open');
   loadMyReservations(phone);
   renderTimeSlots();
   trackEvent('reservation', 'submit', date + '_' + selectedTime);
+  setTimeout(function(){ _resSubmitting = false; }, 3000);
 }
 
 function loadMyReservations(phone){
@@ -4119,10 +4133,7 @@ function purchaseGiftCard(){
   if(!phone){ toast('⚠ Téléphone requis'); return; }
   const code = generateGCCode();
   const gc = {
-    id: Date.now(),
-    code,
-    amount: selectedGCAmount,
-    balance: selectedGCAmount,
+    id: Date.now(), code, amount: selectedGCAmount, balance: selectedGCAmount,
     sender, recipient, phone, message,
     created: new Date().toISOString(),
     expires: new Date(Date.now() + 365*24*3600*1000).toLocaleDateString('fr-MA'),
@@ -4131,22 +4142,28 @@ function purchaseGiftCard(){
   const allGC = getLS('lux_gift_cards', []);
   allGC.unshift(gc);
   setLS('lux_gift_cards', allGC);
-  // Show code on card
   document.getElementById('gc-code-display').textContent = code;
-  // WA notification
-  sendWANotification(
-    `🎁 *Carte Cadeau LUX*\n\n` +
-    `De: ${sender}\nPour: ${recipient}\n` +
-    `Montant: ${selectedGCAmount} MAD\n` +
-    `Code: *${code}*\n\n` +
-    `${message ? '💬 ' + message + '\n\n' : ''}` +
-    `Valable 1 an · cafeslux.com`,
-    'giftcard'
+  // Send code DIRECTLY to recipient phone via WhatsApp
+  var recipientPhone = phone.replace(/[^0-9]/g,'');
+  if(recipientPhone.startsWith('0')) recipientPhone = '212' + recipientPhone.slice(1);
+  if(!recipientPhone.startsWith('212')) recipientPhone = '212' + recipientPhone;
+  var gcMsg = encodeURIComponent(
+    '🎁 *Carte Cadeau Café LUX*\n\n'+
+    'De: '+sender+'\nPour: '+recipient+'\n'+
+    'Montant: '+selectedGCAmount+' MAD\n\n'+
+    '🔑 Votre code: *'+code+'*\n\n'+
+    (message ? '💬 '+message+'\n\n' : '')+
+    'Utilisez ce code lors de votre commande sur cafeslux.com\nValable 1 an · +212 808524169'
   );
+  window.open('https://wa.me/'+recipientPhone+'?text='+gcMsg, '_blank');
+  // Also notify admin
+  sendWANotification('🎁 Carte Cadeau vendue: '+code+' ('+selectedGCAmount+' MAD) · De: '+sender+' → '+recipient, 'giftcard');
   if(Notification.permission === 'granted')
-    sendLocalNotification(`🎁 Carte Cadeau LUX ${selectedGCAmount} MAD`, `Code: ${code} · Pour ${recipient}`, '/');
-  toast(`🎁 Carte ${code} générée! Code envoyé.`);
+    sendLocalNotification('🎁 Carte Cadeau LUX '+selectedGCAmount+' MAD', 'Code: '+code+' · Pour '+recipient, '/');
+  toast('🎁 Carte '+code+' envoyée à '+recipient+'!');
   trackEvent('giftcard','purchase',String(selectedGCAmount));
+  // Save via API
+  if(typeof LuxAPI !== 'undefined') LuxAPI.createGiftCard(gc).catch(console.warn);
 }
 
 function checkGCBalance(){
@@ -4924,7 +4941,14 @@ async function initAllFeatures() {
   if (typeof LuxAPI !== 'undefined') {
     const health = await LuxAPI.init();
     renderAPIStatus(health ? { status: 'ok' } : null);
-    setInterval(updateSyncStatus, 30000);
+    // Throttled sync: 60s intervals, no UI thrashing
+    setInterval(function(){
+      if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+        var q = getLS('lux_pending_sync',[]);
+        if(q.length) LuxAPI._flushPending().catch(function(){});
+      }
+    }, 60000);
+    // Single initial sync — no repeated calls
     updateSyncStatus();
   }
 }
@@ -5149,11 +5173,15 @@ body.lux-app-active #lux-fab-group{bottom:80px}
 
     try {
       var apiUrl = (window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app') + '/api/ai/chat';
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function(){ controller.abort(); }, 8000);
       var res = await fetch(apiUrl, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ prompt: q, message: q, location: 'Taza', context: 'cafe_lux_taza' })
+        headers: {'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({ prompt: q, message: q, location: 'Taza', context: 'cafe_lux_taza', lang: 'fr' }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       var data = await res.json();
       typing.remove();
       var botDiv = document.createElement('div');
@@ -5255,6 +5283,13 @@ body.lux-app-active #lux-fab-group{bottom:80px}
       if(typeof toast === 'function') toast('⚠ Sync échouée');
     }
     if(btn){ btn.textContent = '🔄 Sync'; btn.style.opacity = '1'; }
+  };
+
+  // ── PayPal WhatsApp fallback ──
+  window.payViaWhatsApp = function(){
+    var total = document.getElementById('pay-amount')?.textContent || '0 MAD';
+    var msg = encodeURIComponent('✦ Paiement Café LUX\nMontant: '+total+'\nMode: PayPal\nMerci de confirmer.');
+    window.open('https://wa.me/212677717201?text='+msg, '_blank');
   };
 
   // ── CUSTOMER AUTH SYSTEM — Cloud-based ──
