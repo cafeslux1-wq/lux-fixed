@@ -462,6 +462,21 @@ async function doLogin(){
         SESS = {id:data.employee.id, name:data.employee.name, role:data.employee.role, isAdmin:data.employee.role==='admin', salary:Number(data.employee.salary||0)};
         saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋'); return;
       }
+    } else if(res.status === 403){
+      // Pending or rejected employee
+      var errData = await res.json().catch(function(){return {};});
+      errEl.textContent = '⏳ ' + (errData.error || 'حسابك في انتظار الموافقة من المدير');
+      // Check if rejected with reason
+      var rejected = JSON.parse(localStorage.getItem('lux_emp_rejected')||'[]');
+      var myRejection = rejected.find(function(r){return (r.username||'').toLowerCase() === user;});
+      if(myRejection){
+        errEl.innerHTML = '❌ تم رفض طلبك<br><span style="font-size:11px;color:var(--dim)">السبب: '+myRejection.reason+'</span>';
+      }
+      return;
+    } else if(res.status === 401){
+      var errData2 = await res.json().catch(function(){return {};});
+      errEl.textContent = '❌ ' + (errData2.error || 'كلمة المرور خاطئة');
+      return;
     }
   } catch(e){ /* API offline — fallback to local */ }
 

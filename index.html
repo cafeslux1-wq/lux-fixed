@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#C9A84C">
 <meta name="mobile-web-app-capable" content="yes">
+<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD&disable-funding=credit,card"></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Café LUX">
@@ -1489,6 +1490,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
     <button class="s-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
     <button class="s-tab admin-only-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()" style="display:none">📱 QR Tables</button>
     <button class="s-tab admin-only-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()" style="display:none">📊 Analytics</button>
+    <button class="s-tab admin-only-tab" id="st-admin-res" onclick="switchTab('admin-res',null);loadAdminReservations()" style="display:none">📅 Réservations</button>
     <button class="s-tab" id="st-giftcard" onclick="switchTab('giftcard',null)">🎁 Cartes Cadeau</button>
     <button class="s-tab admin-only-tab" id="st-campaigns" onclick="switchTab('campaigns',null)" style="display:none">📢 Campagnes</button>
     <button class="s-tab" id="st-saas" onclick="window.open('lux-saas.html','_blank')">✦ LUX SaaS</button>
@@ -1702,6 +1704,19 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <div class="an-chart-wrap" id="payment-chart"></div>
       </div>
       <div class="an-chart-wrap" id="order-type-chart"></div>
+    </div>
+  </div>
+
+  <!-- TAB: ADMIN RESERVATIONS -->
+  <div id="tab-admin-res" class="site-tab-content">
+    <div style="padding:24px;max-width:900px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold)">📅 Réservations</div>
+        <button onclick="loadAdminReservations()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+      </div>
+      <div id="admin-res-list" style="display:grid;gap:12px">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Chargement...</div>
+      </div>
     </div>
   </div>
 
@@ -4968,6 +4983,191 @@ if (typeof window._luxCartPatched === 'undefined') {
 }
 
 // ── REAL-TIME ORDERS POLLING ─────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN RESERVATIONS — Load from API + manage
+// ═══════════════════════════════════════════════════════════════
+async function loadAdminReservations(){
+  var el = document.getElementById('admin-res-list');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  var reservations = getLS('lux_reservations', []);
+  // Try API
+  try {
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      var apiRes = await LuxAPI.getReservations();
+      if(apiRes && apiRes.length) reservations = apiRes;
+    }
+  } catch(e){}
+  if(!reservations.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucune réservation</div>';
+    return;
+  }
+  reservations.sort(function(a,b){ return new Date(b.date||b.created||0) - new Date(a.date||a.created||0); });
+  var html = '';
+  reservations.slice(0,30).forEach(function(r){
+    var st = r.status || 'confirmed';
+    var stColor = st==='confirmed'?'var(--green)':st==='cancelled'?'var(--red)':'var(--gold)';
+    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div>';
+    html += '<div style="font-weight:600;color:var(--text);font-size:13px">'+('👤 '+(r.name||'—'))+' · <span style="color:var(--muted)">'+('📞 '+(r.phone||''))+'</span></div>';
+    html += '<div style="font-size:12px;color:var(--muted);margin-top:4px">📅 '+(r.date||'')+' à '+(r.time||'')+' · 👥 '+(r.guests||2)+' pers.'+(r.notes?' · '+r.notes:'')+'</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;align-items:center">';
+    html += '<span style="font-size:10px;color:'+stColor+';font-weight:600;text-transform:uppercase">'+st+'</span>';
+    if(st !== 'cancelled'){
+      html += '<button onclick="cancelAdminRes('+r.id+')" style="padding:4px 8px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:10px">✕</button>';
+    }
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function cancelAdminRes(id){
+  if(!confirm('Annuler cette réservation?')) return;
+  var all = getLS('lux_reservations', []);
+  var r = all.find(function(x){return x.id===id;});
+  if(r) r.status = 'cancelled';
+  setLS('lux_reservations', all);
+  loadAdminReservations();
+  toast('❌ Réservation annulée');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAYPAL BUTTON INIT — Real PayPal Checkout
+// ═══════════════════════════════════════════════════════════════
+function initPayPalButton(){
+  var container = document.getElementById('paypal-button-container');
+  var fallback = document.getElementById('paypal-fallback');
+  if(!container) return;
+  if(typeof paypal === 'undefined'){
+    if(fallback) fallback.style.display = 'block';
+    return;
+  }
+  try {
+    paypal.Buttons({
+      style: { layout:'vertical', color:'gold', shape:'rect', label:'paypal', height:45 },
+      createOrder: function(data, actions){
+        var total = parseFloat((document.getElementById('pay-total-amount')?.textContent || '0').replace(/[^0-9.]/g,'')) || 1;
+        return actions.order.create({ purchase_units:[{ amount:{ value: total.toFixed(2) } }] });
+      },
+      onApprove: function(data, actions){
+        return actions.order.capture().then(function(details){
+          toast('✅ Paiement PayPal réussi! ' + (details.payer?.name?.given_name || ''));
+          // Save order via API
+          if(typeof LuxAPI !== 'undefined') LuxAPI.createOrder({
+            payMethod:'paypal', paypalId: details.id,
+            items: cart.map(function(c){return {name:c.name||c.n, price:c.price||c.p, qty:c.qty||c.q};}),
+            total: parseFloat(details.purchase_units?.[0]?.amount?.value || 0)
+          }).catch(function(){});
+          // Reset cart
+          cart = []; renderCart();
+          var cp = document.getElementById('cart-panel'); if(cp) cp.classList.remove('open');
+          document.getElementById('payment-modal')?.classList.remove('open');
+          switchTab('tracking', null);
+        });
+      },
+      onError: function(err){
+        console.warn('[PayPal]', err);
+        if(fallback) fallback.style.display = 'block';
+      }
+    }).render('#paypal-button-container').catch(function(){
+      if(fallback) fallback.style.display = 'block';
+    });
+  } catch(e){
+    if(fallback) fallback.style.display = 'block';
+  }
+}
+
+// PayPal WhatsApp fallback
+function payViaWhatsApp(){
+  var total = document.querySelector('#pay-total-amount,.pay-header-amount')?.textContent || '0 MAD';
+  var msg = encodeURIComponent('✦ Paiement Café LUX\nMontant: '+total+'\nMode: PayPal\nMerci de confirmer.');
+  window.open('https://wa.me/212677717201?text='+msg, '_blank');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMPLOYEE PENDING REQUESTS — Admin view in dashboard
+// ═══════════════════════════════════════════════════════════════
+function renderPendingEmployees(){
+  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
+  var el = document.getElementById('pending-emp-section');
+  if(!el){
+    // Create section dynamically in the staff tab
+    var staffTab = document.querySelector('#tab-menu')?.parentElement;
+    if(!staffTab) return;
+  }
+  if(!reqs.length) return;
+  // Inject into existing DOM if section exists
+  if(el) {
+    var html = '<div style="font-size:13px;color:var(--gold);font-weight:600;margin-bottom:12px">📝 Demandes d\'adhésion en attente ('+reqs.length+')</div>';
+    reqs.forEach(function(r, idx){
+      html += '<div style="background:var(--bg2);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:12px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<div><strong>'+r.name+'</strong> · <span style="color:var(--muted);font-size:11px">'+(r.phone||'')+'</span>';
+      if(r.cin) html += ' · <span style="color:var(--muted);font-size:11px">CIN: '+r.cin+'</span>';
+      html += '</div>';
+      html += '<span style="font-size:9px;color:var(--gold);background:rgba(201,168,76,.1);padding:2px 8px;border-radius:4px">EN ATTENTE</span>';
+      html += '</div>';
+      html += '<div style="margin-top:8px"><textarea id="emp-reason-'+idx+'" placeholder="Motif de la décision..." style="width:100%;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;resize:none;height:36px;font-family:DM Sans,sans-serif"></textarea></div>';
+      html += '<div style="display:flex;gap:6px;margin-top:6px">';
+      html += '<button onclick="approveEmployee('+idx+')" style="flex:1;padding:7px;background:rgba(61,190,122,.1);border:1px solid rgba(61,190,122,.3);border-radius:6px;color:var(--green);cursor:pointer;font-size:11px;font-weight:600">✅ Accepter</button>';
+      html += '<button onclick="rejectEmployee('+idx+')" style="flex:1;padding:7px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:11px;font-weight:600">❌ Refuser</button>';
+      html += '</div></div>';
+    });
+    el.innerHTML = html;
+  }
+}
+
+function approveEmployee(idx){
+  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
+  var r = reqs[idx]; if(!r) return;
+  var reason = (document.getElementById('emp-reason-'+idx)?.value||'').trim();
+  r.status = 'approved'; r.reason = reason; r.decidedAt = new Date().toISOString();
+  // Add to employees list
+  var emps = getLS('lux_employees', []);
+  emps.push({ id:'E'+Date.now(), name:r.name, role:'service', phone:r.phone||'', cin:r.cin||'', status:'active', since:new Date().toISOString().slice(0,10) });
+  setLS('lux_employees', emps);
+  reqs.splice(idx, 1);
+  localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
+  // Try API
+  if(typeof LuxAPI !== 'undefined') LuxAPI.createEmployee({name:r.name, role:'service', phone:r.phone, cin:r.cin, username:r.username}).catch(function(){});
+  toast('✅ '+r.name+' approuvé!');
+  renderPendingEmployees();
+}
+
+function rejectEmployee(idx){
+  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
+  var r = reqs[idx]; if(!r) return;
+  var reason = (document.getElementById('emp-reason-'+idx)?.value||'').trim();
+  if(!reason){ toast('⚠ Veuillez indiquer le motif du refus'); return; }
+  r.status = 'rejected'; r.reason = reason; r.decidedAt = new Date().toISOString();
+  // Send rejection to server (update employee status + save reason)
+  if(typeof LuxAPI !== 'undefined' && r.username){
+    fetch((window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app')+'/api/employees/register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:r.username, status:'rejected', reason:reason})
+    }).catch(function(){});
+  }
+  // Save rejected list for portal to read
+  var rejected = JSON.parse(localStorage.getItem('lux_emp_rejected')||'[]');
+  rejected.push({name:r.name, username:r.username, reason:reason, date:r.decidedAt});
+  localStorage.setItem('lux_emp_rejected', JSON.stringify(rejected));
+  reqs.splice(idx, 1);
+  localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
+  toast('❌ '+r.name+' refusé — Motif: '+reason);
+  renderPendingEmployees();
+}
+
+// Init PayPal on payment modal open
+var _origSelectPay = typeof selectPayMethod !== 'undefined' ? selectPayMethod : null;
+if(_origSelectPay){
+  var _wrappedSelectPay = function(method, el){
+    _origSelectPay(method, el);
+    if(method === 'paypal') setTimeout(initPayPalButton, 200);
+  };
+  window.selectPayMethod = _wrappedSelectPay;
+}
 async function pollOrderStatus() {
   if (typeof LuxAPI === 'undefined' || !LuxAPI.isOnline()) return;
   try {
