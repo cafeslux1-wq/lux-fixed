@@ -2187,9 +2187,8 @@ function enterMonEspace(){
 }
 
 function openStaffPortal(){
-  // Direct access to Staff Portal — bypass choice screen
-  // ?mode=staff tells portal.html to skip the gateway and load staff view directly
-  window.open('portal.html?mode=staff','_blank');
+  // Opens the staff portal directly — new portal.html has login form, no choice screen
+  window.open('portal.html','_blank');
 }
 
 
@@ -2291,7 +2290,7 @@ function checkPIN(){
     var routes = {
       'pos':   'cafe-lux.html?mode=pos&focus=1',
       'admin': 'cafe-lux.html?mode=admin',
-      'staff': 'portal.html?mode=staff',
+      'staff': 'portal.html',
       'kds':   'cafe-lux.html?mode=kds',
       'stock': 'cafe-lux.html?mode=admin'
     };
@@ -5255,7 +5254,7 @@ function autoEnterAdmin() {
 
 // ── Auto-enter Staff (opens portal.html directly in staff mode) ─────────
 function autoEnterStaff() {
-  window.open('portal.html?mode=staff', '_blank');
+  window.open('portal.html', '_blank');
 }
 
 // ── Auto-enter KDS ───────────────────────────────────────────────────

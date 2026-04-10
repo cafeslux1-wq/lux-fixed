@@ -6,7 +6,6 @@
 <title>Café LUX Pro · v3.6 Final Luxury Ultra</title>
 <script>window.LUX_API_URL = 'https://api.cafeslux.com';</script>
 <script src="api-client.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 
@@ -2655,68 +2654,47 @@ function markKdsReady(id){
 function renderQRTables(){
   var el = document.getElementById('qr-grid');
   if(!el) return;
-  var base = 'https://cafeslux.com/?table=';
+  var base = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu';
   var html='';
   for(var i=1;i<=12;i++){
+    var url = base + '&table=' + i;
+    var qrImg = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl='+encodeURIComponent(url)+'&choe=UTF-8&chld=H|2';
     html += '<div class="card" style="text-align:center">'+
       '<div style="font-family:Playfair Display,serif;color:var(--gold);font-size:24px;margin-bottom:6px">Table '+i+'</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">QR menu public</div>'+
-      '<div id="qr-canvas-'+i+'" style="background:#fff;border-radius:12px;padding:12px;display:inline-block;margin-bottom:10px;min-width:156px;min-height:156px"></div>'+
+      '<div style="background:#fff;border-radius:12px;padding:8px;display:inline-block;margin-bottom:10px"><img src="'+qrImg+'" width="140" height="140" alt="QR Table '+i+'" style="display:block;border-radius:6px"></div>'+
       '<div style="display:flex;gap:8px;justify-content:center"><button class="btn sm" onclick="copyQrLink('+i+')">📋 Copier</button><button class="btn sm solid" onclick="printQrCard('+i+')">🖨 Imprimer</button></div>'+
     '</div>';
   }
   el.innerHTML = html;
-  // Generate QR codes after DOM is ready using qrcode.js
-  setTimeout(function(){
-    for(var t=1;t<=12;t++){
-      var container = document.getElementById('qr-canvas-'+t);
-      if(container && typeof QRCode !== 'undefined'){
-        container.innerHTML = '';
-        new QRCode(container, {
-          text: base + t,
-          width: 132,
-          height: 132,
-          colorDark: '#1A0A00',
-          colorLight: '#FFFFFF',
-          correctLevel: QRCode.CorrectLevel.H
-        });
-      }
-    }
-  }, 150);
 }
 function copyQrLink(i){
-  var url = 'https://cafeslux.com/?table=' + i;
+  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
   navigator.clipboard.writeText(url).then(function(){ toast('🔗 Lien table '+i+' copié'); }).catch(function(){ toast(url); });
 }
 function printQrCard(i){
-  var container = document.getElementById('qr-canvas-'+i);
-  var qrDataUrl = '';
-  if(container){
-    var canvas = container.querySelector('canvas');
-    if(canvas) qrDataUrl = canvas.toDataURL('image/png');
-  }
-  if(!qrDataUrl){toast('⚠ QR non généré');return;}
+  var url = window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'cafe-lux.html?mode=site&tab=menu&table=' + i;
+  var qrImg = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='+encodeURIComponent(url)+'&choe=UTF-8&chld=H|2';
   var w = window.open('', '', 'width=420,height=620');
   if(!w) return;
   w.document.write('<!DOCTYPE html><html><head><title>QR Table '+i+'</title><style>'
     +'body{font-family:serif;text-align:center;padding:30px;background:#fff;color:#000}'
     +'.logo{font-size:28px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px}'
-    +'.sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:20px}'
-    +'img{border:3px solid #C9A84C;border-radius:12px;padding:10px;background:#fff}'
-    +'.tnum{font-size:42px;color:#C9A84C;font-weight:700;margin:16px 0 8px}'
-    +'.hint{font-size:13px;color:#555;margin-top:10px}'
-    +'.url{font-size:10px;color:#AAA;margin-top:6px}'
-    +'@page{size:80mm auto;margin:5mm}'
+    +'.sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:16px}'
+    +'img{border:3px solid #C9A84C;border-radius:12px;padding:8px;background:#fff}'
+    +'.tnum{font-size:42px;color:#C9A84C;font-weight:700;margin:14px 0 6px}'
+    +'.hint{font-size:12px;color:#555;margin-top:8px}'
+    +'.url{font-size:9px;color:#AAA;margin-top:4px}'
     +'</style></head><body>'
     +'<div class="logo">✦ LUX</div>'
     +'<div class="sub">CAFÉ & PÂTISSERIE · TAZA</div>'
-    +'<img src="'+qrDataUrl+'" width="200" height="200">'
+    +'<img src="'+qrImg+'" width="200" height="200" alt="QR">'
     +'<div class="tnum">TABLE '+i+'</div>'
     +'<div class="hint">📱 Scannez pour commander directement</div>'
     +'<div class="url">cafeslux.com · +212 808524169</div>'
     +'</body></html>');
   w.document.close();
-  setTimeout(function(){try{w.focus();w.print();}catch(e){}}, 600);
+  setTimeout(function(){try{w.focus();w.print();}catch(e){}}, 800);
 }
 
 // ── RECIPE COSTS ─────────────────────────────────────────────────────
