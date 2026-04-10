@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Café LUX v3.3 Final — Full Launch | StaffDirect | POSFocus | PrintFix | Mobile -->
+<!-- Café LUX v3.4 — Admin Dashboard: Reservations + Employees + Customers + Loyalty -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -1491,6 +1491,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
     <button class="s-tab admin-only-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()" style="display:none">📱 QR Tables</button>
     <button class="s-tab admin-only-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()" style="display:none">📊 Analytics</button>
     <button class="s-tab admin-only-tab" id="st-admin-res" onclick="switchTab('admin-res',null);loadAdminReservations()" style="display:none">📅 Réservations</button>
+    <button class="s-tab admin-only-tab" id="st-admin-emps" onclick="switchTab('admin-emps',null);loadAdminEmployees()" style="display:none">👥 Employés</button>
+    <button class="s-tab admin-only-tab" id="st-admin-custs" onclick="switchTab('admin-custs',null);loadAdminCustomers()" style="display:none">💎 Clients</button>
     <button class="s-tab" id="st-giftcard" onclick="switchTab('giftcard',null)">🎁 Cartes Cadeau</button>
     <button class="s-tab admin-only-tab" id="st-campaigns" onclick="switchTab('campaigns',null)" style="display:none">📢 Campagnes</button>
     <button class="s-tab" id="st-saas" onclick="window.open('lux-saas.html','_blank')">✦ LUX SaaS</button>
@@ -1715,6 +1717,42 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <button onclick="loadAdminReservations()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
       </div>
       <div id="admin-res-list" style="display:grid;gap:12px">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ADMIN EMPLOYEES -->
+  <div id="tab-admin-emps" class="site-tab-content">
+    <div style="padding:24px;max-width:900px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold)">👥 Gestion des Employés</div>
+        <button onclick="loadAdminEmployees()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+      </div>
+      <!-- Pending employees section -->
+      <div id="admin-emps-pending" style="display:none;margin-bottom:24px">
+        <div style="font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px">⏳ En attente de validation <span id="pending-count" style="background:var(--red);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px"></span></div>
+        <div id="admin-emps-pending-list" style="display:grid;gap:10px"></div>
+      </div>
+      <!-- Active employees -->
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">✅ Employés actifs</div>
+      <div id="admin-emps-list" style="display:grid;gap:10px">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ADMIN CUSTOMERS -->
+  <div id="tab-admin-custs" class="site-tab-content">
+    <div style="padding:24px;max-width:900px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--gold)">💎 Clients & Fidélité</div>
+        <button onclick="loadAdminCustomers()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+      </div>
+      <!-- KPI summary -->
+      <div id="admin-custs-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px"></div>
+      <!-- Customer list -->
+      <div id="admin-custs-list" style="display:grid;gap:10px">
         <div style="text-align:center;padding:40px;color:var(--muted)">Chargement...</div>
       </div>
     </div>
@@ -5030,6 +5068,163 @@ function cancelAdminRes(id){
   setLS('lux_reservations', all);
   loadAdminReservations();
   toast('❌ Réservation annulée');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN: EMPLOYEES MANAGEMENT — API-connected
+// ═══════════════════════════════════════════════════════════════
+async function loadAdminEmployees(){
+  var listEl = document.getElementById('admin-emps-list');
+  var pendEl = document.getElementById('admin-emps-pending-list');
+  var pendWrap = document.getElementById('admin-emps-pending');
+  var pendCount = document.getElementById('pending-count');
+  if(!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis le serveur...</div>';
+
+  var employees = [];
+  try {
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      employees = await LuxAPI.getEmployees();
+    }
+  } catch(e){ console.warn('[LUX] Employees fetch error:', e); }
+  if(!employees.length) employees = getLS('lux_employees_full', []);
+
+  // Split into pending and active
+  var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
+  var active = employees.filter(function(e){ return e.status !== 'pending' && e.role !== 'pending'; });
+
+  // Pending section
+  if(pending.length > 0 && pendEl && pendWrap){
+    pendWrap.style.display = 'block';
+    if(pendCount) pendCount.textContent = pending.length;
+    pendEl.innerHTML = pending.map(function(e){
+      return '<div style="background:rgba(224,82,82,.05);border:1px solid rgba(224,82,82,.2);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">'
+        +'<div>'
+        +'<div style="font-weight:600;color:var(--text);font-size:13px">👤 '+(e.name||'—')+' <span style="color:var(--muted);font-size:11px">@'+(e.username||'')+'</span></div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:3px">📞 '+(e.phone||'—')+' · CIN: '+(e.cin||'—')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Inscrit: '+new Date(e.createdAt||Date.now()).toLocaleDateString('fr-MA')+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button onclick="approveEmployee('+e.id+')" style="padding:6px 12px;background:rgba(61,190,122,.12);border:1px solid rgba(61,190,122,.3);border-radius:8px;color:var(--green);cursor:pointer;font-size:11px;font-weight:600">✅ Accepter</button>'
+        +'<button onclick="rejectEmployee('+e.id+')" style="padding:6px 12px;background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.3);border-radius:8px;color:var(--red);cursor:pointer;font-size:11px;font-weight:600">❌ Refuser</button>'
+        +'</div></div>';
+    }).join('');
+  } else if(pendWrap){
+    pendWrap.style.display = 'none';
+  }
+
+  // Active employees
+  if(!active.length){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun employé actif</div>';
+    return;
+  }
+  var roleIcons = {service:'🍽',barman:'🥤',cuisine:'👨‍🍳',caissiere:'💰',nettoyage:'🧹',manager:'👔'};
+  listEl.innerHTML = active.map(function(e){
+    var icon = roleIcons[e.role] || '👤';
+    var salary = e.salary ? (Math.round(e.salary).toLocaleString()+' DH') : '—';
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="font-size:24px">'+icon+'</div>'
+      +'<div>'
+      +'<div style="font-weight:600;color:var(--text);font-size:13px">'+e.name+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'+e.role+' · '+salary+'</div>'
+      +'</div></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:10px;color:var(--green)">● '+(e.status||'active')+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">📞 '+(e.phone||'—')+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+async function approveEmployee(id){
+  if(!confirm('Accepter cet employé?')) return;
+  try {
+    if(typeof LuxAPI !== 'undefined') await LuxAPI.updateEmployee(id, {status:'active', role:'service'});
+    toast('✅ Employé approuvé!');
+    loadAdminEmployees();
+  } catch(e){ toast('⚠ Erreur: '+e.message); }
+}
+
+async function rejectEmployee(id){
+  var reason = prompt('Raison du refus (optionnel):');
+  try {
+    if(typeof LuxAPI !== 'undefined') await LuxAPI.updateEmployee(id, {status:'rejected', rejectionReason: reason||'Refusé'});
+    toast('❌ Employé refusé');
+    loadAdminEmployees();
+  } catch(e){ toast('⚠ Erreur: '+e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN: CUSTOMERS & LOYALTY — API-connected
+// ═══════════════════════════════════════════════════════════════
+async function loadAdminCustomers(){
+  var listEl = document.getElementById('admin-custs-list');
+  var kpiEl = document.getElementById('admin-custs-kpi');
+  if(!listEl) return;
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis le serveur...</div>';
+
+  var customers = [];
+  try {
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      customers = await LuxAPI.getCustomers();
+    }
+  } catch(e){ console.warn('[LUX] Customers fetch error:', e); }
+
+  // Fallback to localStorage
+  if(!customers.length){
+    var localCusts = getLS('lux_web_customers', {});
+    customers = Object.values(localCusts).map(function(c){
+      return {name:c.name, phone:c.phone, loyaltyPoints:c.points||0, _count:{orders:c.orders?c.orders.length:0}};
+    });
+  }
+
+  // Compute levels
+  function getLevel(pts){
+    if(pts >= 600) return {name:'Diamond',icon:'💎',color:'#5B8DEF'};
+    if(pts >= 300) return {name:'Gold',icon:'🥇',color:'var(--gold)'};
+    if(pts >= 100) return {name:'Silver',icon:'🥈',color:'#A0A0B4'};
+    return {name:'Bronze',icon:'🥉',color:'#B06438'};
+  }
+
+  // KPI
+  if(kpiEl){
+    var total = customers.length;
+    var diamond = customers.filter(function(c){return (c.loyaltyPoints||0)>=600;}).length;
+    var gold = customers.filter(function(c){var p=c.loyaltyPoints||0;return p>=300&&p<600;}).length;
+    var silver = customers.filter(function(c){var p=c.loyaltyPoints||0;return p>=100&&p<300;}).length;
+    var bronze = total - diamond - gold - silver;
+    kpiEl.innerHTML = ''
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;color:var(--gold);font-weight:700">'+total+'</div><div style="font-size:10px;color:var(--muted)">Total Clients</div></div>'
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;color:#5B8DEF;font-weight:700">'+diamond+'</div><div style="font-size:10px;color:var(--muted)">💎 Diamond</div></div>'
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;color:var(--gold);font-weight:700">'+gold+'</div><div style="font-size:10px;color:var(--muted)">🥇 Gold</div></div>'
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;color:#A0A0B4;font-weight:700">'+silver+'</div><div style="font-size:10px;color:var(--muted)">🥈 Silver</div></div>'
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center"><div style="font-size:24px;color:#B06438;font-weight:700">'+bronze+'</div><div style="font-size:10px;color:var(--muted)">🥉 Bronze</div></div>';
+  }
+
+  if(!customers.length){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun client enregistré</div>';
+    return;
+  }
+
+  // Sort by points desc
+  customers.sort(function(a,b){return (b.loyaltyPoints||0)-(a.loyaltyPoints||0);});
+
+  listEl.innerHTML = customers.slice(0,50).map(function(c){
+    var pts = c.loyaltyPoints || 0;
+    var lv = getLevel(pts);
+    var orders = c._count ? c._count.orders : (c.orders||[]).length;
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div style="display:flex;align-items:center;gap:12px">'
+      +'<div style="font-size:22px">'+lv.icon+'</div>'
+      +'<div>'
+      +'<div style="font-weight:600;color:var(--text);font-size:13px">'+(c.name||'Anonyme')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">📞 '+(c.phone||'—')+' · '+orders+' commandes</div>'
+      +'</div></div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:16px;font-weight:700;color:'+lv.color+'">'+pts+' pts</div>'
+      +'<div style="font-size:10px;color:'+lv.color+'">'+lv.name+'</div>'
+      +'</div></div>';
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════════

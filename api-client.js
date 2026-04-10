@@ -189,6 +189,17 @@
     },
 
     // ── CUSTOMERS ─────────────────────────────────────────────────
+    async getCustomers() {
+      if (!_isOnline) {
+        const local = _ls('web_customers',{});
+        return Object.values(local).map(c => ({name:c.name,phone:c.phone,loyaltyPoints:c.points||c.loyaltyPoints||0,_count:{orders:(c.orders||[]).length}}));
+      }
+      try {
+        const data = await _get('/api/customers');
+        _lsSet('customers_list', data);
+        return data;
+      } catch { return _ls('customers_list', []); }
+    },
     async getCustomer(phone) {
       if (!phone) return null;
       if (!_isOnline) return _ls('web_customers',{})[phone] || null;
