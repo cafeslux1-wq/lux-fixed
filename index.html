@@ -2392,6 +2392,8 @@ function showAdminTabs(){
   } catch(e){}
 }
 function switchTab(tab,btn){
+  if(tab === 'signatures'){ tab = 'menu'; setTimeout(function(){ if(typeof buildMenu === 'function') buildMenu(); var b = document.querySelector('.cat-btn[data-cat="sig"]'); if(typeof scrollToSection === 'function') scrollToSection('sig', b); }, 60); }
+  if(tab === 'breakfast'){ tab = 'menu'; setTimeout(function(){ if(typeof buildMenu === 'function') buildMenu(); var b = document.querySelector('.cat-btn[data-cat="pdej"]'); if(typeof scrollToSection === 'function') scrollToSection('pdej', b); }, 60); }
   document.querySelectorAll('.site-tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.s-tab').forEach(b=>b.classList.remove('active'));
   const tc=document.getElementById('tab-'+tab);
@@ -5473,14 +5475,13 @@ function autoEnterKDS() {
 
 <!-- AI Chat Window -->
 <div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:360px;max-width:calc(100vw - 40px);height:500px;max-height:70vh;background:linear-gradient(180deg,var(--bg2) 0%,#0C0C0C 100%);border:1px solid var(--border-gold);border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.7),0 0 0 1px rgba(215,210,200,.06) inset;overflow:hidden;flex-direction:column">
-  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid rgba(201,168,76,.12)">
-    <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI" style="width:30px; height:30px; border-radius:50%; border:1px solid var(--gold); object-fit:cover;">
-    
-    <div style="flex:1">
-      <div style="font-family:'Cinzel',serif;color:var(--gold);font-size:14px;letter-spacing:2px">LUX AI</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.4)">Assistant intelligent · Café LUX</div>
+  <div class="lux-ai-chat-header-bar">
+    <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI" class="lux-ai-header-avatar">
+    <div class="lux-ai-header-text">
+      <div class="lux-ai-header-title-main">LUX AI</div>
+      <div class="lux-ai-header-subtitle">Assistant intelligent · Café LUX</div>
     </div>
-    <button onclick="toggleAIChat()" style="background:none;border:1px solid rgba(255,255,255,.15);color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px">✕</button>
+    <button type="button" onclick="toggleAIChat()" class="lux-ai-header-close" aria-label="Fermer">✕</button>
   </div>
   <div id="ai-chat-messages" class="lux-ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
     <div class="lux-ai-bot-bubble lux-ai-rich" style="background:linear-gradient(165deg,rgba(215,210,200,.12) 0%,rgba(201,168,76,.07) 100%);border:1px solid rgba(201,168,76,.22);border-radius:14px 14px 14px 4px;padding:14px;font-size:12px;color:var(--text);line-height:1.65;max-width:100%;align-self:flex-start">
@@ -5538,6 +5539,29 @@ function autoEnterKDS() {
 #fab-wa:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(37,211,102,.5)}
 #fab-sync:hover{border-color:var(--gold);background:rgba(201,168,76,.1)}
 #lux-ai-chat.open{display:flex!important}
+/* LUX AI — barre titre premium */
+.lux-ai-chat-header-bar{
+  background:linear-gradient(135deg,#120800 0%,#1F1004 45%,#2D1A0A 100%);
+  padding:18px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0;
+  border-bottom:1px solid rgba(201,168,76,.22);
+  box-shadow:0 8px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(232,201,122,.08);
+}
+.lux-ai-header-avatar{width:36px;height:36px;border-radius:50%;border:2px solid rgba(201,168,76,.55);object-fit:cover;box-shadow:0 0 0 1px rgba(0,0,0,.2),0 4px 14px rgba(201,168,76,.15)}
+.lux-ai-header-text{flex:1;min-width:0}
+.lux-ai-header-title-main{
+  font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:16px;letter-spacing:.22em;
+  color:#FAF7F2;text-shadow:0 1px 2px rgba(0,0,0,.4);line-height:1.2;margin:0;
+}
+.lux-ai-header-subtitle{
+  margin-top:5px;font-size:10px;font-weight:500;letter-spacing:.06em;
+  color:var(--gold);opacity:.92;line-height:1.35;
+}
+.lux-ai-header-close{
+  background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.22);color:rgba(255,255,255,.85);
+  width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;
+  transition:background .2s,border-color .2s,color .2s;flex-shrink:0;
+}
+.lux-ai-header-close:hover{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.4);color:var(--gold-l)}
 /* Mobile: full width chat */
 @media(max-width:480px){
   #lux-ai-chat{width:calc(100vw - 20px);right:10px;bottom:70px;height:60vh}
@@ -5553,6 +5577,8 @@ function autoEnterKDS() {
 }
 .lux-ai-chip:hover{background:rgba(201,168,76,.18);border-color:var(--gold);color:var(--text)}
 .lux-ai-chip:active{transform:scale(.97)}
+.lux-ai-action-btn{cursor:pointer;font-family:'DM Sans',sans-serif;border:none}
+.lux-ai-action-btn:hover{filter:brightness(1.06);box-shadow:0 2px 12px rgba(201,168,76,.2)}
 .lux-ai-messages .lux-ai-card{max-width:100%!important}
 .lux-ai-messages .lux-ai-card a[onclick]{-webkit-tap-highlight-color:transparent}
 .lux-ai-messages .lux-ai-card img{border-radius:12px}
@@ -5567,6 +5593,32 @@ body.lux-app-active #lux-fab-group{bottom:80px}
 // ══════════════════════════════════════════════════════════════
 (function(){
   'use strict';
+
+  /**
+   * Deep-link LUX AI → onglets site + sections menu (data-cat).
+   * Ferme le chat, appelle switchTab, puis scrollToSection si menuSection défini.
+   */
+  window.luxAINavigate = function(tab, menuSection){
+    var c = document.getElementById('lux-ai-chat');
+    if(c) c.classList.remove('open');
+    if(tab === 'signatures'){ tab = 'menu'; menuSection = 'sig'; }
+    else if(tab === 'breakfast'){ tab = 'menu'; menuSection = 'pdej'; }
+    tab = tab || 'menu';
+    if(typeof switchTab !== 'function') return;
+    switchTab(tab, null);
+    if(tab === 'reservation' && typeof initReservation === 'function') initReservation();
+    if(tab === 'menu'){
+      if(typeof buildMenu === 'function') buildMenu();
+      var sec = menuSection ? String(menuSection) : '';
+      if(sec && /^[a-z0-9_-]+$/i.test(sec)){
+        var b = document.querySelector('.cat-btn[data-cat="'+sec+'"]');
+        if(typeof scrollToSection === 'function') scrollToSection(sec, b);
+      } else if(typeof showAllCategories === 'function'){
+        var allB = document.querySelector('.cat-btn[data-cat="all"]');
+        showAllCategories(allB);
+      }
+    }
+  };
 
   function luxEscapeHint(s){
     if(!s) return '';
@@ -5585,9 +5637,16 @@ body.lux-app-active #lux-fab-group{bottom:80px}
       var d = await r.json();
       if(d.timeSuggestion && (d.timeSuggestion.hintAr || d.timeSuggestion.hintFr)){
         hint.style.display = 'block';
+        var ctaBtn = '';
+        var cs = d.timeSuggestion.ctaMenuSection ? String(d.timeSuggestion.ctaMenuSection).replace(/[^a-z0-9_-]/gi, '') : '';
+        if(cs && (d.timeSuggestion.ctaLabelAr || d.timeSuggestion.ctaLabelFr)){
+          ctaBtn = '<button type="button" class="lux-ai-chip lux-ai-action-btn" style="margin-top:10px;width:100%;padding:10px 12px;font-weight:700" onclick="if(window.luxAINavigate){luxAINavigate(\'menu\',\''+cs+'\');}return false;">' +
+            luxEscapeHint(d.timeSuggestion.ctaLabelAr || '') + ' · ' + luxEscapeHint(d.timeSuggestion.ctaLabelFr || '') + '</button>';
+        }
         hint.innerHTML = '<strong style="color:var(--gold)">✦ اقتراح حسب الوقت</strong><br>' +
           (d.timeSuggestion.hintAr ? '<span>' + luxEscapeHint(d.timeSuggestion.hintAr) + '</span><br>' : '') +
-          (d.timeSuggestion.hintFr ? '<span style="opacity:.88">' + luxEscapeHint(d.timeSuggestion.hintFr) + '</span>' : '');
+          (d.timeSuggestion.hintFr ? '<span style="opacity:.88">' + luxEscapeHint(d.timeSuggestion.hintFr) + '</span>' : '') +
+          ctaBtn;
       }
     } catch(e){}
   }
