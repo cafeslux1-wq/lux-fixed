@@ -75,6 +75,7 @@
 <style>
 :root{
   --gold:#C9A84C;--gold-l:#E8C97A;--gold-d:#8B6E2F;--gold-glow:rgba(201,168,76,.15);
+  --greige:#D7D2C8;--greige-deep:#B8B0A6;--off-white:#F5F2ED;--matte-cream:#EBE8E1;
   --bg:#080808;--bg2:#0F0F0F;--bg3:#161616;--bg4:#1E1E1E;--bg5:#282828;
   --border:#2A2A2A;--border-gold:rgba(201,168,76,.25);
   --text:#F2EFE9;--muted:#888;--dim:#555;
@@ -1271,7 +1272,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   </div>
 
   <!-- Footer -->
-  <div class="gw-footer">
+  <div class="gw-footer" id="lux-visit-footer">
     <div>📍 Résidence Ziat N28, Taza &nbsp;·&nbsp; ⏰ 07:00–23:00</div>
     <div>
       <a href="https://wa.me/212677717201" target="_blank">📲 WhatsApp</a>
@@ -5471,8 +5472,8 @@ function autoEnterKDS() {
 ══════════════════════════════════════════════════════════════════ -->
 
 <!-- AI Chat Window -->
-<div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:360px;max-width:calc(100vw - 40px);height:500px;max-height:70vh;background:var(--bg2);border:1px solid var(--border-gold);border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.7);overflow:hidden;flex-direction:column">
-  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+<div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:360px;max-width:calc(100vw - 40px);height:500px;max-height:70vh;background:linear-gradient(180deg,var(--bg2) 0%,#0C0C0C 100%);border:1px solid var(--border-gold);border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.7),0 0 0 1px rgba(215,210,200,.06) inset;overflow:hidden;flex-direction:column">
+  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;border-bottom:1px solid rgba(201,168,76,.12)">
     <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI" style="width:30px; height:30px; border-radius:50%; border:1px solid var(--gold); object-fit:cover;">
     
     <div style="flex:1">
@@ -5481,10 +5482,18 @@ function autoEnterKDS() {
     </div>
     <button onclick="toggleAIChat()" style="background:none;border:1px solid rgba(255,255,255,.15);color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px">✕</button>
   </div>
-  <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
-    <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);border-radius:12px 12px 12px 4px;padding:12px;font-size:12px;color:var(--text);line-height:1.6;max-width:85%">
-      مرحباً! أنا المساعد الذكي لـ Café LUX ☕<br>
-      Bonjour! Comment puis-je vous aider? Menu, commandes, réservations...
+  <div id="ai-chat-messages" class="lux-ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
+    <div class="lux-ai-bot-bubble lux-ai-rich" style="background:linear-gradient(165deg,rgba(215,210,200,.12) 0%,rgba(201,168,76,.07) 100%);border:1px solid rgba(201,168,76,.22);border-radius:14px 14px 14px 4px;padding:14px;font-size:12px;color:var(--text);line-height:1.65;max-width:100%;align-self:flex-start">
+      <div style="font-family:'Cinzel',serif;color:var(--gold);font-size:11px;letter-spacing:.2em;margin-bottom:6px">LUX AI</div>
+      مرحباً بكم في Café LUX ✦ أنا مساعدكم الذكي للمينيو، العنوان، الحجوزات والمزيد.<br>
+      <span style="opacity:.88">Bonjour — menu, adresse, réservations, cartes cadeau : choisissez une action ou écrivez-nous.</span>
+      <div id="lux-ai-time-hint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(201,168,76,.1);border-left:3px solid var(--gold);font-size:11px;line-height:1.5;color:var(--off-white)"></div>
+      <div id="lux-ai-quick-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Où se trouve Café LUX à Taza ? Adresse précise.')">📍 أين تقعون؟</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Montrez-moi le menu Café LUX : boissons et spécialités avec les prix.')">📖 رؤية المينيو</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je veux acheter une carte cadeau Café LUX')">🎁 شراء بطاقة هدية</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je cherche un emploi chez Café LUX, procédure بوابة الموظفين')">💼 طلب وظيفة</button>
+      </div>
     </div>
   </div>
   <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;align-items:center">
@@ -5534,6 +5543,20 @@ function autoEnterKDS() {
   #lux-ai-chat{width:calc(100vw - 20px);right:10px;bottom:70px;height:60vh}
   #lux-fab-group{bottom:12px;right:12px}
 }
+/* LUX AI — rich HTML (cartes produit greige / or / blanc cassé) */
+.lux-ai-messages .lux-ai-rich{max-width:100%!important;width:100%}
+.lux-ai-messages .lux-ai-rich .lux-ai-product-grid{width:100%;max-width:100%}
+.lux-ai-chip{
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;padding:8px 10px;border-radius:999px;
+  border:1px solid rgba(201,168,76,.35);background:rgba(215,210,200,.08);color:var(--off-white);cursor:pointer;
+  transition:background .2s,border-color .2s,transform .15s;white-space:normal;text-align:center;line-height:1.3;max-width:100%
+}
+.lux-ai-chip:hover{background:rgba(201,168,76,.18);border-color:var(--gold);color:var(--text)}
+.lux-ai-chip:active{transform:scale(.97)}
+.lux-ai-messages .lux-ai-card{max-width:100%!important}
+.lux-ai-messages .lux-ai-card a[onclick]{-webkit-tap-highlight-color:transparent}
+.lux-ai-messages .lux-ai-card img{border-radius:12px}
+.lux-ai-messages .lux-ai-card--full img{border-radius:14px}
 /* Push FABs above bottom nav if present */
 body.lux-app-active #lux-fab-group{bottom:80px}
 </style>
@@ -5545,18 +5568,59 @@ body.lux-app-active #lux-fab-group{bottom:80px}
 (function(){
   'use strict';
 
+  function luxEscapeHint(s){
+    if(!s) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function loadLuxAiInit(){
+    var hint = document.getElementById('lux-ai-time-hint');
+    if(!hint) return;
+    try {
+      var apiUrl = (window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app') + '/api/ai/init';
+      var r = await fetch(apiUrl, { headers: { 'Accept': 'application/json' } });
+      if(!r.ok) return;
+      var d = await r.json();
+      if(d.timeSuggestion && (d.timeSuggestion.hintAr || d.timeSuggestion.hintFr)){
+        hint.style.display = 'block';
+        hint.innerHTML = '<strong style="color:var(--gold)">✦ اقتراح حسب الوقت</strong><br>' +
+          (d.timeSuggestion.hintAr ? '<span>' + luxEscapeHint(d.timeSuggestion.hintAr) + '</span><br>' : '') +
+          (d.timeSuggestion.hintFr ? '<span style="opacity:.88">' + luxEscapeHint(d.timeSuggestion.hintFr) + '</span>' : '');
+      }
+    } catch(e){}
+  }
+
+  window.luxAIQuickSend = function(prompt){
+    var input = document.getElementById('ai-chat-input');
+    if(!input || !prompt) return;
+    input.value = prompt;
+    sendToGemma();
+  };
+
+  /** Détecte une question menu/produit (évite le message générique type WhatsApp) */
+  function luxAILooksLikeMenuOrProductQuery(s){
+    var t = (s || '').toLowerCase();
+    return /menu|carte|مينيو|breakfast|moroccan|latte|espresso|jus|juice|عصير|قهوة|coffee|café|crêpe|crepe|كريب|gâteau|gateau|cake|كاطو|thé|tea|شاي|sellou|سلو|zaazaa|زعزاع|avocat|أفوكادو|فطور|petit|déjeuner|ingrédient|ingredient|مكونات|prix|price|ثمن|commande|اطلب|plat|boisson|signature|lux\s*latte|royal/i.test(t);
+  }
+
   // ── AI CHAT TOGGLE ──
   window.toggleAIChat = function(){
     var chat = document.getElementById('lux-ai-chat');
     if(!chat) return;
     chat.classList.toggle('open');
     if(chat.classList.contains('open')){
+      if(!window._luxAiInitLoaded){
+        window._luxAiInitLoaded = true;
+        loadLuxAiInit();
+      }
       var input = document.getElementById('ai-chat-input');
       if(input) setTimeout(function(){ input.focus(); }, 200);
     }
   };
 
-  // ── SEND TO GEMMA AI — with proper API body ──
+  // ── SEND TO LUX AI API — HTML-aware rendering ──
   window.sendToGemma = async function(){
     var input = document.getElementById('ai-chat-input');
     var msgs = document.getElementById('ai-chat-messages');
@@ -5581,25 +5645,39 @@ body.lux-app-active #lux-fab-group{bottom:80px}
     try {
       var apiUrl = (window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app') + '/api/ai/chat';
       var controller = new AbortController();
-      var timeoutId = setTimeout(function(){ controller.abort(); }, 8000);
+      var timeoutId = setTimeout(function(){ controller.abort(); }, 15000);
       var res = await fetch(apiUrl, {
         method: 'POST',
         headers: {'Content-Type':'application/json','Accept':'application/json'},
-        body: JSON.stringify({ prompt: q, message: q, location: 'Taza', context: 'cafe_lux_taza', lang: 'fr' }),
+        body: JSON.stringify({ prompt: q, message: q, location: 'Taza', context: 'cafe_lux_taza', lang: 'fr-ar' }),
         signal: controller.signal
       });
       clearTimeout(timeoutId);
       var data = await res.json();
       typing.remove();
       var botDiv = document.createElement('div');
-      botDiv.style.cssText = 'background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);border-radius:12px 12px 12px 4px;padding:12px;font-size:12px;color:var(--text);line-height:1.6;max-width:85%';
-      botDiv.textContent = data.reply || data.message || data.response || data.text || 'Merci! Notre équipe vous répondra bientôt.';
+      botDiv.className = 'lux-ai-bot-bubble lux-ai-rich';
+      botDiv.style.cssText = 'background:linear-gradient(165deg,rgba(215,210,200,.1) 0%,rgba(201,168,76,.06) 100%);border:1px solid rgba(201,168,76,.2);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:12px;color:var(--text);line-height:1.65;max-width:100%;width:100%;align-self:flex-start;word-wrap:break-word';
+      var payload = data.html || data.reply || data.message || data.response || data.text || '';
+      var asHtml = data.format === 'html' || (typeof payload === 'string' && /<\s*[a-z][\s\S]*>/i.test(payload));
+      if(asHtml && payload) botDiv.innerHTML = payload;
+      else if(payload) botDiv.textContent = payload;
+      else if(luxAILooksLikeMenuOrProductQuery(q)){
+        botDiv.innerHTML = '<p style="margin:0;line-height:1.55">Réponse incomplète du serveur. Consultez l’onglet <strong style="color:var(--gold)">Menu</strong> pour la carte et les prix, puis réessayez.</p>';
+      } else {
+        botDiv.textContent = 'Précisez votre demande : menu, adresse, réservation ou carte cadeau — nous vous guidons avec plaisir.';
+      }
       msgs.appendChild(botDiv);
     } catch(err){
       typing.remove();
       var errDiv = document.createElement('div');
-      errDiv.style.cssText = 'background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);border-radius:12px 12px 12px 4px;padding:12px;font-size:12px;color:var(--text);line-height:1.6;max-width:85%';
-      errDiv.innerHTML = '⚠ Service IA temporairement indisponible.<br><a href="https://wa.me/212677717201?text='+encodeURIComponent(q)+'" target="_blank" style="color:var(--gold);font-weight:600">📲 Contactez-nous sur WhatsApp</a>';
+      errDiv.className = 'lux-ai-bot-bubble lux-ai-rich';
+      errDiv.style.cssText = 'background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:12px;color:var(--text);line-height:1.6;max-width:100%';
+      if(luxAILooksLikeMenuOrProductQuery(q)){
+        errDiv.innerHTML = '⚠ Impossible de joindre le serveur LUX AI pour le moment.<br><span style="display:block;margin-top:8px;font-size:11px;opacity:.92">Pour voir les produits, ingrédients et tarifs, ouvrez l’onglet <strong style="color:var(--gold)">Menu</strong> sur cette page.</span>';
+      } else {
+        errDiv.innerHTML = '⚠ Service IA temporairement indisponible.<br><a href="https://wa.me/212677717201?text='+encodeURIComponent(q)+'" target="_blank" style="color:var(--gold);font-weight:600;margin-top:8px;display:inline-block">📲 WhatsApp Café LUX</a>';
+      }
       msgs.appendChild(errDiv);
     }
     msgs.scrollTop = msgs.scrollHeight;
