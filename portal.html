@@ -170,6 +170,8 @@ tr:last-child td{border-bottom:none}
         onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="perr" id="login-err" style="margin-bottom:8px"></div>
+    <div id="login-reader-state" style="margin-bottom:10px;padding:10px 12px;border-radius:12px;border:1px dashed rgba(201,168,76,.35);font-size:11px;color:var(--dim);text-align:center">Lecteur RFID / Dallas actif</div>
+    <input type="text" id="login-probe" autocomplete="off" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
     <button class="btn btn-g" onclick="doLogin()" style="font-size:14px;padding:14px">🔐 تسجيل الدخول</button>
     <div style="text-align:center;margin-top:12px">
       <button class="btn btn-g" onclick="showNewEmpForm()" style="font-size:11px;padding:10px;background:none;border:1px solid var(--g3);color:var(--dim)">📝 طلب انضمام موظف جديد</button>
@@ -303,16 +305,154 @@ var EMPS_DEFAULT = [
 // Load from shared storage (written by both cafe-lux.html and this portal)
 var _storedEmps = null;
 try { _storedEmps = JSON.parse(localStorage.getItem('lux_employees_full')); } catch(e){}
-var EMPS = (_storedEmps && _storedEmps.length) ? _storedEmps : EMPS_DEFAULT;
+var EMPS = normalizeEmps((_storedEmps && _storedEmps.length) ? _storedEmps : EMPS_DEFAULT);
+
+function accessSeed(value){
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
+}
+
+function normalizeEmpAccess(emp, index){
+  var raw = emp || {};
+  var id = String(raw.id || ('EMP' + String(index + 1).padStart(3, '0')));
+  var username = String(raw.username || accessSeed(raw.name || id) || ('emp' + String(index + 1).padStart(3, '0'))).toLowerCase();
+  var accountNumber = String(raw.accountNumber || ('2' + String(index + 1).padStart(4, '0')));
+  var rfidCode = String(raw.rfidCode || ('RFID-' + id)).toUpperCase();
+  var dallasKey = String(raw.dallasKey || ('DALLAS-' + id)).toUpperCase();
+  var accessCodes = Array.from(new Set([accountNumber, username, rfidCode, dallasKey, id].concat(raw.accessCodes || []).map(function(v){
+    return String(v || '').trim();
+  }).filter(Boolean)));
+  return Object.assign({}, raw, {
+    id: id,
+    username: username,
+    accountNumber: accountNumber,
+    rfidCode: rfidCode,
+    dallasKey: dallasKey,
+    accessCodes: accessCodes
+  });
+}
+
+function normalizeEmps(list){
+  return (Array.isArray(list) ? list : []).map(function(emp, index){
+    return normalizeEmpAccess(emp, index);
+  });
+}
+
+function matchLoginEmployee(probe, allowName){
+  var raw = String(probe || '').trim();
+  if(!raw) return null;
+  var upper = raw.toUpperCase();
+  var lower = raw.toLowerCase();
+  return activeEmps().find(function(emp){
+    var normalized = normalizeEmpAccess(emp, 0);
+    var fastMatch = [normalized.accountNumber, normalized.username, normalized.rfidCode, normalized.dallasKey, normalized.id].some(function(code){
+      return String(code || '').trim().toUpperCase() === upper || String(code || '').trim().toLowerCase() === lower;
+    });
+    if(fastMatch) return true;
+    if(!allowName) return false;
+    var name = String(normalized.name || '').toLowerCase();
+    return name === lower || name.indexOf(lower) === 0;
+  }) || null;
+}
+
+function persistPosSession(sess){
+  localStorage.setItem(POS_SESS_KEY, JSON.stringify(sess));
+}
+
+function setSessionFromEmployee(emp, source){
+  var normalized = normalizeEmpAccess(emp, 0);
+  SESS = {
+    id: normalized.id,
+    name: normalized.name,
+    role: normalized.role,
+    isAdmin: normalized.role === 'admin',
+    salary: Number(normalized.salary || 0),
+    accountNumber: normalized.accountNumber || '',
+    rfidCode: normalized.rfidCode || '',
+    dallasKey: normalized.dallasKey || '',
+    source: source || 'manual'
+  };
+  saveSess();
+  persistPosSession(SESS);
+  return SESS;
+}
+
+var LOGIN_SCAN_BUFFER = '';
+var LOGIN_SCAN_TIMER = 0;
+
+function isLoginVisible(){
+  var scr = document.getElementById('scr-login');
+  var form = document.getElementById('login-form');
+  return !!(scr && scr.classList.contains('on') && form && form.style.display !== 'none');
+}
+
+function focusLoginProbe(){
+  var probe = document.getElementById('login-probe');
+  if(!probe || !isLoginVisible()) return;
+  setTimeout(function(){ try { probe.focus(); } catch(e){} }, 30);
+}
+
+function instantLoginByCode(code, source){
+  var errEl = document.getElementById('login-err');
+  if(errEl) errEl.textContent = '';
+  var emp = matchLoginEmployee(code, false);
+  if(!emp){
+    if(errEl && source !== 'silent') errEl.textContent = 'Code RFID / Dallas / compte introuvable';
+    return false;
+  }
+  setSessionFromEmployee(emp, source || 'badge');
+  launch();
+  toast('✦ ' + SESS.name);
+  return true;
+}
+
+function bindInstantReader(){
+  if(bindInstantReader._ready) return;
+  var probe = document.getElementById('login-probe');
+  if(probe){
+    probe.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var code = String(probe.value || '').trim();
+      probe.value = '';
+      instantLoginByCode(code, 'badge');
+    });
+  }
+  document.addEventListener('keydown', function(e){
+    if(!isLoginVisible()) return;
+    var active = document.activeElement;
+    var typing = active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) && active.id !== 'login-probe';
+    if(e.ctrlKey || e.altKey || e.metaKey) return;
+    if(typing) return;
+    if(e.key === 'Escape'){ focusLoginProbe(); return; }
+    if(e.key === 'Enter'){
+      if(!LOGIN_SCAN_BUFFER.trim()) return;
+      instantLoginByCode(LOGIN_SCAN_BUFFER.trim(), 'badge');
+      LOGIN_SCAN_BUFFER = '';
+      if(probe) probe.value = '';
+      return;
+    }
+    if(e.key.length !== 1) return;
+    LOGIN_SCAN_BUFFER += e.key;
+    if(probe) probe.value = LOGIN_SCAN_BUFFER;
+    clearTimeout(LOGIN_SCAN_TIMER);
+    LOGIN_SCAN_TIMER = setTimeout(function(){
+      LOGIN_SCAN_BUFFER = '';
+      if(probe) probe.value = '';
+    }, 260);
+  });
+  bindInstantReader._ready = true;
+}
 
 // Save back to shared storage
 function saveEmpsToStorage(){
+  EMPS = normalizeEmps(EMPS);
   localStorage.setItem('lux_employees_full', JSON.stringify(EMPS));
   // Also sync to lux_employees for cafe-lux.html compatibility
   try {
     var shared = EMPS.map(function(e){
       return {id:e.id, name:e.name, initials:(e.name||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2),
-        role:e.role, status:e.endDate?'off':'active', phone:e.phone||'', since:e.startDate||'', salary:e.salary||0};
+        role:e.role, status:e.endDate?'off':'active', phone:e.phone||'', since:e.startDate||'', salary:e.salary||0,
+        username:e.username||'', accountNumber:e.accountNumber||'', rfidCode:e.rfidCode||'', dallasKey:e.dallasKey||'', accessCodes:e.accessCodes||[]};
     });
     localStorage.setItem('lux_employees', JSON.stringify(shared));
   } catch(e){}
@@ -382,6 +522,7 @@ var SALS = [
 var ADMIN_PIN = '9999';
 var PINS_KEY  = 'lux_pins_v1';
 var SESS_KEY  = 'lux_sess_v1';
+var POS_SESS_KEY = 'lux_pos_employee_session_v1';
 var REQS_KEY  = 'lux_reqs_v1';
 var MONTHS    = ['يناير','فبراير','مارس','أبريل','ماي','يونيو',
                  'يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
@@ -405,6 +546,7 @@ function saveSess(){ localStorage.setItem(SESS_KEY, JSON.stringify(SESS)); }
 function getPin(id){ return id==='__admin__' ? ADMIN_PIN : (PINS[id]||'1234'); }
 
 function activeEmps(){
+  EMPS = normalizeEmps(EMPS);
   return EMPS.filter(function(e){ return !e.endDate; });
 }
 
@@ -421,7 +563,11 @@ async function fetchEmpsFromAPI(){
     });
     if(res.ok){
       var data = await res.json();
-      if(data && data.length) { EMPS = data; localStorage.setItem('lux_emps_cache', JSON.stringify(data)); }
+      if(data && data.length) {
+        EMPS = normalizeEmps(data);
+        localStorage.setItem('lux_emps_cache', JSON.stringify(EMPS));
+        saveEmpsToStorage();
+      }
     }
   } catch(e){ console.warn('[Portal] API offline, using local data'); }
 }
@@ -441,10 +587,14 @@ async function syncReqsToAPI(req){
 //  SECURE LOGIN — Cloud-first, local fallback
 // ════════════════════════════════════════════════════════
 async function doLogin(){
-  var user = (document.getElementById('login-user').value||'').trim().toLowerCase();
+  var userRaw = (document.getElementById('login-user').value||'').trim();
+  var user = userRaw.toLowerCase();
   var pass = (document.getElementById('login-pass').value||'').trim();
   var errEl = document.getElementById('login-err');
   errEl.textContent = '';
+  if(!userRaw && !pass){ errEl.textContent = 'Badge or account required'; focusLoginProbe(); return; }
+  if(!userRaw && !pass){ errEl.textContent = 'âš ï¸ Entrez un compte ou scannez un badge'; focusLoginProbe(); return; }
+  if(userRaw && !pass){ instantLoginByCode(userRaw, 'manual-account'); return; }
 
   if(!user || !pass){ errEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور'; return; }
 
@@ -459,7 +609,7 @@ async function doLogin(){
       var data = await res.json();
       if(data.token) localStorage.setItem('lux_auth_token', data.token);
       if(data.employee){
-        SESS = {id:data.employee.id, name:data.employee.name, role:data.employee.role, isAdmin:data.employee.role==='admin', salary:Number(data.employee.salary||0)};
+        setSessionFromEmployee(data.employee, 'cloud');
         saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋'); return;
       }
     } else if(res.status === 403){
@@ -489,15 +639,11 @@ async function doLogin(){
   }
 
   // Find employee locally
-  var emp = EMPS.filter(function(e){
-    if(e.endDate) return false;
-    var n = (e.name||'').toLowerCase();
-    return n === user || n.indexOf(user) === 0;
-  })[0];
+  var emp = matchLoginEmployee(userRaw, true);
   if(!emp){ errEl.textContent = '❌ اسم المستخدم غير موجود'; return; }
   var pin = getPin(emp.id);
   if(pass !== pin){ errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
-  SESS = {id:emp.id, name:emp.name, role:emp.role, isAdmin:false, salary:Number(emp.salary||0)};
+  setSessionFromEmployee(emp, 'manual-pin');
   saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋');
 }
 
@@ -509,6 +655,7 @@ function showNewEmpForm(){
 function hideNewEmpForm(){
   document.getElementById('new-emp-form').style.display = 'none';
   document.getElementById('login-form').style.display = 'block';
+  focusLoginProbe();
 }
 async function submitNewEmpRequest(){
   var name = (document.getElementById('ne-name').value||'').trim();
@@ -543,6 +690,7 @@ function launch(){
     renderAdminReqs();
     updDot();
   } else {
+    persistPosSession(SESS);
     document.getElementById('e-hname').textContent=SESS.name;
     document.getElementById('e-hrole').textContent=SESS.role;
     showScr('scr-emp');
@@ -891,6 +1039,7 @@ function renderAdminPins(){
       +'<div style="font-size:20px">'+ico+'</div>'
       +'<div><div style="font-size:13px;font-weight:700">'+e.name+'</div>'
       +'<div style="font-size:10px;color:var(--dim)">'+e.role+'</div></div></div>'
+      +'<div style="font-size:10px;color:var(--dim);line-height:1.8">Compte: <b style="color:var(--tx)">'+(e.accountNumber||'--')+'</b><br>RFID: <b style="color:var(--tx)">'+(e.rfidCode||'--')+'</b><br>Dallas: <b style="color:var(--tx)">'+(e.dallasKey||'--')+'</b></div>'
       +'<div style="font-size:11px;color:var(--dim)">شفرة: <b style="color:var(--gold)">'+(PINS[e.id]||'1234')+'</b></div></div>';
     var btn=document.createElement('button');
     btn.className='btn btn-g';
@@ -946,16 +1095,20 @@ function aPg(p,el){
 function showScr(id){
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   document.getElementById(id).classList.add('on');
+  if(id === 'scr-login') focusLoginProbe();
 }
 function doLogout(){
   if(!confirm('تسجيل الخروج؟'))return;
   SESS=null;SEL=null;pinB='';
   localStorage.removeItem(SESS_KEY);
+  localStorage.removeItem(POS_SESS_KEY);
   showScr('scr-login');
   // Clear login form
   var u=document.getElementById('login-user'); if(u) u.value='';
   var p=document.getElementById('login-pass'); if(p) p.value='';
   var e=document.getElementById('login-err');  if(e) e.textContent='';
+  var probe=document.getElementById('login-probe'); if(probe) probe.value='';
+  focusLoginProbe();
   toast('تم الخروج');
 }
 function closeM(id){document.getElementById(id).classList.remove('on');}
@@ -976,11 +1129,19 @@ function toast(msg){
   try { await fetchEmpsFromAPI(); } catch(e){}
   // Also try to load from localStorage cache
   var cached = localStorage.getItem('lux_emps_cache');
-  if(cached){ try { var c = JSON.parse(cached); if(c && c.length) EMPS = c; } catch(e){} }
+  if(cached){ try { var c = JSON.parse(cached); if(c && c.length) EMPS = normalizeEmps(c); } catch(e){} }
+  EMPS = normalizeEmps(EMPS);
+  saveEmpsToStorage();
+  bindInstantReader();
 
   // Check existing session
   if(SESS) launch();
-  else showScr('scr-login');
+  else { showScr('scr-login'); focusLoginProbe(); }
+
+  var userInput = document.getElementById('login-user');
+  if(userInput) userInput.placeholder = '20001 / RFID / Dallas / username';
+  var passInput = document.getElementById('login-pass');
+  if(passInput) passInput.placeholder = 'PIN (optionnel pour badge)';
 
   setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
 })();
