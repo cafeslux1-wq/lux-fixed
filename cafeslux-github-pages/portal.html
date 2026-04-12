@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>LUX â€” Ø¨ÙˆØ§Ø¨Ø© Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ†</title>
+<title>LUX — بوابة الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cinzel:wght@600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -125,377 +125,272 @@ tr:last-child td{border-bottom:none}
 </head>
 <body>
 
-<div id="ld"><div class="ld-logo">âœ¦ LUX</div><div class="spin"></div></div>
+<div id="ld"><div class="ld-logo">✦ LUX</div><div class="spin"></div></div>
 <div id="toast"></div>
 
-<!-- modal Ø±ÙØ¶ -->
+<!-- modal رفض -->
 <div class="modal" id="m-rej">
   <div class="mbox">
-    <div class="mtit">ðŸ’¬ Ø³Ø¨Ø¨ Ø§Ù„Ø±ÙØ¶</div>
-    <div class="fg"><label>Ù…Ù„Ø§Ø­Ø¸Ø© Ù„Ù„Ù…ÙˆØ¸Ù</label><textarea id="rej-note" placeholder="Ø§Ø®ØªÙŠØ§Ø±ÙŠ..."></textarea></div>
+    <div class="mtit">💬 سبب الرفض</div>
+    <div class="fg"><label>ملاحظة للموظف</label><textarea id="rej-note" placeholder="اختياري..."></textarea></div>
     <input type="hidden" id="rej-id">
     <div class="g2">
-      <button class="btn btn-rd" onclick="closeM('m-rej')">Ø¥Ù„ØºØ§Ø¡</button>
-      <button class="btn btn-gr" onclick="doReject()">âœ“ ØªØ£ÙƒÙŠØ¯</button>
+      <button class="btn btn-rd" onclick="closeM('m-rej')">إلغاء</button>
+      <button class="btn btn-gr" onclick="doReject()">✓ تأكيد</button>
     </div>
   </div>
 </div>
 <!-- modal PIN -->
 <div class="modal" id="m-pin">
   <div class="mbox">
-    <div class="mtit" id="m-pin-tit">ðŸ”‘ ØªØºÙŠÙŠØ± PIN</div>
-    <div class="fg"><label>PIN Ø§Ù„Ø¬Ø¯ÙŠØ¯ (4 Ø£Ø±Ù‚Ø§Ù…)</label><input type="tel" id="new-pin" placeholder="Ù…Ø«Ø§Ù„: 5678" maxlength="4" inputmode="numeric"></div>
+    <div class="mtit" id="m-pin-tit">🔑 تغيير PIN</div>
+    <div class="fg"><label>PIN الجديد (4 أرقام)</label><input type="tel" id="new-pin" placeholder="مثال: 5678" maxlength="4" inputmode="numeric"></div>
     <input type="hidden" id="pin-eid">
     <div class="g2">
-      <button class="btn btn-rd" onclick="closeM('m-pin')">Ø¥Ù„ØºØ§Ø¡</button>
-      <button class="btn btn-g" onclick="savePIN()">ðŸ’¾ Ø­ÙØ¸</button>
+      <button class="btn btn-rd" onclick="closeM('m-pin')">إلغاء</button>
+      <button class="btn btn-g" onclick="savePIN()">💾 حفظ</button>
     </div>
   </div>
 </div>
 
-<!-- â•â•â•â• LOGIN â•â•â•â• -->
+<!-- ════ LOGIN ════ -->
 <div id="scr-login" class="scr" style="overflow-y:auto">
 <div class="login-wrap">
-  <div class="login-logo"><a href="index.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">â¬… Ø±Ø¬ÙˆØ¹</a><div class="ll">âœ¦ LUX</div><div class="ls">Ù…Ù‚Ù‡Ù‰ ØªØ§Ø²Ø© Â· Ø¨ÙˆØ§Ø¨Ø© Ø§Ù„Ù…ÙˆØ¸ÙÙŠÙ†</div></div>
-  <!-- Secure Login Form â€” no employee names visible -->
+  <div class="login-logo"><a href="index.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,.3);font-size:12px;text-decoration:none">⬅ رجوع</a><div class="ll">✦ LUX</div><div class="ls">مقهى تازة · بوابة الموظفين</div></div>
+  <!-- Secure Login Form — no employee names visible -->
   <div id="login-form">
-    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center">Ø£Ø¯Ø®Ù„ Ø¨ÙŠØ§Ù†Ø§ØªÙƒ Ù„Ù„Ø¯Ø®ÙˆÙ„ Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨Ùƒ</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;text-align:center">أدخل بياناتك للدخول إلى حسابك</div>
     <div class="fg">
-      <label>Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…</label>
-      <input type="text" id="login-user" placeholder="Ù…Ø«Ø§Ù„: reda" autocomplete="username" autofocus>
+      <label>اسم المستخدم</label>
+      <input type="text" id="login-user" placeholder="مثال: reda" autocomplete="username" autofocus>
     </div>
     <div class="fg">
-      <label>ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±</label>
-      <input type="password" id="login-pass" placeholder="â€¢â€¢â€¢â€¢" autocomplete="current-password" inputmode="numeric" maxlength="10"
+      <label>كلمة المرور</label>
+      <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" inputmode="numeric" maxlength="10"
         onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="perr" id="login-err" style="margin-bottom:8px"></div>
-    <button class="btn btn-g" onclick="doLogin()" style="font-size:14px;padding:14px">ðŸ” ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„</button>
+    <button class="btn btn-g" onclick="doLogin()" style="font-size:14px;padding:14px">🔐 تسجيل الدخول</button>
     <div style="text-align:center;margin-top:12px">
-      <button class="btn btn-g" onclick="showNewEmpForm()" style="font-size:11px;padding:10px;background:none;border:1px solid var(--g3);color:var(--dim)">ðŸ“ Ø·Ù„Ø¨ Ø§Ù†Ø¶Ù…Ø§Ù… Ù…ÙˆØ¸Ù Ø¬Ø¯ÙŠØ¯</button>
+      <button class="btn btn-g" onclick="showNewEmpForm()" style="font-size:11px;padding:10px;background:none;border:1px solid var(--g3);color:var(--dim)">📝 طلب انضمام موظف جديد</button>
     </div>
     <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--dim)">
-      Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… = Ø§Ø³Ù…Ùƒ Ø§Ù„Ø´Ø®ØµÙŠ<br>ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± = Ø±Ù…Ø² PIN Ø§Ù„Ø®Ø§Øµ Ø¨Ùƒ
+      اسم المستخدم = اسمك الشخصي<br>كلمة المرور = رمز PIN الخاص بك
     </div>
   </div>
 
   <!-- New Employee Registration Form -->
   <div id="new-emp-form" style="display:none">
-    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px;text-align:center">ðŸ“ Ø·Ù„Ø¨ Ø§Ù†Ø¶Ù…Ø§Ù… Ø¬Ø¯ÙŠØ¯</div>
+    <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px;text-align:center">📝 طلب انضمام جديد</div>
     <div style="font-size:11px;color:var(--dim);margin-bottom:12px;text-align:center;line-height:1.7">
-      Ø£Ø±Ø³Ù„ Ø·Ù„Ø¨Ùƒ Ù„Ù„Ù…Ø¯ÙŠØ±. Ø³ÙŠØªÙ… ØªÙØ¹ÙŠÙ„ Ø§Ù„Ø­Ø³Ø§Ø¨ Ø¨Ø¹Ø¯ Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©.
+      أرسل طلبك للمدير. سيتم تفعيل الحساب بعد الموافقة.
     </div>
-    <div class="fg"><label>Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„ *</label><input type="text" id="ne-name" placeholder="Ù…Ø«Ø§Ù„: Ø£Ø­Ù…Ø¯ Ø§Ù„Ù…Ø±Ø§Ø¨Ø·"></div>
-    <div class="fg"><label>Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ *</label><input type="tel" id="ne-phone" placeholder="+212 6XX XXX XXX"></div>
-    <div class="fg"><label>Ø±Ù‚Ù… Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„ØªØ¹Ø±ÙŠÙ (CIN)</label><input type="text" id="ne-cin" placeholder="Ù…Ø«Ø§Ù„: AB123456" style="text-transform:uppercase"></div>
-    <div class="fg"><label>Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ *</label><input type="text" id="ne-user" placeholder="Ù…Ø«Ø§Ù„: ahmed"></div>
-    <div class="fg"><label>ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± *</label><input type="password" id="ne-pass" placeholder="4 Ø£Ø±Ù‚Ø§Ù… Ø£Ùˆ Ø£ÙƒØ«Ø±"></div>
-    <button class="btn btn-g" onclick="submitNewEmpRequest()" style="font-size:13px;padding:12px;margin-top:4px">ðŸ“¤ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨</button>
-    <button class="btn btn-rd" onclick="hideNewEmpForm()" style="font-size:11px;padding:9px;margin-top:8px">â† Ø±Ø¬ÙˆØ¹ Ù„Ù„Ø¯Ø®ÙˆÙ„</button>
+    <div class="fg"><label>الاسم الكامل *</label><input type="text" id="ne-name" placeholder="مثال: أحمد المرابط"></div>
+    <div class="fg"><label>رقم الهاتف *</label><input type="tel" id="ne-phone" placeholder="+212 6XX XXX XXX"></div>
+    <div class="fg"><label>رقم بطاقة التعريف (CIN)</label><input type="text" id="ne-cin" placeholder="مثال: AB123456" style="text-transform:uppercase"></div>
+    <div class="fg"><label>اسم المستخدم المطلوب *</label><input type="text" id="ne-user" placeholder="مثال: ahmed"></div>
+    <div class="fg"><label>كلمة المرور *</label><input type="password" id="ne-pass" placeholder="4 أرقام أو أكثر"></div>
+    <button class="btn btn-g" onclick="submitNewEmpRequest()" style="font-size:13px;padding:12px;margin-top:4px">📤 إرسال الطلب</button>
+    <button class="btn btn-rd" onclick="hideNewEmpForm()" style="font-size:11px;padding:9px;margin-top:8px">← رجوع للدخول</button>
   </div>
 </div>
 </div>
 
-<!-- â•â•â•â• EMPLOYEE â•â•â•â• -->
+<!-- ════ EMPLOYEE ════ -->
 <div id="scr-emp" class="scr">
   <header>
-    <div class="hlogo">âœ¦ LUX</div>
+    <div class="hlogo">✦ LUX</div>
     <div class="huser" onclick="doLogout()">
       <div class="hun" id="e-hname"></div>
       <div class="hur" id="e-hrole"></div>
-      <div class="hout">Ø®Ø±ÙˆØ¬ â†©</div>
+      <div class="hout">خروج ↩</div>
     </div>
   </header>
   <div class="tabs">
-    <button class="tab on" onclick="ePg('home',this)">ðŸ  Ø­Ø³Ø§Ø¨ÙŠ</button>
-    <button class="tab"    onclick="ePg('profile',this)">âœï¸ Ø¨ÙŠØ§Ù†Ø§ØªÙŠ</button>
-    <button class="tab"    onclick="ePg('hist',this)">ðŸ“‹ Ø§Ù„Ø±ÙˆØ§ØªØ¨</button>
-    <button class="tab"    onclick="ePg('req', this)">ðŸ’¸ Ø·Ù„Ø¨ ØªØ³Ø¨ÙŠÙ‚</button>
-    <button class="tab"    onclick="ePg('reqs',this)">ðŸ“¨ Ø·Ù„Ø¨Ø§ØªÙŠ</button>
+    <button class="tab on" onclick="ePg('home',this)">🏠 حسابي</button>
+    <button class="tab"    onclick="ePg('profile',this)">✏️ بياناتي</button>
+    <button class="tab"    onclick="ePg('hist',this)">📋 الرواتب</button>
+    <button class="tab"    onclick="ePg('req', this)">💸 طلب تسبيق</button>
+    <button class="tab"    onclick="ePg('reqs',this)">📨 طلباتي</button>
   </div>
   <div class="body">
     <div class="pg on" id="epg-home"></div>
     <div class="pg" id="epg-profile">
-      <div class="stl">âœï¸ ØªØ¹Ø¯ÙŠÙ„ Ø¨ÙŠØ§Ù†Ø§ØªÙŠ</div>
+      <div class="stl">✏️ تعديل بياناتي</div>
       <div class="card">
-        <div class="fg"><label>Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„</label><input type="text" id="pf-name" placeholder="Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„"></div>
-        <div class="fg"><label>Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ</label><input type="tel" id="pf-phone" placeholder="+212 6XX XXX XXX" inputmode="tel"></div>
-        <div class="fg"><label>Ø±Ù‚Ù… Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„ØªØ¹Ø±ÙŠÙ Ø§Ù„ÙˆØ·Ù†ÙŠØ© (CIN)</label><input type="text" id="pf-cin" placeholder="Ù…Ø«Ø§Ù„: AB123456" style="text-transform:uppercase"></div>
-        <div class="fg"><label>Ø§Ù„Ø¹Ù†ÙˆØ§Ù†</label><input type="text" id="pf-addr" placeholder="Ø§Ù„Ø¹Ù†ÙˆØ§Ù† Ø§Ù„ÙƒØ§Ù…Ù„"></div>
-        <div class="fg"><label>Ù…Ù„Ø§Ø­Ø¸Ø§Øª</label><textarea id="pf-notes" placeholder="Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø´Ø®ØµÙŠØ©..."></textarea></div>
-        <button class="btn btn-g" onclick="saveProfile()">ðŸ’¾ Ø­ÙØ¸ Ø§Ù„ØªØ¹Ø¯ÙŠÙ„Ø§Øª</button>
+        <div class="fg"><label>الاسم الكامل</label><input type="text" id="pf-name" placeholder="الاسم الكامل"></div>
+        <div class="fg"><label>رقم الهاتف</label><input type="tel" id="pf-phone" placeholder="+212 6XX XXX XXX" inputmode="tel"></div>
+        <div class="fg"><label>رقم بطاقة التعريف الوطنية (CIN)</label><input type="text" id="pf-cin" placeholder="مثال: AB123456" style="text-transform:uppercase"></div>
+        <div class="fg"><label>العنوان</label><input type="text" id="pf-addr" placeholder="العنوان الكامل"></div>
+        <div class="fg"><label>ملاحظات</label><textarea id="pf-notes" placeholder="ملاحظات شخصية..."></textarea></div>
+        <button class="btn btn-g" onclick="saveProfile()">💾 حفظ التعديلات</button>
       </div>
     </div>
     <div class="pg"    id="epg-hist">
-      <div class="stl">ðŸ“‹ Ø³Ø¬Ù„ Ø§Ù„Ø±ÙˆØ§ØªØ¨</div>
+      <div class="stl">📋 سجل الرواتب</div>
       <div class="mrow" id="e-mrow"></div>
       <div id="epg-hist-b"></div>
     </div>
     <div class="pg"    id="epg-req">
-      <div class="stl">ðŸ’¸ Ø·Ù„Ø¨ ØªØ³Ø¨ÙŠÙ‚</div>
+      <div class="stl">💸 طلب تسبيق</div>
       <div class="infobox" id="req-info"></div>
       <div class="card">
-        <div class="fg"><label>Ø§Ù„Ù…Ø¨Ù„Øº Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ (Ø¯Ø±Ù‡Ù…)</label><input type="number" id="rq-amt" placeholder="500" min="50" inputmode="decimal"></div>
-        <div class="fg"><label>Ø§Ù„Ø´Ù‡Ø±</label><select id="rq-mo" dir="rtl"></select></div>
-        <div class="fg"><label>Ø§Ù„Ø³Ø¨Ø¨ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)</label><textarea id="rq-why" placeholder="Ù…ØµØ§Ø±ÙŠÙ Ø·Ø§Ø±Ø¦Ø©..."></textarea></div>
-        <button class="btn btn-g" onclick="sendReq()">ðŸ“¤ Ø¥Ø±Ø³Ø§Ù„ Ù„Ù„Ù…Ø¯ÙŠØ±</button>
+        <div class="fg"><label>المبلغ المطلوب (درهم)</label><input type="number" id="rq-amt" placeholder="500" min="50" inputmode="decimal"></div>
+        <div class="fg"><label>الشهر</label><select id="rq-mo" dir="rtl"></select></div>
+        <div class="fg"><label>السبب (اختياري)</label><textarea id="rq-why" placeholder="مصاريف طارئة..."></textarea></div>
+        <button class="btn btn-g" onclick="sendReq()">📤 إرسال للمدير</button>
       </div>
     </div>
     <div class="pg"    id="epg-reqs">
-      <div class="stl">ðŸ“¨ Ø·Ù„Ø¨Ø§ØªÙŠ</div>
+      <div class="stl">📨 طلباتي</div>
       <div id="epg-reqs-b"></div>
     </div>
   </div>
 </div>
 
-<!-- â•â•â•â• ADMIN â•â•â•â• -->
+<!-- ════ ADMIN ════ -->
 <div id="scr-admin" class="scr">
   <header>
-    <div class="hlogo">âœ¦ ADMIN</div>
-    <div class="huser" onclick="doLogout()"><div class="hun">Ø§Ù„Ù…Ø¯ÙŠØ±</div><div class="hout">Ø®Ø±ÙˆØ¬ â†©</div></div>
+    <div class="hlogo">✦ ADMIN</div>
+    <div class="huser" onclick="doLogout()"><div class="hun">المدير</div><div class="hout">خروج ↩</div></div>
   </header>
   <div class="tabs">
-    <button class="tab on" onclick="aPg('reqs',this)">ðŸ“¨ Ø§Ù„Ø·Ù„Ø¨Ø§Øª <span id="a-dot" style="display:none;background:var(--rd);color:#fff;font-size:9px;padding:1px 6px;border-radius:99px;vertical-align:middle"></span></button>
-    <button class="tab"    onclick="aPg('emps',this)">ðŸ‘¥ Ø§Ù„Ù…ÙˆØ¸ÙÙˆÙ†</button>
-    <button class="tab"    onclick="aPg('pins',this)">ðŸ”‘ PIN</button>
+    <button class="tab on" onclick="aPg('reqs',this)">📨 الطلبات <span id="a-dot" style="display:none;background:var(--rd);color:#fff;font-size:9px;padding:1px 6px;border-radius:99px;vertical-align:middle"></span></button>
+    <button class="tab"    onclick="aPg('emps',this)">👥 الموظفون</button>
+    <button class="tab"    onclick="aPg('pins',this)">🔑 PIN</button>
   </div>
   <div class="body">
     <div class="pg on" id="apg-reqs">
-      <div class="stl">ðŸ“¨ Ø·Ù„Ø¨Ø§Øª Ø§Ù„ØªØ³Ø¨ÙŠÙ‚</div>
+      <div class="stl">📨 طلبات التسبيق</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px">
-        <button class="fbtn on" id="f-all"  onclick="filt('all',this)">Ø§Ù„ÙƒÙ„</button>
-        <button class="fbtn"    id="f-pend" onclick="filt('pending',this)">â³ Ø§Ù†ØªØ¸Ø§Ø±</button>
-        <button class="fbtn"    id="f-app"  onclick="filt('approved',this)">âœ… Ù…ÙˆØ§ÙÙ‚</button>
-        <button class="fbtn"    id="f-rej"  onclick="filt('rejected',this)">âŒ Ù…Ø±ÙÙˆØ¶</button>
+        <button class="fbtn on" id="f-all"  onclick="filt('all',this)">الكل</button>
+        <button class="fbtn"    id="f-pend" onclick="filt('pending',this)">⏳ انتظار</button>
+        <button class="fbtn"    id="f-app"  onclick="filt('approved',this)">✅ موافق</button>
+        <button class="fbtn"    id="f-rej"  onclick="filt('rejected',this)">❌ مرفوض</button>
       </div>
       <div id="a-reqs-b"></div>
     </div>
     <div class="pg" id="apg-emps">
-      <div class="stl">ðŸ‘¥ Ø§Ù„Ù…ÙˆØ¸ÙÙˆÙ†</div>
+      <div class="stl">👥 الموظفون</div>
       <div id="a-emps-b"></div>
     </div>
     <div class="pg" id="apg-pins">
-      <div class="stl">ðŸ”‘ Ø±Ù…ÙˆØ² Ø§Ù„Ø¯Ø®ÙˆÙ„ PIN</div>
-      <div class="infobox"><b>PIN Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠ Ù„ÙƒÙ„ Ù…ÙˆØ¸Ù: 1234.</b><br>ØºÙŠÙ‘Ø± PIN ÙƒÙ„ Ù…ÙˆØ¸Ù Ø¹Ù†Ø¯ Ø£ÙˆÙ„ Ø§Ø³ØªØ®Ø¯Ø§Ù….</div>
+      <div class="stl">🔑 رموز الدخول PIN</div>
+      <div class="infobox"><b>PIN الافتراضي لكل موظف: 1234.</b><br>غيّر PIN كل موظف عند أول استخدام.</div>
       <div id="a-pins-b"></div>
     </div>
   </div>
 </div>
 
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª â€” Ù…ÙˆØ­Ù‘Ø¯Ø© Ù…Ø¹ cafe-lux.html
-//  Ø§Ù„Ù…ØµØ¯Ø±: localStorage (lux_employees_full) + API
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
+//  البيانات — موحّدة مع cafe-lux.html
+//  المصدر: localStorage (lux_employees_full) + API
+// ════════════════════════════════════════════════════════
 var EMPS_DEFAULT = [
   {id:'e01',name:'Reda',    role:'service',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
   {id:'e02',name:'Brahim',  role:'service',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
   {id:'e03',name:'Mohammed',role:'barman',   salary:2000,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
-  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:'Ù…Ø®Ø§Ù„ÙØ© ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'e04',name:'Ayoub',   role:'barman',   salary:2000,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:'مخالفة يناير'},
   {id:'e05',name:'Fadwa',   role:'cuisine',  salary:1500,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
   {id:'e06',name:'Karima',  role:'cuisine',  salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
   {id:'e07',name:'Smahan',  role:'caissiere',salary:1300,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
   {id:'e08',name:'Iman',    role:'caissiere',salary:1200,phone:'',cin:'',address:'',startDate:'2026-01-04',endDate:'',note:''},
   {id:'e10',name:'Hakima',  role:'nettoyage',salary:1200,phone:'',cin:'',address:'',startDate:'2025-01-01',endDate:'',note:''},
-  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',cin:'',address:'',startDate:'2026-01-01',endDate:'2026-01-03',note:'3 Ø£ÙŠØ§Ù… Ø¹Ù…Ù„'}
+  {id:'e09',name:'Fatima',  role:'caissiere',salary:1200,phone:'',cin:'',address:'',startDate:'2026-01-01',endDate:'2026-01-03',note:'3 أيام عمل'}
 ];
 
 // Load from shared storage (written by both cafe-lux.html and this portal)
 var _storedEmps = null;
 try { _storedEmps = JSON.parse(localStorage.getItem('lux_employees_full')); } catch(e){}
-var EMPS = normalizeEmps((_storedEmps && _storedEmps.length) ? _storedEmps : EMPS_DEFAULT);
-
-function accessSeed(value){
-  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
-}
-
-function normalizeEmpAccess(emp, index){
-  var raw = emp || {};
-  var id = String(raw.id || ('EMP' + String(index + 1).padStart(3, '0')));
-  var username = String(raw.username || accessSeed(raw.name || id) || ('emp' + String(index + 1).padStart(3, '0'))).toLowerCase();
-  var accountNumber = String(raw.accountNumber || ('2' + String(index + 1).padStart(4, '0')));
-  var rfidCode = String(raw.rfidCode || ('RFID-' + id)).toUpperCase();
-  var dallasKey = String(raw.dallasKey || ('DALLAS-' + id)).toUpperCase();
-  var accessCodes = Array.from(new Set([accountNumber, username, rfidCode, dallasKey, id].concat(raw.accessCodes || []).map(function(v){
-    return String(v || '').trim();
-  }).filter(Boolean)));
-  return Object.assign({}, raw, {
-    id: id,
-    username: username,
-    accountNumber: accountNumber,
-    rfidCode: rfidCode,
-    dallasKey: dallasKey,
-    accessCodes: accessCodes
-  });
-}
-
-function normalizeEmps(list){
-  return (Array.isArray(list) ? list : []).map(function(emp, index){
-    return normalizeEmpAccess(emp, index);
-  });
-}
-
-function matchLoginEmployee(probe, allowName){
-  var raw = String(probe || '').trim();
-  if(!raw) return null;
-  var upper = raw.toUpperCase();
-  var lower = raw.toLowerCase();
-  return activeEmps().find(function(emp){
-    var normalized = normalizeEmpAccess(emp, 0);
-    var fastMatch = [normalized.accountNumber, normalized.username, normalized.rfidCode, normalized.dallasKey, normalized.id].some(function(code){
-      return String(code || '').trim().toUpperCase() === upper || String(code || '').trim().toLowerCase() === lower;
-    });
-    if(fastMatch) return true;
-    if(!allowName) return false;
-    var name = String(normalized.name || '').toLowerCase();
-    return name === lower || name.indexOf(lower) === 0;
-  }) || null;
-}
-
-function persistPosSession(sess){
-  localStorage.setItem(POS_SESS_KEY, JSON.stringify(sess));
-}
-
-function setSessionFromEmployee(emp, source){
-  var normalized = normalizeEmpAccess(emp, 0);
-  SESS = {
-    id: normalized.id,
-    name: normalized.name,
-    role: normalized.role,
-    isAdmin: normalized.role === 'admin',
-    salary: Number(normalized.salary || 0),
-    accountNumber: normalized.accountNumber || '',
-    rfidCode: normalized.rfidCode || '',
-    dallasKey: normalized.dallasKey || '',
-    source: source || 'manual'
-  };
-  saveSess();
-  persistPosSession(SESS);
-  return SESS;
-}
-
-var LOGIN_SCAN_BUFFER = '';
-var LOGIN_SCAN_TIMER = 0;
-
-function isLoginVisible(){
-  var scr = document.getElementById('scr-login');
-  var form = document.getElementById('login-form');
-  return !!(scr && scr.classList.contains('on') && form && form.style.display !== 'none');
-}
-
-function focusLoginProbe(){
-  var input = document.getElementById('login-user');
-  if(!input || !isLoginVisible()) return;
-  setTimeout(function(){ try { input.focus(); } catch(e){} }, 30);
-}
-
-function instantLoginByCode(code, source){
-  var errEl = document.getElementById('login-err');
-  if(errEl) errEl.textContent = '';
-  var emp = matchLoginEmployee(code, false);
-  if(!emp){
-    if(errEl && source !== 'silent') errEl.textContent = 'Code RFID / Dallas / compte introuvable';
-    return false;
-  }
-  setSessionFromEmployee(emp, source || 'badge');
-  launch();
-  toast('âœ¦ ' + SESS.name);
-  return true;
-}
-
-function bindInstantReader(){
-  bindInstantReader._ready = true;
-}
+var EMPS = (_storedEmps && _storedEmps.length) ? _storedEmps : EMPS_DEFAULT;
 
 // Save back to shared storage
 function saveEmpsToStorage(){
-  EMPS = normalizeEmps(EMPS);
   localStorage.setItem('lux_employees_full', JSON.stringify(EMPS));
   // Also sync to lux_employees for cafe-lux.html compatibility
   try {
     var shared = EMPS.map(function(e){
       return {id:e.id, name:e.name, initials:(e.name||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2),
-        role:e.role, status:e.endDate?'off':'active', phone:e.phone||'', since:e.startDate||'', salary:e.salary||0,
-        username:e.username||'', accountNumber:e.accountNumber||'', rfidCode:e.rfidCode||'', dallasKey:e.dallasKey||'', accessCodes:e.accessCodes||[]};
+        role:e.role, status:e.endDate?'off':'active', phone:e.phone||'', since:e.startDate||'', salary:e.salary||0};
     });
     localStorage.setItem('lux_employees', JSON.stringify(shared));
   } catch(e){}
 }
 
 var SALS = [
-  {id:'s01a',empId:'e01',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s01b',empId:'e01',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s01a',empId:'e01',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
+  {id:'s01b',empId:'e01',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'باقي يناير'},
 
-  {id:'s02a',empId:'e02',month:'2026-01',date:'2026-01-15',type:'avance', amount:445,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s02b',empId:'e02',month:'2026-01',date:'2026-01-31',type:'reste',  amount:855,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s02a',empId:'e02',month:'2026-01',date:'2026-01-15',type:'avance', amount:445,  note:'تسبيق يناير'},
+  {id:'s02b',empId:'e02',month:'2026-01',date:'2026-01-31',type:'reste',  amount:855,  note:'باقي يناير'},
 
-  {id:'s03a',empId:'e03',month:'2026-01',date:'2026-01-15',type:'avance', amount:500,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s03b',empId:'e03',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1500, note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s03a',empId:'e03',month:'2026-01',date:'2026-01-15',type:'avance', amount:500,  note:'تسبيق يناير'},
+  {id:'s03b',empId:'e03',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1500, note:'باقي يناير'},
 
-  {id:'s04a',empId:'e04',month:'2026-01',date:'2026-01-15',type:'avance', amount:1100, note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s04b',empId:'e04',month:'2026-01',date:'2026-01-31',type:'reste',  amount:900,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ± (Ù…Ø®Ø§Ù„ÙØ©: ØºÙŠÙ„Ø¨ ÙŠÙˆÙ… Ø§Ù„ØªÙ†Ø¸ÙŠÙ)'},
+  {id:'s04a',empId:'e04',month:'2026-01',date:'2026-01-15',type:'avance', amount:1100, note:'تسبيق يناير'},
+  {id:'s04b',empId:'e04',month:'2026-01',date:'2026-01-31',type:'reste',  amount:900,  note:'باقي يناير (مخالفة: غيلب يوم التنظيف)'},
 
-  {id:'s05a',empId:'e05',month:'2026-01',date:'2026-01-15',type:'avance', amount:1229, note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s05b',empId:'e05',month:'2026-01',date:'2026-01-31',type:'reste',  amount:271,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s05a',empId:'e05',month:'2026-01',date:'2026-01-15',type:'avance', amount:1229, note:'تسبيق يناير'},
+  {id:'s05b',empId:'e05',month:'2026-01',date:'2026-01-31',type:'reste',  amount:271,  note:'باقي يناير'},
 
-  {id:'s06a',empId:'e06',month:'2026-01',date:'2026-01-15',type:'avance', amount:140,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s06b',empId:'e06',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1160, note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s06a',empId:'e06',month:'2026-01',date:'2026-01-15',type:'avance', amount:140,  note:'تسبيق يناير'},
+  {id:'s06b',empId:'e06',month:'2026-01',date:'2026-01-31',type:'reste',  amount:1160, note:'باقي يناير'},
 
-  {id:'s07a',empId:'e07',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s07b',empId:'e07',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
+  {id:'s07a',empId:'e07',month:'2026-01',date:'2026-01-15',type:'avance', amount:600,  note:'تسبيق يناير'},
+  {id:'s07b',empId:'e07',month:'2026-01',date:'2026-01-31',type:'reste',  amount:700,  note:'باقي يناير'},
 
-  {id:'s08a',empId:'e08',month:'2026-01',date:'2026-01-15',type:'avance', amount:120,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s08b',empId:'e08',month:'2026-01',date:'2026-01-31',type:'reste',  amount:960,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ± (27 ÙŠÙˆÙ… Ã— 40 = 1080 Ù…Ø³ØªØ­Ù‚)'},
-  {id:'s09b',empId:'e09',month:'2026-01',date:'2026-01-03',type:'salaire',amount:120, note:'Ø±Ø§ØªØ¨ ÙŠÙ†Ø§ÙŠØ± ÙƒØ§Ù…Ù„ â€” 3 Ø£ÙŠØ§Ù… Ø¹Ù…Ù„ (1200Ã—3/30=120) | ØªØ§Ø±ÙŠØ® Ø§Ù„Ù…ØºØ§Ø¯Ø±Ø©: 2026-01-03'},
+  {id:'s08a',empId:'e08',month:'2026-01',date:'2026-01-15',type:'avance', amount:120,  note:'تسبيق يناير'},
+  {id:'s08b',empId:'e08',month:'2026-01',date:'2026-01-31',type:'reste',  amount:960,  note:'باقي يناير (27 يوم × 40 = 1080 مستحق)'},
+  {id:'s09b',empId:'e09',month:'2026-01',date:'2026-01-03',type:'salaire',amount:120, note:'راتب يناير كامل — 3 أيام عمل (1200×3/30=120) | تاريخ المغادرة: 2026-01-03'},
 
-  {id:'s10a',empId:'e10',month:'2026-01',date:'2026-01-15',type:'avance', amount:235,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s10b',empId:'e10',month:'2026-01',date:'2026-01-31',type:'reste',  amount:965,  note:'Ø¨Ø§Ù‚ÙŠ ÙŠÙ†Ø§ÙŠØ±'},
-  {id:'s01c',empId:'e01',month:'2026-02',date:'2026-02-10',type:'avance', amount:486,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s01d',empId:'e01',month:'2026-02',date:'2026-02-28',type:'reste',  amount:814,  note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s10a',empId:'e10',month:'2026-01',date:'2026-01-15',type:'avance', amount:235,  note:'تسبيق يناير'},
+  {id:'s10b',empId:'e10',month:'2026-01',date:'2026-01-31',type:'reste',  amount:965,  note:'باقي يناير'},
+  {id:'s01c',empId:'e01',month:'2026-02',date:'2026-02-10',type:'avance', amount:486,  note:'تسبيق فبراير'},
+  {id:'s01d',empId:'e01',month:'2026-02',date:'2026-02-28',type:'reste',  amount:814,  note:'باقي فبراير'},
 
-  {id:'s02c',empId:'e02',month:'2026-02',date:'2026-02-10',type:'avance', amount:343,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s02d',empId:'e02',month:'2026-02',date:'2026-02-28',type:'reste',  amount:957,  note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s02c',empId:'e02',month:'2026-02',date:'2026-02-10',type:'avance', amount:343,  note:'تسبيق فبراير'},
+  {id:'s02d',empId:'e02',month:'2026-02',date:'2026-02-28',type:'reste',  amount:957,  note:'باقي فبراير'},
 
-  {id:'s03c',empId:'e03',month:'2026-02',date:'2026-02-10',type:'avance', amount:500,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s03d',empId:'e03',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1500, note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s03c',empId:'e03',month:'2026-02',date:'2026-02-10',type:'avance', amount:500,  note:'تسبيق فبراير'},
+  {id:'s03d',empId:'e03',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1500, note:'باقي فبراير'},
 
-  {id:'s04c',empId:'e04',month:'2026-02',date:'2026-02-10',type:'avance', amount:1000, note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s04d',empId:'e04',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s04c',empId:'e04',month:'2026-02',date:'2026-02-10',type:'avance', amount:1000, note:'تسبيق فبراير'},
+  {id:'s04d',empId:'e04',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'باقي فبراير'},
 
-  {id:'s05c',empId:'e05',month:'2026-02',date:'2026-02-10',type:'avance', amount:1249, note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s05d',empId:'e05',month:'2026-02',date:'2026-02-28',type:'reste',  amount:251,  note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s05c',empId:'e05',month:'2026-02',date:'2026-02-10',type:'avance', amount:1249, note:'تسبيق فبراير'},
+  {id:'s05d',empId:'e05',month:'2026-02',date:'2026-02-28',type:'reste',  amount:251,  note:'باقي فبراير'},
 
-  {id:'s06c',empId:'e06',month:'2026-02',date:'2026-02-10',type:'avance', amount:300,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s06d',empId:'e06',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s06c',empId:'e06',month:'2026-02',date:'2026-02-10',type:'avance', amount:300,  note:'تسبيق فبراير'},
+  {id:'s06d',empId:'e06',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1000, note:'باقي فبراير'},
 
-  {id:'s07c',empId:'e07',month:'2026-02',date:'2026-02-10',type:'avance', amount:1100, note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s07d',empId:'e07',month:'2026-02',date:'2026-02-28',type:'reste',  amount:200,  note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s07c',empId:'e07',month:'2026-02',date:'2026-02-10',type:'avance', amount:1100, note:'تسبيق فبراير'},
+  {id:'s07d',empId:'e07',month:'2026-02',date:'2026-02-28',type:'reste',  amount:200,  note:'باقي فبراير'},
 
-  {id:'s08c',empId:'e08',month:'2026-02',date:'2026-02-10',type:'avance', amount:120,  note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s08d',empId:'e08',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1080, note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
+  {id:'s08c',empId:'e08',month:'2026-02',date:'2026-02-10',type:'avance', amount:120,  note:'تسبيق فبراير'},
+  {id:'s08d',empId:'e08',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1080, note:'باقي فبراير'},
 
-  {id:'s10c',empId:'e10',month:'2026-02',date:'2026-02-10',type:'avance', amount:80,   note:'ØªØ³Ø¨ÙŠÙ‚ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s10d',empId:'e10',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1120, note:'Ø¨Ø§Ù‚ÙŠ ÙØ¨Ø±Ø§ÙŠØ±'},
-  {id:'s01e',empId:'e01',month:'2026-03',date:'2026-03-07',type:'avance', amount:283,  note:'ØªØ³Ø¨ÙŠÙ‚ Ø¬Ø²Ø¦ÙŠ Ù…Ø§Ø±Ø³'},
-  {id:'s04e',empId:'e04',month:'2026-03',date:'2026-03-07',type:'avance', amount:200,  note:'ØªØ³Ø¨ÙŠÙ‚ Ø¬Ø²Ø¦ÙŠ Ù…Ø§Ø±Ø³'}
+  {id:'s10c',empId:'e10',month:'2026-02',date:'2026-02-10',type:'avance', amount:80,   note:'تسبيق فبراير'},
+  {id:'s10d',empId:'e10',month:'2026-02',date:'2026-02-28',type:'reste',  amount:1120, note:'باقي فبراير'},
+  {id:'s01e',empId:'e01',month:'2026-03',date:'2026-03-07',type:'avance', amount:283,  note:'تسبيق جزئي مارس'},
+  {id:'s04e',empId:'e04',month:'2026-03',date:'2026-03-07',type:'avance', amount:200,  note:'تسبيق جزئي مارس'}
  ];
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  CONSTANTS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 var ADMIN_PIN = '9999';
 var PINS_KEY  = 'lux_pins_v1';
 var SESS_KEY  = 'lux_sess_v1';
-var POS_SESS_KEY = 'lux_pos_employee_session_v1';
 var REQS_KEY  = 'lux_reqs_v1';
-var MONTHS    = ['ÙŠÙ†Ø§ÙŠØ±','ÙØ¨Ø±Ø§ÙŠØ±','Ù…Ø§Ø±Ø³','Ø£Ø¨Ø±ÙŠÙ„','Ù…Ø§ÙŠ','ÙŠÙˆÙ†ÙŠÙˆ',
-                 'ÙŠÙˆÙ„ÙŠÙˆØ²','ØºØ´Øª','Ø´ØªÙ†Ø¨Ø±','Ø£ÙƒØªÙˆØ¨Ø±','Ù†ÙˆÙ†Ø¨Ø±','Ø¯Ø¬Ù†Ø¨Ø±'];
-var RICO      = {service:'ðŸ½ï¸',barman:'ðŸ¸',cuisine:'ðŸ‘¨â€ðŸ³',
-                caissiere:'ðŸ’¼',nettoyage:'ðŸ§¹',admin:'ðŸ‘‘',autre:'ðŸ‘¤'};
+var MONTHS    = ['يناير','فبراير','مارس','أبريل','ماي','يونيو',
+                 'يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
+var RICO      = {service:'🍽️',barman:'🍸',cuisine:'👨‍🍳',
+                caissiere:'💼',nettoyage:'🧹',admin:'👑',autre:'👤'};
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  STATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 var PINS = JSON.parse(localStorage.getItem(PINS_KEY)||'{}');
 var REQS = JSON.parse(localStorage.getItem(REQS_KEY)||'[]');
 var SESS = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
@@ -510,13 +405,12 @@ function saveSess(){ localStorage.setItem(SESS_KEY, JSON.stringify(SESS)); }
 function getPin(id){ return id==='__admin__' ? ADMIN_PIN : (PINS[id]||'1234'); }
 
 function activeEmps(){
-  EMPS = normalizeEmps(EMPS);
   return EMPS.filter(function(e){ return !e.endDate; });
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  API Configuration â€” same as index.html
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
+//  API Configuration — same as index.html
+// ════════════════════════════════════════════════════════
 var API_URL = 'https://cafeslux-api-production.up.railway.app';
 
 // Try to load employees from API, fallback to local
@@ -527,11 +421,7 @@ async function fetchEmpsFromAPI(){
     });
     if(res.ok){
       var data = await res.json();
-      if(data && data.length) {
-        EMPS = normalizeEmps(data);
-        localStorage.setItem('lux_emps_cache', JSON.stringify(EMPS));
-        saveEmpsToStorage();
-      }
+      if(data && data.length) { EMPS = data; localStorage.setItem('lux_emps_cache', JSON.stringify(data)); }
     }
   } catch(e){ console.warn('[Portal] API offline, using local data'); }
 }
@@ -547,18 +437,18 @@ async function syncReqsToAPI(req){
   } catch(e){ console.warn('[Portal] Sync failed, stored locally'); }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  SECURE LOGIN â€” Cloud-first, local fallback
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
+//  SECURE LOGIN — Cloud-first, local fallback
+// ════════════════════════════════════════════════════════
 async function doLogin(){
-  var userRaw = (document.getElementById('login-user').value||'').trim();
-  var user = userRaw.toLowerCase();
+  var user = (document.getElementById('login-user').value||'').trim().toLowerCase();
   var pass = (document.getElementById('login-pass').value||'').trim();
   var errEl = document.getElementById('login-err');
   errEl.textContent = '';
 
-  if(!user || !pass){ errEl.textContent = 'âš ï¸ Ø£Ø¯Ø®Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙˆÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±'; return; }
+  if(!user || !pass){ errEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور'; return; }
 
+  // Try cloud auth first
   try {
     var res = await fetch(API_URL + '/api/auth/login', {
       method: 'POST',
@@ -569,44 +459,49 @@ async function doLogin(){
       var data = await res.json();
       if(data.token) localStorage.setItem('lux_auth_token', data.token);
       if(data.employee){
-        setSessionFromEmployee(data.employee, 'cloud');
-        saveSess(); launch(); toast('Ù…Ø±Ø­Ø¨Ø§Ù‹ ' + SESS.name + ' ðŸ‘‹'); return;
+        SESS = {id:data.employee.id, name:data.employee.name, role:data.employee.role, isAdmin:data.employee.role==='admin', salary:Number(data.employee.salary||0)};
+        saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋'); return;
       }
     } else if(res.status === 403){
+      // Pending or rejected employee
       var errData = await res.json().catch(function(){return {};});
-      errEl.textContent = 'â³ ' + (errData.error || 'Ø­Ø³Ø§Ø¨Ùƒ ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ù…Ù† Ø§Ù„Ù…Ø¯ÙŠØ±');
+      errEl.textContent = '⏳ ' + (errData.error || 'حسابك في انتظار الموافقة من المدير');
+      // Check if rejected with reason
       var rejected = JSON.parse(localStorage.getItem('lux_emp_rejected')||'[]');
       var myRejection = rejected.find(function(r){return (r.username||'').toLowerCase() === user;});
       if(myRejection){
-        errEl.innerHTML = 'âŒ ØªÙ… Ø±ÙØ¶ Ø·Ù„Ø¨Ùƒ<br><span style="font-size:11px;color:var(--dim)">Ø§Ù„Ø³Ø¨Ø¨: '+myRejection.reason+'</span>';
+        errEl.innerHTML = '❌ تم رفض طلبك<br><span style="font-size:11px;color:var(--dim)">السبب: '+myRejection.reason+'</span>';
       }
       return;
     } else if(res.status === 401){
       var errData2 = await res.json().catch(function(){return {};});
-      errEl.textContent = 'âŒ ' + (errData2.error || 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ø®Ø§Ø·Ø¦Ø©');
+      errEl.textContent = '❌ ' + (errData2.error || 'كلمة المرور خاطئة');
       return;
     }
-  } catch(e){ }
+  } catch(e){ /* API offline — fallback to local */ }
 
-  if(user === 'admin' || user === 'Ø§Ù„Ù…Ø¯ÙŠØ±'){
+  // Local auth fallback — check admin
+  if(user === 'admin' || user === 'المدير'){
     if(pass === ADMIN_PIN){
-      SESS = {id:'__admin__',name:'Ø§Ù„Ù…Ø¯ÙŠØ±',role:'admin',isAdmin:true,salary:0};
-      saveSess(); launch(); toast('Ù…Ø±Ø­Ø¨Ø§Ù‹ Ø¨Ø§Ù„Ù…Ø¯ÙŠØ± ðŸ‘‘'); return;
-    } else { errEl.textContent = 'âŒ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ø®Ø§Ø·Ø¦Ø©'; return; }
+      SESS = {id:'__admin__',name:'المدير',role:'admin',isAdmin:true,salary:0};
+      saveSess(); launch(); toast('مرحباً بالمدير 👑'); return;
+    } else { errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
   }
 
-  var emp = activeEmps().find(function(entry){
-    var normalized = normalizeEmpAccess(entry, 0);
-    return (normalized.username||'').toLowerCase() === user || (normalized.name||'').toLowerCase() === user;
-  });
-  if(!emp){ errEl.textContent = 'âŒ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯'; return; }
+  // Find employee locally
+  var emp = EMPS.filter(function(e){
+    if(e.endDate) return false;
+    var n = (e.name||'').toLowerCase();
+    return n === user || n.indexOf(user) === 0;
+  })[0];
+  if(!emp){ errEl.textContent = '❌ اسم المستخدم غير موجود'; return; }
   var pin = getPin(emp.id);
-  if(pass !== pin){ errEl.textContent = 'âŒ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ø®Ø§Ø·Ø¦Ø©'; return; }
-  setSessionFromEmployee(emp, 'manual-pin');
-  saveSess(); launch(); toast('Ù…Ø±Ø­Ø¨Ø§Ù‹ ' + SESS.name + ' ðŸ‘‹');
+  if(pass !== pin){ errEl.textContent = '❌ كلمة المرور خاطئة'; return; }
+  SESS = {id:emp.id, name:emp.name, role:emp.role, isAdmin:false, salary:Number(emp.salary||0)};
+  saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋');
 }
 
-// â”€â”€ New Employee Registration â”€â”€
+// ── New Employee Registration ──
 function showNewEmpForm(){
   document.getElementById('login-form').style.display = 'none';
   document.getElementById('new-emp-form').style.display = 'block';
@@ -614,7 +509,6 @@ function showNewEmpForm(){
 function hideNewEmpForm(){
   document.getElementById('new-emp-form').style.display = 'none';
   document.getElementById('login-form').style.display = 'block';
-  focusLoginProbe();
 }
 async function submitNewEmpRequest(){
   var name = (document.getElementById('ne-name').value||'').trim();
@@ -622,8 +516,8 @@ async function submitNewEmpRequest(){
   var cin = (document.getElementById('ne-cin').value||'').trim().toUpperCase();
   var user = (document.getElementById('ne-user').value||'').trim().toLowerCase();
   var pass = (document.getElementById('ne-pass').value||'').trim();
-  if(!name||!phone||!user||!pass){ toast('âš ï¸ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø© (*) Ø¥Ù„Ø²Ø§Ù…ÙŠØ©'); return; }
-  if(pass.length < 4){ toast('âš ï¸ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±: 4 Ø£Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„'); return; }
+  if(!name||!phone||!user||!pass){ toast('⚠️ جميع الحقول المطلوبة (*) إلزامية'); return; }
+  if(pass.length < 4){ toast('⚠️ كلمة المرور: 4 أحرف على الأقل'); return; }
   var req = {name:name, phone:phone, cin:cin, username:user, password:pass, status:'pending', requestDate:new Date().toISOString()};
   // Save locally
   var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
@@ -635,7 +529,7 @@ async function submitNewEmpRequest(){
       body: JSON.stringify(req)
     });
   } catch(e){}
-  toast('âœ… ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨Ùƒ â€” ÙÙŠ Ø§Ù†ØªØ¸Ø§Ø± Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø¯ÙŠØ±');
+  toast('✅ تم إرسال طلبك — في انتظار موافقة المدير');
   hideNewEmpForm();
 }
 
@@ -649,7 +543,6 @@ function launch(){
     renderAdminReqs();
     updDot();
   } else {
-    persistPosSession(SESS);
     document.getElementById('e-hname').textContent=SESS.name;
     document.getElementById('e-hrole').textContent=SESS.role;
     showScr('scr-emp');
@@ -657,9 +550,9 @@ function launch(){
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  EMPLOYEE HELPERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function myEmp(){ return EMPS.filter(function(e){return e.id===SESS.id;})[0]||{salary:SESS.salary,role:SESS.role}; }
 function mySals(month){ return SALS.filter(function(s){return s.empId===SESS.id&&(!month||s.month===month);}); }
 function myReqs(){ return REQS.filter(function(r){return r.empId===SESS.id;}); }
@@ -675,75 +568,75 @@ function calcMo(empId, month){
   return {net:net,paid:av+re,av:av,re:re,bon:bon,inf:inf,rem:net-(av+re)};
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  EMPLOYEE HOME
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function renderEmpHome(){
   var emp=myEmp();
-  var ico=RICO[emp.role]||'ðŸ‘¤';
+  var ico=RICO[emp.role]||'👤';
   var profile = JSON.parse(localStorage.getItem('lux_profile_'+SESS.id)||'{}');
   var myS=mySals();
   var months=myS.map(function(s){return s.month;}).sort().reverse();
   var lastM=months[0]||'2026-02';
   var c=calcMo(SESS.id,lastM);
   var req=myReqs()[0];
-  var stM={pending:'â³ ÙÙŠ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±',approved:'âœ… Ù…ÙˆØ§ÙÙ‚ Ø¹Ù„ÙŠÙ‡',rejected:'âŒ Ù…Ø±ÙÙˆØ¶'};
+  var stM={pending:'⏳ في الانتظار',approved:'✅ موافق عليه',rejected:'❌ مرفوض'};
 
   var h='<div class="pcard">'
     +'<div style="font-size:48px;margin-bottom:9px">'+ico+'</div>'
     +'<div style="font-size:22px;font-weight:900">'+SESS.name+'</div>'
     +'<div style="font-size:11px;color:var(--dim);margin-top:5px">'+emp.role
-    +' Â· Ø§Ù„Ø±Ø§ØªØ¨: <span style="color:var(--gold);font-weight:700">'+fmt(emp.salary)+' Ø¯.Ù…</span></div>'
-    +(emp.startDate?'<div style="font-size:10px;color:var(--dim);margin-top:4px">ðŸ“… Ø§Ù„Ø§Ù„ØªØ­Ø§Ù‚: '+emp.startDate+'</div>':'')
-    +(emp.endDate?'<div style="font-size:10px;color:var(--rd);margin-top:4px">ðŸ”´ Ø§Ù„Ù…ØºØ§Ø¯Ø±Ø©: '+emp.endDate+'</div>':'')
+    +' · الراتب: <span style="color:var(--gold);font-weight:700">'+fmt(emp.salary)+' د.م</span></div>'
+    +(emp.startDate?'<div style="font-size:10px;color:var(--dim);margin-top:4px">📅 الالتحاق: '+emp.startDate+'</div>':'')
+    +(emp.endDate?'<div style="font-size:10px;color:var(--rd);margin-top:4px">🔴 المغادرة: '+emp.endDate+'</div>':'')
     +'</div>';
 
   // Personal info card
   h+='<div class="card" style="margin-bottom:12px">'
-    +'<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:10px">ðŸ“‹ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø´Ø®ØµÙŠØ©</div>'
+    +'<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:10px">📋 المعلومات الشخصية</div>'
     +'<div style="font-size:12px;line-height:2.2;color:var(--dim)">'
-    +'ðŸ“ž Ø§Ù„Ù‡Ø§ØªÙ: <b style="color:var(--tx)">'+(profile.phone||emp.phone||'ØºÙŠØ± Ù…Ø­Ø¯Ø¯')+'</b><br>'
-    +'ðŸªª CIN: <b style="color:var(--tx)">'+(profile.cin||'ØºÙŠØ± Ù…Ø­Ø¯Ø¯')+'</b><br>'
-    +'ðŸ“ Ø§Ù„Ø¹Ù†ÙˆØ§Ù†: <b style="color:var(--tx)">'+(profile.addr||'ØºÙŠØ± Ù…Ø­Ø¯Ø¯')+'</b>'
+    +'📞 الهاتف: <b style="color:var(--tx)">'+(profile.phone||emp.phone||'غير محدد')+'</b><br>'
+    +'🪪 CIN: <b style="color:var(--tx)">'+(profile.cin||'غير محدد')+'</b><br>'
+    +'📍 العنوان: <b style="color:var(--tx)">'+(profile.addr||'غير محدد')+'</b>'
     +'</div>'
-    +'<button class="btn btn-g" onclick="ePg(\'profile\',null);loadProfileForm()" style="margin-top:10px;padding:8px">âœï¸ ØªØ¹Ø¯ÙŠÙ„ Ø¨ÙŠØ§Ù†Ø§ØªÙŠ</button>'
+    +'<button class="btn btn-g" onclick="ePg(\'profile\',null);loadProfileForm()" style="margin-top:10px;padding:8px">✏️ تعديل بياناتي</button>'
     +'</div>';
 
   if(myS.length){
-    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">ðŸ“Š Ø¢Ø®Ø± Ø´Ù‡Ø± â€” '+mLbl(lastM)+'</div>';
+    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">📊 آخر شهر — '+mLbl(lastM)+'</div>';
     h+='<div class="netbox">'
-      +'<div><div class="nl">Ø§Ù„ØµØ§ÙÙŠ Ø§Ù„Ù…Ø³ØªØ­Ù‚</div><div class="ns">Ø±Ø§ØªØ¨+Ù…ÙƒØ§ÙØ£Ø©âˆ’Ø®ØµÙ…</div></div>'
-      +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">Ø¯.Ù…</div></div></div>';
+      +'<div><div class="nl">الصافي المستحق</div><div class="ns">راتب+مكافأة−خصم</div></div>'
+      +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">د.م</div></div></div>';
     h+='<div class="kg3">'
-      +'<div class="kbox"><div class="kl">Ù…Ø¯ÙÙˆØ¹</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">Ø¯.Ù…</div></div>'
-      +'<div class="kbox"><div class="kl">Ø§Ù„Ø³Ù„ÙØ©</div><div class="kv c-rd">'+fmt(c.av)+'</div><div class="ks">Ø¯.Ù…</div></div>'
-      +'<div class="kbox"><div class="kl">Ø§Ù„Ø¨Ø§Ù‚ÙŠ</div>'
+      +'<div class="kbox"><div class="kl">مدفوع</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">د.م</div></div>'
+      +'<div class="kbox"><div class="kl">السلفة</div><div class="kv c-rd">'+fmt(c.av)+'</div><div class="ks">د.م</div></div>'
+      +'<div class="kbox"><div class="kl">الباقي</div>'
       +'<div class="kv '+(c.rem>0?'c-rd':c.rem===0?'c-gr':'c-pr')+'">'+fmt(Math.abs(c.rem))+'</div>'
-      +'<div class="ks">'+(c.rem>0?'âš ï¸ ØºÙŠØ± Ù…Ø¯ÙÙˆØ¹':c.rem===0?'âœ… Ù…Ø³ÙˆÙ‘Ù‰':'Ø²ÙŠØ§Ø¯Ø©')+'</div></div></div>';
+      +'<div class="ks">'+(c.rem>0?'⚠️ غير مدفوع':c.rem===0?'✅ مسوّى':'زيادة')+'</div></div></div>';
   } else {
-    h+='<div class="infobox"><b>Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø±ÙˆØ§ØªØ¨ Ø¨Ø¹Ø¯.</b><br>Ø³ØªØ¸Ù‡Ø± Ù‡Ù†Ø§ Ø¨Ø¹Ø¯ Ø¥Ø¶Ø§ÙØªÙ‡Ø§ Ù…Ù† Ù‚ÙØ¨Ù„ Ø§Ù„Ù…Ø¯ÙŠØ±.</div>';
+    h+='<div class="infobox"><b>لا توجد بيانات رواتب بعد.</b><br>ستظهر هنا بعد إضافتها من قِبل المدير.</div>';
   }
 
   if(req){
-    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">ðŸ“¨ Ø¢Ø®Ø± Ø·Ù„Ø¨</div>';
+    h+='<div style="font-size:10px;color:var(--dim);font-weight:700;margin-bottom:8px">📨 آخر طلب</div>';
     h+='<div class="rcard"><div class="rcard-h">'
-      +'<div><div class="ramt">'+fmt(req.amount)+' <span style="font-size:11px;color:var(--dim)">Ø¯.Ù…</span></div>'
-      +'<div class="rm">'+mLbl(req.month)+' Â· '+req.date+'</div></div>'
+      +'<div><div class="ramt">'+fmt(req.amount)+' <span style="font-size:11px;color:var(--dim)">د.م</span></div>'
+      +'<div class="rm">'+mLbl(req.month)+' · '+req.date+'</div></div>'
       +'<span class="badge '+req.status+'">'+stM[req.status]+'</span></div>'
       +(req.reason?'<div style="font-size:11px;color:var(--dim);margin-top:5px">'+req.reason+'</div>':'')
-      +(req.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">ðŸ’¬ Ø§Ù„Ù…Ø¯ÙŠØ±: '+req.adminNote+'</div>':'')
+      +(req.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">💬 المدير: '+req.adminNote+'</div>':'')
       +'</div>';
   } else {
     h+='<div class="card" style="text-align:center;padding:16px">'
-      +'<div style="font-size:22px;margin-bottom:6px">ðŸ’¸</div>'
-      +'<div style="font-size:12px;color:var(--dim)">Ø§Ø¶ØºØ· <b style="color:var(--gold)">ðŸ’¸ Ø·Ù„Ø¨ ØªØ³Ø¨ÙŠÙ‚</b> Ù„Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ù„Ù„Ù…Ø¯ÙŠØ±</div></div>';
+      +'<div style="font-size:22px;margin-bottom:6px">💸</div>'
+      +'<div style="font-size:12px;color:var(--dim)">اضغط <b style="color:var(--gold)">💸 طلب تسبيق</b> لإرسال طلب للمدير</div></div>';
   }
   document.getElementById('epg-home').innerHTML=h;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  PROFILE MANAGEMENT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function loadProfileForm(){
   var emp = myEmp();
   var profile = JSON.parse(localStorage.getItem('lux_profile_'+SESS.id)||'{}');
@@ -766,7 +659,7 @@ function saveProfile(){
   localStorage.setItem('lux_profile_'+SESS.id, JSON.stringify(profile));
   // Try to sync with API
   syncProfileToAPI(profile);
-  toast('âœ… ØªÙ… Ø­ÙØ¸ Ø¨ÙŠØ§Ù†Ø§ØªÙƒ');
+  toast('✅ تم حفظ بياناتك');
   ePg('home', null);
   document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===0)t.classList.add('on');else t.classList.remove('on');});
 }
@@ -781,9 +674,9 @@ async function syncProfileToAPI(profile){
   } catch(e){ console.warn('[Portal] Profile sync offline'); }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  EMPLOYEE HISTORY
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function buildMrow(){
   var hasMo={};
   mySals().forEach(function(s){hasMo[s.month]=true;});
@@ -795,7 +688,7 @@ function buildMrow(){
   all.forEach(function(m){
     var div=document.createElement('div');
     div.className='ms'+(m===eSel?' on':'');
-    div.textContent=MONTHS[parseInt(m.slice(5,7))-1]+(hasMo[m]?' âœ“':'');
+    div.textContent=MONTHS[parseInt(m.slice(5,7))-1]+(hasMo[m]?' ✓':'');
     div.onclick=(function(mo){return function(){setEM(mo);};})(m);
     container.appendChild(div);
   });
@@ -808,34 +701,34 @@ function renderHist(){
   var sals=mySals(eSel);
   var h='<div class="netbox">'
     +'<div><div class="nl">'+mLbl(eSel)+'</div></div>'
-    +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">Ø¯.Ù…</div></div></div>';
+    +'<div style="text-align:left"><div class="nv">'+fmt(c.net)+'</div><div style="font-size:10px;color:var(--dim)">د.م</div></div></div>';
   h+='<div class="kg2">'
-    +'<div class="kbox"><div class="kl">Ù…Ø¯ÙÙˆØ¹</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">Ø¯.Ù…</div></div>'
-    +'<div class="kbox"><div class="kl">Ø¨Ø§Ù‚ÙŠ</div><div class="kv '+(c.rem>0?'c-rd':'c-gr')+'">'+fmt(Math.abs(c.rem))+'</div>'
-    +'<div class="ks">'+(c.rem>0?'ØºÙŠØ± Ù…Ø¯ÙÙˆØ¹':'Ù…Ø³ÙˆÙ‘Ù‰')+'</div></div></div>';
+    +'<div class="kbox"><div class="kl">مدفوع</div><div class="kv c-gr">'+fmt(c.paid)+'</div><div class="ks">د.م</div></div>'
+    +'<div class="kbox"><div class="kl">باقي</div><div class="kv '+(c.rem>0?'c-rd':'c-gr')+'">'+fmt(Math.abs(c.rem))+'</div>'
+    +'<div class="ks">'+(c.rem>0?'غير مدفوع':'مسوّى')+'</div></div></div>';
   if(sals.length){
-    var tm={avance:'ðŸ’¸ Ø³Ù„ÙØ©',reste:'âœ… Ø¨Ø§Ù‚ÙŠ',salaire:'ðŸ’° Ø±Ø§ØªØ¨ ÙƒØ§Ù…Ù„',bonus:'ðŸ… Ù…ÙƒØ§ÙØ£Ø©',infraction:'âš ï¸ Ø®ØµÙ…'};
-    h+='<div class="tw"><table><thead><tr><th>Ø§Ù„ØªØ§Ø±ÙŠØ®</th><th>Ø§Ù„Ù†ÙˆØ¹</th><th>Ø§Ù„Ù…Ø¨Ù„Øº</th><th>Ù…Ù„Ø§Ø­Ø¸Ø©</th></tr></thead><tbody>';
+    var tm={avance:'💸 سلفة',reste:'✅ باقي',salaire:'💰 راتب كامل',bonus:'🏅 مكافأة',infraction:'⚠️ خصم'};
+    h+='<div class="tw"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>';
     sals.forEach(function(s){
       var neg=s.type==='avance'||s.type==='infraction';
       h+='<tr><td>'+s.date+'</td><td>'+(tm[s.type]||s.type)+'</td>'
         +'<td style="color:'+(neg?'var(--rd)':'var(--gr)')+'">'+fmt(s.amount)+'</td>'
-        +'<td style="color:var(--dim)">'+(s.note||'â€”')+'</td></tr>';
+        +'<td style="color:var(--dim)">'+(s.note||'—')+'</td></tr>';
     });
     h+='</tbody></table></div>';
   } else {
-    h+='<div class="empty"><div>ðŸ“‹</div>Ù„Ø§ ØªÙˆØ¬Ø¯ Ø³Ø¬Ù„Ø§Øª Ù„Ù‡Ø°Ø§ Ø§Ù„Ø´Ù‡Ø±</div>';
+    h+='<div class="empty"><div>📋</div>لا توجد سجلات لهذا الشهر</div>';
   }
   document.getElementById('epg-hist-b').innerHTML=h;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  EMPLOYEE REQUEST
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function buildReqForm(){
   var emp=myEmp();
   document.getElementById('req-info').innerHTML=
-    '<b>Ø±Ø§ØªØ¨Ùƒ Ø§Ù„Ø£Ø³Ø§Ø³ÙŠ: '+fmt(emp.salary)+' Ø¯.Ù…</b><br>ÙŠÙ…ÙƒÙ†Ùƒ Ø·Ù„Ø¨ ØªØ³Ø¨ÙŠÙ‚ Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„Ø±Ø§ØªØ¨ Ø§Ù„ÙƒØ§Ù…Ù„.';
+    '<b>راتبك الأساسي: '+fmt(emp.salary)+' د.م</b><br>يمكنك طلب تسبيق لا يتجاوز الراتب الكامل.';
   var sel=document.getElementById('rq-mo');
   sel.innerHTML='';
   ['2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'].forEach(function(m){
@@ -846,15 +739,15 @@ function buildReqForm(){
 
 function renderMyReqs(){
   var reqs=myReqs();
-  if(!reqs.length){document.getElementById('epg-reqs-b').innerHTML='<div class="empty"><div>ðŸ“¨</div>Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ø¨Ø¹Ø¯</div>';return;}
-  var stM={pending:'â³ ÙÙŠ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±',approved:'âœ… Ù…ÙˆØ§ÙÙ‚ Ø¹Ù„ÙŠÙ‡',rejected:'âŒ Ù…Ø±ÙÙˆØ¶'};
+  if(!reqs.length){document.getElementById('epg-reqs-b').innerHTML='<div class="empty"><div>📨</div>لا توجد طلبات بعد</div>';return;}
+  var stM={pending:'⏳ في الانتظار',approved:'✅ موافق عليه',rejected:'❌ مرفوض'};
   document.getElementById('epg-reqs-b').innerHTML=reqs.map(function(r){
     return '<div class="rcard"><div class="rcard-h">'
-      +'<div><div class="ramt">'+fmt(r.amount)+' <span style="font-size:11px;color:var(--dim)">Ø¯.Ù…</span></div>'
-      +'<div class="rm">'+mLbl(r.month)+' Â· '+r.date+'</div></div>'
+      +'<div><div class="ramt">'+fmt(r.amount)+' <span style="font-size:11px;color:var(--dim)">د.م</span></div>'
+      +'<div class="rm">'+mLbl(r.month)+' · '+r.date+'</div></div>'
       +'<span class="badge '+r.status+'">'+stM[r.status]+'</span></div>'
-      +(r.reason?'<div style="font-size:11px;color:var(--dim);margin-top:5px">ðŸ“ '+r.reason+'</div>':'')
-      +(r.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">ðŸ’¬ Ø§Ù„Ù…Ø¯ÙŠØ±: '+r.adminNote+'</div>':'')
+      +(r.reason?'<div style="font-size:11px;color:var(--dim);margin-top:5px">📝 '+r.reason+'</div>':'')
+      +(r.adminNote?'<div style="font-size:10px;color:var(--dim);margin-top:4px">💬 المدير: '+r.adminNote+'</div>':'')
       +'</div>';
   }).join('');
 }
@@ -864,10 +757,10 @@ function sendReq(){
   var mo=document.getElementById('rq-mo').value;
   var why=document.getElementById('rq-why').value.trim();
   var emp=myEmp();
-  if(!amt||amt<50){toast('âš ï¸ Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ø¯Ù†Ù‰ 50 Ø¯Ø±Ù‡Ù…');return;}
-  if(amt>Number(emp.salary||0)){toast('âš ï¸ Ø§Ù„Ù…Ø¨Ù„Øº Ø£ÙƒØ¨Ø± Ù…Ù† Ø±Ø§ØªØ¨Ùƒ ('+fmt(emp.salary)+' Ø¯.Ù…)');return;}
+  if(!amt||amt<50){toast('⚠️ الحد الأدنى 50 درهم');return;}
+  if(amt>Number(emp.salary||0)){toast('⚠️ المبلغ أكبر من راتبك ('+fmt(emp.salary)+' د.م)');return;}
   if(REQS.filter(function(r){return r.empId===SESS.id&&r.month===mo&&r.status==='pending';}).length){
-    toast('âš ï¸ Ù„Ø¯ÙŠÙƒ Ø·Ù„Ø¨ Ù…Ø¹Ù„Ù‚ Ù„Ù‡Ø°Ø§ Ø§Ù„Ø´Ù‡Ø±');return;
+    toast('⚠️ لديك طلب معلق لهذا الشهر');return;
   }
   var newReq = {id:'r'+Date.now(),empId:SESS.id,empName:SESS.name,amount:amt,month:mo,reason:why,status:'pending',adminNote:'',date:new Date().toISOString().slice(0,10)};
   REQS.unshift(newReq);
@@ -876,14 +769,14 @@ function sendReq(){
   syncReqsToAPI(newReq);
   document.getElementById('rq-amt').value='';
   document.getElementById('rq-why').value='';
-  toast('âœ… ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨Ùƒ Ù„Ù„Ù…Ø¯ÙŠØ±');
+  toast('✅ تم إرسال طلبك للمدير');
   ePg('reqs',null);
   document.querySelectorAll('#scr-emp .tab').forEach(function(t,i){if(i===4)t.classList.add('on');else t.classList.remove('on');});
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  ADMIN
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function updDot(){
   var n=REQS.filter(function(r){return r.status==='pending';}).length;
   var el=document.getElementById('a-dot');
@@ -956,8 +849,8 @@ function renderAdminReqs(){
 }
 
 function doApprove(id){
-  REQS.forEach(function(r){if(r.id===id){r.status='approved';r.adminNote='ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©';}});
-  saveReqs();renderAdminReqs();toast('âœ… ØªÙ…Øª Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø©');
+  REQS.forEach(function(r){if(r.id===id){r.status='approved';r.adminNote='تمت الموافقة';}});
+  saveReqs();renderAdminReqs();toast('✅ تمت الموافقة');
 }
 function openRej(id){
   document.getElementById('rej-id').value=id;
@@ -967,8 +860,8 @@ function openRej(id){
 function doReject(){
   var id=document.getElementById('rej-id').value;
   var note=document.getElementById('rej-note').value.trim();
-  REQS.forEach(function(r){if(r.id===id){r.status='rejected';r.adminNote=note||'Ù…Ø±ÙÙˆØ¶';}});
-  saveReqs();closeM('m-rej');renderAdminReqs();toast('âŒ ØªÙ… Ø§Ù„Ø±ÙØ¶');
+  REQS.forEach(function(r){if(r.id===id){r.status='rejected';r.adminNote=note||'مرفوض';}});
+  saveReqs();closeM('m-rej');renderAdminReqs();toast('❌ تم الرفض');
 }
 
 function renderAdminEmps(){
@@ -976,11 +869,11 @@ function renderAdminEmps(){
     var pend=REQS.filter(function(r){return r.empId===e.id&&r.status==='pending';}).length;
     return '<div class="erow">'
       +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<div style="font-size:22px">'+(RICO[e.role]||'ðŸ‘¤')+'</div>'
-      +'<div><div style="font-size:13px;font-weight:700">'+e.name+(pend?' <span style="color:var(--rd);font-size:10px">â—'+pend+'</span>':'')+'</div>'
-      +'<div style="font-size:10px;color:var(--dim)">'+e.role+' Â· '+fmt(e.salary)+' Ø¯.Ù…</div></div></div>'
+      +'<div style="font-size:22px">'+(RICO[e.role]||'👤')+'</div>'
+      +'<div><div style="font-size:13px;font-weight:700">'+e.name+(pend?' <span style="color:var(--rd);font-size:10px">●'+pend+'</span>':'')+'</div>'
+      +'<div style="font-size:10px;color:var(--dim)">'+e.role+' · '+fmt(e.salary)+' د.م</div></div></div>'
       +'<div style="font-size:9px;color:var(--dim);text-align:left">'
-      +(e.endDate?'<div style="color:var(--rd)">ðŸ”´ '+e.endDate+'</div>':'<div style="color:var(--gr)">ðŸŸ¢ Ù†Ø´Ø·</div>')
+      +(e.endDate?'<div style="color:var(--rd)">🔴 '+e.endDate+'</div>':'<div style="color:var(--gr)">🟢 نشط</div>')
       +'<div>'+e.startDate+'</div></div></div>';
   }).join('');
 }
@@ -992,18 +885,17 @@ function renderAdminPins(){
     var card=document.createElement('div');
     card.className='card';
     card.style.marginBottom='10px';
-    var ico=RICO[e.role]||'ðŸ‘¤';
+    var ico=RICO[e.role]||'👤';
     card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;gap:9px">'
       +'<div style="font-size:20px">'+ico+'</div>'
       +'<div><div style="font-size:13px;font-weight:700">'+e.name+'</div>'
       +'<div style="font-size:10px;color:var(--dim)">'+e.role+'</div></div></div>'
-      +'<div style="font-size:10px;color:var(--dim);line-height:1.8">Compte: <b style="color:var(--tx)">'+(e.accountNumber||'--')+'</b><br>RFID: <b style="color:var(--tx)">'+(e.rfidCode||'--')+'</b><br>Dallas: <b style="color:var(--tx)">'+(e.dallasKey||'--')+'</b></div>'
-      +'<div style="font-size:11px;color:var(--dim)">Ø´ÙØ±Ø©: <b style="color:var(--gold)">'+(PINS[e.id]||'1234')+'</b></div></div>';
+      +'<div style="font-size:11px;color:var(--dim)">شفرة: <b style="color:var(--gold)">'+(PINS[e.id]||'1234')+'</b></div></div>';
     var btn=document.createElement('button');
     btn.className='btn btn-g';
     btn.style.cssText='padding:9px;margin:0';
-    btn.textContent='ðŸ”‘ ØªØºÙŠÙŠØ± PIN';
+    btn.textContent='🔑 تغيير PIN';
     btn.onclick=(function(id,name){return function(){openPIN(id,name);};})(e.id,e.name);
     card.appendChild(btn);
     container.appendChild(card);
@@ -1011,27 +903,27 @@ function renderAdminPins(){
   var info=document.createElement('div');
   info.className='infobox';
   info.style.marginTop='4px';
-  info.innerHTML='PIN Ø§Ù„Ù…Ø¯ÙŠØ±: <b>'+ADMIN_PIN+'</b>';
+  info.innerHTML='PIN المدير: <b>'+ADMIN_PIN+'</b>';
   container.appendChild(info);
 }
 
 function openPIN(id,name){
   document.getElementById('pin-eid').value=id;
-  document.getElementById('m-pin-tit').textContent='ðŸ”‘ '+name;
+  document.getElementById('m-pin-tit').textContent='🔑 '+name;
   document.getElementById('new-pin').value='';
   document.getElementById('m-pin').classList.add('on');
 }
 function savePIN(){
   var id=document.getElementById('pin-eid').value;
   var val=String(document.getElementById('new-pin').value).trim();
-  if(!/^\d{4}$/.test(val)){toast('âš ï¸ PIN ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† 4 Ø£Ø±Ù‚Ø§Ù…');return;}
+  if(!/^\d{4}$/.test(val)){toast('⚠️ PIN يجب أن يكون 4 أرقام');return;}
   PINS[id]=val;savePins();closeM('m-pin');renderAdminPins();
-  toast('âœ… PIN Ù…Ø­ÙÙˆØ¸');
+  toast('✅ PIN محفوظ');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 //  NAV
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
 function ePg(p,el){
   document.querySelectorAll('#scr-emp .pg').forEach(function(x){x.classList.remove('on');});
   document.querySelectorAll('#scr-emp .tab').forEach(function(t){t.classList.remove('on');});
@@ -1054,21 +946,17 @@ function aPg(p,el){
 function showScr(id){
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   document.getElementById(id).classList.add('on');
-  if(id === 'scr-login') focusLoginProbe();
 }
 function doLogout(){
-  if(!confirm('ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø±ÙˆØ¬ØŸ'))return;
+  if(!confirm('تسجيل الخروج؟'))return;
   SESS=null;SEL=null;pinB='';
   localStorage.removeItem(SESS_KEY);
-  localStorage.removeItem(POS_SESS_KEY);
   showScr('scr-login');
   // Clear login form
   var u=document.getElementById('login-user'); if(u) u.value='';
   var p=document.getElementById('login-pass'); if(p) p.value='';
   var e=document.getElementById('login-err');  if(e) e.textContent='';
-  var probe=document.getElementById('login-probe'); if(probe) probe.value='';
-  focusLoginProbe();
-  toast('ØªÙ… Ø§Ù„Ø®Ø±ÙˆØ¬');
+  toast('تم الخروج');
 }
 function closeM(id){document.getElementById(id).classList.remove('on');}
 function fmt(n){var v=Math.round(Number(n||0));return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
@@ -1080,25 +968,22 @@ function toast(msg){
   toast._t=setTimeout(function(){t.classList.remove('on');},2800);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  INIT â€” API-first, fallback local
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════
+//  INIT — API-first, fallback local
+// ════════════════════════════════════════════════════════
 (async function(){
   // Try to load fresh employee data from API
   try { await fetchEmpsFromAPI(); } catch(e){}
   // Also try to load from localStorage cache
   var cached = localStorage.getItem('lux_emps_cache');
-  if(cached){ try { var c = JSON.parse(cached); if(c && c.length) EMPS = normalizeEmps(c); } catch(e){} }
-  EMPS = normalizeEmps(EMPS);
-  saveEmpsToStorage();
+  if(cached){ try { var c = JSON.parse(cached); if(c && c.length) EMPS = c; } catch(e){} }
 
   // Check existing session
   if(SESS) launch();
-  else { showScr('scr-login'); focusLoginProbe(); }
+  else showScr('scr-login');
 
   setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
 })();
 </script>
 </body>
 </html>
-
