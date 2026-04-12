@@ -183,9 +183,35 @@
       return result;
     },
     async getCategories() {
-      if (!_isOnline) return [];
-      try { return await _get('/api/categories'); }
-      catch { return []; }
+      if (!_isOnline) return _ls('categories_cache', []);
+      try {
+        const data = await _get('/api/categories');
+        _lsSet('categories_cache', data);
+        return data;
+      } catch { return _ls('categories_cache', []); }
+    },
+    async getPosCatalog() {
+      const fallback = {
+        menu: _ls('menu_cache', []),
+        products: _ls('products_cache', []),
+        categories: _ls('categories_cache', []),
+      };
+
+      try {
+        const [menu, products, categories] = await Promise.all([
+          this.getMenu().catch(() => fallback.menu),
+          this.getProducts().catch(() => fallback.products),
+          this.getCategories().catch(() => fallback.categories),
+        ]);
+
+        return {
+          menu: Array.isArray(menu) ? menu : fallback.menu,
+          products: Array.isArray(products) ? products : fallback.products,
+          categories: Array.isArray(categories) ? categories : fallback.categories,
+        };
+      } catch {
+        return fallback;
+      }
     },
 
     // ── CUSTOMERS ─────────────────────────────────────────────────
