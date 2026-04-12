@@ -21,20 +21,6 @@
   let _orderData = null;
   let _payStep = 1;
 
-  function getVisibleMethods() {
-    const requested = _orderData && Array.isArray(_orderData.methods) && _orderData.methods.length
-      ? _orderData.methods
-      : Object.keys(PAYMENT_METHODS);
-    return requested.filter(function(key) { return !!PAYMENT_METHODS[key]; });
-  }
-
-  function getAmountLabel() {
-    if (_orderData && _orderData.amountLabel) return _orderData.amountLabel;
-    const currency = (_orderData && _orderData.currency) || 'MAD';
-    const total = _orderData && _orderData.total != null ? _orderData.total : '0';
-    return total + ' ' + currency;
-  }
-
   // ── BUILD PAYMENT MODAL HTML ─────────────────────────────────────
   function buildPaymentModal() {
     if (document.getElementById('lux-pay-modal-v3')) return;
@@ -149,7 +135,7 @@
     const container = document.getElementById('lpay-methods');
     if (!container) return;
 
-    container.innerHTML = getVisibleMethods().map(function(key) {
+    container.innerHTML = Object.keys(PAYMENT_METHODS).map(function(key) {
       const m = PAYMENT_METHODS[key];
       const sel = key === _selectedMethod ? ' selected' : '';
       return '<div class="lpay-method' + sel + '" data-method="' + key + '" onclick="LuxPayment.selectMethod(\'' + key + '\')">' +
@@ -376,13 +362,11 @@
   function open(orderData) {
     buildPaymentModal();
     _orderData = orderData;
-    _selectedMethod = orderData && orderData.defaultMethod
-      ? orderData.defaultMethod
-      : (getVisibleMethods()[0] || 'cash');
+    _selectedMethod = 'cash';
     _payStep = 1;
 
     // Set amount
-    document.getElementById('lpay-amount').textContent = getAmountLabel();
+    document.getElementById('lpay-amount').textContent = (orderData.total || '0') + ' MAD';
 
     // Reset
     buildMethodButtons();
@@ -435,10 +419,9 @@
 
     // Step 2: show correct form
     if (step === 2) {
-      var visible = getVisibleMethods();
       Object.keys(PAYMENT_METHODS).forEach(function(m) {
         const f = document.getElementById('lpay-form-' + m);
-        if (f) f.style.display = visible.indexOf(m) >= 0 && m === _selectedMethod ? 'block' : 'none';
+        if (f) f.style.display = m === _selectedMethod ? 'block' : 'none';
       });
     }
 
@@ -459,10 +442,9 @@
       if (proc) proc.style.display = 'none';
       const total = _orderData ? _orderData.total : '?';
       const name = _orderData ? (_orderData.name || _orderData.customer || 'Client') : 'Client';
-      const currency = (_orderData && _orderData.currency) || 'MAD';
       const msg = encodeURIComponent(
         '✦ Paiement Café LUX\n\nClient: ' + name +
-        '\nMontant: ' + total + ' ' + currency + '\nMode: PayPal\n\nMerci de confirmer.'
+        '\nMontant: ' + total + ' MAD\nMode: PayPal\n\nMerci de confirmer.'
       );
       window.open('https://wa.me/212677717201?text=' + msg, '_blank');
       // Show success after redirect
@@ -508,12 +490,7 @@
       TrustScore.recordTransaction({
         type: 'payment',
         method: _selectedMethod,
-        amount: _orderData ? (_orderData.baseTotal != null ? _orderData.baseTotal : _orderData.total) : 0,
-        displayAmount: _orderData ? _orderData.total : 0,
-        currency: (_orderData && _orderData.currency) || 'MAD',
-        phone: _orderData ? (_orderData.customerPhone || _orderData.phone || '') : '',
-        customer: _orderData ? (_orderData.customerName || _orderData.name || _orderData.customer || '') : '',
-        source: _orderData ? (_orderData.source || 'pos') : 'pos',
+        amount: _orderData ? _orderData.total : 0,
         ref: ref,
         timestamp: Date.now(),
       });
