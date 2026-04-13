@@ -1,63 +1,54 @@
-(function() {
-  "use strict";
-
-  if (typeof document === "undefined") return;
-
+// ═══════════════════════════════════════════════════════════════
+//  POS FOCUS MODE — Café LUX v3.2
+//  Add this script to cafe-lux.html before </body>
+//  When mode=pos&focus=1, hides: Accueil, Administration, Employes, Site Public
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
   var params = new URLSearchParams(window.location.search);
-  var requestedMode = params.get("mode");
-  var storedFocus = localStorage.getItem("lux_pos_focus");
-  if (requestedMode !== "pos" && storedFocus !== "1") {
-    localStorage.removeItem("lux_pos_focus");
-    return;
-  }
-
-  localStorage.setItem("lux_pos_focus", "1");
-
-  function applyPageState(page) {
-    document.querySelectorAll(".page").forEach(function(node) {
-      node.classList.toggle("active", node.id === "p-" + page);
-    });
-    document.querySelectorAll(".t-tab").forEach(function(tab) {
-      tab.classList.toggle("active", tab.getAttribute("data-page") === page);
-    });
-  }
-
-  function applyFocusMode() {
-    document.body.classList.add("maestro-pos-focus");
-
-    ["home", "admin", "staff", "site"].forEach(function(page) {
-      var tab = document.querySelector('.t-tab[data-page="' + page + '"]');
-      if (tab) tab.style.display = "none";
-    });
-
-    var posTab = document.querySelector('.t-tab[data-page="pos"]');
-    if (posTab) posTab.classList.add("active");
-
-    if (typeof window.forcePosPage === "function") {
-      window.forcePosPage();
-      return;
+  var mode = params.get('mode');
+  var focus = params.get('focus');
+  
+  // Also check localStorage flag
+  var posFlag = localStorage.getItem('lux_pos_focus');
+  
+  if(mode === 'pos' && (focus === '1' || posFlag === '1')){
+    function hidePOSNav(){
+      // Hide navigation buttons that shouldn't appear in POS
+      var hideLabels = ['accueil','administration','admin','employes','employés','site public','site','home'];
+      var allBtns = document.querySelectorAll('button, a, .nav-btn, .tab-btn, [role="tab"]');
+      allBtns.forEach(function(btn){
+        var text = (btn.textContent || '').trim().toLowerCase();
+        var dataMode = (btn.getAttribute('data-mode') || '').toLowerCase();
+        for(var i = 0; i < hideLabels.length; i++){
+          if(text.indexOf(hideLabels[i]) !== -1 || dataMode === hideLabels[i]){
+            btn.style.display = 'none';
+            break;
+          }
+        }
+      });
+      
+      // Also inject a CSS rule to hide by common selectors
+      var style = document.createElement('style');
+      style.textContent = [
+        '.nav-home, .nav-admin, .nav-staff, .nav-public,',
+        '[data-tab="home"], [data-tab="admin"], [data-tab="staff"], [data-tab="public"],',
+        '[data-mode="home"], [data-mode="admin"], [data-mode="staff"],',
+        '.btn-accueil, .btn-admin, .btn-employes, .btn-public',
+        '{ display: none !important; }'
+      ].join('');
+      document.head.appendChild(style);
     }
-
-    if (typeof window.showPage === "function") {
-      window.showPage("pos");
-      return;
+    
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', function(){ setTimeout(hidePOSNav, 200); });
+    } else {
+      setTimeout(hidePOSNav, 200);
     }
-
-    applyPageState("pos");
   }
-
-  function runFocusPasses() {
-    applyFocusMode();
-    if (typeof window.requestAnimationFrame === "function") {
-      window.requestAnimationFrame(applyFocusMode);
-    }
-    window.setTimeout(applyFocusMode, 120);
-    window.setTimeout(applyFocusMode, 360);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", runFocusPasses);
-  } else {
-    runFocusPasses();
-  }
+  
+  // Clean up POS flag when leaving
+  window.addEventListener('beforeunload', function(){
+    if(mode !== 'pos') localStorage.removeItem('lux_pos_focus');
+  });
 })();

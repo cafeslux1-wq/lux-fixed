@@ -83,30 +83,15 @@
   }
 
   // ── SYNC EMPLOYEES TO SHARED KEY (cafe-lux.html reads lux_employees) ──
-  function _normalizePosEmployee(raw, index) {
-    raw = raw || {};
-    const id = String(raw.id || raw.employeeId || ('E' + String((index || 0) + 1).padStart(3, '0')));
-    const username = String(raw.username || raw.login || raw.name || ('cashier' + ((index || 0) + 1))).trim().toLowerCase().replace(/\s+/g, '');
-    const pins = _ls('pins_v1', {});
-    const pin = String(raw.pin || raw.password || pins[id] || '1234');
-    const accountNumber = String(raw.accountNumber || raw.account || raw.code || id).toUpperCase();
-    const rfidCode = String(raw.rfidCode || raw.rfid || raw.badgeCode || ('RFID-' + id)).toUpperCase();
-    const dallasKey = String(raw.dallasKey || raw.dallas || ('DALLAS-' + id)).toUpperCase();
-    const accessCodes = Array.from(new Set([id, username, accountNumber, rfidCode, dallasKey].concat(raw.accessCodes || []).map(v => String(v || '').trim()).filter(Boolean)));
-    return {
-      id, name: raw.name || raw.fullName || username, role: raw.role || raw.position || 'Cashier',
-      username, password: String(raw.password || pin), pin,
-      accountNumber, rfidCode, dallasKey, accessCodes,
-      initials: (raw.name || username).split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0,2),
-      status: raw.endDate ? 'off' : 'active',
-      phone: raw.phone || '', since: raw.startDate || '', salary: raw.salary || 0,
-      cin: raw.cin || '', address: raw.address || ''
-    };
-  }
-
   function _syncEmployeesShared(emps) {
     try {
-      const shared = (emps || []).map((e, index) => _normalizePosEmployee(e, index));
+      const shared = (emps || []).map(e => ({
+        id: e.id, name: e.name,
+        initials: (e.name||'').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2),
+        role: e.role || 'service', status: e.endDate ? 'off' : 'active',
+        phone: e.phone || '', since: e.startDate || '', salary: e.salary || 0,
+        cin: e.cin || '', address: e.address || ''
+      }));
       localStorage.setItem('lux_employees', JSON.stringify(shared));
     } catch(e) { console.warn('[LUX] Shared sync failed:', e); }
   }
@@ -198,35 +183,9 @@
       return result;
     },
     async getCategories() {
-      if (!_isOnline) return _ls('categories_cache', []);
-      try {
-        const data = await _get('/api/categories');
-        _lsSet('categories_cache', data);
-        return data;
-      } catch { return _ls('categories_cache', []); }
-    },
-    async getPosCatalog() {
-      const fallback = {
-        menu: _ls('menu_cache', []),
-        products: _ls('products_cache', []),
-        categories: _ls('categories_cache', []),
-      };
-
-      try {
-        const [menu, products, categories] = await Promise.all([
-          this.getMenu().catch(() => fallback.menu),
-          this.getProducts().catch(() => fallback.products),
-          this.getCategories().catch(() => fallback.categories),
-        ]);
-
-        return {
-          menu: Array.isArray(menu) ? menu : fallback.menu,
-          products: Array.isArray(products) ? products : fallback.products,
-          categories: Array.isArray(categories) ? categories : fallback.categories,
-        };
-      } catch {
-        return fallback;
-      }
+      if (!_isOnline) return [];
+      try { return await _get('/api/categories'); }
+      catch { return []; }
     },
 
     // ── CUSTOMERS ─────────────────────────────────────────────────
@@ -332,21 +291,6 @@
       if (_isOnline) try { return await _get('/api/gift-cards/'+code.toUpperCase()); } catch {}
       return _ls('gift_cards',[]).find(g=>g.code===code.toUpperCase()) || null;
     },
-    async commitGiftCardUsage(code, amount) {
-      const upper = String(code || '').trim().toUpperCase();
-      const debit = Number(amount || 0);
-      const cards = _ls('gift_cards', []);
-      const card = cards.find(g => String(g.code || '').toUpperCase() === upper);
-      if (card) {
-        const current = Number(card.balance != null ? card.balance : card.amount || 0);
-        card.balance = Math.max(0, +(current - debit).toFixed(2));
-        _lsSet('gift_cards', cards);
-      }
-      if (_isOnline) {
-        try { return await _post('/api/gift-cards/use', { code: upper, amount: debit }); } catch {}
-      }
-      return card || null;
-    },
 
     // ── COUPONS ───────────────────────────────────────────────────
     async validateCoupon(code, subtotal) {
@@ -359,26 +303,9 @@
 
     // ── TRANSACTIONS ──────────────────────────────────────────────
     async saveTransaction(tx) {
-      const cashier = tx && tx.cashier ? tx.cashier : { id: tx.employeeId || null, name: tx.employeeName || '' };
-      const normalized = Object.assign({}, tx, {
-        employeeId: tx.employeeId || (cashier && cashier.id) || null,
-        employeeName: tx.employeeName || (cashier && cashier.name) || '',
-        cashier: cashier,
-        items: (tx.items || []).map(item => ({
-          n: item.n || item.name || 'Item',
-          p: Number(item.p != null ? item.p : item.price || 0),
-          q: Number(item.q != null ? item.q : item.quantity || 1),
-          modifiers: item.modifiers || [],
-          note: item.note || '',
-          image: item.image || ''
-        }))
-      });
-      const all = _ls('transactions',[]); all.unshift(normalized); _lsSet('transactions', all.slice(0,500));
-      if (normalized.paymentMethod === 'giftcard' && normalized.giftCard && normalized.giftCard.code) {
-        await LuxAPI.commitGiftCardUsage(normalized.giftCard.code, normalized.total);
-      }
-      if (_isOnline && _token) _post('/api/transactions',normalized).catch(()=>_queue('saveTransaction',normalized));
-      else _queue('saveTransaction',normalized);
+      const all = _ls('transactions',[]); all.unshift(tx); _lsSet('transactions', all.slice(0,500));
+      if (_isOnline && _token) _post('/api/transactions',tx).catch(()=>_queue('saveTransaction',tx));
+      else _queue('saveTransaction',tx);
     },
     async getTransactions(params = {}) {
       if (!_isOnline) return _ls('transactions',[]);
@@ -406,17 +333,6 @@
         _lsSet('employees_full', d);
         return d;
       } catch { return _ls('employees_full', []); }
-    },
-    async getPosEmployees() {
-      const full = await LuxAPI.getEmployees().catch(() => []);
-      if (Array.isArray(full) && full.length) return full.map(_normalizePosEmployee);
-      return (_ls('employees_full', []).concat(_ls('employees', []))).map(_normalizePosEmployee);
-    },
-    async findEmployeeByAccessCode(code) {
-      const upper = String(code || '').trim().toUpperCase();
-      if (!upper) return null;
-      const pool = await LuxAPI.getPosEmployees().catch(() => []);
-      return pool.find(emp => (emp.accessCodes || []).some(v => String(v || '').trim().toUpperCase() === upper)) || null;
     },
     async createEmployee(emp) {
       const local = { ...emp, id: emp.id || 'e' + Date.now() };
