@@ -5524,52 +5524,40 @@ function autoEnterKDS() {
 
 <div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:380px;max-width:calc(100vw - 40px);height:550px;max-height:80vh;background:linear-gradient(180deg,#1A1A1A 0%,#0C0C0C 100%);border:1px solid #C9A84C;border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.8);overflow:hidden;flex-direction:column">
   
-  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:20px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(201,168,76,0.2)">
-    <div class="lux-ai-header-avatar-container">
-      <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI">
-      <div class="lux-status-dot"></div>
+  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:15px 20px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(201,168,76,0.2);flex-shrink:0">
+    <div style="position:relative; width:50px; height:50px; flex-shrink:0;">
+      <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI" style="width:100%; height:100%; border-radius:50%; border:2px solid #C9A84C; object-fit:cover;">
+      <div style="position:absolute; bottom:2px; right:2px; width:10px; height:10px; background:#0f0; border:2px solid #1A0A00; border-radius:50%; box-shadow:0 0 5px #0f0;"></div>
     </div>
     <div style="flex:1">
-      <div style="font-family:'Cinzel',serif;color:#C9A84C;font-size:18px;letter-spacing:1px;font-weight:700">LUX AI</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5)">Assistant intelligent · Café LUX</div>
+      <div style="font-family:'Cinzel',serif;color:#C9A84C;font-size:16px;letter-spacing:1px;font-weight:700">LUX AI</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5)">Assistant intelligent · Café LUX</div>
     </div>
     <button type="button" onclick="toggleAIChat()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:20px;opacity:0.6">✕</button>
   </div>
 
-  <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:15px">
-<div style="background:rgba(215,210,200,0.05); border:1px solid rgba(201,168,76,0.1); border-radius:15px 15px 15px 5px; padding:18px; font-size:13px; color:#D7D2C8; line-height:1.7; direction:rtl; text-align:right;">
-  
-  <strong style="color:#C9A84C; font-size:15px; display:block; margin-bottom:8px;">
-    مرحباً بك في عالم <span dir="ltr" style="display:inline-block;">LUX ☕</span>
-  </strong>
-
-  <p style="margin:0 0 15px 0; opacity:0.9;">
-    أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟ يمكنك الضغط على الخيارات السريعة أدناه:
-  </p>
-  
-  <div style="display:flex; flex-wrap:wrap; gap:8px; direction:rtl;">
-    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Où se trouve Café LUX ?')">
-      📍 أين تقعون؟
-    </button>
-    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Montrez-moi le menu')">
-      📖 المينيو
-    </button>
-    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je veux une carte cadeau')">
-      🎁 بطاقة هدية
-    </button>
-    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je cherche un emploi')">
-      💼 وظيفة
-    </button>
-  </div>
-
-</div>
+  <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:15px;background:transparent">
+    <div style="background:rgba(215,210,200,0.05); border:1px solid rgba(201,168,76,0.1); border-radius:15px 15px 15px 5px; padding:18px; font-size:13px; color:#D7D2C8; line-height:1.7; direction:rtl; text-align:right;">
+      <strong style="color:#C9A84C; font-size:15px; display:block; margin-bottom:8px;">
+        مرحباً بك في عالم <span dir="ltr" style="display:inline-block;">LUX ☕</span>
+      </strong>
+      <p style="margin:0 0 15px 0; opacity:0.9;">
+        أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟ يمكنك الضغط على الخيارات السريعة أدناه:
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; direction:rtl;">
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Où se trouve Café LUX ?')">📍 أين تقعون؟</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Montrez-moi le menu')">📖 المينيو</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je veux une carte cadeau')">🎁 بطاقة هدية</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je cherche un emploi')">💼 وظيفة</button>
+      </div>
     </div>
   </div>
 
-  <div style="padding:15px;background:rgba(0,0,0,0.3);display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.05)">
+  <div style="padding:15px;background:rgba(0,0,0,0.3);display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0">
     <input type="text" id="ai-chat-input" placeholder="اكتب سؤالك هنا..." style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:12px;color:#fff;outline:none" onkeydown="if(event.key==='Enter')sendToGemma()">
-    <button type="button" onclick="sendToGemma()" style="padding:12px 20px;background:#C9A84C;border:none;border-radius:12px;font-weight:bold;cursor:pointer">إرسال</button>
+    <button type="button" onclick="sendToGemma()" style="padding:12px 20px;background:#C9A84C;border:none;border-radius:12px;font-weight:bold;cursor:pointer;color:#000">إرسال</button>
   </div>
+
 </div>
 <div id="lux-fab-group" style="position:fixed;bottom:25px;right:25px;z-index:940;display:flex;flex-direction:column;align-items:center;gap:12px">
   
