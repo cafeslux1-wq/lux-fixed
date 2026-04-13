@@ -101,6 +101,14 @@
   window.clearCart=clearCart;
   window.pay=pay;
 
+  try{ buildMenuSections=window.buildMenuSections; }catch(e){}
+  try{ buildTables=window.buildTables; }catch(e){}
+  try{ renderTicket=window.renderTicket; }catch(e){}
+  try{ addTakeaway=window.addTakeaway; }catch(e){}
+  try{ selectTable=window.selectTable; }catch(e){}
+  try{ clearCart=window.clearCart; }catch(e){}
+  try{ pay=window.pay; }catch(e){}
+
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
   else init();
 })(window);
