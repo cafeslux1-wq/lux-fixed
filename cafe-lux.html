@@ -469,7 +469,7 @@ body{
 #lux-print-area { display: none; position: fixed; top: -9999px; left: -9999px; }
 
 </style>
-<link rel="stylesheet" href="maestro-pos.css?v=20260413a">
+<link rel="stylesheet" href="maestro-pos.css?v=20260413c">
 </head>
 <body>
 
@@ -1128,7 +1128,12 @@ function showPage(id){
   }
   if(id === 'home') renderHome();
   if(id === 'pos'){ buildMenuSections(); renderTicket(); }
-  if(id === 'web') renderWebOrders();
+  if(id === 'web'){
+    if(localStorage.getItem('lux_pos_focus') === '1' && typeof routePendingWebOrderToPos === 'function' && routePendingWebOrderToPos()){
+      return;
+    }
+    renderWebOrders();
+  }
   if(id === 'kds') renderKDS();
   if(id === 'admin'){ renderAdmin('dash'); }
   if(id === 'staff'){ renderStaff(); }
@@ -1552,6 +1557,7 @@ function acceptWebOrder(btn){
   const orders = getLS('lux_web_orders',[]);
   const o = orders.filter(function(x){return x.id===id;})[0];
   if(!o) return;
+  return importWebOrderToPos(o, orders);
   o.status = 'accepted';
   setLS('lux_web_orders', orders);
   if(typeof LuxAPI !== 'undefined') LuxAPI.updateOrderStatus(id, 'accepted').catch(()=>{});
@@ -1565,6 +1571,33 @@ function acceptWebOrder(btn){
   renderTicket();
   showPage('pos');
   toast('🌐 Commande chargee dans la caisse!');
+}
+
+function importWebOrderToPos(order, orders){
+  const o = order || null;
+  if(!o) return false;
+  const pool = Array.isArray(orders) ? orders : getLS('lux_web_orders',[]);
+  const found = pool.filter(function(x){ return x.id===o.id; })[0];
+  if(found) found.status = 'accepted';
+  setLS('lux_web_orders', pool);
+  if(typeof LuxAPI !== 'undefined') LuxAPI.updateOrderStatus(o.id, 'accepted').catch(()=>{});
+  const takeId = 'WEB' + String(o.id).slice(-4);
+  caisse.tableOrders[takeId] = (o.items||[]).slice();
+  caisse.selectedTable = takeId;
+  caisse.cart = (o.items||[]).slice();
+  setEl('pos-title', 'Web POS ' + (o.customer||''));
+  renderWebOrders();
+  renderTicket();
+  showPage('pos');
+  toast('Commande web chargee dans la caisse');
+  return true;
+}
+
+function routePendingWebOrderToPos(){
+  const orders = getLS('lux_web_orders',[]);
+  const pending = orders.find(function(o){ return o.status === 'pending'; });
+  if(!pending) return false;
+  return importWebOrderToPos(pending, orders);
 }
 
 function rejectWebOrder(btn){
@@ -3228,7 +3261,7 @@ function orderGiftCard(){
 })();
 </script>
 <script src="lux-payment.js?v=20260413a"></script>
-<script src="maestro-pos.js?v=20260413b"></script>
+<script src="maestro-pos.js?v=20260413c"></script>
 <script src="pos-focus.js?v=20260413b"></script>
 </body>
 </html>
