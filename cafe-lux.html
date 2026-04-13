@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Café LUX Pro · v3.6 Final Luxury Ultra</title>
 <script>window.LUX_API_URL = 'https://api.cafeslux.com';</script>
-<script src="api-client.js"></script>
+<script src="api-client.js?v=20260412e"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 
@@ -469,6 +469,7 @@ body{
 #lux-print-area { display: none; position: fixed; top: -9999px; left: -9999px; }
 
 </style>
+<link rel="stylesheet" href="maestro-pos.css?v=20260412e">
 </head>
 <body>
 
@@ -1379,23 +1380,41 @@ function closeTicketPrintOverlay(){
 }
 window.addEventListener('afterprint', closeTicketPrintOverlay);
 function printTicket(tx){
-  const items = tx.items.map(function(i){
-    return '<tr><td>' + i.n + '</td><td style="text-align:right">' + i.q + '</td><td style="text-align:right">' + (i.p*i.q).toFixed(2) + ' DH</td></tr>';
+  var currency = tx.currency || 'MAD';
+  function fmt(value){
+    var num = Number(value || 0);
+    return num.toFixed(2) + ' ' + currency;
+  }
+  const items = (tx.items || []).map(function(i){
+    var unit = Number(i.p != null ? i.p : i.price || 0);
+    var qty = Number(i.q != null ? i.q : i.quantity || 1);
+    var mods = Array.isArray(i.modifiers) && i.modifiers.length
+      ? '<div style="font-size:10px;color:#444;margin-top:2px">' + i.modifiers.map(function(m){ return m.label || m; }).join(' - ') + '</div>'
+      : '';
+    var note = i.note ? '<div style="font-size:10px;color:#666;margin-top:2px">' + i.note + '</div>' : '';
+    return '<tr>'
+      + '<td style="padding:6px 0;vertical-align:top"><div style="font-weight:700">' + i.n + '</div>' + mods + note + '</td>'
+      + '<td style="padding:6px 0;text-align:right;vertical-align:top">' + qty + '</td>'
+      + '<td style="padding:6px 0;text-align:right;vertical-align:top">' + fmt(unit * qty) + '</td>'
+      + '</tr>';
   }).join('');
-  const html = '<div style="font-family:monospace;font-size:12px;width:280px;margin:0 auto;padding:10px;background:#fff;color:#000">'
-    + '<h2 style="text-align:center">CAFE LUX</h2>'
-    + '<p style="text-align:center;font-size:10px">Residence Ziat N28 - Taza | +212 808524169</p>'
-    + '<div style="border-top:1px dashed #000;margin:6px 0"></div>'
-    + '<p>' + tx.date + ' ' + tx.time + ' | ' + tx.table + ' | ' + tx.mode + '</p>'
-    + (tx.client ? '<p>Client: ' + tx.client + '</p>' : '')
-    + '<div style="border-top:1px dashed #000;margin:6px 0"></div>'
-    + '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Article</th><th>Qte</th><th>Prix</th></tr></thead>'
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;width:302px;margin:0 auto;padding:14px 14px 18px;background:#fff;color:#000">'
+    + '<div style="text-align:center;margin-bottom:8px"><div style="font:700 26px/1 Georgia,serif;color:#111">✦ LUX</div><div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8b6e2f;margin-top:4px">MAESTRO OS by NextaGlobal</div></div>'
+    + '<div style="text-align:center;font-size:10px;line-height:1.6;color:#444">Residence Ziat N28 - Taza<br>+212 808524169 - cafeslux.com</div>'
+    + '<div style="border-top:1px dashed #000;margin:10px 0"></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px"><span>' + (tx.date || '') + ' ' + (tx.time || '') + '</span><span>' + (tx.table || '-') + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>Mode</span><strong>' + (tx.paymentMethod || tx.mode || '-') + '</strong></div>'
+    + (tx.employeeName ? '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>Cashier</span><strong>' + tx.employeeName + '</strong></div>' : '')
+    + (tx.client || tx.customer ? '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>Client</span><strong>' + (tx.client || tx.customer) + '</strong></div>' : '')
+    + '<div style="border-top:1px dashed #000;margin:10px 0"></div>'
+    + '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding-bottom:6px">Article</th><th style="text-align:right;padding-bottom:6px">Qte</th><th style="text-align:right;padding-bottom:6px">Montant</th></tr></thead>'
     + '<tbody>' + items + '</tbody></table>'
-    + '<div style="border-top:1px dashed #000;margin:6px 0"></div>'
-    + '<p>Sous-total: ' + tx.subtotal + ' DH | TVA: ' + tx.tva + ' DH</p>'
-    + '<p style="font-weight:bold">TOTAL: ' + tx.total + ' DH</p>'
-    + '<div style="border-top:1px dashed #000;margin:6px 0"></div>'
-    + '<p style="text-align:center">Merci! www.cafeslux.com</p>'
+    + '<div style="border-top:1px dashed #000;margin:10px 0"></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px"><span>Sous-total</span><strong>' + fmt(tx.subtotal) + '</strong></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>TVA</span><strong>' + fmt(tx.tva) + '</strong></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:700;margin-top:8px"><span>Total</span><strong>' + fmt(tx.total) + '</strong></div>'
+    + '<div style="border-top:1px dashed #000;margin:10px 0"></div>'
+    + '<div style="text-align:center;font-size:10px;line-height:1.7">Powered by MAESTRO OS - A subsidiary of NextaGlobal Holding</div>'
     + '</div>';
   var ov = ensureTicketPrintOverlay();
   document.getElementById('lux-ticket-print-sheet').innerHTML = html;
@@ -1416,6 +1435,8 @@ function switchMenuTab(tabId, btn){
 let rfidBuffer = '';
 let rfidTimer = null;
 document.addEventListener('keydown', function(e){
+  var posPage = document.getElementById('p-pos');
+  if(posPage && posPage.dataset.maestro === '1' && posPage.classList.contains('active')) return;
   const tag = document.activeElement ? document.activeElement.tagName : '';
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
   if(e.key==='Enter'){
@@ -3163,5 +3184,8 @@ function orderGiftCard(){
   });
 })();
 </script>
+<script src="lux-payment.js?v=20260412e"></script>
+<script src="maestro-pos.js?v=20260412e"></script>
+<script src="pos-focus.js?v=20260412e"></script>
 </body>
 </html>

@@ -1,833 +1,106 @@
 (function(window){
   "use strict";
 
-  if (typeof document === "undefined") return;
+  if(typeof document==="undefined") return;
 
-  var LS = {
-    lang: "lux_pos_language",
-    currency: "lux_pos_currency",
-    trust: "lux_pos_trustscore"
+  var STORE={lang:"lux_pos_language",currency:"lux_pos_currency",session:"lux_pos_employee_session",seed:"lux_pos_seed_employees"};
+  var RATES=Object.assign({MAD:1,USD:0.1,EUR:0.09},window.LUX_CURRENCY_RATES||{});
+  var FALLBACK="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420"><rect width="640" height="420" fill="#101218"/><text x="50%" y="48%" fill="#C9A84C" font-size="58" text-anchor="middle" font-family="Georgia,serif">&#10022; LUX</text><text x="50%" y="64%" fill="#F5F1E8" font-size="24" text-anchor="middle" font-family="Arial,sans-serif">MAESTRO POS</text></svg>');
+  var COPY={
+    fr:{kicker:"MAESTRO POS · NextaGlobal",title:"Caisse premium, tactile et mondiale.",sub:"Produits a gauche, ticket fixe a droite, session employe integree et paiement unifie.",switcher:"Changer d'employe",smart:"Suggestion intelligente",clear:"Vider le ticket",all:"Tout",service:"Flux de service",serviceNote:"Table, retrait ou livraison via ce tiroir flottant.",client:"Client & TrustScore",clientNote:"Telephone, alias et note livraison restent disponibles ici.",search:"Rechercher produit ou categorie...",phone:"Telephone",phonePh:"+212 ...",name:"Nom client",namePh:"Nom ou alias",delivery:"Adresse / note",deliveryPh:"Quartier, repere, instruction...",dine:"Sur place",pickup:"Retrait",deliveryMode:"Livraison",ticket:"Ticket MAESTRO",ticketSub:"Panier synchronise avec MAESTRO OS.",empty:"Aucun article dans le ticket.",subtotal:"Sous-total",tax:"TVA 10%",total:"Total TTC",checkout:"Encaisser",powered:"Powered by MAESTRO OS — A subsidiary of NextaGlobal Holding",add:"Ajouter",notes:"Instruction",notesPh:"Sans sucre, tres chaud...",confirm:"Ajouter au ticket",cancel:"Annuler",loginTitle:"Connexion employe",loginSub:"Compte, mot de passe, PIN ou badge RFID / Dallas.",loginHint:"Lecteur RFID / Dallas en attente...",user:"Utilisateur / compte",pass:"Mot de passe",pin:"Code PIN",accountLogin:"Connexion compte",pinLogin:"Connexion PIN",noEmployee:"Aucun employe connecte",loading:"Chargement du catalogue...",needEmployee:"Connectez un employe avant l'encaissement.",needItems:"Ajoutez au moins un article.",needDelivery:"Ajoutez une note ou une adresse de livraison.",loginError:"Identifiants ou code invalides.",loginOk:"Session employee activee.",unknownBadge:"Badge inconnu.",printDone:"Commande finalisee et ticket emis.",tableFree:"Libre",tableBusy:"Occupee",tableSelected:"Selectionnee"},
+    en:{kicker:"MAESTRO POS · NextaGlobal",title:"Global premium checkout built for speed.",sub:"Products on the left, ticket on the right, employee session built in, unified payment ready.",switcher:"Switch employee",smart:"Smart suggestion",clear:"Clear ticket",all:"All",service:"Service flow",serviceNote:"Dine-in, pickup or delivery lives in this floating drawer.",client:"Customer & TrustScore",clientNote:"Phone, alias and delivery note remain available here.",search:"Search product or category...",phone:"Phone",phonePh:"+212 ...",name:"Customer name",namePh:"Name or alias",delivery:"Address / note",deliveryPh:"District, landmark, instruction...",dine:"Dine-in",pickup:"Pickup",deliveryMode:"Delivery",ticket:"MAESTRO Ticket",ticketSub:"Cart synced with MAESTRO OS.",empty:"No items in the ticket.",subtotal:"Subtotal",tax:"VAT 10%",total:"Grand total",checkout:"Checkout",powered:"Powered by MAESTRO OS — A subsidiary of NextaGlobal Holding",add:"Add",notes:"Instruction",notesPh:"No sugar, extra hot...",confirm:"Add to ticket",cancel:"Cancel",loginTitle:"Employee sign in",loginSub:"Account, password, PIN or RFID / Dallas badge.",loginHint:"RFID / Dallas reader is waiting...",user:"Username / account",pass:"Password",pin:"PIN code",accountLogin:"Account login",pinLogin:"PIN login",noEmployee:"No employee connected",loading:"Loading catalog...",needEmployee:"Connect an employee before checkout.",needItems:"Add at least one item.",needDelivery:"Add a delivery note or address.",loginError:"Invalid credentials or access code.",loginOk:"Employee session activated.",unknownBadge:"Unknown badge.",printDone:"Order completed and receipt issued.",tableFree:"Free",tableBusy:"Busy",tableSelected:"Selected"}
   };
-  var RATES = Object.assign({ MAD: 1, USD: 0.1, EUR: 0.09 }, window.LUX_CURRENCY_RATES || {});
-  var SVG_FALLBACK = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#151515"/><stop offset="1" stop-color="#2a2313"/></linearGradient></defs><rect width="600" height="380" fill="url(#g)"/><circle cx="470" cy="86" r="90" fill="rgba(201,168,76,.18)"/><circle cx="100" cy="300" r="120" fill="rgba(91,141,239,.12)"/><text x="50%" y="46%" font-family="Georgia,serif" font-size="52" fill="#C9A84C" text-anchor="middle">✦ LUX</text><text x="50%" y="60%" font-family="Arial,sans-serif" font-size="22" fill="#f5f0e8" text-anchor="middle">MAESTRO POS</text></svg>'
-  );
-  var TEXT = {
-    fr: {k:"✦ MAESTRO POS · NextaGlobal",t:"Caisse mondiale, premium et fluide.",s:"Grille a gauche, ticket fixe a droite, modificateurs, TrustScore et paiement unifie.",svc:"Flux de service",svcNote:"Passez de la table au pickup ou a la livraison sans quitter la caisse.",cust:"Client & TrustScore",custNote:"Le telephone active le suivi fidelite.",search:"Recherche rapide",searchPh:"Produit ou categorie...",phone:"Telephone",phonePh:"+212 ...",name:"Nom client",namePh:"Nom ou alias",table:"Numero de table",tablePh:"Ex: 7",delivery:"Adresse / note livraison",deliveryPh:"Quartier, repere, instruction...",ai:"✦ Suggestion intelligente",clear:"Vider le ticket",tableMode:"Sur place",pickup:"Retrait",deliveryMode:"Livraison",cart:"Ticket MAESTRO",cartSub:"Panier premium synchronise avec MAESTRO OS.",all:"Tout voir",empty:"Aucun article dans le ticket.",loading:"Chargement du catalogue...",sub:"Sous-total",tax:"TVA 10%",total:"Total TTC",base:"Base MAESTRO",cash:"Cash",card:"Carte CMI",checkout:"Encaisser",added:"Article ajoute au ticket",needTable:"Selectionnez une table.",needPhone:"Ajoutez un numero ou une carte RFID.",needDelivery:"Ajoutez une adresse ou une note livraison.",modTitle:"Personnaliser l'article",confirm:"Ajouter au ticket",cancel:"Annuler",notes:"Instruction",notesPh:"Sans mousse, extra chaud...",powered:"Powered by MAESTRO OS — A subsidiary of NextaGlobal Holding",guest:"Client discret",loyal:"Client fidele",vip:"Client VIP"},
-    en: {k:"✦ MAESTRO POS · NextaGlobal",t:"Global luxury checkout, built for speed.",s:"Grid on the left, pinned ticket on the right, modifiers, TrustScore and unified payment.",svc:"Service flow",svcNote:"Switch between table, pickup and delivery without leaving the POS.",cust:"Customer & TrustScore",custNote:"Phone tracking powers loyalty.",search:"Quick search",searchPh:"Product or category...",phone:"Phone",phonePh:"+212 ...",name:"Customer name",namePh:"Name or alias",table:"Table number",tablePh:"Ex: 7",delivery:"Delivery note / address",deliveryPh:"District, landmark, instruction...",ai:"✦ Smart suggestion",clear:"Clear ticket",tableMode:"Dine-in",pickup:"Pickup",deliveryMode:"Delivery",cart:"MAESTRO Ticket",cartSub:"Premium cart synced with MAESTRO OS.",all:"All items",empty:"No items in the ticket.",loading:"Loading catalog...",sub:"Subtotal",tax:"VAT 10%",total:"Grand total",base:"MAESTRO base",cash:"Cash",card:"CMI Card",checkout:"Checkout",added:"Item added to the ticket",needTable:"Select a table first.",needPhone:"Add a phone number or RFID guest.",needDelivery:"Add a delivery note or address.",modTitle:"Customize item",confirm:"Add to ticket",cancel:"Cancel",notes:"Instruction",notesPh:"No foam, extra hot...",powered:"Powered by MAESTRO OS — A subsidiary of NextaGlobal Holding",guest:"Silent profile",loyal:"Loyal guest",vip:"VIP guest"},
-    ar: {k:"✦ MAESTRO POS · NextaGlobal",t:"واجهة كاشي عالمية فاخرة وسريعة.",s:"شبكة بيع يسارًا، تذكرة ثابتة يمينًا، موديفايرز وTrustScore ودفع موحد.",svc:"نوع الخدمة",svcNote:"بدّل بين الطاولة والاستلام والتوصيل بدون مغادرة الواجهة.",cust:"العميل و TrustScore",custNote:"رقم الهاتف يفعّل تتبع الولاء.",search:"بحث سريع",searchPh:"منتج أو فئة...",phone:"الهاتف",phonePh:"+212 ...",name:"اسم العميل",namePh:"اسم أو لقب",table:"رقم الطاولة",tablePh:"مثال: 7",delivery:"ملاحظة / عنوان التوصيل",deliveryPh:"حي، معلم قريب، تعليمات...",ai:"✦ اقتراح ذكي",clear:"تفريغ التذكرة",tableMode:"داخل المقهى",pickup:"استلام",deliveryMode:"توصيل",cart:"تذكرة MAESTRO",cartSub:"سلة فاخرة متزامنة مع MAESTRO OS.",all:"كل الأصناف",empty:"لا توجد عناصر داخل التذكرة.",loading:"جاري تحميل الكتالوج...",sub:"المجموع الفرعي",tax:"ضريبة 10%",total:"الإجمالي",base:"الأساس MAESTRO",cash:"كاش",card:"بطاقة CMI",checkout:"تحصيل",added:"تمت إضافة المنتج",needTable:"اختر طاولة أولًا.",needPhone:"أدخل رقم الهاتف أو RFID.",needDelivery:"أدخل عنوانًا أو ملاحظة للتوصيل.",modTitle:"تخصيص المنتج",confirm:"إضافة للتذكرة",cancel:"إلغاء",notes:"تعليمات",notesPh:"بدون رغوة، ساخن جدًا...",powered:"Powered by MAESTRO OS — A subsidiary of NextaGlobal Holding",guest:"عميل جديد",loyal:"عميل وفي",vip:"عميل VIP"}
-  };
-  var STATE = {
-    lang: read(LS.lang, "fr"),
-    currency: read(LS.currency, "MAD"),
-    catalog: [],
-    category: "all",
-    search: "",
-    mode: "table",
-    table: "",
-    ref: "",
-    phone: "",
-    name: "",
-    delivery: "",
-    focus: "",
-    ready: false,
-    swipe: false,
-    draft: null,
-    lastSelection: ""
-  };
+  var DEFAULT_EMPLOYEES=[{id:"E001",name:"Amina LUX",role:"Cashier",username:"amina",password:"1234",pin:"1234",accountNumber:"1001",rfidCode:"RFID-E001",dallasKey:"DALLAS-E001"},{id:"E002",name:"Youssef LUX",role:"Supervisor",username:"youssef",password:"2580",pin:"2580",accountNumber:"1002",rfidCode:"RFID-E002",dallasKey:"DALLAS-E002"}];
+  var state={lang:read(STORE.lang,"fr"),currency:read(STORE.currency,"MAD"),catalog:[],category:"all",search:"",mode:"table",table:"1",ref:"",phone:"",customer:"",delivery:"",drawer:null,defaultMethod:"cash",session:read(STORE.session,null),employees:null,loginVisible:!read(STORE.session,null),draft:null,scan:"",scanTimer:null,ready:false,swipe:false};
 
-  function read(key, fallback){ try { var raw = localStorage.getItem(key); return raw == null ? fallback : JSON.parse(raw); } catch(e){ return fallback; } }
-  function write(key, value){ try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){} }
-  function say(msg){ if (typeof toast === "function") toast(msg); }
-  function tx(key){ return (TEXT[TEXT[STATE.lang] ? STATE.lang : "fr"] || TEXT.fr)[key] || key; }
-  function norm(v){ return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
-  function slug(v){ return norm(v).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""); }
-  function esc(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
-  function moneyMad(v){ return new Intl.NumberFormat("fr-MA",{style:"currency",currency:"MAD",minimumFractionDigits:2}).format(Number(v || 0)); }
-  function money(v){
-    var meta = { MAD:{l:"fr-MA",c:"MAD"}, USD:{l:"en-US",c:"USD"}, EUR:{l:"fr-FR",c:"EUR"} }[STATE.currency] || {l:"fr-MA",c:"MAD"};
-    return new Intl.NumberFormat(meta.l,{style:"currency",currency:meta.c,minimumFractionDigits:2}).format(Number(v || 0) * Number(RATES[STATE.currency] || 1));
-  }
-  function localize(copy){
-    if (!copy || typeof copy !== "object") return "";
-    return copy[STATE.lang] || copy.fr || copy.en || "";
-  }
-  function icon(label){
-    var v = norm(label);
-    if (/break|dej|petit/.test(v)) return "🍳";
-    if (/cafe|coffee|espresso/.test(v)) return "☕";
-    if (/creme|milk/.test(v)) return "🥛";
-    if (/infusion|tea|the/.test(v)) return "🍵";
-    if (/jus|juice|smooth|shake/.test(v)) return "🥤";
-    if (/crepe/.test(v)) return "🥞";
-    if (/restaurant|resto|toast|harira/.test(v)) return "🍽";
-    if (/soft|soda/.test(v)) return "🥫";
-    if (/signature|lux/.test(v)) return "⭐";
-    return "✦";
-  }
+  function read(k,f){try{var v=localStorage.getItem(k);return v==null?f:JSON.parse(v);}catch(e){return f;}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function copy(k){return (COPY[state.lang]||COPY.fr)[k]||COPY.en[k]||COPY.fr[k]||k;}
+  function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+  function norm(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
+  function slug(v){return norm(v).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+  function say(msg){if(typeof window.toast==="function") window.toast(msg);}
+  function money(v){var meta={MAD:{l:"fr-MA",c:"MAD"},USD:{l:"en-US",c:"USD"},EUR:{l:"fr-FR",c:"EUR"}}[state.currency]||{l:"fr-MA",c:"MAD"};return new Intl.NumberFormat(meta.l,{style:"currency",currency:meta.c,minimumFractionDigits:2}).format(Number(v||0)*Number(RATES[state.currency]||1));}
+  function image(item){var url=String(item.imageUrl||"");if(/^https:\/\/([^\/]+\.)?cafeslux\.com\//i.test(url)) return url;return "https://cafeslux.com/assets/menu/"+(item.imageKey||slug(item.name))+".jpg";}
 
-  function ensureTrust(){
-    if (window.TrustScore && typeof TrustScore.recordTransaction === "function" && typeof TrustScore.getProfile === "function") return;
-    window.TrustScore = {
-      getProfile: function(phone){
-        var data = read(LS.trust, {});
-        return data[String(phone || "").replace(/\s+/g, "")] || null;
-      },
-      recordTransaction: function(payload){
-        var clean = String((payload && payload.phone) || "").replace(/\s+/g, "");
-        if (!clean) return null;
-        var data = read(LS.trust, {});
-        var item = data[clean] || { phone: clean, customer: "", visits: 0, points: 0, spendMad: 0 };
-        item.customer = payload.customer || item.customer || "";
-        item.visits += 1;
-        item.points += Math.max(1, Math.floor(Number(payload.amount || 0) / 10));
-        item.spendMad += Number(payload.amount || 0);
-        item.updatedAt = Date.now();
-        data[clean] = item;
-        write(LS.trust, data);
-        return item;
-      }
-    };
-  }
+  function ensureCaisse(){if(!window.caisse) window.caisse={cart:[],selectedTable:null,tableOrders:{},takeawayCount:1,todayCA:0,todayOrders:0,currentClient:null};if(!Array.isArray(window.caisse.cart)) window.caisse.cart=[];if(!window.caisse.tableOrders||typeof window.caisse.tableOrders!=="object") window.caisse.tableOrders={};if(!window.caisse.takeawayCount) window.caisse.takeawayCount=1;}
+  function cartKey(){return state.mode==="table"?String(state.table||"1"):String(state.ref||"");}
+  function clone(v){return JSON.parse(JSON.stringify(v||[]));}
+  function ensureLineIds(){window.caisse.cart=(window.caisse.cart||[]).map(function(line){if(!line.key) line.key="L-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);line.q=Number(line.q||1);line.p=Number(line.p!=null?line.p:line.price||0);return line;});}
+  function saveBucket(){ensureCaisse();ensureLineIds();var key=cartKey();if(key){window.caisse.selectedTable=key;window.caisse.tableOrders[key]=clone(window.caisse.cart);}}
+  function restoreBucket(key){ensureCaisse();window.caisse.selectedTable=key;window.caisse.cart=clone(window.caisse.tableOrders[key]||[]);ensureLineIds();}
+  function ensureRef(fresh){if(state.mode==="table"){state.ref="";state.table=String(state.table||"1");return;}if(state.mode==="pickup"){if(fresh||!state.ref||!/^P/i.test(state.ref)) state.ref="P"+String(window.caisse.takeawayCount++).padStart(3,"0");return;}if(fresh||!state.ref||!/^D/i.test(state.ref)) state.ref="D"+String(Date.now()).slice(-4);}
+  function setMode(mode,opt){opt=opt||{};saveBucket();state.mode=mode;if(mode==="table") state.table=String(opt.table||state.table||"1");ensureRef(!!opt.fresh);restoreBucket(cartKey());renderDrawers();renderTicket();}
+  function serviceLabel(){if(state.mode==="table") return copy("dine")+" · T"+String(state.table||"1");if(state.mode==="delivery") return copy("deliveryMode")+" · "+String(state.ref||"");return copy("pickup")+" · "+String(state.ref||"");}
 
-  function tier(profile){
-    if (!profile) return { label: tx("guest"), tone: "guest", note: tx("custNote") };
-    if ((profile.points || 0) >= 120 || (profile.visits || 0) >= 8) return { label: tx("vip"), tone: "vip", note: profile.visits + " visits · " + profile.points + " pts" };
-    return { label: tx("loyal"), tone: "loyal", note: profile.visits + " visits · " + profile.points + " pts" };
-  }
+  function normalizeEmployee(raw,index){raw=raw||{};var id=String(raw.id||raw.employeeId||("E"+String((index||0)+1).padStart(3,"0")));var username=String(raw.username||raw.login||raw.name||("cashier"+((index||0)+1))).trim().toLowerCase().replace(/\s+/g,"");var pin=String(raw.pin||raw.password||"1234").trim();var pass=String(raw.password||pin).trim();var account=String(raw.accountNumber||raw.account||raw.code||id).trim().toUpperCase();var rfid=String(raw.rfidCode||raw.rfid||("RFID-"+id)).trim().toUpperCase();var dallas=String(raw.dallasKey||raw.dallas||("DALLAS-"+id)).trim().toUpperCase();var access=[id,username.toUpperCase(),account,pin,rfid,dallas].concat(raw.accessCodes||[]).map(function(v){return String(v||"").trim().toUpperCase();}).filter(Boolean);return{id:id,name:raw.name||raw.fullName||username,role:raw.role||raw.position||"Cashier",username:username,password:pass,pin:pin,accountNumber:account,rfidCode:rfid,dallasKey:dallas,accessCodes:Array.from(new Set(access))};}
+  function fallbackEmployees(){var pool=read("lux_employees",[]);if(!Array.isArray(pool)||!pool.length) pool=read(STORE.seed,[]);if(!Array.isArray(pool)||!pool.length) pool=DEFAULT_EMPLOYEES;return pool.map(normalizeEmployee);}
+  async function loadEmployees(force){if(state.employees&&!force) return state.employees;var pool=[];if(window.LuxAPI&&typeof window.LuxAPI.getPosEmployees==="function"){try{pool=await window.LuxAPI.getPosEmployees();}catch(e){}}if(!Array.isArray(pool)||!pool.length) pool=fallbackEmployees();state.employees=pool.map(normalizeEmployee);write(STORE.seed,state.employees);write("lux_employees",state.employees);return state.employees;}
+  async function findEmployee(code){code=String(code||"").trim().toUpperCase();if(!code) return null;if(window.LuxAPI&&typeof window.LuxAPI.findEmployeeByAccessCode==="function"){try{var remote=await window.LuxAPI.findEmployeeByAccessCode(code);if(remote) return normalizeEmployee(remote);}catch(e){}}var pool=await loadEmployees();return pool.find(function(emp){return (emp.accessCodes||[]).indexOf(code)>=0;})||null;}
 
-  function rawCatalog(payload){
-    if (Array.isArray(payload)) return payload;
-    if (payload && Array.isArray(payload.menu) && payload.menu.length) return payload.menu;
-    if (payload && Array.isArray(payload.products) && payload.products.length) {
-      var categories = {};
-      (payload.categories || []).forEach(function(cat){
-        var id = String(cat.id || slug(cat.name || cat.title || "general"));
-        categories[id] = { id: id, title: cat.name || cat.title || "General", icon: icon(cat.name || cat.title || "General"), items: [] };
-      });
-      payload.products.forEach(function(product){
-        if (product.active === false) return;
-        var id = String(product.categoryId || "general");
-        if (!categories[id]) categories[id] = { id: id, title: product.categoryName || "General", icon: icon(product.categoryName || "General"), items: [] };
-        categories[id].items.push({
-          n: product.name,
-          p: Number(product.price || 0),
-          s: product.description || "",
-          sig: !!product.isSignature,
-          img: product.imageKey || slug(product.name),
-          imageUrl: product.image || product.imageUrl || ""
-        });
-      });
-      return Object.keys(categories).map(function(id){ return categories[id]; });
-    }
-    return [];
-  }
+  function normalizeCatalog(payload){if(Array.isArray(payload)) return payload.map(function(cat){var title=cat.title||cat.name||"Menu";var id=String(cat.id||slug(title));return{id:id,title:title,icon:cat.icon||"✦",items:(cat.items||[]).map(function(item){return{id:String(item.id||slug(item.n||item.name)),name:item.n||item.name||"Item",price:Number(item.p!=null?item.p:item.price||0),description:item.s||item.description||"",imageKey:item.img||item.imageKey||slug(item.n||item.name),imageUrl:item.imageUrl||item.image||"",signature:!!(item.sig||item.isSignature),categoryId:id,categoryTitle:title};})};}).filter(function(cat){return cat.items.length;});if(payload&&Array.isArray(payload.products)){var map={};(payload.categories||[]).forEach(function(cat){var title=cat.name||cat.title||"Menu";var id=String(cat.id||slug(title));map[id]={id:id,title:title,icon:"✦",items:[]};});payload.products.forEach(function(p){if(p.active===false) return;var id=String(p.categoryId||slug(p.categoryName||"Menu"));if(!map[id]) map[id]={id:id,title:p.categoryName||"Menu",icon:"✦",items:[]};map[id].items.push({id:String(p.id||slug(p.name)),name:p.name||"Item",price:Number(p.price||0),description:p.description||"",imageKey:p.imageKey||slug(p.name||"item"),imageUrl:p.imageUrl||p.image||"",signature:!!p.isSignature,categoryId:id,categoryTitle:map[id].title});});return Object.keys(map).map(function(k){return map[k];}).filter(function(cat){return cat.items.length;});}return [];}
+  async function loadCatalog(){renderProducts(true);var data=[];try{if(window.LuxAPI&&typeof window.LuxAPI.getPosCatalog==="function") data=await window.LuxAPI.getPosCatalog();else if(window.LuxAPI&&typeof window.LuxAPI.getMenu==="function") data=await window.LuxAPI.getMenu();else if(typeof window.MENU!=="undefined") data=window.MENU;}catch(e){}state.catalog=normalizeCatalog(data);if(!state.catalog.length&&typeof window.MENU!=="undefined") state.catalog=normalizeCatalog(window.MENU);renderCategories();renderProducts();}
+  function visibleCatalog(){var search=norm(state.search);return state.catalog.map(function(cat){return{id:cat.id,title:cat.title,icon:cat.icon,items:cat.items.filter(function(item){var hay=norm([item.name,item.description,cat.title].join(" "));return (!search||hay.indexOf(search)>=0)&&(state.category==="all"||state.category===cat.id);})};}).filter(function(cat){return cat.items.length;});}
+  function totals(){var subtotal=(window.caisse.cart||[]).reduce(function(sum,line){return sum+Number(line.p||0)*Number(line.q||1);},0);var tax=+(subtotal*0.10).toFixed(2);return{subtotal:+subtotal.toFixed(2),tax:tax,total:+(subtotal+tax).toFixed(2)};}
+  function suggestion(){var h=new Date().getHours();if(h<11) return "LUX tip: pair the morning coffee with a croissant.";if(h<17) return "LUX tip: suggest a fresh juice, toast or quiche with lunch.";return "LUX tip: propose dessert, crepe or a warm signature drink.";}
+  function trustCopy(){var phone=String(state.phone||(window.caisse.currentClient&&window.caisse.currentClient.phone)||"").trim();var profile=null;if(phone&&window.TrustScore&&typeof window.TrustScore.getProfile==="function"){try{profile=window.TrustScore.getProfile(phone);}catch(e){}}if(!profile) return{label:phone?"TrustScore":"Client",note:phone?phone:copy("clientNote")};if(Number(profile.points||0)>=120||Number(profile.visits||0)>=8) return{label:"VIP",note:(profile.visits||0)+" visits · "+(profile.points||0)+" pts"};return{label:"TrustScore",note:(profile.visits||0)+" visits · "+(profile.points||0)+" pts"};}
 
-  function catalog(payload){
-    return rawCatalog(payload).filter(function(cat){
-      return cat && Array.isArray(cat.items) && cat.items.length;
-    }).map(function(cat){
-      var id = String(cat.id || slug(cat.title || cat.name || "general"));
-      var title = cat.title || cat.name || "General";
-      return {
-        id: id,
-        title: title,
-        icon: cat.icon || icon(title),
-        items: cat.items.map(function(item){
-          return {
-            n: item.n || item.name || "Untitled",
-            p: Number(item.p != null ? item.p : item.price || 0),
-            s: item.s || item.description || "",
-            sig: !!(item.sig || item.isSignature),
-            img: item.img || item.imageKey || slug(item.n || item.name || "item"),
-            imageUrl: item.imageUrl || item.image || "",
-            categoryId: id,
-            categoryTitle: title
-          };
-        })
-      };
-    });
-  }
+  function modifierGroups(item){var key=norm([item.categoryTitle,item.name].join(" "));if(/coffee|espresso|latte|cappuccino|cafe/.test(key)) return[{id:"sweet",title:"Sugar",multi:false,options:[{label:"Normal sugar",price:0,checked:true},{label:"Light sugar",price:0},{label:"No sugar",price:0}]},{id:"milk",title:"Milk",multi:false,options:[{label:"Classic milk",price:0,checked:true},{label:"Oat milk",price:4},{label:"Almond milk",price:5}]},{id:"extra",title:"Extras",multi:true,options:[{label:"Extra shot",price:6},{label:"Whipped cream",price:5}]}];if(/jus|smooth|shake|mojito/.test(key)) return[{id:"sweet",title:"Sugar",multi:false,options:[{label:"Normal",price:0,checked:true},{label:"Light",price:0},{label:"No sugar",price:0}]},{id:"ice",title:"Texture",multi:false,options:[{label:"Classic",price:0,checked:true},{label:"Crushed ice",price:0},{label:"Thick blend",price:0}]}];return[{id:"service",title:"Service",multi:true,options:[{label:"Warm it",price:0},{label:"Add cutlery",price:0},{label:"Extra sauce",price:3}]}];}
+  function beep(){var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx) return;try{if(!beep.ctx) beep.ctx=new Ctx();var ctx=beep.ctx;var osc=ctx.createOscillator();var gain=ctx.createGain();osc.frequency.value=920;gain.gain.value=.025;osc.connect(gain);gain.connect(ctx.destination);var start=ctx.currentTime;osc.start(start);osc.stop(start+.06);}catch(e){}}
+  function findProduct(id){var found=null;state.catalog.some(function(cat){found=cat.items.find(function(item){return item.id===id||item.name===id;});return !!found;});return found;}
+  function addLine(item,mods,note,extra){ensureCaisse();ensureLineIds();window.caisse.cart.push({key:"L-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7),n:item.name,p:+(Number(item.price||0)+Number(extra||0)).toFixed(2),q:1,note:note||"",modifiers:mods||[],image:image(item),category:item.categoryTitle||""});saveBucket();beep();say(copy("confirm"));renderTicket();}
+  function changeQty(key,delta){ensureCaisse();ensureLineIds();var i=(window.caisse.cart||[]).findIndex(function(line){return line.key===key;});if(i<0) return;window.caisse.cart[i].q=Number(window.caisse.cart[i].q||1)+delta;if(window.caisse.cart[i].q<=0) window.caisse.cart.splice(i,1);saveBucket();renderTicket();}
+  function clearCart(){ensureCaisse();window.caisse.cart=[];saveBucket();renderTicket();}
+  function setDrawer(name){state.drawer=state.drawer===name?null:name;renderDrawers();}
 
-  function staticCatalog(){
-    try { return catalog(typeof MENU !== "undefined" ? MENU : []); } catch(e){ return []; }
-  }
+  function scaffold(){if(state.ready) return;var page=document.getElementById("p-pos");if(!page) return;page.dataset.maestro="1";page.innerHTML='<div class="maestro-shell"><section class="maestro-main"><header class="maestro-shell-head"><div class="maestro-brand"><div class="maestro-logo">✦ LUX</div><div class="maestro-brand-copy"><div class="maestro-kicker" id="mp-kicker"></div><h1 class="maestro-title" id="mp-title"></h1><p class="maestro-subtitle" id="mp-subtitle"></p></div></div><div class="maestro-head-side"><div class="maestro-employee-pill" id="mp-employee"></div><div class="maestro-head-actions"><button class="maestro-head-btn" id="mp-switch" type="button"></button><button class="maestro-head-btn" id="mp-smart" type="button"></button><button class="maestro-head-btn" id="mp-clear" type="button"></button></div></div></header><div class="maestro-toolbar"><div class="maestro-categories" id="mp-categories"></div><div class="maestro-search-wrap"><input class="maestro-search" id="mp-search" type="search"></div></div><div class="maestro-floating-rail"><button class="maestro-float-btn" data-drawer="service" type="button">📋</button><button class="maestro-float-btn" data-drawer="client" type="button">👤</button></div><div class="maestro-drawer-stack"><section class="maestro-drawer" id="mp-drawer-service"><div class="maestro-drawer-title" id="mp-service-title"></div><div class="maestro-drawer-note" id="mp-service-note"></div><div class="maestro-mode-switch" id="mp-modes"></div><div class="maestro-table-grid" id="mp-tables"></div></section><section class="maestro-drawer" id="mp-drawer-client"><div class="maestro-drawer-title" id="mp-client-title"></div><div class="maestro-drawer-note" id="mp-client-note"></div><div class="maestro-client-grid"><div class="maestro-field"><label id="mp-phone-label"></label><input class="maestro-input" id="mp-phone" type="tel"></div><div class="maestro-field"><label id="mp-name-label"></label><input class="maestro-input" id="mp-name" type="text"></div><div class="maestro-field maestro-field--full"><label id="mp-delivery-label"></label><textarea class="maestro-textarea" id="mp-delivery"></textarea></div></div><div class="maestro-trust-box" id="mp-trust"></div><div class="maestro-insight-box" id="mp-insight"></div></section></div><div class="maestro-products" id="mp-products"></div><footer class="maestro-powered" id="mp-powered"></footer></section><aside class="maestro-ticket-panel"><div class="maestro-ticket-head"><div class="maestro-ticket-title" id="mp-ticket-title"></div><div class="maestro-ticket-copy" id="mp-ticket-copy"></div></div><div class="maestro-ticket-lines" id="mp-ticket-lines"></div><div class="maestro-ticket-summary" id="mp-ticket-summary"></div></aside><button class="maestro-mobile-fab" id="mp-fab" type="button"></button><div class="maestro-mobile-sheet" id="mp-sheet"><div class="maestro-mobile-panel" id="mp-sheet-panel"><div class="maestro-sheet-handle" id="mp-sheet-handle"></div><div class="maestro-ticket-head"><div class="maestro-ticket-title" id="mp-ticket-title-mobile"></div><div class="maestro-ticket-copy" id="mp-ticket-copy-mobile"></div></div><div class="maestro-ticket-lines" id="mp-ticket-lines-mobile"></div><div class="maestro-ticket-summary" id="mp-ticket-summary-mobile"></div></div></div></div><div class="maestro-modal" id="mp-modal"><div class="maestro-modal-card"><div class="maestro-modal-head"><div><div class="maestro-modal-title" id="mp-modal-title"></div><div class="maestro-modal-subtitle" id="mp-modal-sub"></div></div><button class="maestro-modal-close" id="mp-modal-close" type="button">×</button></div><div class="maestro-modifier-groups" id="mp-modal-groups"></div><div class="maestro-modal-notes maestro-field"><label id="mp-notes-label"></label><textarea class="maestro-textarea" id="mp-notes"></textarea></div><div class="maestro-modal-actions"><button class="maestro-modal-btn" id="mp-modal-cancel" type="button"></button><button class="maestro-modal-btn maestro-modal-btn--primary" id="mp-modal-confirm" type="button"></button></div></div></div><div class="maestro-login-overlay" id="mp-login"><div class="maestro-login-card"><div class="maestro-login-brand">✦ LUX</div><div class="maestro-login-title" id="mp-login-title"></div><div class="maestro-login-copy" id="mp-login-sub"></div><div class="maestro-login-mode" id="mp-login-mode"></div><div class="maestro-login-grid"><div class="maestro-field"><label id="mp-user-label"></label><input class="maestro-input" id="mp-user" type="text" autocomplete="username"></div><div class="maestro-field"><label id="mp-pass-label"></label><input class="maestro-input" id="mp-pass" type="password" autocomplete="current-password"></div><div class="maestro-field maestro-field--full"><label id="mp-pin-label"></label><input class="maestro-input" id="mp-pin" type="password" inputmode="numeric" autocomplete="one-time-code"></div></div><input class="maestro-hidden-input" id="mp-hidden-scan" type="password" autocomplete="off"><div class="maestro-login-scan" id="mp-scan-status"></div><div class="maestro-login-actions"><button class="maestro-modal-btn maestro-modal-btn--primary" id="mp-login-account" type="button"></button><button class="maestro-modal-btn" id="mp-login-pin" type="button"></button></div><div class="maestro-login-error" id="mp-login-error"></div></div></div>';bindEvents();state.ready=true;}
+  function renderStatic(){document.body.classList.toggle("pos-lang-ar",state.lang==="ar");document.getElementById("mp-kicker").textContent=copy("kicker");document.getElementById("mp-title").textContent=copy("title");document.getElementById("mp-subtitle").textContent=copy("sub");document.getElementById("mp-switch").textContent=copy("switcher");document.getElementById("mp-smart").textContent=copy("smart");document.getElementById("mp-clear").textContent=copy("clear");document.getElementById("mp-service-title").textContent=copy("service");document.getElementById("mp-service-note").textContent=copy("serviceNote");document.getElementById("mp-client-title").textContent=copy("client");document.getElementById("mp-client-note").textContent=copy("clientNote");document.getElementById("mp-search").placeholder=copy("search");document.getElementById("mp-phone-label").textContent=copy("phone");document.getElementById("mp-phone").placeholder=copy("phonePh");document.getElementById("mp-name-label").textContent=copy("name");document.getElementById("mp-name").placeholder=copy("namePh");document.getElementById("mp-delivery-label").textContent=copy("delivery");document.getElementById("mp-delivery").placeholder=copy("deliveryPh");document.getElementById("mp-ticket-title").textContent=copy("ticket");document.getElementById("mp-ticket-copy").textContent=copy("ticketSub");document.getElementById("mp-ticket-title-mobile").textContent=copy("ticket");document.getElementById("mp-ticket-copy-mobile").textContent=copy("ticketSub");document.getElementById("mp-powered").textContent=copy("powered");document.getElementById("mp-notes-label").textContent=copy("notes");document.getElementById("mp-notes").placeholder=copy("notesPh");document.getElementById("mp-modal-cancel").textContent=copy("cancel");document.getElementById("mp-modal-confirm").textContent=copy("confirm");}
+  function renderEmployee(){var el=document.getElementById("mp-employee");if(!el) return;if(!state.session){el.textContent=copy("noEmployee");el.style.borderColor="rgba(227,90,90,.25)";el.style.background="rgba(227,90,90,.08)";return;}el.textContent=state.session.name+" · "+state.session.role;el.style.borderColor="rgba(61,190,122,.22)";el.style.background="rgba(61,190,122,.08)";}
+  function renderCategories(){var host=document.getElementById("mp-categories");if(!host) return;var cats=[{id:"all",icon:"✦",title:copy("all")}].concat(state.catalog);host.innerHTML=cats.map(function(cat){return '<button class="maestro-cat-btn'+(state.category===cat.id?' is-active':'')+'" type="button" data-cat="'+esc(cat.id)+'">'+cat.icon+" "+esc(cat.title)+"</button>";}).join("");}
+  function renderProducts(loading){var host=document.getElementById("mp-products");if(!host) return;if(loading&&!state.catalog.length){host.innerHTML='<div class="maestro-ticket-empty">'+esc(copy("loading"))+"</div>";return;}var sections=visibleCatalog();if(!sections.length){host.innerHTML='<div class="maestro-ticket-empty">'+esc(copy("loading"))+"</div>";return;}host.innerHTML=sections.map(function(section){return '<section class="maestro-section"><div class="maestro-section-head"><div class="maestro-section-copy">'+section.icon+" "+esc(section.title)+'</div><div class="maestro-section-meta">'+section.items.length+' items</div></div><div class="maestro-product-grid">'+section.items.map(function(item){return '<article class="maestro-product-card" data-product="'+esc(item.id)+'"><div class="maestro-product-media">'+(item.signature?'<div class="maestro-product-badge">✦ Signature</div>':'')+'<img src="'+esc(image(item))+'" data-fallback="'+esc(FALLBACK)+'" alt="'+esc(item.name)+'" onerror="window.maestroPosImageFallback(this)"></div><div class="maestro-product-body"><div class="maestro-product-title-row"><div class="maestro-product-name">'+esc(item.name)+'</div><div class="maestro-product-price">'+esc(money(item.price))+'</div></div><div class="maestro-product-desc">'+esc(item.description||"")+'</div><div class="maestro-product-foot"><div class="maestro-product-meta">'+section.icon+" "+esc(section.title)+'</div><button class="maestro-add-btn" type="button">'+esc(copy("add"))+"</button></div></div></article>";}).join("")+"</div></section>";}).join("");}
+  function renderServiceDrawer(){var modes=document.getElementById("mp-modes");var tables=document.getElementById("mp-tables");if(!modes||!tables) return;modes.innerHTML=[{key:"table",label:copy("dine")},{key:"pickup",label:copy("pickup")},{key:"delivery",label:copy("deliveryMode")}].map(function(m){return '<button class="maestro-mode-btn'+(state.mode===m.key?' is-active':'')+'" type="button" data-mode="'+m.key+'">'+esc(m.label)+"</button>";}).join("");if(state.mode!=="table"){tables.innerHTML='<div class="maestro-ticket-empty">'+esc(serviceLabel())+"</div>";return;}tables.innerHTML=Array.from({length:12}).map(function(_,i){var key=String(i+1);var busy=Array.isArray(window.caisse.tableOrders[key])&&window.caisse.tableOrders[key].length;var active=state.table===key;var label=active?copy("tableSelected"):busy?copy("tableBusy"):copy("tableFree");return '<button class="maestro-table-btn'+(active?' is-active':'')+'" type="button" data-table="'+key+'"><span class="maestro-table-label">'+key+'</span><span class="maestro-table-state">'+esc(label)+"</span></button>";}).join("");}
+  function renderClientDrawer(){var p=document.getElementById("mp-phone"),n=document.getElementById("mp-name"),d=document.getElementById("mp-delivery"),trust=document.getElementById("mp-trust"),insight=document.getElementById("mp-insight");if(!p||!n||!d||!trust||!insight) return;p.value=state.phone;n.value=state.customer;d.value=state.delivery;var tc=trustCopy();trust.innerHTML="<strong>"+esc(tc.label)+"</strong><span>"+esc(tc.note)+"</span>";insight.innerHTML="<strong>✦ LUX AI</strong><span>"+esc(suggestion())+"</span>";}
+  function renderDrawers(){var s=document.getElementById("mp-drawer-service"),c=document.getElementById("mp-drawer-client"),sb=document.querySelector('[data-drawer="service"]'),cb=document.querySelector('[data-drawer="client"]');if(s) s.classList.toggle("is-open",state.drawer==="service");if(c) c.classList.toggle("is-open",state.drawer==="client");if(sb) sb.classList.toggle("is-active",state.drawer==="service");if(cb) cb.classList.toggle("is-active",state.drawer==="client");renderServiceDrawer();renderClientDrawer();}
+  function openModal(item){state.draft=item;document.getElementById("mp-modal-title").textContent=item.name;document.getElementById("mp-modal-sub").textContent=item.description||item.categoryTitle||"";document.getElementById("mp-notes").value="";document.getElementById("mp-modal-groups").innerHTML=modifierGroups(item).map(function(group){return '<div class="maestro-mod-group"><strong>'+esc(group.title)+'</strong>'+group.options.map(function(opt,idx){var type=group.multi?"checkbox":"radio";return '<label class="maestro-mod-option"><span>'+esc(opt.label)+(opt.price?" +"+esc(money(opt.price)):"")+'</span><input type="'+type+'" name="mod-'+esc(group.id)+'" data-label="'+esc(opt.label)+'" data-price="'+esc(opt.price||0)+'" '+(opt.checked&&idx===0?"checked":"")+"></label>";}).join("")+"</div>";}).join("");document.getElementById("mp-modal").classList.add("is-open");}
+  function closeModal(){document.getElementById("mp-modal").classList.remove("is-open");state.draft=null;}
+  function confirmModal(){if(!state.draft) return;var checked=Array.prototype.slice.call(document.querySelectorAll("#mp-modal-groups input:checked"));var mods=checked.map(function(input){return{label:input.getAttribute("data-label"),price:Number(input.getAttribute("data-price")||0)};});var extra=mods.reduce(function(sum,m){return sum+Number(m.price||0);},0);addLine(state.draft,mods,document.getElementById("mp-notes").value.trim(),extra);closeModal();}
 
-  function selectedKey(){ return String(typeof caisse !== "undefined" && caisse.selectedTable != null ? caisse.selectedTable : ""); }
-  function cloneCart(cart){ return (cart || []).map(function(line){ return JSON.parse(JSON.stringify(line)); }); }
-  function lineKey(line, seed){ return [line.n, (line.modifiers || []).map(function(m){ return m.label; }).join("-"), line.note || "", seed || 0].join("::"); }
-  function syncRFID(){
-    if (typeof caisse === "undefined" || !caisse.currentClient) return;
-    if (!STATE.phone && caisse.currentClient.phone) STATE.phone = caisse.currentClient.phone;
-    if (!STATE.name && caisse.currentClient.name) STATE.name = caisse.currentClient.name;
-  }
-  function ensureKeys(){
-    if (typeof caisse === "undefined" || !Array.isArray(caisse.cart)) return;
-    caisse.cart = caisse.cart.map(function(line, index){
-      if (!line.key) line.key = lineKey(line, index);
-      if (!line.displayName) line.displayName = line.n;
-      return line;
-    });
-  }
-  function saveBucket(){
-    if (typeof caisse === "undefined") return;
-    var key = selectedKey();
-    if (key) caisse.tableOrders[key] = cloneCart(caisse.cart);
-  }
-  function restoreBucket(key){
-    if (typeof caisse === "undefined") return;
-    caisse.selectedTable = key;
-    caisse.cart = cloneCart(caisse.tableOrders[key] || []);
-  }
+  function renderTicketBlock(linesId,summaryId){var lines=document.getElementById(linesId),summary=document.getElementById(summaryId);if(!lines||!summary) return;ensureCaisse();ensureLineIds();var items=window.caisse.cart||[];var calc=totals();lines.innerHTML=items.length?items.map(function(line){var note=[];if(Array.isArray(line.modifiers)&&line.modifiers.length) note.push(line.modifiers.map(function(m){return m.label;}).join(" · "));if(line.note) note.push(line.note);return '<article class="maestro-ticket-item"><div class="maestro-ticket-line-main"><div class="maestro-ticket-line-name">'+esc(line.n)+'</div><div class="maestro-ticket-line-price">'+esc(money(Number(line.p||0)*Number(line.q||1)))+'</div></div><div class="maestro-ticket-line-note">'+esc(note.join(" | "))+'</div><div class="maestro-ticket-line-controls"><button class="maestro-qty-btn" type="button" data-line-action="dec" data-line-key="'+esc(line.key)+'">−</button><span class="maestro-qty">'+Number(line.q||1)+'</span><button class="maestro-qty-btn" type="button" data-line-action="inc" data-line-key="'+esc(line.key)+'">+</button></div></article>';}).join(""):'<div class="maestro-ticket-empty">'+esc(copy("empty"))+"</div>";summary.innerHTML='<div class="maestro-summary-row"><span>'+esc(copy("subtotal"))+'</span><strong>'+esc(money(calc.subtotal))+'</strong></div><div class="maestro-summary-row"><span>'+esc(copy("tax"))+'</span><strong>'+esc(money(calc.tax))+'</strong></div><div class="maestro-summary-total"><span>'+esc(copy("total"))+'</span><strong>'+esc(money(calc.total))+'</strong></div><div class="maestro-service-line">'+esc(serviceLabel())+'</div><div class="maestro-methods"><button class="maestro-method-btn'+(state.defaultMethod==="cash"?' is-active':'')+'" type="button" data-pay-method="cash">Cash</button><button class="maestro-method-btn'+(state.defaultMethod==="carte"?' is-active':'')+'" type="button" data-pay-method="carte">Card / CMI</button><button class="maestro-method-btn'+(state.defaultMethod==="giftcard"?' is-active':'')+'" type="button" data-pay-method="giftcard">Gift Card</button></div><button class="maestro-checkout" type="button" data-action="checkout">'+esc(copy("checkout"))+'</button><div class="maestro-ticket-footnote">'+esc(copy("powered"))+"</div>";}
+  function renderTicket(){renderTicketBlock("mp-ticket-lines","mp-ticket-summary");renderTicketBlock("mp-ticket-lines-mobile","mp-ticket-summary-mobile");renderEmployee();var fab=document.getElementById("mp-fab");if(fab) fab.textContent=copy("ticket")+" · "+money(totals().total);}
+  function openSheet(){var sheet=document.getElementById("mp-sheet");if(sheet) sheet.classList.add("is-open");}
+  function closeSheet(){var sheet=document.getElementById("mp-sheet");if(sheet) sheet.classList.remove("is-open");}
+  function bindSwipe(){if(state.swipe) return;var handle=document.getElementById("mp-sheet-handle"),panel=document.getElementById("mp-sheet-panel");if(!handle||!panel) return;var start=0,delta=0,down=false;handle.addEventListener("pointerdown",function(e){down=true;start=e.clientY;delta=0;panel.style.transition="none";handle.setPointerCapture(e.pointerId);});handle.addEventListener("pointermove",function(e){if(!down) return;delta=Math.max(0,e.clientY-start);panel.style.transform="translateY("+delta+"px)";});handle.addEventListener("pointerup",function(){if(!down) return;down=false;panel.style.transition="";panel.style.transform="";if(delta>90) closeSheet();else openSheet();});state.swipe=true;}
 
-  function syncSelection(force){
-    var current = selectedKey();
-    if (!force && current === STATE.lastSelection) return;
-    STATE.lastSelection = current;
-    if (!current) return;
-    if (/^\d+$/.test(current)) {
-      STATE.mode = "table";
-      STATE.table = current;
-      STATE.ref = "";
-    } else if (/^D/i.test(current) || /^DEL/i.test(current)) {
-      STATE.mode = "delivery";
-      STATE.ref = current;
-    } else {
-      STATE.mode = "pickup";
-      STATE.ref = current;
-    }
-  }
+  function renderLogin(){var overlay=document.getElementById("mp-login");if(!overlay) return;document.getElementById("mp-login-title").textContent=copy("loginTitle");document.getElementById("mp-login-sub").textContent=copy("loginSub");document.getElementById("mp-login-mode").textContent=copy("loginHint");document.getElementById("mp-user-label").textContent=copy("user");document.getElementById("mp-pass-label").textContent=copy("pass");document.getElementById("mp-pin-label").textContent=copy("pin");document.getElementById("mp-user").placeholder=copy("user");document.getElementById("mp-pass").placeholder=copy("pass");document.getElementById("mp-pin").placeholder=copy("pin");document.getElementById("mp-login-account").textContent=copy("accountLogin");document.getElementById("mp-login-pin").textContent=copy("pinLogin");document.getElementById("mp-scan-status").textContent=copy("loginHint");overlay.classList.toggle("is-open",!!state.loginVisible);if(state.loginVisible){setTimeout(function(){var hidden=document.getElementById("mp-hidden-scan");if(hidden) hidden.focus();},80);}else document.getElementById("mp-login-error").textContent="";}
+  function setLoginError(msg){var el=document.getElementById("mp-login-error");if(el) el.textContent=msg||"";}
+  function applySession(emp){state.session=normalizeEmployee(emp);write(STORE.session,state.session);write("lux_session",{employeeId:state.session.id,employeeName:state.session.name,role:"pos",startedAt:Date.now()});state.loginVisible=false;renderLogin();renderEmployee();say(copy("loginOk")+" "+state.session.name);}
+  function openLogin(){state.loginVisible=true;renderLogin();}
+  async function loginByAccount(){var user=String(document.getElementById("mp-user").value||"").trim().toLowerCase().replace(/\s+/g,"");var pass=String(document.getElementById("mp-pass").value||"").trim();var pool=await loadEmployees();var emp=pool.find(function(e){return (e.username===user||String(e.accountNumber||"").toLowerCase()===user)&&e.password===pass;});if(!emp){setLoginError(copy("loginError"));return;}setLoginError("");applySession(emp);}
+  async function loginByPin(){var pin=String(document.getElementById("mp-pin").value||"").trim();var pool=await loadEmployees();var emp=pool.find(function(e){return e.pin===pin;});if(!emp){setLoginError(copy("loginError"));return;}setLoginError("");applySession(emp);}
+  async function resolveAccess(code){var status=document.getElementById("mp-scan-status");if(status) status.textContent=copy("loginHint")+" "+code;var emp=await findEmployee(code);if(!emp){setLoginError(copy("unknownBadge"));return;}setLoginError("");applySession(emp);}
 
-  function setMode(mode, options){
-    if (typeof caisse === "undefined") return;
-    options = options || {};
-    saveBucket();
-    STATE.mode = mode;
-    if (mode === "table") {
-      STATE.ref = "";
-      STATE.table = String(options.table || STATE.table || 1);
-      restoreBucket(STATE.table);
-    } else if (mode === "pickup") {
-      if (options.fresh || !STATE.ref || !/^WEB/i.test(STATE.ref) && !/^E/i.test(STATE.ref)) STATE.ref = "E" + String(caisse.takeawayCount++);
-      restoreBucket(STATE.ref);
-    } else {
-      if (options.fresh || !STATE.ref || !/^D/i.test(STATE.ref)) STATE.ref = "D" + String(Date.now()).slice(-4);
-      restoreBucket(STATE.ref);
-    }
-    STATE.focus = "";
-    renderPOS();
-  }
+  function buildTx(payment){var calc=totals();return{id:Date.now(),date:new Date().toLocaleDateString("fr-MA"),time:new Date().toLocaleTimeString("fr-MA",{hour:"2-digit",minute:"2-digit"}),table:serviceLabel(),mode:state.mode,subtotal:calc.subtotal,tva:calc.tax,total:calc.total,currency:"MAD",displayCurrency:state.currency,paymentMethod:payment.label||payment.payMethod||"Cash",paymentCode:payment.payMethod||"cash",giftCard:payment.giftCard||null,customer:state.customer||"",client:state.customer||"",customerPhone:state.phone||"",phone:state.phone||"",delivery:state.delivery||"",employeeId:state.session&&state.session.id,employeeName:state.session&&state.session.name,cashier:state.session?{id:state.session.id,name:state.session.name,username:state.session.username,accountNumber:state.session.accountNumber,role:state.session.role}:null,items:clone(window.caisse.cart||[]),source:"maestro_pos"};}
+  async function finishPayment(payment){if(!state.session){openLogin();throw new Error(copy("needEmployee"));}var tx=buildTx(payment||{});if(window.LuxAPI&&typeof window.LuxAPI.saveTransaction==="function") await window.LuxAPI.saveTransaction(tx);if(state.phone&&window.TrustScore&&typeof window.TrustScore.recordTransaction==="function"){try{window.TrustScore.recordTransaction({phone:state.phone,customer:state.customer,amount:tx.total});}catch(e){}}window.caisse.todayCA=Number(window.caisse.todayCA||0)+Number(tx.total||0);window.caisse.todayOrders=Number(window.caisse.todayOrders||0)+1;if(typeof window.printTicket==="function") window.printTicket(tx);clearCart();closeSheet();say(copy("printDone"));}
+  function pay(method){if(method) state.defaultMethod=method;if(!state.session){openLogin();say(copy("needEmployee"));return;}if(!window.caisse.cart||!window.caisse.cart.length){say(copy("needItems"));return;}if(state.mode==="delivery"&&!String(state.delivery||"").trim()){setDrawer("client");say(copy("needDelivery"));return;}if(window.LuxPayment&&typeof window.LuxPayment.open==="function"){window.LuxPayment.open({methods:["cash","carte","giftcard"],defaultMethod:state.defaultMethod,total:totals().total,currency:"MAD",amountLabel:money(totals().total),customerPhone:state.phone||"",customerName:state.customer||"",employeeId:state.session.id,employeeName:state.session.name,submitCallback:finishPayment});return;}finishPayment({payMethod:state.defaultMethod,label:state.defaultMethod});}
 
-  function injectTopbar(){
-    if (document.getElementById("maestro-topbar-controls")) return;
-    var host = document.querySelector(".topbar-right");
-    if (!host) return;
-    var wrap = document.createElement("div");
-    wrap.className = "maestro-topbar-group";
-    wrap.id = "maestro-topbar-controls";
-    wrap.innerHTML = '<select class="maestro-topbar-control" id="maestro-lang"><option value="fr">FR</option><option value="en">EN</option><option value="ar">AR</option></select><select class="maestro-topbar-control" id="maestro-currency"><option value="MAD">MAD</option><option value="USD">USD</option><option value="EUR">EUR</option></select>';
-    host.insertBefore(wrap, host.firstChild);
-    document.getElementById("maestro-lang").value = STATE.lang;
-    document.getElementById("maestro-currency").value = STATE.currency;
-    document.getElementById("maestro-lang").addEventListener("change", function(){
-      STATE.lang = this.value;
-      write(LS.lang, STATE.lang);
-      document.body.classList.toggle("pos-lang-ar", STATE.lang === "ar");
-      renderPOS();
-    });
-    document.getElementById("maestro-currency").addEventListener("change", function(){
-      STATE.currency = this.value;
-      write(LS.currency, STATE.currency);
-      renderProducts();
-      renderTicket();
-    });
-  }
+  function bindScanner(){document.addEventListener("keydown",function(e){if(e.key==="Escape"){if(document.getElementById("mp-modal").classList.contains("is-open")) closeModal();else if(state.loginVisible&&state.session){state.loginVisible=false;renderLogin();}}var active=document.activeElement,tag=active?active.tagName:"",activeId=active?active.id:"";var allow=!(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT")||activeId==="mp-hidden-scan";if(!allow||e.ctrlKey||e.metaKey||e.altKey) return;if(e.key==="Enter"){var code=String(state.scan||"").trim().toUpperCase();clearTimeout(state.scanTimer);state.scan="";var hidden=document.getElementById("mp-hidden-scan");if(hidden) hidden.value="";if(code.length>=4) resolveAccess(code);return;}if(e.key.length===1){state.scan+=e.key;var field=document.getElementById("mp-hidden-scan");if(field) field.value=state.scan.replace(/./g,"•");clearTimeout(state.scanTimer);state.scanTimer=setTimeout(function(){state.scan="";if(field) field.value="";},220);}});}
+  function injectTopbar(){var host=document.querySelector(".topbar-right");if(!host||document.getElementById("maestro-topbar-controls")) return;var wrap=document.createElement("div");wrap.id="maestro-topbar-controls";wrap.innerHTML='<select class="maestro-topbar-control" id="maestro-lang"><option value="fr">FR</option><option value="en">EN</option><option value="ar">AR</option></select><select class="maestro-topbar-control" id="maestro-currency"><option value="MAD">MAD</option><option value="USD">USD</option><option value="EUR">EUR</option></select>';host.insertBefore(wrap,host.firstChild);document.getElementById("maestro-lang").value=state.lang;document.getElementById("maestro-currency").value=state.currency;document.getElementById("maestro-lang").addEventListener("change",function(){state.lang=this.value==="ar"?"fr":this.value;write(STORE.lang,state.lang);render();});document.getElementById("maestro-currency").addEventListener("change",function(){state.currency=this.value;write(STORE.currency,state.currency);renderProducts();renderTicket();});}
+  function bindEvents(){var page=document.getElementById("p-pos");if(!page) return;document.getElementById("mp-search").addEventListener("input",function(){state.search=this.value;renderProducts();});document.getElementById("mp-phone").addEventListener("input",function(){state.phone=this.value.trim();renderClientDrawer();renderTicket();});document.getElementById("mp-name").addEventListener("input",function(){state.customer=this.value.trim();renderClientDrawer();});document.getElementById("mp-delivery").addEventListener("input",function(){state.delivery=this.value.trim();renderClientDrawer();renderTicket();});document.getElementById("mp-smart").addEventListener("click",function(){say(suggestion());});document.getElementById("mp-clear").addEventListener("click",clearCart);document.getElementById("mp-switch").addEventListener("click",openLogin);document.getElementById("mp-fab").addEventListener("click",openSheet);document.getElementById("mp-modal-close").addEventListener("click",closeModal);document.getElementById("mp-modal-cancel").addEventListener("click",closeModal);document.getElementById("mp-modal-confirm").addEventListener("click",confirmModal);document.getElementById("mp-login-account").addEventListener("click",loginByAccount);document.getElementById("mp-login-pin").addEventListener("click",loginByPin);document.getElementById("mp-pass").addEventListener("keydown",function(e){if(e.key==="Enter") loginByAccount();});document.getElementById("mp-pin").addEventListener("keydown",function(e){if(e.key==="Enter") loginByPin();});page.addEventListener("click",function(e){var cat=e.target.closest("[data-cat]");if(cat){state.category=cat.getAttribute("data-cat");renderCategories();renderProducts();return;}var draw=e.target.closest("[data-drawer]");if(draw){setDrawer(draw.getAttribute("data-drawer"));return;}var mode=e.target.closest("[data-mode]");if(mode){var m=mode.getAttribute("data-mode");setMode(m,{fresh:m!=="table"&&state.mode!==m});return;}var table=e.target.closest("[data-table]");if(table){state.table=String(table.getAttribute("data-table"));setMode("table",{table:state.table});return;}var product=e.target.closest("[data-product]");if(product){var item=findProduct(product.getAttribute("data-product"));if(item) openModal(item);return;}var qty=e.target.closest("[data-line-action]");if(qty){changeQty(qty.getAttribute("data-line-key"),qty.getAttribute("data-line-action")==="inc"?1:-1);return;}var method=e.target.closest("[data-pay-method]");if(method){state.defaultMethod=method.getAttribute("data-pay-method");renderTicket();return;}var action=e.target.closest("[data-action='checkout']");if(action) pay();});document.getElementById("mp-modal").addEventListener("click",function(e){if(e.target.id==="mp-modal") closeModal();});document.getElementById("mp-login").addEventListener("click",function(e){if(e.target.id==="mp-login"&&state.session){state.loginVisible=false;renderLogin();}});bindSwipe();}
+  function render(){if(!state.ready) scaffold();renderStatic();renderLogin();renderEmployee();renderCategories();renderDrawers();renderProducts();renderTicket();}
+  function syncLegacy(){ensureCaisse();var sel=window.caisse.selectedTable;if(sel==null||sel===""){restoreBucket(String(state.table||"1"));return;}sel=String(sel);if(/^\d+$/.test(sel)){state.mode="table";state.table=sel;state.ref="";}else if(/^D/i.test(sel)){state.mode="delivery";state.ref=sel;}else{state.mode="pickup";state.ref=sel;}restoreBucket(sel);}
+  function init(){if(!document.getElementById("p-pos")) return;ensureCaisse();injectTopbar();scaffold();syncLegacy();if(window.caisse.currentClient){state.phone=String(window.caisse.currentClient.phone||"");state.customer=String(window.caisse.currentClient.name||"");}bindScanner();render();loadEmployees();loadCatalog();}
 
-  function scaffold(){
-    if (STATE.ready) return;
-    var page = document.getElementById("p-pos");
-    if (!page) return;
-    page.innerHTML = '' +
-      '<div class="maestro-pos-shell">' +
-      '  <section class="maestro-pos-main">' +
-      '    <div class="maestro-hero">' +
-      '      <div><div class="maestro-kicker" id="mp-k"></div><div class="maestro-title" id="mp-t"></div><div class="maestro-subtitle" id="mp-s"></div></div>' +
-      '      <div class="maestro-hero-actions"><button class="maestro-hero-btn" id="mp-ai" type="button"></button><button class="maestro-hero-btn" id="mp-clear" type="button"></button></div>' +
-      '    </div>' +
-      '    <div class="maestro-main-scroll">' +
-      '      <div class="maestro-main-grid">' +
-      '        <div class="maestro-card"><div class="maestro-card-head"><div><div class="maestro-card-title" id="mp-svc-title"></div><div class="maestro-card-note" id="mp-svc-note"></div></div><div class="maestro-card-note" id="mp-order-ref"></div></div><div class="maestro-service-switch" id="mp-modes"></div><div class="maestro-table-grid" id="mp-tables"></div></div>' +
-      '        <div class="maestro-card"><div class="maestro-card-head"><div><div class="maestro-card-title" id="mp-cust-title"></div><div class="maestro-card-note" id="mp-cust-note"></div></div></div><div class="maestro-fields"><div class="maestro-field"><label id="mp-phone-l"></label><input id="mp-phone" type="tel"></div><div class="maestro-field"><label id="mp-name-l"></label><input id="mp-name" type="text"></div><div class="maestro-field" id="mp-table-wrap"><label id="mp-table-l"></label><input id="mp-table" type="number" min="1" max="24"></div><div class="maestro-field maestro-field--span" id="mp-delivery-wrap"><label id="mp-delivery-l"></label><textarea id="mp-delivery" rows="3"></textarea></div><div class="maestro-field maestro-field--span"><label id="mp-search-l"></label><input id="mp-search" type="search"></div></div><div class="maestro-trust-card" id="mp-trust" style="margin-top:12px"></div><div class="maestro-ai-card" id="mp-insight" style="margin-top:12px"></div></div>' +
-      '      </div>' +
-      '      <div class="maestro-category-strip" id="mp-cats"></div>' +
-      '      <div id="mp-products"></div>' +
-      '      <div class="maestro-powered" id="mp-powered"></div>' +
-      '    </div>' +
-      '  </section>' +
-      '  <aside class="maestro-pos-cart"><div class="maestro-cart-head"><h3 id="mp-cart-t"></h3><p id="mp-cart-s"></p></div><div class="maestro-cart-body" id="mp-cart-body"></div><div class="maestro-cart-footer" id="mp-cart-footer"></div></aside>' +
-      '  <button class="maestro-mobile-fab" id="mp-fab" type="button"></button>' +
-      '  <div class="maestro-mobile-sheet" id="mp-sheet"><div class="maestro-mobile-sheet-panel" id="mp-sheet-panel"><div class="maestro-sheet-handle" id="mp-sheet-handle"></div><div class="maestro-sheet-title" id="mp-sheet-title"></div><div class="maestro-cart-body" id="mp-mobile-body"></div><div class="maestro-cart-footer" id="mp-mobile-footer"></div></div></div>' +
-      '</div>' +
-      '<div id="maestro-pos-modal"><div class="maestro-modal-card"><div class="maestro-modal-head"><div><h3 id="mp-modal-t"></h3><div class="maestro-subtitle" id="mp-modal-s"></div></div><button class="maestro-modal-close" id="mp-modal-x" type="button">×</button></div><div class="maestro-modifier-grid" id="mp-modal-groups"></div><div class="maestro-field maestro-field--span" style="margin-top:16px"><label id="mp-notes-l"></label><textarea id="mp-notes" rows="3"></textarea></div><div class="maestro-modal-actions"><button class="maestro-modal-btn" id="mp-modal-cancel" type="button"></button><button class="maestro-modal-btn maestro-modal-btn--primary" id="mp-modal-confirm" type="button"></button></div></div></div>';
+  window.maestroPosImageFallback=function(img){if(img.dataset.fallbackApplied==="1") return;img.dataset.fallbackApplied="1";img.src=img.getAttribute("data-fallback")||FALLBACK;};
+  window.buildMenuSections=function(){render();loadCatalog();};
+  window.buildTables=renderServiceDrawer;
+  window.renderTicket=renderTicket;
+  window.addTakeaway=function(){setMode("pickup",{fresh:true});};
+  window.selectTable=function(table){state.table=String(table||"1");setMode("table",{table:state.table});};
+  window.addToCart=function(itemOrName,price){var item=typeof itemOrName==="object"?itemOrName:findProduct(itemOrName);if(!item) item={id:slug(itemOrName),name:String(itemOrName||"Item"),price:Number(price||0),description:"",imageKey:slug(itemOrName),imageUrl:"",categoryTitle:"Manual"};openModal(item);};
+  window.rmFromCart=function(key){changeQty(key,-1);};
+  window.clearCart=clearCart;
+  window.pay=pay;
 
-    document.getElementById("mp-ai").addEventListener("click", function(){ applySuggestion(true); });
-    document.getElementById("mp-clear").addEventListener("click", clearCart);
-    document.getElementById("mp-fab").addEventListener("click", function(){ toggleSheet(true); });
-    document.getElementById("mp-phone").addEventListener("input", function(){ STATE.phone = this.value.trim(); renderTrust(); renderTicket(); });
-    document.getElementById("mp-name").addEventListener("input", function(){ STATE.name = this.value.trim(); renderTrust(); });
-    document.getElementById("mp-table").addEventListener("input", function(){
-      STATE.table = String(this.value || "").replace(/\D/g, "").slice(0, 2);
-      if (STATE.table) { saveBucket(); restoreBucket(STATE.table); }
-      renderPOS();
-    });
-    document.getElementById("mp-delivery").addEventListener("input", function(){ STATE.delivery = this.value.trim(); renderTicket(); });
-    document.getElementById("mp-search").addEventListener("input", function(){ STATE.search = this.value; STATE.focus = ""; renderProducts(); });
-    document.getElementById("mp-modal-x").addEventListener("click", closeModal);
-    document.getElementById("mp-modal-cancel").addEventListener("click", closeModal);
-    document.getElementById("mp-modal-confirm").addEventListener("click", confirmModal);
-    document.getElementById("maestro-pos-modal").addEventListener("click", function(e){ if (e.target.id === "maestro-pos-modal") closeModal(); });
-    STATE.ready = true;
-  }
-
-  function translate(){
-    document.body.classList.toggle("pos-lang-ar", STATE.lang === "ar");
-    document.getElementById("mp-k").textContent = tx("k");
-    document.getElementById("mp-t").textContent = tx("t");
-    document.getElementById("mp-s").textContent = tx("s");
-    document.getElementById("mp-svc-title").textContent = tx("svc");
-    document.getElementById("mp-svc-note").textContent = tx("svcNote");
-    document.getElementById("mp-cust-title").textContent = tx("cust");
-    document.getElementById("mp-cust-note").textContent = tx("custNote");
-    document.getElementById("mp-phone-l").textContent = tx("phone");
-    document.getElementById("mp-phone").placeholder = tx("phonePh");
-    document.getElementById("mp-name-l").textContent = tx("name");
-    document.getElementById("mp-name").placeholder = tx("namePh");
-    document.getElementById("mp-table-l").textContent = tx("table");
-    document.getElementById("mp-table").placeholder = tx("tablePh");
-    document.getElementById("mp-delivery-l").textContent = tx("delivery");
-    document.getElementById("mp-delivery").placeholder = tx("deliveryPh");
-    document.getElementById("mp-search-l").textContent = tx("search");
-    document.getElementById("mp-search").placeholder = tx("searchPh");
-    document.getElementById("mp-ai").textContent = tx("ai");
-    document.getElementById("mp-clear").textContent = tx("clear");
-    document.getElementById("mp-cart-t").textContent = tx("cart");
-    document.getElementById("mp-cart-s").textContent = tx("cartSub");
-    document.getElementById("mp-sheet-title").textContent = tx("cart");
-    document.getElementById("mp-modal-t").textContent = tx("modTitle");
-    document.getElementById("mp-modal-cancel").textContent = tx("cancel");
-    document.getElementById("mp-modal-confirm").textContent = tx("confirm");
-    document.getElementById("mp-notes-l").textContent = tx("notes");
-    document.getElementById("mp-notes").placeholder = tx("notesPh");
-    document.getElementById("mp-powered").textContent = tx("powered");
-  }
-
-  function loadCatalog(force){
-    if (window.__maestroPosCatalogPromise && !force) return window.__maestroPosCatalogPromise;
-    renderProducts(true);
-    window.__maestroPosCatalogPromise = Promise.resolve().then(function(){
-      if (window.LuxAPI && typeof LuxAPI.getPosCatalog === "function") return LuxAPI.getPosCatalog();
-      if (window.LuxAPI && typeof LuxAPI.getMenu === "function") return LuxAPI.getMenu();
-      return [];
-    }).then(function(data){
-      STATE.catalog = catalog(data);
-      if (!STATE.catalog.length) STATE.catalog = staticCatalog();
-    }).catch(function(){
-      STATE.catalog = staticCatalog();
-    }).finally(function(){
-      renderCats();
-      renderProducts();
-      renderTrust();
-    });
-    return window.__maestroPosCatalogPromise;
-  }
-
-  function tables(){
-    syncSelection(false);
-    var wrap = document.getElementById("mp-table-wrap");
-    var del = document.getElementById("mp-delivery-wrap");
-    var grid = document.getElementById("mp-tables");
-    var modes = [
-      { key: "table", label: tx("tableMode") },
-      { key: "pickup", label: tx("pickup") },
-      { key: "delivery", label: tx("deliveryMode") }
-    ];
-    document.getElementById("mp-modes").innerHTML = modes.map(function(mode){
-      return '<button class="maestro-switch-btn' + (STATE.mode === mode.key ? ' active' : '') + '" type="button" data-mode="' + mode.key + '">' + mode.label + "</button>";
-    }).join("");
-    document.getElementById("mp-modes").querySelectorAll("[data-mode]").forEach(function(button){
-      button.addEventListener("click", function(){ setMode(this.getAttribute("data-mode"), { fresh: this.getAttribute("data-mode") !== "table" && this.getAttribute("data-mode") !== STATE.mode }); });
-    });
-
-    wrap.style.display = STATE.mode === "table" ? "flex" : "none";
-    del.style.display = STATE.mode === "delivery" ? "flex" : "none";
-    if (STATE.mode !== "table") { grid.style.display = "none"; }
-    else {
-      grid.style.display = "grid";
-      grid.innerHTML = "";
-      for (var i = 1; i <= 12; i += 1) {
-        var key = String(i);
-        var busy = typeof caisse !== "undefined" && caisse.tableOrders && caisse.tableOrders[key] && caisse.tableOrders[key].length;
-        var active = STATE.table === key;
-        var stateLabel = active ? (STATE.lang === "ar" ? "محددة" : STATE.lang === "en" ? "Active" : "Selectionnee") : busy ? (STATE.lang === "ar" ? "مشغولة" : STATE.lang === "en" ? "Busy" : "Occupee") : (STATE.lang === "ar" ? "فارغة" : STATE.lang === "en" ? "Free" : "Libre");
-        var card = document.createElement("button");
-        card.className = "maestro-table-btn" + (active ? " active" : "") + (busy ? " busy" : "");
-        card.type = "button";
-        card.setAttribute("data-table", key);
-        card.innerHTML = '<span class="maestro-table-no">' + key + '</span><span class="maestro-table-state">' + stateLabel + "</span>";
-        card.addEventListener("click", function(){ selectTable(this.getAttribute("data-table")); });
-        grid.appendChild(card);
-      }
-    }
-    document.getElementById("mp-order-ref").textContent = (STATE.mode === "table" ? "T" + (STATE.table || "—") : (STATE.ref || "—"));
-  }
-
-  function renderCats(){
-    var bar = document.getElementById("mp-cats");
-    if (!bar) return;
-    var cats = [{ id: "all", icon: "✦", title: tx("all") }].concat(STATE.catalog);
-    bar.innerHTML = cats.map(function(cat){
-      return '<button class="maestro-category-btn' + (STATE.category === cat.id ? ' active' : '') + '" type="button" data-cat="' + esc(cat.id) + '">' + (cat.icon ? cat.icon + " " : "") + esc(cat.title) + "</button>";
-    }).join("");
-    bar.querySelectorAll("[data-cat]").forEach(function(button){
-      button.addEventListener("click", function(){
-        STATE.category = this.getAttribute("data-cat");
-        renderCats();
-        renderProducts();
-      });
-    });
-  }
-
-  function visibleCatalog(){
-    var search = norm(STATE.search);
-    return STATE.catalog.map(function(cat){
-      return {
-        id: cat.id,
-        title: cat.title,
-        icon: cat.icon,
-        items: cat.items.filter(function(item){
-          var hay = norm([item.n, item.s, cat.title].join(" "));
-          return (!search || hay.indexOf(search) >= 0) && (STATE.category === "all" || STATE.category === cat.id);
-        })
-      };
-    }).filter(function(cat){ return cat.items.length; });
-  }
-
-  function image(item){
-    return {
-      src: item.imageUrl && /^https?:/i.test(item.imageUrl) ? item.imageUrl : "https://cafeslux.com/assets/menu/" + (item.img || slug(item.n)) + ".jpg",
-      fallback: (typeof IMGS !== "undefined" && IMGS[item.img]) || SVG_FALLBACK
-    };
-  }
-
-  window.maestroPosImageFallback = function(el){
-    if (el.dataset.fallbackApplied === "1") return;
-    el.dataset.fallbackApplied = "1";
-    el.src = el.getAttribute("data-fallback") || SVG_FALLBACK;
-  };
-
-  function renderProducts(loading){
-    var root = document.getElementById("mp-products");
-    if (!root) return;
-    if (loading && !STATE.catalog.length) { root.innerHTML = '<div class="maestro-card"><div class="maestro-card-note">' + tx("loading") + "</div></div>"; return; }
-    var sections = visibleCatalog();
-    if (!sections.length) { root.innerHTML = '<div class="maestro-card"><div class="maestro-card-note">' + tx("loading") + "</div></div>"; return; }
-    root.innerHTML = sections.map(function(cat){
-      return '<section class="maestro-product-section"><div class="maestro-section-title"><h3>' + cat.icon + ' ' + esc(cat.title) + '</h3><span>' + cat.items.length + '</span></div><div class="maestro-product-grid">' + cat.items.map(function(item){
-        var img = image(item);
-        return '<article class="maestro-product-card' + (norm(STATE.focus) === norm(item.n) ? ' maestro-product-card--highlight' : '') + '" data-product="' + esc(item.n) + '"><div class="maestro-product-media">' + (item.sig ? '<div class="maestro-product-badge">✦ Signature</div>' : '') + '<img src="' + img.src + '" data-fallback="' + img.fallback + '" alt="' + esc(item.n) + '" onerror="window.maestroPosImageFallback(this)"></div><div class="maestro-product-body"><div class="maestro-product-head"><div class="maestro-product-name">' + esc(item.n) + '</div><div class="maestro-product-price">' + money(item.p) + '</div></div><div class="maestro-product-desc">' + esc(item.s || "") + '</div><div class="maestro-product-footer"><div class="maestro-product-meta"><span class="maestro-meta-pill">' + cat.icon + ' ' + esc(cat.title) + '</span></div><button class="maestro-add-btn" type="button">' + tx("confirm") + '</button></div></div></article>';
-      }).join("") + "</div></section>";
-    }).join("");
-    root.querySelectorAll("[data-product]").forEach(function(card){
-      card.addEventListener("click", function(e){
-        if (e.target && e.target.tagName === "BUTTON") e.stopPropagation();
-        var item = find(this.getAttribute("data-product"));
-        if (item) openModal(item);
-      });
-    });
-  }
-
-  function find(name){
-    var item = null;
-    STATE.catalog.some(function(cat){
-      item = cat.items.find(function(entry){ return entry.n === name; });
-      return !!item;
-    });
-    return item;
-  }
-
-  function modifierGroups(item){
-    var key = norm([item.categoryTitle, item.categoryId, item.n].join(" "));
-    if (/jus|shake|smooth|soft|mojito|cocktail|panache/.test(key)) {
-      return [
-        {
-          id: "sweet",
-          title: localize({ fr: "Sucre", en: "Sweetness", ar: "السكر" }),
-          type: "single",
-          options: [
-            { v: "normal", l: localize({ fr: "Normal", en: "Normal", ar: "عادي" }), p: 0, show: false, checked: true },
-            { v: "light", l: localize({ fr: "Peu sucre", en: "Light sugar", ar: "سكر خفيف" }), p: 0, show: true },
-            { v: "none", l: localize({ fr: "Sans sucre", en: "No sugar", ar: "بدون سكر" }), p: 0, show: true }
-          ]
-        },
-        {
-          id: "texture",
-          title: localize({ fr: "Texture", en: "Texture", ar: "القوام" }),
-          type: "single",
-          options: [
-            { v: "classic", l: localize({ fr: "Classique", en: "Classic", ar: "كلاسيكي" }), p: 0, show: false, checked: true },
-            { v: "ice", l: localize({ fr: "Glace pilee", en: "Crushed ice", ar: "ثلج مجروش" }), p: 0, show: true },
-            { v: "thick", l: localize({ fr: "Mix epais", en: "Thick blend", ar: "قوام كثيف" }), p: 0, show: true }
-          ]
-        }
-      ];
-    }
-    return [
-      {
-        id: "sugar",
-        title: localize({ fr: "Sucre", en: "Sugar", ar: "السكر" }),
-        type: "single",
-        options: [
-          { v: "normal", l: localize({ fr: "Normal", en: "Regular", ar: "عادي" }), p: 0, show: false, checked: true },
-          { v: "extra", l: localize({ fr: "Plus sucre", en: "Extra sugar", ar: "سكر إضافي" }), p: 0, show: true },
-          { v: "none", l: localize({ fr: "Sans sucre", en: "No sugar", ar: "بدون سكر" }), p: 0, show: true }
-        ]
-      },
-      {
-        id: "milk",
-        title: localize({ fr: "Lait", en: "Milk", ar: "الحليب" }),
-        type: "single",
-        options: [
-          { v: "classic", l: localize({ fr: "Lait classique", en: "Classic milk", ar: "حليب عادي" }), p: 0, show: false, checked: true },
-          { v: "oat", l: localize({ fr: "Lait d'avoine", en: "Oat milk", ar: "حليب الشوفان" }), p: 4, show: true },
-          { v: "almond", l: localize({ fr: "Lait d'amande", en: "Almond milk", ar: "حليب اللوز" }), p: 5, show: true }
-        ]
-      },
-      {
-        id: "extras",
-        title: localize({ fr: "Extras", en: "Extras", ar: "إضافات" }),
-        type: "multi",
-        options: [
-          { v: "shot", l: localize({ fr: "Shot extra", en: "Extra shot", ar: "شوت إضافي" }), p: 4, show: true },
-          { v: "cream", l: localize({ fr: "Chantilly", en: "Whipped cream", ar: "كريمة مخفوقة" }), p: 4, show: true },
-          { v: "croissant", l: localize({ fr: "Croissant", en: "Croissant", ar: "كرواسون" }), p: 12, show: true }
-        ]
-      }
-    ];
-  }
-
-  function openModal(item){
-    if (!item) return;
-    if (STATE.mode === "table" && !STATE.table) { say("⚠ " + tx("needTable")); return; }
-    if (STATE.mode === "pickup" && !selectedKey()) setMode("pickup", { fresh: true });
-    if (STATE.mode === "delivery" && !selectedKey()) setMode("delivery", { fresh: true });
-    STATE.draft = { item: item, groups: modifierGroups(item) };
-    document.getElementById("mp-modal-t").textContent = item.n;
-    document.getElementById("mp-modal-s").textContent = item.s || tx("modTitle");
-    document.getElementById("mp-notes").value = "";
-    document.getElementById("mp-modal-groups").innerHTML = STATE.draft.groups.map(function(group){
-      return '<div class="maestro-mod-group"><h4>' + group.title + '</h4>' + group.options.map(function(option){
-        var type = group.type === "multi" ? "checkbox" : "radio";
-        var name = group.type === "multi" ? group.id + ":" + option.v : group.id;
-        return '<label class="maestro-mod-option"><span>' + option.l + (option.p ? " +" + money(option.p) : "") + '</span><input type="' + type + '" name="' + name + '" value="' + option.v + '"' + (option.checked ? " checked" : "") + "></label>";
-      }).join("") + "</div>";
-    }).join("");
-    document.getElementById("maestro-pos-modal").classList.add("open");
-  }
-
-  function closeModal(){
-    STATE.draft = null;
-    document.getElementById("maestro-pos-modal").classList.remove("open");
-  }
-
-  function confirmModal(){
-    if (!STATE.draft) return;
-    var modifiers = [];
-    var root = document.getElementById("mp-modal-groups");
-    STATE.draft.groups.forEach(function(group){
-      if (group.type === "single") {
-        var chosen = root.querySelector('input[name="' + group.id + '"]:checked');
-        var option = chosen ? group.options.find(function(entry){ return entry.v === chosen.value; }) : null;
-        if (option && option.show) modifiers.push({ label: option.l, price: option.p || 0 });
-      } else {
-        group.options.forEach(function(option){
-          var input = root.querySelector('input[name="' + group.id + ':' + option.v + '"]');
-          if (input && input.checked) modifiers.push({ label: option.l, price: option.p || 0 });
-        });
-      }
-    });
-    var note = document.getElementById("mp-notes").value.trim();
-    var line = {
-      n: STATE.draft.item.n,
-      displayName: STATE.draft.item.n,
-      p: Number(STATE.draft.item.p) + modifiers.reduce(function(sum, mod){ return sum + Number(mod.price || 0); }, 0),
-      q: 1,
-      modifiers: modifiers,
-      note: note,
-      img: STATE.draft.item.img,
-      s: STATE.draft.item.s || ""
-    };
-    line.key = lineKey(line, Date.now());
-    ensureKeys();
-    caisse.cart.push(line);
-    saveBucket();
-    closeModal();
-    renderTicket();
-    say("✓ " + tx("added"));
-  }
-
-  function summary(){
-    ensureKeys();
-    var sub = (caisse.cart || []).reduce(function(sum, line){ return sum + Number(line.p || 0) * Number(line.q || 0); }, 0);
-    return { sub: sub, tax: sub * 0.1, total: sub * 1.1 };
-  }
-
-  function renderTrust(){
-    syncRFID();
-    var profile = window.TrustScore ? TrustScore.getProfile(STATE.phone || (caisse.currentClient && caisse.currentClient.phone) || "") : null;
-    var info = tier(profile);
-    document.getElementById("mp-trust").innerHTML = '<div class="maestro-trust-badge">' + info.label + '</div><div class="maestro-trust-copy">' + info.note + "</div>" + (profile ? '<div class="maestro-trust-copy">' + moneyMad(profile.spendMad || 0) + "</div>" : "");
-    var tip = suggestion();
-    document.getElementById("mp-insight").innerHTML = '<div class="maestro-trust-badge">LUX AI</div><div class="maestro-ai-copy">' + tip.text + "</div>";
-  }
-
-  function serviceLabel(){
-    if (STATE.mode === "table") return tx("tableMode") + " · T" + (STATE.table || "—");
-    if (STATE.mode === "delivery") return tx("deliveryMode") + " · " + (STATE.ref || "—");
-    return tx("pickup") + " · " + (STATE.ref || "—");
-  }
-
-  function cartMarkup(){
-    ensureKeys();
-    var stats = summary();
-    var count = (caisse.cart || []).reduce(function(sum, line){ return sum + Number(line.q || 0); }, 0);
-    var body = !caisse.cart.length
-      ? '<div class="maestro-cart-empty">' + tx("empty") + "</div>"
-      : '<div class="maestro-cart-list">' + caisse.cart.map(function(line){
-          var meta = [];
-          if (line.modifiers && line.modifiers.length) meta.push(line.modifiers.map(function(mod){ return mod.label; }).join(" · "));
-          if (line.note) meta.push(line.note);
-          return '<div class="maestro-cart-item"><div class="maestro-cart-row"><div><div class="maestro-cart-item-name">' + esc(line.displayName || line.n) + '</div><div class="maestro-cart-item-meta">' + esc(meta.join(" · ") || line.s || "") + '</div></div><div class="maestro-product-price">' + money(Number(line.p || 0) * Number(line.q || 0)) + '</div></div><div class="maestro-cart-controls"><button class="maestro-qty-btn" type="button" data-qty="' + esc(line.key) + '" data-delta="-1">−</button><div class="maestro-qty-number">' + line.q + '</div><button class="maestro-qty-btn" type="button" data-qty="' + esc(line.key) + '" data-delta="1">+</button></div></div>';
-        }).join("") + "</div>";
-    var footer = '<div class="maestro-summary-row"><span>' + tx("sub") + '</span><span>' + money(stats.sub) + '</span></div><div class="maestro-summary-row"><span>' + tx("tax") + '</span><span>' + money(stats.tax) + '</span></div><div class="maestro-summary-row"><span>' + tx("base") + '</span><span>' + moneyMad(stats.total) + '</span></div><div class="maestro-summary-total"><span>' + tx("total") + '</span><strong>' + money(stats.total) + '</strong></div><div class="maestro-summary-caption">' + serviceLabel() + '</div><div class="maestro-pay-grid"><button class="maestro-pay-btn" type="button" data-pay="cash">' + tx("cash") + '</button><button class="maestro-pay-btn" type="button" data-pay="carte">' + tx("card") + '</button><button class="maestro-pay-btn maestro-pay-btn--main" type="button" data-pay="smart">' + tx("checkout") + '</button></div><div class="maestro-powered">' + tx("powered") + "</div>";
-    return { body: body, footer: footer, count: count, total: stats.total };
-  }
-
-  function bindCart(root){
-    if (!root) return;
-    root.querySelectorAll("[data-qty]").forEach(function(button){
-      button.addEventListener("click", function(){
-        ensureKeys();
-        var target = (caisse.cart || []).find(function(line){ return line.key === button.getAttribute("data-qty"); });
-        if (!target) return;
-        target.q += Number(button.getAttribute("data-delta"));
-        if (target.q <= 0) caisse.cart = caisse.cart.filter(function(line){ return line.key !== target.key; });
-        saveBucket();
-        renderTicket();
-      });
-    });
-    root.querySelectorAll("[data-pay]").forEach(function(button){
-      button.addEventListener("click", function(){ pay(this.getAttribute("data-pay") === "smart" ? null : this.getAttribute("data-pay")); });
-    });
-  }
-
-  function renderTicket(){
-    scaffold();
-    translate();
-    tables();
-    renderTrust();
-    document.getElementById("mp-phone").value = STATE.phone || "";
-    document.getElementById("mp-name").value = STATE.name || "";
-    document.getElementById("mp-table").value = STATE.table || "";
-    document.getElementById("mp-delivery").value = STATE.delivery || "";
-    document.getElementById("mp-search").value = STATE.search || "";
-    var card = cartMarkup();
-    document.getElementById("mp-cart-body").innerHTML = card.body;
-    document.getElementById("mp-cart-footer").innerHTML = card.footer;
-    document.getElementById("mp-mobile-body").innerHTML = card.body;
-    document.getElementById("mp-mobile-footer").innerHTML = card.footer;
-    bindCart(document.getElementById("mp-cart-body"));
-    bindCart(document.getElementById("mp-cart-footer"));
-    bindCart(document.getElementById("mp-mobile-body"));
-    bindCart(document.getElementById("mp-mobile-footer"));
-    document.getElementById("mp-fab").textContent = tx("cart") + " · " + card.count + " · " + money(card.total);
-  }
-
-  function suggestion(){
-    var hour = new Date().getHours();
-    if (hour < 11) return { item: firstMatch(["espresso", "cafe", "morning", "breakfast", "croissant"]), text: STATE.lang === "ar" ? "الصباح: اقترح قهوة مع كرواسون أو فطور كامل." : STATE.lang === "en" ? "Morning: suggest coffee with pastry or breakfast." : "Matin: proposez cafe + viennoiserie ou petit-dejeuner." };
-    if (hour < 16) return { item: firstMatch(["toast", "harira", "jus", "orange"]), text: STATE.lang === "ar" ? "الظهيرة: ارفع التذكرة بتوست أو حريرة أو عصير طازج." : STATE.lang === "en" ? "Lunch: push toast, harira or fresh juice." : "Midi: poussez toast, harira ou jus frais." };
-    if (hour < 20) return { item: firstMatch(["cappuccino", "crepe", "cake", "chocolat"]), text: STATE.lang === "ar" ? "بعد الظهر: الكابتشينو والكريب يحولان بسرعة." : STATE.lang === "en" ? "Afternoon: cappuccino and crepe convert fast." : "Apres-midi: cappuccino et crepe convertissent vite." };
-    return { item: firstMatch(["lux", "signature", "cocktail", "panache", "mojito"]), text: STATE.lang === "ar" ? "المساء: ركّز على المشروبات السيغنتشر والباناش." : STATE.lang === "en" ? "Evening: lead with signature drinks and panache." : "Soir: misez sur les signatures et panache." };
-  }
-
-  function firstMatch(words){
-    var found = null;
-    STATE.catalog.some(function(cat){
-      found = cat.items.find(function(item){ return words.some(function(word){ return norm([item.n, item.s, cat.title].join(" ")).indexOf(word) >= 0; }); });
-      return !!found;
-    });
-    return found;
-  }
-
-  function applySuggestion(showToast){
-    var tip = suggestion();
-    if (tip.item) {
-      STATE.category = tip.item.categoryId;
-      STATE.focus = tip.item.n;
-      renderCats();
-      renderProducts();
-    }
-    if (showToast) say("✦ " + tip.text);
-  }
-
-  function validateCheckout(){
-    if (STATE.mode === "table" && !STATE.table) { say("⚠ " + tx("needTable")); return false; }
-    if (STATE.mode === "delivery" && !STATE.delivery) { say("⚠ " + tx("needDelivery")); return false; }
-    return true;
-  }
-
-  function txPayload(payment){
-    var stats = summary();
-    return {
-      id: Date.now(),
-      date: typeof today === "function" ? today() : new Date().toLocaleDateString("fr-MA"),
-      time: typeof now === "function" ? now() : new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-      table: STATE.mode === "table" ? STATE.table : STATE.ref,
-      serviceMode: STATE.mode,
-      currency: STATE.currency,
-      fxRate: Number(RATES[STATE.currency] || 1),
-      items: (caisse.cart || []).map(function(line){
-        var extras = [];
-        if (line.modifiers && line.modifiers.length) extras.push(line.modifiers.map(function(mod){ return mod.label; }).join(" · "));
-        if (line.note) extras.push(line.note);
-        return { n: extras.length ? line.n + " — " + extras.join(" · ") : line.n, p: Number(line.p || 0), q: Number(line.q || 0), modifiers: line.modifiers || [], note: line.note || "" };
-      }),
-      subtotal: stats.sub.toFixed(2),
-      tva: stats.tax.toFixed(2),
-      total: stats.total.toFixed(2),
-      totalDisplay: money(stats.total),
-      mode: payment.payMethod || payment.method || "cash",
-      client: STATE.name || (caisse.currentClient && caisse.currentClient.name) || null,
-      phone: STATE.phone || (caisse.currentClient && caisse.currentClient.phone) || null,
-      ref: payment.ref || "",
-      notes: STATE.mode === "delivery" ? STATE.delivery : ""
-    };
-  }
-
-  function finishPayment(payment){
-    ensureTrust();
-    var record = txPayload(payment || {});
-    var rows = typeof getLS === "function" ? getLS("lux_transactions", []) : read("lux_transactions", []);
-    rows.unshift(record);
-    if (typeof setLS === "function") setLS("lux_transactions", rows.slice(0, 500));
-    else write("lux_transactions", rows.slice(0, 500));
-    if (window.LuxAPI && typeof LuxAPI.saveTransaction === "function") LuxAPI.saveTransaction(record).catch(function(){});
-    var profile = TrustScore.recordTransaction({ phone: record.phone, customer: record.client, amount: Number(record.total), ref: record.ref, source: "pos" });
-    if (typeof caisse !== "undefined" && caisse.currentClient && profile) {
-      caisse.currentClient.points = profile.points;
-      caisse.currentClient.visits = profile.visits;
-      if (typeof setLS === "function" && caisse.currentClient.uid) {
-        var clients = getLS("lux_clients_rfid", {});
-        clients[caisse.currentClient.uid] = caisse.currentClient;
-        setLS("lux_clients_rfid", clients);
-      }
-    }
-    if (typeof printTicket === "function") printTicket(record);
-    caisse.cart = [];
-    if (selectedKey()) caisse.tableOrders[selectedKey()] = [];
-    STATE.focus = "";
-    toggleSheet(false);
-    renderTicket();
-    say("✅ " + tx("checkout"));
-  }
-
-  function pay(method){
-    if (typeof caisse === "undefined" || !caisse.cart || !caisse.cart.length) { say("⚠ " + tx("empty")); return; }
-    if (!validateCheckout()) return;
-    var stats = summary();
-    say("✦ " + tx("checkout"));
-    var payload = {
-      total: (Number(stats.total) * Number(RATES[STATE.currency] || 1)).toFixed(2),
-      baseTotal: stats.total.toFixed(2),
-      amountLabel: money(stats.total),
-      currency: STATE.currency,
-      customerPhone: STATE.phone || (caisse.currentClient && caisse.currentClient.phone) || "",
-      customerName: STATE.name || (caisse.currentClient && caisse.currentClient.name) || "",
-      phone: STATE.phone || (caisse.currentClient && caisse.currentClient.phone) || "",
-      name: STATE.name || (caisse.currentClient && caisse.currentClient.name) || "",
-      source: "pos",
-      methods: method ? [method] : ["cash", "carte"],
-      defaultMethod: method || "cash",
-      submitCallback: finishPayment
-    };
-    if (window.LuxPayment && typeof LuxPayment.open === "function") { LuxPayment.open(payload); return; }
-    finishPayment({ payMethod: method || "cash", ref: "LUX-OFFLINE" });
-  }
-
-  function toggleSheet(open){
-    var sheet = document.getElementById("mp-sheet");
-    if (!sheet) return;
-    sheet.classList.toggle("open", typeof open === "boolean" ? open : !sheet.classList.contains("open"));
-  }
-
-  function bindSwipe(){
-    if (STATE.swipe) return;
-    var handle = document.getElementById("mp-sheet-handle");
-    var panel = document.getElementById("mp-sheet-panel");
-    if (!handle || !panel) return;
-    var start = 0, delta = 0, moving = false;
-    handle.addEventListener("pointerdown", function(e){ moving = true; start = e.clientY; delta = 0; panel.style.transition = "none"; handle.setPointerCapture(e.pointerId); });
-    handle.addEventListener("pointermove", function(e){ if (!moving) return; delta = Math.max(0, e.clientY - start); panel.style.transform = "translateY(" + delta + "px)"; });
-    handle.addEventListener("pointerup", function(){ if (!moving) return; moving = false; panel.style.transition = ""; panel.style.transform = ""; if (delta > 90) toggleSheet(false); else toggleSheet(true); });
-    STATE.swipe = true;
-  }
-
-  function renderPOS(){
-    scaffold();
-    translate();
-    tables();
-    renderCats();
-    renderProducts();
-    renderTrust();
-    renderTicket();
-    bindSwipe();
-  }
-
-  function addTakeaway(){ setMode("pickup", { fresh: true }); }
-  function selectTable(table){ STATE.table = String(table); setMode("table", { table: STATE.table }); }
-  function clearCart(){ if (typeof caisse === "undefined") return; caisse.cart = []; saveBucket(); renderTicket(); }
-  function addToCart(itemOrName, price){ var item = typeof itemOrName === "object" ? itemOrName : find(itemOrName); if (!item) item = { n: itemOrName, p: Number(price || 0), s: "", img: slug(itemOrName), categoryId: "manual", categoryTitle: "Manual" }; openModal(item); }
-  function rmFromCart(key){ ensureKeys(); var line = (caisse.cart || []).find(function(entry){ return entry.key === key || entry.n === key; }); if (!line) return; line.q -= 1; if (line.q <= 0) caisse.cart = caisse.cart.filter(function(entry){ return entry.key !== line.key; }); saveBucket(); renderTicket(); }
-
-  window.buildMenuSections = function(){ scaffold(); renderPOS(); if (!STATE.catalog.length) loadCatalog(); };
-  window.buildTables = tables;
-  window.renderTicket = renderTicket;
-  window.addTakeaway = addTakeaway;
-  window.selectTable = selectTable;
-  window.addToCart = addToCart;
-  window.rmFromCart = rmFromCart;
-  window.clearCart = clearCart;
-  window.pay = pay;
-  window.switchMenuTab = function(category){
-    var target = String(category || "all");
-    var match = STATE.catalog.find(function(cat){
-      return cat.id === target || cat.title === target || norm(cat.title) === norm(target);
-    });
-    STATE.category = match ? match.id : (target === "all" ? "all" : (STATE.category || "all"));
-    renderCats();
-    renderProducts();
-  };
-
-  function init(){
-    if (typeof caisse === "undefined") return;
-    ensureTrust();
-    injectTopbar();
-    scaffold();
-    syncSelection(true);
-    loadCatalog();
-    renderPOS();
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
   else init();
 })(window);
