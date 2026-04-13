@@ -2348,8 +2348,12 @@ function checkPIN(){
     // POS focus mode: hide nav buttons (Accueil, Administration, Employes, Site Public)
     if(targetRole === 'pos'){
       localStorage.setItem('lux_pos_focus', '1');
+      localStorage.setItem('lux_target_mode', 'pos');
+    } else if(targetRole){
+      localStorage.setItem('lux_target_mode', targetRole);
     } else {
       localStorage.removeItem('lux_pos_focus');
+      localStorage.removeItem('lux_target_mode');
     }
 
     // Show admin-only tabs now that session is valid

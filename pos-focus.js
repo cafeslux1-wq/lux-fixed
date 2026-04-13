@@ -4,7 +4,9 @@
   if (typeof document === "undefined") return;
 
   var params = new URLSearchParams(window.location.search);
-  if (params.get("mode") !== "pos") {
+  var requestedMode = params.get("mode");
+  var storedFocus = localStorage.getItem("lux_pos_focus");
+  if (requestedMode !== "pos" && storedFocus !== "1") {
     localStorage.removeItem("lux_pos_focus");
     return;
   }

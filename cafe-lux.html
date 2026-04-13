@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Café LUX Pro · v3.6 Final Luxury Ultra</title>
 <script>window.LUX_API_URL = 'https://api.cafeslux.com';</script>
-<script src="api-client.js?v=20260412e"></script>
+<script src="api-client.js?v=20260413a"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 
@@ -469,7 +469,7 @@ body{
 #lux-print-area { display: none; position: fixed; top: -9999px; left: -9999px; }
 
 </style>
-<link rel="stylesheet" href="maestro-pos.css?v=20260412e">
+<link rel="stylesheet" href="maestro-pos.css?v=20260413a">
 </head>
 <body>
 
@@ -2580,7 +2580,8 @@ window.addEventListener('DOMContentLoaded', function(){
   // ── Auth Guard — skip for public mode (mode=site) ────────────
   (function(){
     var params = new URLSearchParams(window.location.search);
-    var mode   = params.get('mode') || 'home';
+    var storedMode = localStorage.getItem('lux_target_mode');
+    var mode   = params.get('mode') || storedMode || (localStorage.getItem('lux_pos_focus') === '1' ? 'pos' : 'home');
     var PUBLIC_MODES = ['site']; // no auth needed
     if(PUBLIC_MODES.includes(mode)) return; // allow public access
     try {
@@ -2607,9 +2608,16 @@ window.addEventListener('DOMContentLoaded', function(){
   initImgs();
   buildTables();
   var params = new URLSearchParams(window.location.search);
-  var mode = params.get('mode');
+  var mode = params.get('mode') || localStorage.getItem('lux_target_mode') || (localStorage.getItem('lux_pos_focus') === '1' ? 'pos' : '');
   var tab = params.get('tab');
+  if(mode && !params.get('mode')){
+    var fixedUrl = new URL(window.location.href);
+    fixedUrl.searchParams.set('mode', mode);
+    if(mode === 'pos') fixedUrl.searchParams.set('focus', '1');
+    window.history.replaceState({}, '', fixedUrl.toString());
+  }
   showPage(mode && ['pos','admin','staff','kds','stock','qr','web','site','ext'].includes(mode) ? mode : 'home');
+  if(mode) localStorage.removeItem('lux_target_mode');
   if(mode === 'stock'){ setTimeout(function(){ renderAdmin('stock'); }, 50); }
   if(mode === 'qr'){ setTimeout(function(){ renderQRTables(); }, 50); }
   if(mode === 'kds'){ setTimeout(function(){ renderKDS(); }, 50); }
@@ -3184,8 +3192,8 @@ function orderGiftCard(){
   });
 })();
 </script>
-<script src="lux-payment.js?v=20260412e"></script>
-<script src="maestro-pos.js?v=20260412e"></script>
-<script src="pos-focus.js?v=20260412e"></script>
+<script src="lux-payment.js?v=20260413a"></script>
+<script src="maestro-pos.js?v=20260413a"></script>
+<script src="pos-focus.js?v=20260413a"></script>
 </body>
 </html>
