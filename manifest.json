@@ -1,0 +1,44 @@
+{
+  "name": "Café LUX — Taza",
+  "short_name": "Café LUX",
+  "description": "Commander en ligne · Café & Pâtisserie · Taza, Maroc",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%23080808'/%3E%3Ctext x='96' y='96' text-anchor='middle' dominant-baseline='central' font-family='serif' font-size='96' fill='%23C9A84C'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='64' fill='%23080808'/%3E%3Ctext x='256' y='256' text-anchor='middle' dominant-baseline='central' font-family='serif' font-size='256' fill='%23C9A84C'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "shopping", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Commander",
+      "short_name": "Menu",
+      "description": "Voir le menu et commander",
+      "url": "/?tab=menu",
+      "icons": [{"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='80' font-size='80'%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E", "sizes": "96x96"}]
+    },
+    {
+      "name": "Réserver",
+      "short_name": "Table",
+      "description": "Réserver une table",
+      "url": "/?tab=reservation",
+      "icons": [{"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='80' font-size='80'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E", "sizes": "96x96"}]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
