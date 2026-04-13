@@ -5474,36 +5474,87 @@ function autoEnterKDS() {
 ══════════════════════════════════════════════════════════════════ -->
 
 <!-- AI Chat Window -->
-<div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:360px;max-width:calc(100vw - 40px);height:500px;max-height:70vh;background:linear-gradient(180deg,var(--bg2) 0%,#0C0C0C 100%);border:1px solid var(--border-gold);border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.7),0 0 0 1px rgba(215,210,200,.06) inset;overflow:hidden;flex-direction:column">
-  <div class="lux-ai-chat-header-bar">
-    <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI" class="lux-ai-header-avatar">
-    <div class="lux-ai-header-text">
-      <div class="lux-ai-header-title-main">LUX AI</div>
-      <div class="lux-ai-header-subtitle">Assistant intelligent · Café LUX</div>
+<style>
+  /* تنسيق الأيقونة العلوية المكبرة */
+  .lux-ai-header-avatar-container {
+    position: relative;
+    width: 60px; /* تكبير الحجم */
+    height: 60px;
+    flex-shrink: 0;
+  }
+  .lux-ai-header-avatar-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #C9A84C; /* إطار ذهبي */
+    object-fit: cover;
+    box-shadow: 0 0 15px rgba(201, 168, 76, 0.3);
+  }
+  /* نقطة الحالة (متصل الآن) */
+  .lux-status-dot {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 12px;
+    height: 12px;
+    background: #00ff00;
+    border: 2px solid #1A0A00;
+    border-radius: 50%;
+    box-shadow: 0 0 5px #00ff00;
+  }
+  /* تنسيق الأزرار السريعة (Chips) */
+  .lux-ai-chip {
+    background: rgba(201, 168, 76, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    color: #D7D2C8;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 4px;
+  }
+  .lux-ai-chip:hover {
+    background: #C9A84C;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+  }
+</style>
+
+<div id="lux-ai-chat" style="display:none;position:fixed;bottom:80px;right:20px;width:380px;max-width:calc(100vw - 40px);height:550px;max-height:80vh;background:linear-gradient(180deg,#1A1A1A 0%,#0C0C0C 100%);border:1px solid #C9A84C;border-radius:20px;z-index:950;box-shadow:0 16px 64px rgba(0,0,0,.8);overflow:hidden;flex-direction:column">
+  
+  <div style="background:linear-gradient(135deg,#1A0A00,#2D1500);padding:20px;display:flex;align-items:center;gap:15px;border-bottom:1px solid rgba(201,168,76,0.2)">
+    <div class="lux-ai-header-avatar-container">
+      <img src="https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png" alt="LUX AI">
+      <div class="lux-status-dot"></div>
     </div>
-    <button type="button" onclick="toggleAIChat()" class="lux-ai-header-close" aria-label="Fermer">✕</button>
+    <div style="flex:1">
+      <div style="font-family:'Cinzel',serif;color:#C9A84C;font-size:18px;letter-spacing:1px;font-weight:700">LUX AI</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5)">Assistant intelligent · Café LUX</div>
+    </div>
+    <button type="button" onclick="toggleAIChat()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:20px;opacity:0.6">✕</button>
   </div>
-  <div id="ai-chat-messages" class="lux-ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
-    <div class="lux-ai-bot-bubble lux-ai-rich" style="background:linear-gradient(165deg,rgba(215,210,200,.12) 0%,rgba(201,168,76,.07) 100%);border:1px solid rgba(201,168,76,.22);border-radius:14px 14px 14px 4px;padding:14px;font-size:12px;color:var(--text);line-height:1.65;max-width:100%;align-self:flex-start">
-      <div style="font-family:'Cinzel',serif;color:var(--gold);font-size:11px;letter-spacing:.2em;margin-bottom:6px">LUX AI</div>
-      <strong style="color:var(--off-white)">Assistant intelligent · Café LUX</strong> — يمكنكم طرح <em>أي سؤال</em> (سياحة، ثقافة، تركيز، الصحة…) وسنجيب بعمق، ثم نربطه بتجربتكم في المقهى.<br>
-      <span style="opacity:.88">Posez une question ouverte (ex. meilleures villes du Maroc) : réponse détaillée d’abord, puis invitation LUX — pas seulement le menu.</span>
-      <div id="lux-ai-time-hint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(201,168,76,.1);border-left:3px solid var(--gold);font-size:11px;line-height:1.5;color:var(--off-white)"></div>
-      <div id="lux-ai-quick-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Où se trouve Café LUX à Taza ? Adresse précise.')">📍 أين تقعون؟</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Montrez-moi le menu Café LUX : boissons et spécialités avec les prix.')">📖 رؤية المينيو</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je veux acheter une carte cadeau Café LUX')">🎁 شراء بطاقة هدية</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je cherche un emploi chez Café LUX, procédure بوابة الموظفين')">💼 طلب وظيفة</button>
+
+  <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:15px">
+    <div style="background:rgba(215,210,200,0.05);border:1px solid rgba(201,168,76,0.1);border-radius:15px 15px 15px 5px;padding:15px;font-size:13px;color:#D7D2C8;line-height:1.6">
+      <strong style="color:#C9A84C">مرحباً بك في عالم LUX ☕</strong><br>
+      أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟ يمكنك الضغط على الخيارات السريعة أدناه:
+      
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:15px">
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('📍 أين يقع مقهى LUX؟')">📍 أين تقعون؟</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('📖 أريد رؤية قائمة الطعام')">📖 المينيو</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('🎁 كيف أشتري بطاقة هدية؟')">🎁 بطاقة هدية</button>
+        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('💼 أريد التقديم على وظيفة')">💼 وظيفة</button>
       </div>
     </div>
   </div>
-  <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;align-items:center">
-    <button id="ai-voice-btn" onclick="toggleVoiceInput()" style="width:38px;height:38px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:16px;flex-shrink:0;transition:all .3s;display:flex;align-items:center;justify-content:center" title="🎙 Parler">🎙</button>
-    <input type="text" id="ai-chat-input" placeholder="Posez votre question..." style="flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none" onkeydown="if(event.key==='Enter')sendToGemma()">
-    <button onclick="sendToGemma()" style="padding:10px 16px;background:var(--gold);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;flex-shrink:0">↑</button>
+
+  <div style="padding:15px;background:rgba(0,0,0,0.3);display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.05)">
+    <input type="text" id="ai-chat-input" placeholder="اكتب سؤالك هنا..." style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:12px;color:#fff;outline:none" onkeydown="if(event.key==='Enter')sendToGemma()">
+    <button type="button" onclick="sendToGemma()" style="padding:12px 20px;background:#C9A84C;border:none;border-radius:12px;font-weight:bold;cursor:pointer">إرسال</button>
   </div>
 </div>
-
 <div id="lux-fab-group" style="position:fixed;bottom:20px;right:20px;z-index:940;display:flex;flex-direction:column-reverse;align-items:flex-end;gap:12px">
   
   <button id="fab-ai" onclick="toggleAIChat()" style="width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#000;border:none;cursor:pointer;box-shadow:0 8px 32px rgba(201,168,76,0.5);transition:all 0.3s;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;position:relative;animation:pulse-gold 2s infinite;" title="LUX AI Assistant">
