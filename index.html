@@ -5537,16 +5537,32 @@ function autoEnterKDS() {
   </div>
 
   <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:15px">
-    <div style="background:rgba(215,210,200,0.05);border:1px solid rgba(201,168,76,0.1);border-radius:15px 15px 15px 5px;padding:15px;font-size:13px;color:#D7D2C8;line-height:1.6">
-      <strong style="color:#C9A84C">مرحباً بك في عالم LUX ☕</strong><br>
-      أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟ يمكنك الضغط على الخيارات السريعة أدناه:
-      
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:15px">
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('📍 أين يقع مقهى LUX؟')">📍 أين تقعون؟</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('📖 أريد رؤية قائمة الطعام')">📖 المينيو</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('🎁 كيف أشتري بطاقة هدية؟')">🎁 بطاقة هدية</button>
-        <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('💼 أريد التقديم على وظيفة')">💼 وظيفة</button>
-      </div>
+<div style="background:rgba(215,210,200,0.05); border:1px solid rgba(201,168,76,0.1); border-radius:15px 15px 15px 5px; padding:18px; font-size:13px; color:#D7D2C8; line-height:1.7; direction:rtl; text-align:right;">
+  
+  <strong style="color:#C9A84C; font-size:15px; display:block; margin-bottom:8px;">
+    مرحباً بك في عالم <span dir="ltr" style="display:inline-block;">LUX ☕</span>
+  </strong>
+
+  <p style="margin:0 0 15px 0; opacity:0.9;">
+    أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟ يمكنك الضغط على الخيارات السريعة أدناه:
+  </p>
+  
+  <div style="display:flex; flex-wrap:wrap; gap:8px; direction:rtl;">
+    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Où se trouve Café LUX ?')">
+      📍 أين تقعون؟
+    </button>
+    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Montrez-moi le menu')">
+      📖 المينيو
+    </button>
+    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je veux une carte cadeau')">
+      🎁 بطاقة هدية
+    </button>
+    <button type="button" class="lux-ai-chip" onclick="luxAIQuickSend('Je cherche un emploi')">
+      💼 وظيفة
+    </button>
+  </div>
+
+</div>
     </div>
   </div>
 
