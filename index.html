@@ -5553,10 +5553,27 @@ function autoEnterKDS() {
     </div>
   </div>
 
-  <div style="padding:15px;background:rgba(0,0,0,0.3);display:flex;gap:10px;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0">
-    <input type="text" id="ai-chat-input" placeholder="اكتب سؤالك هنا..." style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:12px;color:#fff;outline:none" onkeydown="if(event.key==='Enter')sendToGemma()">
-    <button type="button" onclick="sendToGemma()" style="padding:12px 20px;background:#C9A84C;border:none;border-radius:12px;font-weight:bold;cursor:pointer;color:#000">إرسال</button>
-  </div>
+  <div style="padding:15px;background:rgba(0,0,0,0.3);display:flex;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0">
+    
+    <button type="button" id="lux-ai-mic-btn" onclick="window.luxMic.toggle()" style="
+        width: 45px; 
+        height: 45px; 
+        background: #C9A84C; 
+        border: none; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 20px; 
+        transition: 0.3s;
+        box-shadow: 0 4px 12px rgba(201,168,76,0.2);
+    ">🎤</button>
+
+    <input type="text" id="ai-chat-input" placeholder="تحدث أو اكتب سؤالك هنا..." style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:12px;color:#fff;outline:none" onkeydown="if(event.key==='Enter')sendToGemma()">
+    
+    <button type="button" onclick="sendToGemma()" style="padding:12px 15px;background:rgba(201,168,76,0.1);border:1px solid #C9A84C;border-radius:12px;font-weight:bold;cursor:pointer;color:#C9A84C">إرسال</button>
+</div>
 
 </div>
 <div id="lux-fab-group" style="position:fixed;bottom:25px;right:25px;z-index:940;display:flex;flex-direction:column;align-items:center;gap:12px">
@@ -6018,6 +6035,50 @@ body.lux-app-active #lux-fab-group{bottom:80px}
   }
 
 })();
+// 🎙️ LUX AI Voice-to-Text (محرك استقبال صوت الزبون)
+  window.luxMic = {
+    recognition: null,
+    isListening: false,
+    init: function() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return console.error("المتصفح لا يدعم الصوت");
+
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'ar-SA'; // مبرمج لفهم العربية والدارجة
+      this.recognition.continuous = false;
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+        this.updateBtn(true);
+      };
+
+      this.recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        const inputField = document.getElementById('ai-input');
+        if (inputField) {
+          inputField.value = text;
+          // إرسال النص تلقائياً للمساعد
+          if (window.LuxAI && window.LuxAI.ask) window.LuxAI.ask(text);
+        }
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+        this.updateBtn(false);
+      };
+    },
+    toggle: function() {
+      if (!this.recognition) this.init();
+      this.isListening ? this.recognition.stop() : this.recognition.start();
+    },
+    updateBtn: function(active) {
+      const btn = document.getElementById('lux-ai-mic-btn');
+      if (btn) {
+        btn.innerHTML = active ? '🛑' : '🎤';
+        btn.style.boxShadow = active ? '0 0 15px #ff4b2b' : 'none';
+      }
+    }
+  };
 </script>
 
 </body>
