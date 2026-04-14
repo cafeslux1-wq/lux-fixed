@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Café LUX v7.7 — Link Correction & Maestro Admin Sync -->
+<!-- Café LUX v7.8 — Global Maestro & Lux Unification (Final Link Fix) -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>Cafés LUX · The Global Standard of Coffee & Innovation</title>
+    <title>Cafés LUX · The Global Standard</title>
 
     <!-- Frameworks & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,6 +36,7 @@
             border: 1px solid rgba(255, 255, 255, 0.05); 
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-decoration: none;
         }
         .lux-card:hover { 
             border-color: var(--lux-gold); 
@@ -74,8 +75,7 @@
 
     <!-- Header Section -->
     <header class="py-10 text-center flex flex-col items-center">
-        <!-- استخدام الشعار الجديد حسب تسميتك في GitHub -->
-        <img src="./image_621b48.png" alt="Cafés LUX Logo" class="w-32 h-auto mb-8 logo-gold select-none">
+        <img src="image_621b48.png" alt="Cafés LUX Logo" class="w-32 h-auto mb-8 logo-gold select-none">
         
         <h1 class="text-4xl md:text-6xl font-black tracking-tighter uppercase font-playfair italic text-white leading-none">
             Cafés <span style="color:var(--lux-gold)">LUX</span>
@@ -92,15 +92,15 @@
             <div class="section-label">✦ Espace Client ✦</div>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 
-                <!-- Gaming Zone Link -->
-                <a href="./gaming.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
+                <!-- Gaming Zone (Working) -->
+                <a href="gaming.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-gamepad text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Gaming Zone</h4>
                     <p class="text-cyan-400 text-[6px] mt-1 font-black uppercase tracking-[0.2em] italic">Maestro Engine</p>
                 </a>
 
-                <!-- Order Live (POS Café) -->
-                <a href="./cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
+                <!-- Order Live (Cafe POS) -->
+                <a href="cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-cart-shopping text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Order Live</h4>
                 </a>
@@ -137,7 +137,8 @@
                     <span class="text-[7px] text-zinc-600 font-black mt-1 uppercase tracking-[0.4em]">Maestro Integration</span>
                 </div>
 
-                <a href="./cafe-lux.html" class="pill-action">Explore Solution</a>
+                <!-- توجيه الحل السحابي إلى المقهى كونه الأساس -->
+                <a href="cafe-lux.html" class="pill-action">Explore Solution</a>
             </div>
         </section>
 
@@ -151,8 +152,8 @@
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">POS Caisse</h4>
                 </div>
                 
-                <!-- [FIX] Admin Hub: الآن يفتح إدارة المقهى (Administration) -->
-                <a href="./cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
+                <!-- [FIXED] Admin Hub: تم توجيهه لملف المقهى (Administration) -->
+                <a href="cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-gauge-high text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Admin Hub</h4>
                 </a>
@@ -162,13 +163,14 @@
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Cuisine KDS</h4>
                 </div>
 
-                <a href="./portal.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
+                <!-- Staff Portal (Working) -->
+                <a href="portal.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-users-gear text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Staff Portal</h4>
                 </a>
                 
-                <!-- Gaming Admin: هذا الرابط مخصص لإدارة نادي الألعاب (Lux AI) -->
-                <a href="./lux-admin.html" class="lux-card py-7 px-4 rounded-[2.5rem] border-cyan-500/10">
+                <!-- Gaming Admin (Working) -->
+                <a href="lux-admin.html" class="lux-card py-7 px-4 rounded-[2.5rem] border-cyan-500/10">
                     <i class="fa-solid fa-terminal text-2xl mb-3 text-cyan-500"></i>
                     <h4 class="font-black text-white text-[10px] uppercase tracking-wider text-center">Gaming Admin</h4>
                 </a>
