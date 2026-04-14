@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Café LUX v7.6 — Global Luxury Tech Framework (Restored Edition) -->
+<!-- Café LUX v7.7 — Link Correction & Maestro Admin Sync -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -14,9 +14,8 @@
     <style>
         :root { 
             --lux-gold: #C9A84C; 
-            --lux-gold-dim: rgba(201, 168, 76, 0.15);
             --lux-dark: #050505; 
-            --lux-card: rgba(15, 15, 16, 0.8);
+            --lux-card: rgba(15, 15, 16, 0.85);
         }
 
         body { 
@@ -29,40 +28,27 @@
         }
 
         .font-playfair { font-family: 'Playfair Display', serif; }
-
-        .logo-gold {
-            filter: invert(72%) sepia(17%) saturate(1033%) hue-rotate(1deg) brightness(105%) contrast(105%);
-        }
+        .logo-gold { filter: invert(72%) sepia(17%) saturate(1033%) hue-rotate(1deg) brightness(105%) contrast(105%); }
 
         .lux-card { 
             background: var(--lux-card); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.04); 
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .lux-card:hover { 
             border-color: var(--lux-gold); 
-            background: rgba(20, 20, 22, 0.9);
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         }
 
         .saas-horizon-banner {
-            max-width: 1152px;
-            margin: 2.5rem auto;
-            padding: 1.5rem 3.5rem;
+            max-width: 1152px; margin: 2.5rem auto; padding: 1.5rem 3.5rem;
             background: linear-gradient(90deg, rgba(15,15,16,0.9), rgba(25,25,28,0.9));
-            border: 1px solid rgba(201, 168, 76, 0.2);
-            border-radius: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: 0.5s;
-            backdrop-filter: blur(20px);
+            border: 1px solid rgba(201, 168, 76, 0.2); border-radius: 100px;
+            display: flex; align-items: center; justify-content: space-between;
+            backdrop-filter: blur(20px); transition: 0.5s;
         }
         .saas-horizon-banner:hover { border-color: var(--lux-gold); }
 
@@ -74,18 +60,12 @@
         .section-label::before, .section-label::after { content: ''; height: 1px; width: 40px; background: var(--lux-gold); opacity: 0.3; }
 
         .gold-glow-icon { color: var(--lux-gold); transition: 0.3s; }
-        .lux-card:hover .gold-glow-icon { transform: scale(1.15); filter: drop-shadow(0 0 8px var(--lux-gold)); }
+        .lux-card:hover .gold-glow-icon { transform: scale(1.1); filter: drop-shadow(0 0 10px var(--lux-gold)); }
 
         .pill-action {
-            background: var(--lux-gold);
-            color: #000;
-            padding: 0.6rem 2.5rem;
-            border-radius: 50px;
-            font-weight: 900;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            transition: 0.4s;
+            background: var(--lux-gold); color: #000; padding: 0.6rem 2.5rem;
+            border-radius: 50px; font-weight: 900; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 0.15em; transition: 0.4s;
         }
         .pill-action:hover { background: #FFF; transform: scale(1.05); }
     </style>
@@ -94,7 +74,8 @@
 
     <!-- Header Section -->
     <header class="py-10 text-center flex flex-col items-center">
-        <img src="image_621b48.png" alt="Cafés LUX Logo" class="w-32 h-auto mb-8 logo-gold select-none">
+        <!-- استخدام الشعار الجديد حسب تسميتك في GitHub -->
+        <img src="./image_621b48.png" alt="Cafés LUX Logo" class="w-32 h-auto mb-8 logo-gold select-none">
         
         <h1 class="text-4xl md:text-6xl font-black tracking-tighter uppercase font-playfair italic text-white leading-none">
             Cafés <span style="color:var(--lux-gold)">LUX</span>
@@ -111,12 +92,14 @@
             <div class="section-label">✦ Espace Client ✦</div>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 
+                <!-- Gaming Zone Link -->
                 <a href="./gaming.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-gamepad text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Gaming Zone</h4>
                     <p class="text-cyan-400 text-[6px] mt-1 font-black uppercase tracking-[0.2em] italic">Maestro Engine</p>
                 </a>
 
+                <!-- Order Live (POS Café) -->
                 <a href="./cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-cart-shopping text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Order Live</h4>
@@ -127,7 +110,6 @@
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Fidélité</h4>
                 </div>
 
-                <!-- [RESTORED] Reservations Card -->
                 <div class="lux-card py-7 px-4 rounded-[2.5rem] opacity-60">
                     <i class="fa-solid fa-calendar-check text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Reservations</h4>
@@ -140,7 +122,7 @@
             </div>
         </section>
 
-        <!-- [RESTORED CENTERPIECE] LUX SaaS Solution Horizon -->
+        <!-- LUX SaaS Solution Horizon -->
         <section class="px-2">
             <div class="saas-horizon-banner group">
                 <div class="flex items-center gap-8">
@@ -155,7 +137,7 @@
                     <span class="text-[7px] text-zinc-600 font-black mt-1 uppercase tracking-[0.4em]">Maestro Integration</span>
                 </div>
 
-                <a href="./index.html" class="pill-action">Explore Now</a>
+                <a href="./cafe-lux.html" class="pill-action">Explore Solution</a>
             </div>
         </section>
 
@@ -169,7 +151,8 @@
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">POS Caisse</h4>
                 </div>
                 
-                <a href="./lux-admin.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
+                <!-- [FIX] Admin Hub: الآن يفتح إدارة المقهى (Administration) -->
+                <a href="./cafe-lux.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-gauge-high text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Admin Hub</h4>
                 </a>
@@ -179,12 +162,12 @@
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Cuisine KDS</h4>
                 </div>
 
-                <div class="lux-card py-7 px-4 rounded-[2.5rem] opacity-60">
+                <a href="./portal.html" class="lux-card py-7 px-4 rounded-[2.5rem]">
                     <i class="fa-solid fa-users-gear text-2xl mb-3 gold-glow-icon"></i>
                     <h4 class="font-bold text-white text-[10px] uppercase tracking-wider text-center">Staff Portal</h4>
-                </div>
+                </a>
                 
-                <!-- [RESTORED] Gaming Admin Card -->
+                <!-- Gaming Admin: هذا الرابط مخصص لإدارة نادي الألعاب (Lux AI) -->
                 <a href="./lux-admin.html" class="lux-card py-7 px-4 rounded-[2.5rem] border-cyan-500/10">
                     <i class="fa-solid fa-terminal text-2xl mb-3 text-cyan-500"></i>
                     <h4 class="font-black text-white text-[10px] uppercase tracking-wider text-center">Gaming Admin</h4>
