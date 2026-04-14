@@ -6035,50 +6035,68 @@ body.lux-app-active #lux-fab-group{bottom:80px}
   }
 
 })();
-// 🎙️ LUX AI Voice-to-Text (محرك استقبال صوت الزبون)
-  window.luxMic = {
-    recognition: null,
-    isListening: false,
-    init: function() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return console.error("المتصفح لا يدعم الصوت");
-
-      this.recognition = new SpeechRecognition();
-      this.recognition.lang = 'ar-SA'; // مبرمج لفهم العربية والدارجة
-      this.recognition.continuous = false;
-
-      this.recognition.onstart = () => {
-        this.isListening = true;
-        this.updateBtn(true);
-      };
-
-      this.recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-        const inputField = document.getElementById('ai-input');
-        if (inputField) {
-          inputField.value = text;
-          // إرسال النص تلقائياً للمساعد
-          if (window.LuxAI && window.LuxAI.ask) window.LuxAI.ask(text);
-        }
-      };
-
-      this.recognition.onend = () => {
-        this.isListening = false;
-        this.updateBtn(false);
-      };
-    },
-    toggle: function() {
-      if (!this.recognition) this.init();
-      this.isListening ? this.recognition.stop() : this.recognition.start();
-    },
-    updateBtn: function(active) {
-      const btn = document.getElementById('lux-ai-mic-btn');
-      if (btn) {
-        btn.innerHTML = active ? '🛑' : '🎤';
-        btn.style.boxShadow = active ? '0 0 15px #ff4b2b' : 'none';
-      }
+// 🎙️ LUX AI Voice-to-Text (المحرك المصحح لـ Café LUX)
+window.luxMic = {
+  recognition: null,
+  isListening: false,
+  init: function() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("متصفحك لا يدعم التعرف على الصوت. يرجى استخدام Chrome.");
+      return;
     }
-  };
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'ar-SA'; 
+    this.recognition.continuous = false;
+
+    this.recognition.onstart = () => {
+      this.isListening = true;
+      this.updateBtn(true);
+    };
+
+    this.recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      // تصحيح: البحث عن المعرف الصحيح ai-chat-input
+      const inputField = document.getElementById('ai-chat-input');
+      if (inputField) {
+        inputField.value = text;
+        // تصحيح: استدعاء الدالة المستخدمة في ملفك لإرسال الرسالة
+        if (typeof sendToGemma === 'function') {
+          sendToGemma();
+        }
+      }
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+      this.updateBtn(false);
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error("خطأ في الميكروفون:", event.error);
+      this.isListening = false;
+      this.updateBtn(false);
+    };
+  },
+  toggle: function() {
+    if (!this.recognition) this.init();
+    try {
+      this.isListening ? this.recognition.stop() : this.recognition.start();
+    } catch(e) {
+      this.init();
+      this.recognition.start();
+    }
+  },
+  updateBtn: function(active) {
+    const btn = document.getElementById('lux-ai-mic-btn');
+    if (btn) {
+      btn.innerHTML = active ? '🛑' : '🎤';
+      btn.style.background = active ? '#ff4b2b' : '#C9A84C';
+      btn.style.boxShadow = active ? '0 0 20px rgba(255, 75, 43, 0.5)' : 'none';
+    }
+  }
+};
 </script>
 
 </body>
