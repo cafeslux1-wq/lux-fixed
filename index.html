@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Café LUX v3.6 — FIXED: Admin Dashboard IN-PAGE | Real API Auth | Full Flow -->
+<!-- Café LUX v3.8 — RAILWAY FIRST · Full CRUD · Gift Card Balance · Dedupe Reservations -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -1485,7 +1485,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- SITE TABS -->
   <div class="site-top-tabs">
     <button class="s-tab active" id="st-menu" onclick="switchTab('menu',null)">🛒 Menu</button>
-    <button class="s-tab" id="st-offers" onclick="switchTab('offers',null)">🌟 Offres Spéciales</button>
+    <button class="s-tab" id="st-offers" onclick="switchTab('offers',null);renderOffers()">🌟 Offres Spéciales</button>
     <button class="s-tab" id="st-tracking" onclick="switchTab('tracking',null)">📦 Mes Commandes</button>
     <button class="s-tab" id="st-account" onclick="switchTab('account',null)">👤 Mon Compte</button>
     <button class="s-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
@@ -1544,52 +1544,17 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <!-- TAB: OFFERS -->
   <div id="tab-offers" class="site-tab-content">
     <div class="offers-section">
-      <div class="offers-title">✦ Offres Spéciales</div>
-      <p class="offers-sub">Nos meilleures offres du moment — disponibles tous les jours</p>
-      <div class="offers-grid">
-        <div class="offer-card">
-          <div class="offer-emoji">🌙</div>
-          <div class="offer-tag">RAMADAN</div>
-          <div class="offer-name">Ftour Ramadan</div>
-          <div class="offer-desc">Pack complet Ftour: Harira maison + Crêpe au choix + Jus pressé frais + Gâteaux marocains</div>
-          <div class="offer-price">49 <span>MAD</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px">
+        <div>
+          <div class="offers-title">✦ Offres Spéciales</div>
+          <p class="offers-sub">Nos meilleures offres du moment — disponibles tous les jours</p>
         </div>
-        <div class="offer-card">
-          <div class="offer-emoji">☕</div>
-          <div class="offer-tag">BEST VALUE</div>
-          <div class="offer-name">Pack Café + Pâtisserie</div>
-          <div class="offer-desc">Un café au choix (Espresso, Cappuccino ou Café Crème) accompagné de 2 gâteaux marocains</div>
-          <div class="offer-price">25 <span>MAD</span></div>
-        </div>
-        <div class="offer-card">
-          <div class="offer-emoji">🥤</div>
-          <div class="offer-tag">SIGNATURE</div>
-          <div class="offer-name">Signature Pack LUX</div>
-          <div class="offer-desc">Notre incontournable Zaazaa Lux + Plateau de gâteaux marocains assortis. L'expérience LUX complète.</div>
-          <div class="offer-price">45 <span>MAD</span></div>
-        </div>
-        <div class="offer-card">
-          <div class="offer-emoji">🍳</div>
-          <div class="offer-tag">PETIT-DÉJEUNER</div>
-          <div class="offer-name">Morning LUX</div>
-          <div class="offer-desc">Petit-déjeuner complet: Moroccan Breakfast + Jus frais pressé + Café offert</div>
-          <div class="offer-price">42 <span>MAD</span></div>
-        </div>
-        <div class="offer-card">
-          <div class="offer-emoji">👥</div>
-          <div class="offer-tag">GROUPE</div>
-          <div class="offer-name">Plateau Gâteaux Marocains</div>
-          <div class="offer-desc">Assortiment de gâteaux marocains authentiques: Sellou, Sablés, Meskouta, Kaab ghazal. Idéal pour partager.</div>
-          <div class="offer-price">100 <span>MAD</span></div>
-        </div>
-        <div class="offer-card">
-          <div class="offer-emoji">🌿</div>
-          <div class="offer-tag">WELLNESS</div>
-          <div class="offer-name">Thé Royal Marocain</div>
-          <div class="offer-desc">Thé à la menthe fraîche préparé à la marocaine, accompagné de 7 pièces de gâteaux traditionnels</div>
-          <div class="offer-price">20 <span>MAD</span></div>
+        <div id="offers-admin-actions" class="admin-only-tab" style="display:none;gap:8px;flex-wrap:wrap">
+          <button onclick="addNewOffer()" style="padding:8px 14px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px">+ Nouvelle Offre</button>
+          <button onclick="downloadOffers()" style="padding:8px 14px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">⬇ Exporter CSV</button>
         </div>
       </div>
+      <div class="offers-grid" id="offers-grid"></div>
     </div>
   
         <!-- ── Carte Cadeau CTA ───────────────────────────── -->
@@ -1727,36 +1692,13 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <div class="an-kpi-grid" id="dash-kpis" style="margin-bottom:24px">
         <div class="an-kpi"><div class="an-kpi-val" style="color:var(--muted)">—</div><div class="an-kpi-lbl">Chargement...</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:28px">
-        <div onclick="switchTab('admin-res',null);loadAdminReservations()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">📅</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Réservations</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Tables · Événements</div>
-        </div>
-        <div onclick="switchTab('admin-emps',null);loadAdminEmployees()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">👥</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Employés</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Équipe · Demandes</div>
-        </div>
-        <div onclick="switchTab('admin-custs',null);loadAdminCustomers()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">💎</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Clients</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Fidélité · Niveaux</div>
-        </div>
-        <div onclick="switchTab('analytics',null);buildAnalytics()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">📈</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Analytics</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Ventes · Heatmap</div>
-        </div>
-        <div onclick="switchTab('campaigns',null)" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">📢</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Campagnes</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">WhatsApp · Push</div>
-        </div>
-        <div onclick="switchTab('qr',null);buildQRGrid()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:28px;margin-bottom:8px">📱</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">QR Tables</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Codes · Impression</div>
+      <!-- Gaming Integration (only card — navigation via top nav) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">
+        <div onclick="openGamingZone()" style="background:linear-gradient(135deg,rgba(0,200,255,.08),rgba(201,168,76,.05));border:1px solid rgba(0,200,255,.25);border-radius:14px;padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(0,200,255,.5)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(0,200,255,.25)'">
+          <div style="font-size:32px;margin-bottom:8px">🎮</div>
+          <div style="font-size:15px;font-weight:700;color:var(--gold)">Gaming Zone</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">PS5 Stations · Maestro Hub</div>
+          <div style="font-size:10px;color:#00c8ff;margin-top:6px;font-weight:600">▶ OUVRIR L'INTERFACE</div>
         </div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
@@ -2326,6 +2268,197 @@ function enterTracking(){
 function scrollTop(){window.scrollTo({top:0,behavior:'smooth'});}
 
 // ═══════════════════════════════════════════════════════════════
+// OFFRES SPÉCIALES — Railway-persisted + Admin CRUD
+// ═══════════════════════════════════════════════════════════════
+const DEFAULT_OFFERS = [
+  {id:'off1', emoji:'🌙', tag:'RAMADAN', name:'Ftour Ramadan', desc:'Pack complet Ftour: Harira maison + Crêpe au choix + Jus pressé frais + Gâteaux marocains', price:49},
+  {id:'off2', emoji:'☕', tag:'BEST VALUE', name:'Pack Café + Pâtisserie', desc:'Un café au choix (Espresso, Cappuccino ou Café Crème) accompagné de 2 gâteaux marocains', price:25},
+  {id:'off3', emoji:'🥤', tag:'SIGNATURE', name:'Signature Pack LUX', desc:"Notre incontournable Zaazaa Lux + Plateau de gâteaux marocains assortis. L'expérience LUX complète.", price:45},
+  {id:'off4', emoji:'🍳', tag:'PETIT-DÉJEUNER', name:'Morning LUX', desc:'Petit-déjeuner complet: Moroccan Breakfast + Jus frais pressé + Café offert', price:42},
+  {id:'off5', emoji:'👥', tag:'GROUPE', name:'Plateau Gâteaux Marocains', desc:'Assortiment de gâteaux marocains authentiques: Sellou, Sablés, Meskouta, Kaab ghazal. Idéal pour partager.', price:100},
+  {id:'off6', emoji:'🌿', tag:'WELLNESS', name:'Thé Royal Marocain', desc:'Thé à la menthe fraîche préparé à la marocaine, accompagné de 7 pièces de gâteaux traditionnels', price:20}
+];
+
+function isAdminLogged(){
+  try {
+    var raw = localStorage.getItem('lux_session');
+    if(!raw) return false;
+    var s = JSON.parse(raw);
+    return s && s.role === 'admin' && s.expires > Date.now();
+  } catch(e){ return false; }
+}
+
+async function renderOffers(){
+  var grid = document.getElementById('offers-grid');
+  if(!grid) return;
+  var isAdmin = isAdminLogged();
+  // Show admin toolbar
+  var adminActions = document.getElementById('offers-admin-actions');
+  if(adminActions) adminActions.style.display = isAdmin ? 'flex' : 'none';
+
+  // Try Railway first (as products with tag=offer), fallback to defaults+local
+  var offers = [];
+  try {
+    if(isAdmin){
+      var r = await fetch(_LUX_API_URL + '/api/products?tag=offer', {headers: _luxAuthHeaders()});
+      if(r.ok){
+        var prods = await r.json();
+        offers = prods.filter(function(p){return p.isOffer || p.tag === 'offer';});
+      }
+    }
+  } catch(e){}
+  // Merge with local-stored offers (admin-added)
+  var localOffers = getLS('lux_offers', DEFAULT_OFFERS);
+  if(!offers.length) offers = localOffers;
+
+  grid.innerHTML = offers.map(function(o, idx){
+    var adminCtrls = isAdmin ? (
+      '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5">'
+      +'<button onclick="event.stopPropagation();editOffer(\''+o.id+'\')" style="width:28px;height:28px;background:rgba(201,168,76,.2);border:1px solid var(--border-gold);border-radius:6px;color:var(--gold);cursor:pointer;font-size:11px;padding:0" title="Éditer">✎</button>'
+      +'<button onclick="event.stopPropagation();deleteOffer(\''+o.id+'\')" style="width:28px;height:28px;background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:11px;padding:0" title="Supprimer">🗑</button>'
+      +'</div>'
+    ) : '';
+    return '<div class="offer-card" style="position:relative">'
+      + adminCtrls
+      +'<div class="offer-emoji">'+(o.emoji||'✨')+'</div>'
+      +'<div class="offer-tag">'+(o.tag||'OFFRE')+'</div>'
+      +'<div class="offer-name">'+o.name+'</div>'
+      +'<div class="offer-desc">'+o.desc+'</div>'
+      +'<div class="offer-price">'+o.price+' <span>MAD</span></div>'
+      +'</div>';
+  }).join('');
+}
+
+async function addNewOffer(){
+  if(!isAdminLogged()){ toast('⚠ Accès Admin requis'); return; }
+  var emoji = prompt('Emoji (ex: ☕ 🍰 🥤):', '✨');
+  if(emoji === null) return;
+  var tag = prompt('Tag (ex: NOUVEAU, BEST VALUE, SIGNATURE):', 'NOUVEAU');
+  if(tag === null) return;
+  var name = prompt('Nom de l\'offre:');
+  if(!name) return;
+  var desc = prompt('Description:');
+  if(!desc) return;
+  var price = parseFloat(prompt('Prix (MAD):', '30'));
+  if(isNaN(price) || price <= 0){ toast('⚠ Prix invalide'); return; }
+
+  var newOffer = {id:'off_'+Date.now(), emoji:emoji.trim(), tag:tag.trim().toUpperCase(), name:name.trim(), desc:desc.trim(), price:price};
+  // Save local (primary) + attempt Railway
+  var offers = getLS('lux_offers', DEFAULT_OFFERS.slice());
+  offers.push(newOffer);
+  setLS('lux_offers', offers);
+  try {
+    await fetch(_LUX_API_URL + '/api/products', {
+      method: 'POST', headers: _luxAuthHeaders(),
+      body: JSON.stringify({name:newOffer.name, price:newOffer.price, description:newOffer.desc, categoryId:1, isOffer:true, tag:'offer', emoji:newOffer.emoji})
+    });
+  } catch(e){}
+  toast('✅ Offre ajoutée');
+  renderOffers();
+}
+
+async function editOffer(id){
+  if(!isAdminLogged()){ toast('⚠ Accès Admin requis'); return; }
+  var offers = getLS('lux_offers', DEFAULT_OFFERS.slice());
+  var o = offers.find(function(x){return x.id === id;});
+  if(!o){ toast('⚠ Offre introuvable'); return; }
+  var name = prompt('Nom:', o.name); if(name === null) return;
+  var desc = prompt('Description:', o.desc); if(desc === null) return;
+  var price = parseFloat(prompt('Prix (MAD):', o.price));
+  if(isNaN(price)){ toast('⚠ Prix invalide'); return; }
+  o.name = name.trim(); o.desc = desc.trim(); o.price = price;
+  setLS('lux_offers', offers);
+  toast('✏ Offre modifiée');
+  renderOffers();
+}
+
+async function deleteOffer(id){
+  if(!isAdminLogged()){ toast('⚠ Accès Admin requis'); return; }
+  if(!confirm('Supprimer cette offre?')) return;
+  var offers = getLS('lux_offers', DEFAULT_OFFERS.slice());
+  offers = offers.filter(function(x){return x.id !== id;});
+  setLS('lux_offers', offers);
+  toast('🗑 Offre supprimée');
+  renderOffers();
+}
+
+function downloadOffers(){
+  var offers = getLS('lux_offers', DEFAULT_OFFERS);
+  var csv = 'ID,Emoji,Tag,Nom,Description,Prix\n';
+  offers.forEach(function(o){
+    csv += [o.id, o.emoji, o.tag, '"'+o.name.replace(/"/g,'""')+'"', '"'+o.desc.replace(/"/g,'""')+'"', o.price].join(',') + '\n';
+  });
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'offres-lux-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('⬇ CSV téléchargé');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAMING ZONE — Integration with gaming.html + Maestro Hub
+// ═══════════════════════════════════════════════════════════════
+function openGamingZone(){
+  // Create iframe modal
+  var existing = document.getElementById('gaming-modal');
+  if(existing){ existing.style.display = 'flex'; return; }
+  var modal = document.createElement('div');
+  modal.id = 'gaming-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,5,5,.96);backdrop-filter:blur(12px);display:flex;flex-direction:column;animation:fadeIn .3s';
+  modal.innerHTML = ''
+    +'<div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(201,168,76,.2);background:rgba(0,0,0,.6)">'
+    +'<div style="display:flex;align-items:center;gap:12px">'
+    +'<span style="font-size:22px">🎮</span>'
+    +'<div>'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;color:var(--gold)">LUX Gaming Zone</div>'
+    +'<div style="font-size:10px;color:#00c8ff">● Maestro Hub Sync Active · Railway Connected</div>'
+    +'</div></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="window.open(\'gaming.html\',\'_blank\')" style="padding:8px 14px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:11px">⊞ Plein écran</button>'
+    +'<button onclick="document.getElementById(\'gaming-modal\').style.display=\'none\'" style="padding:8px 14px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;color:var(--red);cursor:pointer;font-size:11px">✕ Fermer</button>'
+    +'</div></div>'
+    +'<iframe src="gaming.html" style="flex:1;width:100%;border:0;background:#050505" allow="fullscreen"></iframe>';
+  document.body.appendChild(modal);
+  // Listen for gaming session events from iframe (Maestro sync)
+  window.addEventListener('message', function(ev){
+    if(ev.data && ev.data.source === 'lux-gaming'){
+      syncGamingToMaestro(ev.data);
+    }
+  });
+}
+
+// Sync gaming sessions to Railway API (Maestro Hub integration)
+async function syncGamingToMaestro(sessionData){
+  try {
+    // Persist to localStorage first
+    var sessions = getLS('lux_gaming_sessions', []);
+    sessions.unshift({
+      stationId: sessionData.stationId,
+      hourlyRate: sessionData.hourlyRate,
+      consumption: sessionData.consumption || 0,
+      user: sessionData.user || '',
+      startedAt: sessionData.startedAt || new Date().toISOString(),
+      duration: sessionData.duration || 0,
+      revenue: sessionData.revenue || 0,
+      status: sessionData.status
+    });
+    setLS('lux_gaming_sessions', sessions.slice(0, 500));
+    // Push to Railway (POST /api/transactions with source=gaming)
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      await LuxAPI.saveTransaction({
+        source: 'gaming',
+        stationId: sessionData.stationId,
+        total: sessionData.revenue || 0,
+        payMethod: sessionData.payMethod || 'cash',
+        meta: sessionData
+      });
+    }
+    console.log('[LUX Gaming] Session synced to Maestro:', sessionData.stationId);
+  } catch(e){ console.warn('[LUX Gaming] Sync error:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ADMIN DASHBOARD — In-page (no redirect to cafe-lux.html)
 // ═══════════════════════════════════════════════════════════════
 async function enterAdminDashboard(){
@@ -2414,8 +2547,10 @@ async function loadDashPreviews(){
   var empEl = document.getElementById('dash-pending-emps');
   if(empEl){
     var employees = [];
-    try { if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()) employees = await LuxAPI.getEmployees(); } catch(e){}
-    if(!employees.length) employees = getLS('lux_employees_full', []);
+    try {
+      var r = await fetch(_LUX_API_URL + '/api/employees', {headers: _luxAuthHeaders()});
+      if(r.ok) employees = await r.json();
+    } catch(e){}
     var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
     if(!pending.length){
       empEl.innerHTML = '<div style="color:var(--dim);padding:8px 0">✅ Aucune demande en attente</div>';
@@ -2753,6 +2888,9 @@ function sendOrder(){
   cart=[];renderCart();
   document.getElementById('cart-panel').classList.remove('open');
   ['wo-name','wo-phone','wo-address','wo-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Reset success title for orders (might have been changed by reservations)
+  var oTitle = document.querySelector('#success-ov .success-title');
+  if(oTitle) oTitle.textContent = 'Commande envoyée!';
   document.getElementById('success-order-id').textContent='📋 Commande #'+String(order.id).slice(-6);
   document.getElementById('success-sub').textContent='Votre commande a été transmise à Café LUX. Nous vous contacterons sous peu.';
   const etaEl=document.getElementById('success-eta');
@@ -2922,7 +3060,7 @@ function changeGuests(delta){
 
 var _resSubmitting = false;
 function submitReservation(){
-  if(_resSubmitting) return; // prevent double submit
+  if(_resSubmitting) return;
   const name = document.getElementById('res-name')?.value.trim();
   const phone = document.getElementById('res-phone')?.value.trim();
   const date = document.getElementById('res-date')?.value;
@@ -2937,11 +3075,15 @@ function submitReservation(){
     guests: guestCount, notes, status: 'confirmed',
     created: new Date().toISOString()
   };
+  // Dedup: check by phone+date+time BEFORE saving
   const all = getLS('lux_reservations', []);
-  all.unshift(res);
-  setLS('lux_reservations', all);
+  const dupKey = phone+'|'+date+'|'+selectedTime;
+  const exists = all.some(function(r){ return (r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'') === dupKey && r.status !== 'cancelled'; });
+  if(!exists){
+    all.unshift(res);
+    setLS('lux_reservations', all);
+  }
   LuxAPI.createReservation(res).catch(console.warn);
-  // Send WA to admin mobile
   var waMsg = encodeURIComponent(
     '🪑 *Nouvelle Réservation #'+String(res.id).slice(-4)+'*\n'+
     '👤 '+name+' · 📞 '+phone+'\n'+
@@ -2950,6 +3092,9 @@ function submitReservation(){
   );
   window.open('https://wa.me/212677717201?text='+waMsg, '_blank');
   toast('✅ Réservation confirmée!');
+  // FIX: Change success modal title for reservation
+  var sTitle = document.querySelector('#success-ov .success-title');
+  if(sTitle) sTitle.textContent = 'Réservation confirmée!';
   document.getElementById('success-order-id').textContent = '📅 Réservation #' + String(res.id).slice(-4);
   document.getElementById('success-sub').textContent = date+' à '+selectedTime+' · '+guestCount+' pers. · Nous vous attendons!';
   document.getElementById('success-eta').textContent = '✅ Confirmation envoyée · +212 677717201';
@@ -2963,14 +3108,20 @@ function submitReservation(){
 function loadMyReservations(phone){
   const all = getLS('lux_reservations', []);
   const mine = all.filter(r => r.phone === phone);
+  // Dedup by date+time
+  var seen = {}, unique = [];
+  mine.forEach(function(r){
+    var key = (r.date||'')+'|'+(r.time||'');
+    if(!seen[key]){ seen[key] = true; unique.push(r); }
+  });
   const wrap = document.getElementById('my-reservations');
   const list = document.getElementById('my-res-list');
   if(!wrap || !list) return;
-  if(!mine.length){ wrap.style.display='none'; return; }
+  if(!unique.length){ wrap.style.display='none'; return; }
   wrap.style.display = 'block';
   const statusLabels = {confirmed:'✅ Confirmée',pending:'⏳ En attente',cancelled:'❌ Annulée'};
   const statusCls = {confirmed:'rsb-confirmed',pending:'rsb-pending',cancelled:'rsb-cancelled'};
-  list.innerHTML = mine.slice(0,5).map(r => `
+  list.innerHTML = unique.slice(0,5).map(r => `
     <div class="res-card">
       <div class="res-card-info">
         <strong>📅 ${r.date} à ${r.time}</strong><br>
@@ -3523,6 +3674,7 @@ function initAllFeatures(){
   initGA();
   initReservation();
   detectTableFromURL();
+  renderOffers();
   setTimeout(renderReviews, 300);
   setTimeout(buildQRGrid, 500);
 }
@@ -3532,8 +3684,27 @@ window.addEventListener('DOMContentLoaded', function(){
   try {
     if(typeof initAllFeatures === 'function') initAllFeatures();
   } catch(e) { console.warn('[LUX] Init error:', e); }
+  // QR Table scan: auto-bypass gateway
   try {
-    if(typeof detectTableFromURL === 'function') detectTableFromURL();
+    const params = new URLSearchParams(window.location.search);
+    const tableNum = params.get('table');
+    if(tableNum && parseInt(tableNum) >= 1 && parseInt(tableNum) <= 20){
+      // Auto-enter public menu (skip gateway)
+      setTimeout(function(){
+        var gw = document.getElementById('gateway');
+        if(gw){
+          gw.classList.add('hidden');
+          setTimeout(function(){ gw.classList.add('gone'); }, 500);
+        }
+        var ms = document.getElementById('main-site');
+        if(ms) ms.style.display = 'block';
+        if(typeof switchTab === 'function') switchTab('menu', null);
+        if(typeof buildMenu === 'function') buildMenu();
+        if(typeof detectTableFromURL === 'function') detectTableFromURL();
+      }, 100);
+    } else {
+      if(typeof detectTableFromURL === 'function') detectTableFromURL();
+    }
   } catch(e) {}
   try {
     if(typeof showAdminTabs === 'function') showAdminTabs();
@@ -4342,26 +4513,43 @@ function generateGCCode(){
   return code;
 }
 
-function purchaseGiftCard(){
+async function purchaseGiftCard(){
   const sender = document.getElementById('gc-sender')?.value.trim();
   const recipient = document.getElementById('gc-recipient')?.value.trim();
   const phone = document.getElementById('gc-phone')?.value.trim();
   const message = document.getElementById('gc-message')?.value.trim();
   if(!sender||!recipient){ toast('⚠ Offrant et destinataire requis'); return; }
   if(!phone){ toast('⚠ Téléphone requis'); return; }
-  const code = generateGCCode();
-  const gc = {
-    id: Date.now(), code, amount: selectedGCAmount, balance: selectedGCAmount,
-    sender, recipient, phone, message,
-    created: new Date().toISOString(),
-    expires: new Date(Date.now() + 365*24*3600*1000).toLocaleDateString('fr-MA'),
-    status: 'active'
-  };
-  const allGC = getLS('lux_gift_cards', []);
-  allGC.unshift(gc);
-  setLS('lux_gift_cards', allGC);
+
+  // RAILWAY FIRST — let server generate code + persist
+  var savedGC = null;
+  try {
+    var r = await fetch(_LUX_API_URL + '/api/gift-cards', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({sender, recipient, phone, message, amount: selectedGCAmount})
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    savedGC = await r.json();
+  } catch(e){
+    toast('⚠ Serveur inaccessible — carte sauvegardée localement');
+    savedGC = {
+      id: Date.now(),
+      code: generateGCCode(),
+      amount: selectedGCAmount, balance: selectedGCAmount,
+      sender, recipient, phone, message,
+      createdAt: new Date().toISOString(),
+      expires: new Date(Date.now() + 365*24*3600*1000).toISOString()
+    };
+    // Queue for sync
+    var pending = getLS('lux_pending_giftcards', []);
+    pending.push(savedGC);
+    setLS('lux_pending_giftcards', pending);
+  }
+
+  var code = savedGC.code;
   document.getElementById('gc-code-display').textContent = code;
-  // Send code DIRECTLY to recipient phone via WhatsApp
+
+  // WhatsApp delivery
   var recipientPhone = phone.replace(/[^0-9]/g,'');
   if(recipientPhone.startsWith('0')) recipientPhone = '212' + recipientPhone.slice(1);
   if(!recipientPhone.startsWith('212')) recipientPhone = '212' + recipientPhone;
@@ -4374,30 +4562,77 @@ function purchaseGiftCard(){
     'Utilisez ce code lors de votre commande sur cafeslux.com\nValable 1 an · +212 808524169'
   );
   window.open('https://wa.me/'+recipientPhone+'?text='+gcMsg, '_blank');
-  // Also notify admin
   sendWANotification('🎁 Carte Cadeau vendue: '+code+' ('+selectedGCAmount+' MAD) · De: '+sender+' → '+recipient, 'giftcard');
   if(Notification.permission === 'granted')
     sendLocalNotification('🎁 Carte Cadeau LUX '+selectedGCAmount+' MAD', 'Code: '+code+' · Pour '+recipient, '/');
   toast('🎁 Carte '+code+' envoyée à '+recipient+'!');
   trackEvent('giftcard','purchase',String(selectedGCAmount));
-  // Save via API
-  if(typeof LuxAPI !== 'undefined') LuxAPI.createGiftCard(gc).catch(console.warn);
 }
 
-function checkGCBalance(){
+async function checkGCBalance(){
   const code = document.getElementById('gc-check-code')?.value.trim().toUpperCase();
-  if(!code){ toast('⚠ Entrez un code'); return; }
-  const allGC = getLS('lux_gift_cards', []);
-  const gc = allGC.find(g => g.code === code);
   const el = document.getElementById('gc-balance-result');
-  if(!gc){
-    el.innerHTML = '<span style="color:var(--red)">❌ Code invalide</span>';
-  } else if(gc.status === 'used'){
-    el.innerHTML = '<span style="color:var(--muted)">Carte utilisée · Solde: 0 MAD</span>';
-  } else {
-    el.innerHTML = `<span style="color:var(--green)">✅ Solde disponible: <strong>${gc.balance} MAD</strong> · Expire: ${gc.expires}</span>`;
+  if(!code){ toast('⚠ Entrez un code'); return; }
+  if(!el) return;
+  el.innerHTML = '<span style="color:var(--muted)">⏳ Vérification...</span>';
+
+  // RAILWAY FIRST
+  try {
+    var r = await fetch(_LUX_API_URL + '/api/gift-cards/' + encodeURIComponent(code));
+    if(r.ok){
+      var gc = await r.json();
+      var expDate = gc.expires ? new Date(gc.expires).toLocaleDateString('fr-MA') : '—';
+      if(gc.balance <= 0){
+        el.innerHTML = '<span style="color:var(--muted)">💳 Carte épuisée · Solde: 0 MAD · Montant initial: '+gc.amount+' MAD</span>';
+      } else if(new Date(gc.expires) < new Date()){
+        el.innerHTML = '<span style="color:var(--red)">⏰ Carte expirée le '+expDate+'</span>';
+      } else {
+        var pct = Math.round((gc.balance/gc.amount)*100);
+        el.innerHTML = '<div style="color:var(--green)">✅ Solde disponible: <strong style="font-size:16px">'+gc.balance+' MAD</strong></div>'
+          +'<div style="font-size:11px;color:var(--muted);margin-top:4px">Utilisé: '+(gc.amount-gc.balance)+' / '+gc.amount+' MAD · Expire: '+expDate+'</div>'
+          +'<div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--gold),#E8C97A);border-radius:3px"></div></div>';
+      }
+    } else if(r.status === 404){
+      el.innerHTML = '<span style="color:var(--red)">❌ Code invalide</span>';
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
+  } catch(e){
+    el.innerHTML = '<span style="color:var(--red)">⚠ Serveur inaccessible — réessayez</span>';
   }
 }
+
+// ── GIFT CARD REDEEM — for use during checkout ───────────
+// Deducts amount from gift card balance (Railway persistent)
+async function redeemGiftCard(code, amountToDeduct){
+  try {
+    // First check balance
+    var r = await fetch(_LUX_API_URL + '/api/gift-cards/' + encodeURIComponent(code));
+    if(!r.ok) return {success: false, error: 'Code invalide'};
+    var gc = await r.json();
+    if(new Date(gc.expires) < new Date()) return {success: false, error: 'Carte expirée'};
+    if(gc.balance < amountToDeduct) return {success: false, error: 'Solde insuffisant (' + gc.balance + ' MAD disponibles)'};
+
+    // Deduct via PATCH endpoint (server must support it)
+    var newBalance = gc.balance - amountToDeduct;
+    var rd = await fetch(_LUX_API_URL + '/api/gift-cards/' + encodeURIComponent(code) + '/redeem', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({amount: amountToDeduct})
+    });
+    // Fallback: if /redeem endpoint doesn't exist, try PATCH on main resource
+    if(!rd.ok){
+      rd = await fetch(_LUX_API_URL + '/api/gift-cards/' + encodeURIComponent(code), {
+        method: 'PATCH', headers: _luxAuthHeaders(),
+        body: JSON.stringify({balance: newBalance})
+      });
+    }
+    if(!rd.ok) throw new Error('HTTP ' + rd.status);
+    return {success: true, remaining: newBalance, deducted: amountToDeduct, initial: gc.amount};
+  } catch(e){
+    return {success: false, error: 'Erreur serveur: ' + e.message};
+  }
+}
+window.redeemGiftCard = redeemGiftCard;
 
 // ══════════════════════════════════════════════════════════════
 // FEATURE 7: ADVANCED ANALYTICS DASHBOARD
@@ -5194,44 +5429,62 @@ async function loadAdminReservations(){
   var el = document.getElementById('admin-res-list');
   if(!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
-  var reservations = getLS('lux_reservations', []);
-  // Try API
+  var apiRes = [], localRes = getLS('lux_reservations', []);
+  // Fetch from API first (source of truth)
   try {
     if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
-      var apiRes = await LuxAPI.getReservations();
-      if(apiRes && apiRes.length) reservations = apiRes;
+      apiRes = await LuxAPI.getReservations() || [];
     }
-  } catch(e){}
-  if(!reservations.length){
+  } catch(e){ console.warn('[LUX] Reservations API failed:', e); }
+  // Merge API + local, deduplicate by phone+date+time
+  var merged = apiRes.slice();
+  var seen = {};
+  merged.forEach(function(r){ seen[(r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'')] = true; });
+  localRes.forEach(function(r){
+    var key = (r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'');
+    if(!seen[key]){ merged.push(r); seen[key] = true; }
+  });
+  if(!merged.length){
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucune réservation</div>';
     return;
   }
-  reservations.sort(function(a,b){ return new Date(b.date||b.created||0) - new Date(a.date||a.created||0); });
+  merged.sort(function(a,b){ return new Date(b.date||b.created||0) - new Date(a.date||a.created||0); });
   var html = '';
-  reservations.slice(0,30).forEach(function(r){
+  merged.slice(0,30).forEach(function(r){
     var st = r.status || 'confirmed';
     var stColor = st==='confirmed'?'var(--green)':st==='cancelled'?'var(--red)':'var(--gold)';
-    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">';
-    html += '<div>';
+    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">';
+    html += '<div style="flex:1;min-width:200px">';
     html += '<div style="font-weight:600;color:var(--text);font-size:13px">'+('👤 '+(r.name||'—'))+' · <span style="color:var(--muted)">'+('📞 '+(r.phone||''))+'</span></div>';
     html += '<div style="font-size:12px;color:var(--muted);margin-top:4px">📅 '+(r.date||'')+' à '+(r.time||'')+' · 👥 '+(r.guests||2)+' pers.'+(r.notes?' · '+r.notes:'')+'</div>';
     html += '</div>';
     html += '<div style="display:flex;gap:6px;align-items:center">';
     html += '<span style="font-size:10px;color:'+stColor+';font-weight:600;text-transform:uppercase">'+st+'</span>';
     if(st !== 'cancelled'){
-      html += '<button onclick="cancelAdminRes('+r.id+')" style="padding:4px 8px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:10px">✕</button>';
+      html += '<button onclick="cancelAdminRes('+r.id+')" style="padding:4px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:11px" title="Annuler">✕</button>';
     }
     html += '</div></div>';
   });
   el.innerHTML = html;
 }
 
-function cancelAdminRes(id){
+async function cancelAdminRes(id){
   if(!confirm('Annuler cette réservation?')) return;
+  // Local update
   var all = getLS('lux_reservations', []);
   var r = all.find(function(x){return x.id===id;});
   if(r) r.status = 'cancelled';
   setLS('lux_reservations', all);
+  // API update (PATCH reservation status)
+  try {
+    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+      await fetch('https://cafeslux-api-production.up.railway.app/api/reservations/'+id, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+(localStorage.getItem('lux_auth_token')||'')},
+        body: JSON.stringify({status:'cancelled'})
+      });
+    }
+  } catch(e){}
   loadAdminReservations();
   toast('❌ Réservation annulée');
 }
@@ -5239,33 +5492,50 @@ function cancelAdminRes(id){
 // ═══════════════════════════════════════════════════════════════
 // ADMIN: EMPLOYEES MANAGEMENT — API-connected
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// ADMIN EMPLOYEES — RAILWAY FIRST (source of truth = server)
+// ═══════════════════════════════════════════════════════════════
+var _LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';
+
+function _luxAuthHeaders(){
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + (localStorage.getItem('lux_auth_token') || '')
+  };
+}
+
 async function loadAdminEmployees(){
   var listEl = document.getElementById('admin-emps-list');
   var pendEl = document.getElementById('admin-emps-pending-list');
   var pendWrap = document.getElementById('admin-emps-pending');
   var pendCount = document.getElementById('pending-count');
   if(!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis le serveur...</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis Railway...</div>';
 
+  // RAILWAY FIRST — no localStorage fallback for admin view
   var employees = [];
   try {
-    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
-      employees = await LuxAPI.getEmployees();
+    var r = await fetch(_LUX_API_URL + '/api/employees', {headers: _luxAuthHeaders()});
+    if(r.ok) employees = await r.json();
+    else if(r.status === 401){
+      listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
+      if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
+      return;
     }
-  } catch(e){ console.warn('[LUX] Employees fetch error:', e); }
-  if(!employees.length) employees = getLS('lux_employees_full', []);
+  } catch(e){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Serveur inaccessible. Vérifiez votre connexion.</div>';
+    return;
+  }
 
-  // Split into pending and active
   var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
-  var active = employees.filter(function(e){ return e.status !== 'pending' && e.role !== 'pending'; });
+  var active = employees.filter(function(e){ return e.status !== 'pending' && e.role !== 'pending' && e.status !== 'rejected' && e.status !== 'inactive'; });
 
-  // Pending section
   if(pending.length > 0 && pendEl && pendWrap){
     pendWrap.style.display = 'block';
     if(pendCount) pendCount.textContent = pending.length;
     pendEl.innerHTML = pending.map(function(e){
-      return '<div style="background:rgba(224,82,82,.05);border:1px solid rgba(224,82,82,.2);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">'
-        +'<div>'
+      return '<div style="background:rgba(224,82,82,.05);border:1px solid rgba(224,82,82,.2);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'
+        +'<div style="flex:1;min-width:200px">'
         +'<div style="font-weight:600;color:var(--text);font-size:13px">👤 '+(e.name||'—')+' <span style="color:var(--muted);font-size:11px">@'+(e.username||'')+'</span></div>'
         +'<div style="font-size:11px;color:var(--muted);margin-top:3px">📞 '+(e.phone||'—')+' · CIN: '+(e.cin||'—')+'</div>'
         +'<div style="font-size:10px;color:var(--muted);margin-top:2px">Inscrit: '+new Date(e.createdAt||Date.now()).toLocaleDateString('fr-MA')+'</div>'
@@ -5279,7 +5549,6 @@ async function loadAdminEmployees(){
     pendWrap.style.display = 'none';
   }
 
-  // Active employees
   if(!active.length){
     listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun employé actif</div>';
     return;
@@ -5288,36 +5557,79 @@ async function loadAdminEmployees(){
   listEl.innerHTML = active.map(function(e){
     var icon = roleIcons[e.role] || '👤';
     var salary = e.salary ? (Math.round(e.salary).toLocaleString()+' DH') : '—';
-    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center">'
-      +'<div style="display:flex;align-items:center;gap:12px">'
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'
+      +'<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:220px">'
       +'<div style="font-size:24px">'+icon+'</div>'
       +'<div>'
       +'<div style="font-weight:600;color:var(--text);font-size:13px">'+e.name+'</div>'
-      +'<div style="font-size:11px;color:var(--muted)">'+e.role+' · '+salary+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'+e.role+' · '+salary+' · 📞 '+(e.phone||'—')+'</div>'
       +'</div></div>'
-      +'<div style="text-align:right">'
-      +'<div style="font-size:10px;color:var(--green)">● '+(e.status||'active')+'</div>'
-      +'<div style="font-size:10px;color:var(--muted)">📞 '+(e.phone||'—')+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="editEmployee('+e.id+',\''+encodeURIComponent(JSON.stringify(e))+'\')" style="padding:5px 10px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);border-radius:6px;color:var(--gold);cursor:pointer;font-size:11px">✎ Éditer</button>'
+      +'<button onclick="deleteEmployee('+e.id+',\''+(e.name||'').replace(/\'/g,'')+'\')" style="padding:5px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:var(--red);cursor:pointer;font-size:11px">🗑</button>'
       +'</div></div>';
   }).join('');
 }
 
 async function approveEmployee(id){
-  if(!confirm('Accepter cet employé?')) return;
+  if(!confirm('Accepter cet employé comme actif?')) return;
   try {
-    if(typeof LuxAPI !== 'undefined') await LuxAPI.updateEmployee(id, {status:'active', role:'service'});
-    toast('✅ Employé approuvé!');
+    var r = await fetch(_LUX_API_URL + '/api/employees/' + id, {
+      method: 'PATCH', headers: _luxAuthHeaders(),
+      body: JSON.stringify({status:'active', role:'service'})
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    toast('✅ Employé approuvé · Synchronisé avec Railway');
     loadAdminEmployees();
-  } catch(e){ toast('⚠ Erreur: '+e.message); }
+  } catch(e){ toast('⚠ Erreur: ' + e.message); }
 }
 
 async function rejectEmployee(id){
-  var reason = prompt('Raison du refus (optionnel):');
+  var reason = prompt('Raison du refus:', 'Non sélectionné');
+  if(reason === null) return;
   try {
-    if(typeof LuxAPI !== 'undefined') await LuxAPI.updateEmployee(id, {status:'rejected', rejectionReason: reason||'Refusé'});
-    toast('❌ Employé refusé');
+    var r = await fetch(_LUX_API_URL + '/api/employees/' + id, {
+      method: 'PATCH', headers: _luxAuthHeaders(),
+      body: JSON.stringify({status:'rejected', rejectionReason: reason || 'Refusé'})
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    toast('❌ Employé refusé · Synchronisé');
     loadAdminEmployees();
-  } catch(e){ toast('⚠ Erreur: '+e.message); }
+  } catch(e){ toast('⚠ Erreur: ' + e.message); }
+}
+
+async function deleteEmployee(id, name){
+  if(!confirm('Supprimer définitivement "'+name+'" ?\n(L\'employé sera désactivé dans la base de données)')) return;
+  try {
+    var r = await fetch(_LUX_API_URL + '/api/employees/' + id, {
+      method: 'DELETE', headers: _luxAuthHeaders()
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    toast('🗑 Employé supprimé · Synchronisé');
+    loadAdminEmployees();
+  } catch(e){ toast('⚠ Erreur: ' + e.message); }
+}
+
+async function editEmployee(id, encodedEmp){
+  var e;
+  try { e = JSON.parse(decodeURIComponent(encodedEmp)); } catch(err){ return; }
+  var name = prompt('Nom:', e.name || '');
+  if(name === null) return;
+  var role = prompt('Rôle (service/barman/cuisine/caissiere/nettoyage/manager):', e.role || 'service');
+  if(role === null) return;
+  var salary = prompt('Salaire (DH):', e.salary || '0');
+  if(salary === null) return;
+  var phone = prompt('Téléphone:', e.phone || '');
+  if(phone === null) return;
+  try {
+    var r = await fetch(_LUX_API_URL + '/api/employees/' + id, {
+      method: 'PATCH', headers: _luxAuthHeaders(),
+      body: JSON.stringify({name: name.trim(), role: role.trim(), salary: parseFloat(salary)||0, phone: phone.trim()})
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    toast('✏ Employé modifié · Synchronisé');
+    loadAdminEmployees();
+  } catch(err){ toast('⚠ Erreur: ' + err.message); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -5327,24 +5639,23 @@ async function loadAdminCustomers(){
   var listEl = document.getElementById('admin-custs-list');
   var kpiEl = document.getElementById('admin-custs-kpi');
   if(!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis le serveur...</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis Railway...</div>';
 
+  // RAILWAY FIRST
   var customers = [];
   try {
-    if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
-      customers = await LuxAPI.getCustomers();
+    var r = await fetch(_LUX_API_URL + '/api/customers', {headers: _luxAuthHeaders()});
+    if(r.ok) customers = await r.json();
+    else if(r.status === 401){
+      listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
+      if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
+      return;
     }
-  } catch(e){ console.warn('[LUX] Customers fetch error:', e); }
-
-  // Fallback to localStorage
-  if(!customers.length){
-    var localCusts = getLS('lux_web_customers', {});
-    customers = Object.values(localCusts).map(function(c){
-      return {name:c.name, phone:c.phone, loyaltyPoints:c.points||0, _count:{orders:c.orders?c.orders.length:0}};
-    });
+  } catch(e){
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Serveur inaccessible</div>';
+    return;
   }
 
-  // Compute levels
   function getLevel(pts){
     if(pts >= 600) return {name:'Diamond',icon:'💎',color:'#5B8DEF'};
     if(pts >= 300) return {name:'Gold',icon:'🥇',color:'var(--gold)'};
@@ -5352,7 +5663,6 @@ async function loadAdminCustomers(){
     return {name:'Bronze',icon:'🥉',color:'#B06438'};
   }
 
-  // KPI
   if(kpiEl){
     var total = customers.length;
     var diamond = customers.filter(function(c){return (c.loyaltyPoints||0)>=600;}).length;
@@ -5368,11 +5678,10 @@ async function loadAdminCustomers(){
   }
 
   if(!customers.length){
-    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun client enregistré</div>';
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun client enregistré dans la base de données</div>';
     return;
   }
 
-  // Sort by points desc
   customers.sort(function(a,b){return (b.loyaltyPoints||0)-(a.loyaltyPoints||0);});
 
   listEl.innerHTML = customers.slice(0,50).map(function(c){
@@ -5479,45 +5788,9 @@ function renderPendingEmployees(){
   }
 }
 
-function approveEmployee(idx){
-  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
-  var r = reqs[idx]; if(!r) return;
-  var reason = (document.getElementById('emp-reason-'+idx)?.value||'').trim();
-  r.status = 'approved'; r.reason = reason; r.decidedAt = new Date().toISOString();
-  // Add to employees list
-  var emps = getLS('lux_employees', []);
-  emps.push({ id:'E'+Date.now(), name:r.name, role:'service', phone:r.phone||'', cin:r.cin||'', status:'active', since:new Date().toISOString().slice(0,10) });
-  setLS('lux_employees', emps);
-  reqs.splice(idx, 1);
-  localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
-  // Try API
-  if(typeof LuxAPI !== 'undefined') LuxAPI.createEmployee({name:r.name, role:'service', phone:r.phone, cin:r.cin, username:r.username}).catch(function(){});
-  toast('✅ '+r.name+' approuvé!');
-  renderPendingEmployees();
-}
-
-function rejectEmployee(idx){
-  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
-  var r = reqs[idx]; if(!r) return;
-  var reason = (document.getElementById('emp-reason-'+idx)?.value||'').trim();
-  if(!reason){ toast('⚠ Veuillez indiquer le motif du refus'); return; }
-  r.status = 'rejected'; r.reason = reason; r.decidedAt = new Date().toISOString();
-  // Send rejection to server (update employee status + save reason)
-  if(typeof LuxAPI !== 'undefined' && r.username){
-    fetch((window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app')+'/api/employees/register', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:r.username, status:'rejected', reason:reason})
-    }).catch(function(){});
-  }
-  // Save rejected list for portal to read
-  var rejected = JSON.parse(localStorage.getItem('lux_emp_rejected')||'[]');
-  rejected.push({name:r.name, username:r.username, reason:reason, date:r.decidedAt});
-  localStorage.setItem('lux_emp_rejected', JSON.stringify(rejected));
-  reqs.splice(idx, 1);
-  localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
-  toast('❌ '+r.name+' refusé — Motif: '+reason);
-  renderPendingEmployees();
-}
+// NOTE: Legacy approveEmployee(idx)/rejectEmployee(idx) removed.
+// They used localStorage 'lux_emp_requests' which conflicted with Railway-first approach.
+// New async versions above use (id) and sync directly with Railway.
 
 // Init PayPal on payment modal open
 var _origSelectPay = typeof selectPayMethod !== 'undefined' ? selectPayMethod : null;

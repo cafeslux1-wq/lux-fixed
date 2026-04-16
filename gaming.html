@@ -247,21 +247,57 @@
                 }
             },
             methods: {
+                // Send event to parent (Maestro Hub) + Railway sync
+                _syncToMaestro(eventType, extra){
+                    const payload = Object.assign({
+                        source: 'lux-gaming',
+                        event: eventType,
+                        stationId: this.stationId,
+                        hourlyRate: this.hourlyRate,
+                        duration: this.elapsedSeconds,
+                        consumption: this.consumedAmount,
+                        revenue: this.consumedAmount,
+                        timestamp: new Date().toISOString()
+                    }, extra || {});
+                    try {
+                        if(window.parent && window.parent !== window){
+                            window.parent.postMessage(payload, '*');
+                        }
+                    } catch(e){}
+                    // Direct Railway POST (fallback if not in iframe)
+                    try {
+                        fetch('https://cafeslux-api-production.up.railway.app/api/transactions', {
+                            method: 'POST',
+                            headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({
+                                source: 'gaming',
+                                stationId: payload.stationId,
+                                total: payload.revenue,
+                                payMethod: payload.payMethod || 'cash',
+                                meta: payload
+                            })
+                        }).catch(()=>{});
+                    } catch(e){}
+                },
                 startSession(method) {
-                    // Logic: Connect with Railway API
                     console.log(`Starting session via ${method} for Station ${this.stationId}`);
                     this.elapsedSeconds = 0;
                     this.consumedAmount = 0;
                     this.view = 'active';
-                    
+                    this._syncToMaestro('session_start', {payMethod: method, status: 'active'});
                     this.timerInterval = setInterval(() => {
                         this.elapsedSeconds++;
                         this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
+                        // Sync every 60s
+                        if(this.elapsedSeconds % 60 === 0){
+                            this._syncToMaestro('session_tick', {status: 'active'});
+                        }
                     }, 1000);
                 },
                 endSession() {
                     if(confirm("Voulez-vous vraiment terminer la session ?")) {
                         clearInterval(this.timerInterval);
+                        this._syncToMaestro('session_end', {status: 'completed'});
                         this.view = 'user';
                     }
                 }
