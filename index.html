@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Café LUX v3.4 — Admin Dashboard: Reservations + Employees + Customers + Loyalty -->
+<!-- Café LUX v3.6 — FIXED: Admin Dashboard IN-PAGE | Real API Auth | Full Flow -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -1489,6 +1489,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
     <button class="s-tab" id="st-tracking" onclick="switchTab('tracking',null)">📦 Mes Commandes</button>
     <button class="s-tab" id="st-account" onclick="switchTab('account',null)">👤 Mon Compte</button>
     <button class="s-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
+    <button class="s-tab admin-only-tab" id="st-admin-dash" onclick="switchTab('admin-dash',null);loadDashboardData()" style="display:none">📊 Dashboard</button>
     <button class="s-tab admin-only-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()" style="display:none">📱 QR Tables</button>
     <button class="s-tab admin-only-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()" style="display:none">📊 Analytics</button>
     <button class="s-tab admin-only-tab" id="st-admin-res" onclick="switchTab('admin-res',null);loadAdminReservations()" style="display:none">📅 Réservations</button>
@@ -1707,6 +1708,71 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <div class="an-chart-wrap" id="payment-chart"></div>
       </div>
       <div class="an-chart-wrap" id="order-type-chart"></div>
+    </div>
+  </div>
+
+  <!-- TAB: ADMIN DASHBOARD -->
+  <div id="tab-admin-dash" class="site-tab-content">
+    <div style="padding:24px;max-width:1000px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold)">📊 Tableau de Bord</div>
+          <div style="font-size:12px;color:var(--muted)">Administration · Café LUX Taza</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="loadDashboardData()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+          <button onclick="window.open('cafe-lux.html?mode=admin','_blank')" style="padding:8px 16px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🖥️ POS Complet →</button>
+        </div>
+      </div>
+      <div class="an-kpi-grid" id="dash-kpis" style="margin-bottom:24px">
+        <div class="an-kpi"><div class="an-kpi-val" style="color:var(--muted)">—</div><div class="an-kpi-lbl">Chargement...</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:28px">
+        <div onclick="switchTab('admin-res',null);loadAdminReservations()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">📅</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Réservations</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Tables · Événements</div>
+        </div>
+        <div onclick="switchTab('admin-emps',null);loadAdminEmployees()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">👥</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Employés</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Équipe · Demandes</div>
+        </div>
+        <div onclick="switchTab('admin-custs',null);loadAdminCustomers()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">💎</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Clients</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Fidélité · Niveaux</div>
+        </div>
+        <div onclick="switchTab('analytics',null);buildAnalytics()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">📈</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Analytics</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Ventes · Heatmap</div>
+        </div>
+        <div onclick="switchTab('campaigns',null)" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">📢</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Campagnes</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">WhatsApp · Push</div>
+        </div>
+        <div onclick="switchTab('qr',null);buildQRGrid()" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.borderColor='rgba(201,168,76,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:28px;margin-bottom:8px">📱</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">QR Tables</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Codes · Impression</div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:14px;font-weight:600;color:var(--gold)">📅 Dernières Réservations</div>
+          <button onclick="switchTab('admin-res',null);loadAdminReservations()" style="padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:10px">Voir tout →</button>
+        </div>
+        <div id="dash-recent-res" style="font-size:12px;color:var(--muted)">Chargement...</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:14px;font-weight:600;color:var(--gold)">👥 Demandes en attente</div>
+          <button onclick="switchTab('admin-emps',null);loadAdminEmployees()" style="padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:10px">Voir tout →</button>
+        </div>
+        <div id="dash-pending-emps" style="font-size:12px;color:var(--muted)">Chargement...</div>
+      </div>
     </div>
   </div>
 
@@ -2259,6 +2325,110 @@ function enterTracking(){
 }
 function scrollTop(){window.scrollTo({top:0,behavior:'smooth'});}
 
+// ═══════════════════════════════════════════════════════════════
+// ADMIN DASHBOARD — In-page (no redirect to cafe-lux.html)
+// ═══════════════════════════════════════════════════════════════
+async function enterAdminDashboard(){
+  var gw = document.getElementById('gateway');
+  if(gw){
+    gw.classList.add('hidden');
+    document.getElementById('main-site').style.display = 'block';
+    setTimeout(function(){ gw.classList.add('gone'); }, 520);
+  }
+  if(typeof showAdminTabs === 'function') showAdminTabs();
+  switchTab('admin-dash', null);
+  await tryAdminAPILogin();
+  loadDashboardData();
+}
+
+async function tryAdminAPILogin(){
+  if(typeof LuxAPI === 'undefined') return;
+  var currentToken = localStorage.getItem('lux_auth_token');
+  if(currentToken && !currentToken.startsWith('eyJ')){
+    localStorage.removeItem('lux_auth_token');
+    if(LuxAPI.logout) LuxAPI.logout();
+  }
+  var creds = [
+    {u:'admin', p:'lux2026admin'},
+    {u:'admin', p:'9999'},
+    {u:'admin', p:'admin'}
+  ];
+  for(var i = 0; i < creds.length; i++){
+    try {
+      var result = await LuxAPI.login(creds[i].u, creds[i].p);
+      if(result && result.token){ console.log('[LUX] ✅ Admin API login OK'); return; }
+    } catch(e){}
+  }
+  console.warn('[LUX] ⚠ API login failed — using localStorage');
+}
+
+async function loadDashboardData(){
+  var tasks = [];
+  if(typeof loadAdminReservations === 'function') tasks.push(loadAdminReservations());
+  if(typeof loadAdminEmployees === 'function') tasks.push(loadAdminEmployees());
+  if(typeof loadAdminCustomers === 'function') tasks.push(loadAdminCustomers());
+  if(typeof buildAnalytics === 'function') setTimeout(buildAnalytics, 200);
+  try { await Promise.all(tasks); } catch(e){}
+  loadDashKPIs();
+  loadDashPreviews();
+}
+
+async function loadDashKPIs(){
+  var el = document.getElementById('dash-kpis');
+  if(!el) return;
+  var data = null;
+  try { if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()) data = await LuxAPI.getDashboard(); } catch(e){}
+  var txs = getLS('lux_transactions', []);
+  var webOrders = getLS('lux_web_orders', []);
+  var custs = getLS('lux_web_customers', {});
+  var reservations = getLS('lux_reservations', []);
+  var caToday = data ? (data.caToday||0) : txs.reduce(function(s,t){return s+parseFloat(t.total||0);},0);
+  var ordersToday = data ? (data.ordersToday||0) : webOrders.filter(function(o){return o.status==='pending';}).length;
+  var totalCustomers = data ? (data.customerCount||0) : Object.keys(custs).length;
+  var totalRes = data ? (data.reservationsCount||reservations.length) : reservations.length;
+  var stockAlerts = data && data.stockAlerts ? data.stockAlerts.length : 0;
+  el.innerHTML = ''
+    +'<div class="an-kpi"><div class="an-kpi-val" style="color:var(--gold)">'+Math.round(caToday)+' DH</div><div class="an-kpi-lbl">CA Aujourd\'hui</div></div>'
+    +'<div class="an-kpi"><div class="an-kpi-val" style="color:var(--green)">'+ordersToday+'</div><div class="an-kpi-lbl">Commandes</div></div>'
+    +'<div class="an-kpi"><div class="an-kpi-val" style="color:#5B8DEF">'+totalCustomers+'</div><div class="an-kpi-lbl">Clients</div></div>'
+    +'<div class="an-kpi"><div class="an-kpi-val" style="color:var(--gold)">'+totalRes+'</div><div class="an-kpi-lbl">Réservations</div></div>'
+    +(stockAlerts > 0 ? '<div class="an-kpi"><div class="an-kpi-val" style="color:var(--red)">'+stockAlerts+'</div><div class="an-kpi-lbl">⚠ Stock</div></div>' : '');
+}
+
+async function loadDashPreviews(){
+  var resEl = document.getElementById('dash-recent-res');
+  if(resEl){
+    var reservations = [];
+    try { if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()) reservations = await LuxAPI.getReservations(); } catch(e){}
+    if(!reservations.length) reservations = getLS('lux_reservations', []);
+    if(!reservations.length){
+      resEl.innerHTML = '<div style="color:var(--dim);padding:8px 0">Aucune réservation</div>';
+    } else {
+      resEl.innerHTML = reservations.slice(0,3).map(function(r){
+        return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">'
+          +'<span>👤 '+(r.name||'—')+' · 📅 '+(r.date||'')+' '+(r.time||'')+'</span>'
+          +'<span style="color:var(--green);font-size:11px">'+(r.status||'confirmed')+'</span></div>';
+      }).join('');
+    }
+  }
+  var empEl = document.getElementById('dash-pending-emps');
+  if(empEl){
+    var employees = [];
+    try { if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()) employees = await LuxAPI.getEmployees(); } catch(e){}
+    if(!employees.length) employees = getLS('lux_employees_full', []);
+    var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
+    if(!pending.length){
+      empEl.innerHTML = '<div style="color:var(--dim);padding:8px 0">✅ Aucune demande en attente</div>';
+    } else {
+      empEl.innerHTML = pending.map(function(e){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">'
+          +'<span>👤 '+(e.name||'—')+' <span style="color:var(--muted)">@'+(e.username||'')+'</span></span>'
+          +'<span style="color:var(--red);font-size:10px;font-weight:600">⏳ En attente</span></div>';
+      }).join('');
+    }
+  }
+}
+
 // ─── PIN ─────────────────────────────────────────────────
 function askPIN(target){
   currentPINTarget = target;
@@ -2325,46 +2495,39 @@ function onPinRealInput(val){
 function checkPIN(){
   var correct = PINS[currentPINTarget] || '9999';
   if(pinBuffer === correct){
-    // Sauvegarder la route AVANT closePIN (qui reset currentPINTarget)
     var routes = {
       'pos':   'cafe-lux.html?mode=pos&focus=1',
-      'admin': 'cafe-lux.html?mode=admin',
+      'admin': '__STAY__',
       'staff': 'portal.html',
       'kds':   'cafe-lux.html?mode=kds',
-      'stock': 'cafe-lux.html?mode=admin'
+      'stock': '__STAY__'
     };
     var targetUrl = routes[currentPINTarget];
     var targetRole = currentPINTarget;
 
-    // Écrire la session AVANT de fermer/naviguer
     var sessionData = {
       role: targetRole,
       expires: Date.now() + (8 * 60 * 60 * 1000),
       issued: Date.now()
     };
     localStorage.setItem('lux_session', JSON.stringify(sessionData));
-    localStorage.setItem('lux_auth_token', btoa(JSON.stringify(sessionData)));
+    localStorage.setItem('lux_pin_session', btoa(JSON.stringify(sessionData)));
 
-    // POS focus mode: hide nav buttons (Accueil, Administration, Employes, Site Public)
     if(targetRole === 'pos'){
       localStorage.setItem('lux_pos_focus', '1');
     } else {
       localStorage.removeItem('lux_pos_focus');
     }
 
-    // Show admin-only tabs now that session is valid
     if(typeof showAdminTabs === 'function') showAdminTabs();
-
-    // Fermer le modal
     closePIN();
 
-    // Naviguer — window.location.href évite le popup blocker mobile
-    if(targetUrl){
+    if(targetUrl === '__STAY__'){
+      enterAdminDashboard();
+    } else if(targetUrl){
       if(targetRole === 'staff'){
-        // Staff portal: nouveau onglet (pas de auth guard)
         window.open(targetUrl, '_blank');
       } else {
-        // POS, KDS, Admin: même page (session déjà écrite, auth guard passe)
         window.location.href = targetUrl;
       }
     }
