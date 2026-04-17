@@ -1482,6 +1482,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
   <span id="sync-bar-icon">⟳</span>
   <span id="sync-bar-text">Synchronisation en cours...</span>
   <span id="sync-pending-count" style="margin-left:auto;color:var(--muted)"></span>
+  <button onclick="if(confirm('Vider la file d\u0027attente de synchronisation ? (les actions seront perdues)')){localStorage.removeItem('lux_pending_sync');document.getElementById('sync-bar').style.display='none';}" style="padding:3px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;color:#ff6b6b;cursor:pointer;font-size:10px;margin-left:8px" title="Vider la file">🗑 Vider</button>
 </div>
 <div class="delivery-banner">
     🛵 Livraison Taza — 15 DH · Gratuite à partir de 200 DH · Estimation: 30-45 min
@@ -2258,7 +2259,8 @@ function applyNavFilter(mode){
     el.classList.remove('nav-hidden');
   });
   // Hide the entire navbar for immersive modes
-  var navbar = document.querySelector('.site-tabs');
+  // v4.2 FIX: correct selector — '.site-top-tabs' (not '.site-tabs')
+  var navbar = document.querySelector('.site-top-tabs');
   if(navbar){
     if(mode === 'reservation-only' || mode === 'account-only'){
       navbar.style.display = 'none';
@@ -2287,7 +2289,7 @@ function clearNavFilter(){
   document.querySelectorAll('.s-tab').forEach(function(el){
     el.classList.remove('nav-hidden');
   });
-  var navbar = document.querySelector('.site-tabs');
+  var navbar = document.querySelector('.site-top-tabs');
   if(navbar) navbar.style.display = '';
 }
 window.applyNavFilter = applyNavFilter;

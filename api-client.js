@@ -959,7 +959,9 @@
       window._luxFlushing = true;
 
       const remaining = [];
+      const MAX_RETRIES = 3; // v4.2: drop items that fail 3+ times (stops stuck 500s)
       for (const item of queue) {
+        item._retries = (item._retries || 0);
         try {
           switch (item.action) {
             case 'createOrder':           await _post('/api/orders', item.data); break;
@@ -987,13 +989,21 @@
             case 'manualTopUp':           await _post('/api/gaming/topup', item.data); break;
             default:                      remaining.push(item);
           }
-        } catch { remaining.push(item); }
+        } catch (e) {
+          item._retries++;
+          // v4.2: drop items after MAX_RETRIES attempts — stops stuck 500 errors
+          if (item._retries < MAX_RETRIES) {
+            remaining.push(item);
+          } else {
+            console.warn('[LUX API] Dropping failed item after', MAX_RETRIES, 'retries:', item.action, item.data && item.data.id);
+          }
+        }
       }
       _lsSet('pending_sync', remaining);
       window._luxFlushing = false;
 
       const synced = queue.length - remaining.length;
-      if (synced > 0) console.log('[LUX API] Synced', synced, 'items');
+      if (synced > 0) console.log('[LUX API] Synced', synced, 'items · remaining:', remaining.length);
     },
 
     // ═══════════════════════════════════════════════════════════════
