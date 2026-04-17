@@ -494,6 +494,11 @@ body{
     <div class="pill" id="clock">⏰ --:--</div>
     <div class="pill" id="api-dot" title="API Status" onclick="checkApiStatus()" style="cursor:pointer">⟡ API</div>
     <div class="pill active"><span class="status-dot"></span> Synchronise</div>
+    <!-- Active Employee Badge — shown only after PIN/RFID auth -->
+    <div class="pill" id="emp-badge" onclick="openSwitchEmployee()" style="display:none;cursor:pointer;background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.4);color:var(--gold)" title="Cliquer pour changer d'employé">
+      <span id="emp-badge-name">—</span>
+      <span style="opacity:.5;margin-left:6px">⇄</span>
+    </div>
   </div>
 </div>
 
@@ -3163,5 +3168,310 @@ function orderGiftCard(){
   });
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIX 11 · EMPLOYEE AUTHENTICATION OVERLAY (PIN / RFID / Dallas)
+     — Shown on POS startup
+     — RFID reader = HID keyboard emulator: fast burst (< 40ms between keys) + Enter
+     — PIN = manual keypad or number keys (slower typing)
+═══════════════════════════════════════════════════════════════ -->
+<style>
+  .emp-auth-ov{position:fixed;inset:0;z-index:9998;background:rgba(5,8,12,.96);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;font-family:inherit}
+  .emp-auth-ov.open{display:flex}
+  .emp-auth-card{width:100%;max-width:440px;background:linear-gradient(160deg,#0E1218,#0A0D12);border:1px solid rgba(201,168,76,.25);border-radius:24px;padding:32px 28px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .emp-auth-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);text-align:center;margin-bottom:4px;letter-spacing:.5px}
+  .emp-auth-sub{text-align:center;font-size:12px;color:var(--muted);margin-bottom:24px;letter-spacing:1px;text-transform:uppercase}
+  .emp-auth-tabs{display:flex;gap:8px;margin-bottom:20px;background:#060809;padding:4px;border-radius:14px;border:1px solid rgba(201,168,76,.12)}
+  .emp-auth-tab{flex:1;padding:10px;background:transparent;border:none;border-radius:10px;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;transition:.2s}
+  .emp-auth-tab.active{background:rgba(201,168,76,.12);color:var(--gold)}
+  .emp-auth-panel{display:none}
+  .emp-auth-panel.active{display:block}
+  .emp-pin-dots{display:flex;gap:10px;justify-content:center;margin:18px 0 24px}
+  .emp-pin-dot{width:16px;height:16px;border-radius:50%;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);transition:.2s}
+  .emp-pin-dot.filled{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(201,168,76,.45)}
+  .emp-pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .emp-pin-key{padding:16px;background:#0B0F14;border:1px solid rgba(201,168,76,.15);border-radius:14px;color:#E8D7A8;font-size:20px;font-weight:700;cursor:pointer;transition:.15s}
+  .emp-pin-key:hover{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.4)}
+  .emp-pin-key:active{transform:scale(.95)}
+  .emp-pin-key.clear{color:#E85252;border-color:rgba(232,82,82,.3)}
+  .emp-pin-key.ok{color:#000;background:var(--gold);border-color:var(--gold)}
+  .emp-rfid-box{padding:40px 20px;text-align:center;background:#060809;border:2px dashed rgba(201,168,76,.3);border-radius:18px;margin-bottom:20px}
+  .emp-rfid-icon{font-size:56px;margin-bottom:14px;animation:rfidPulse 2s ease-in-out infinite}
+  @keyframes rfidPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+  .emp-rfid-hint{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .emp-rfid-sub{font-size:11px;color:#6A6D74;letter-spacing:1px;text-transform:uppercase}
+  .emp-auth-err{text-align:center;font-size:12px;color:#E85252;min-height:18px;margin:12px 0 0;font-weight:600}
+  .emp-auth-footer{text-align:center;margin-top:18px;font-size:10px;color:#5A5D64;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+  .emp-auth-footer span{color:var(--gold)}
+  .emp-hidden-input{position:absolute;opacity:0;pointer-events:none;left:-9999px}
+</style>
+
+<div class="emp-auth-ov" id="emp-auth-ov" role="dialog" aria-modal="true">
+  <div class="emp-auth-card">
+    <div class="emp-auth-title">Café LUX — Accès Employé</div>
+    <div class="emp-auth-sub" id="emp-auth-sub">Scannez votre badge ou entrez votre PIN</div>
+
+    <div class="emp-auth-tabs">
+      <button type="button" class="emp-auth-tab active" data-method="rfid" onclick="empAuthTab('rfid')">📡 Badge RFID</button>
+      <button type="button" class="emp-auth-tab" data-method="pin" onclick="empAuthTab('pin')">🔢 Code PIN</button>
+    </div>
+
+    <!-- RFID PANEL -->
+    <div class="emp-auth-panel active" id="emp-auth-rfid">
+      <div class="emp-rfid-box">
+        <div class="emp-rfid-icon">📡</div>
+        <div class="emp-rfid-hint">Approchez votre badge du lecteur</div>
+        <div class="emp-rfid-sub">Dallas Key · RFID · HID</div>
+      </div>
+    </div>
+
+    <!-- PIN PANEL -->
+    <div class="emp-auth-panel" id="emp-auth-pin">
+      <div class="emp-pin-dots" id="emp-pin-dots">
+        <div class="emp-pin-dot"></div>
+        <div class="emp-pin-dot"></div>
+        <div class="emp-pin-dot"></div>
+        <div class="emp-pin-dot"></div>
+      </div>
+      <div class="emp-pin-pad">
+        <button type="button" class="emp-pin-key" onclick="empPinPress('1')">1</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('2')">2</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('3')">3</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('4')">4</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('5')">5</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('6')">6</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('7')">7</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('8')">8</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('9')">9</button>
+        <button type="button" class="emp-pin-key clear" onclick="empPinClear()">✕</button>
+        <button type="button" class="emp-pin-key" onclick="empPinPress('0')">0</button>
+        <button type="button" class="emp-pin-key ok" onclick="empPinSubmit()">✓</button>
+      </div>
+    </div>
+
+    <div class="emp-auth-err" id="emp-auth-err"></div>
+
+    <!-- Hidden input to capture RFID keystrokes even if no field is focused -->
+    <input type="text" class="emp-hidden-input" id="emp-rfid-capture" autocomplete="off">
+
+    <div class="emp-auth-footer">
+      Powered by <span>MAESTRO OS</span> — A subsidiary of NextaGlobal Holding
+    </div>
+  </div>
+</div>
+
+<!-- Global footer (always visible) -->
+<div id="maestro-footer" style="position:fixed;bottom:0;left:0;right:0;z-index:50;padding:6px 16px;background:rgba(5,8,12,.85);backdrop-filter:blur(8px);border-top:1px solid rgba(201,168,76,.12);text-align:center;font-size:9.5px;color:#5A5D64;letter-spacing:3px;text-transform:uppercase;font-weight:600;pointer-events:none">
+  Powered by <span style="color:var(--gold)">MAESTRO OS</span> — A subsidiary of NextaGlobal Holding
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// FIX 11 · EMPLOYEE AUTH CONTROLLER (PIN + RFID)
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+
+  var _pinBuffer = '';
+  var _rfidBuffer = '';
+  var _rfidLastKeyTs = 0;
+  var _rfidActive = false;
+  // Any key-gap longer than this (ms) → human typing, reset buffer.
+  // HID keyboard emulators typically emit keys < 15ms apart.
+  var RFID_MAX_GAP_MS = 40;
+  var RFID_MIN_LENGTH = 4;
+  var _authRequired = false;   // set by init based on mode
+
+  function $(id){ return document.getElementById(id); }
+
+  function setErr(msg){
+    var el = $('emp-auth-err');
+    if(el) el.textContent = msg || '';
+  }
+
+  function renderPinDots(){
+    var dots = document.querySelectorAll('#emp-pin-dots .emp-pin-dot');
+    dots.forEach(function(d, i){
+      d.classList.toggle('filled', i < _pinBuffer.length);
+    });
+  }
+
+  window.empAuthTab = function(method){
+    document.querySelectorAll('.emp-auth-tab').forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-method') === method);
+    });
+    document.querySelectorAll('.emp-auth-panel').forEach(function(p){
+      p.classList.remove('active');
+    });
+    var panel = $('emp-auth-' + method);
+    if(panel) panel.classList.add('active');
+    setErr('');
+    if(method === 'pin'){ _pinBuffer = ''; renderPinDots(); }
+  };
+
+  window.empPinPress = function(n){
+    if(_pinBuffer.length >= 6) return;
+    _pinBuffer += n;
+    renderPinDots();
+    setErr('');
+    // Auto-submit when 4 digits entered
+    if(_pinBuffer.length === 4) setTimeout(empPinSubmit, 200);
+  };
+
+  window.empPinClear = function(){
+    _pinBuffer = '';
+    renderPinDots();
+    setErr('');
+  };
+
+  window.empPinSubmit = async function(){
+    if(_pinBuffer.length < 4){ setErr('PIN trop court (min 4 chiffres)'); return; }
+    if(typeof LuxAPI === 'undefined'){ setErr('API client indisponible'); return; }
+    try {
+      var emp = await LuxAPI.loginEmployeePIN(_pinBuffer);
+      _onAuthSuccess(emp);
+    } catch(e){
+      setErr(e.message || 'PIN invalide');
+      _pinBuffer = '';
+      renderPinDots();
+    }
+  };
+
+  async function _handleRFIDScan(uid){
+    if(typeof LuxAPI === 'undefined'){ setErr('API client indisponible'); return; }
+    try {
+      var emp = await LuxAPI.loginEmployeeRFID(uid);
+      _onAuthSuccess(emp);
+    } catch(e){
+      setErr(e.message || 'Badge non reconnu');
+    }
+  }
+
+  function _onAuthSuccess(emp){
+    setErr('');
+    if(typeof toast === 'function') toast('✓ Bienvenue ' + (emp.name || 'Employé'));
+    _updateEmployeeBadge(emp);
+    closeEmpAuth();
+  }
+
+  function _updateEmployeeBadge(emp){
+    var badge = $('emp-badge');
+    var nameEl = $('emp-badge-name');
+    if(badge && nameEl){
+      nameEl.textContent = (emp && emp.name) ? emp.name : '—';
+      badge.style.display = emp ? 'inline-flex' : 'none';
+    }
+  }
+
+  window.openEmpAuth = function(options){
+    options = options || {};
+    _pinBuffer = '';
+    _rfidBuffer = '';
+    renderPinDots();
+    setErr('');
+    if(options.sub) {
+      var subEl = $('emp-auth-sub');
+      if(subEl) subEl.textContent = options.sub;
+    }
+    var ov = $('emp-auth-ov');
+    if(ov) ov.classList.add('open');
+    // Focus hidden input to capture RFID keystrokes
+    setTimeout(function(){
+      var cap = $('emp-rfid-capture');
+      if(cap) cap.focus();
+    }, 50);
+  };
+
+  window.closeEmpAuth = function(){
+    var ov = $('emp-auth-ov');
+    if(ov) ov.classList.remove('open');
+  };
+
+  // Trigger switch from the topbar badge
+  window.openSwitchEmployee = function(){
+    if(typeof LuxAPI !== 'undefined') LuxAPI.switchEmployee();
+    _updateEmployeeBadge(null);
+    openEmpAuth({ sub: 'Changer d\'employé — scannez ou entrez votre PIN' });
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // RFID / DALLAS KEY — Global keystroke detector
+  // ───────────────────────────────────────────────────────────────
+  // The reader emits characters as fast HID keyboard keystrokes ending with Enter.
+  // We distinguish reader from human by measuring inter-key gap (< 40ms = reader).
+  // ═══════════════════════════════════════════════════════════════
+  document.addEventListener('keydown', function(ev){
+    // Only act when auth overlay is open OR when no input/textarea is focused
+    var ov = $('emp-auth-ov');
+    var overlayOpen = ov && ov.classList.contains('open');
+    var active = document.activeElement;
+    var typingInField = active && ['INPUT','TEXTAREA','SELECT'].indexOf(active.tagName) !== -1
+                      && active.id !== 'emp-rfid-capture';
+    if(!overlayOpen && typingInField) return; // don't hijack normal typing
+
+    var now = Date.now();
+    var gap = now - _rfidLastKeyTs;
+    _rfidLastKeyTs = now;
+
+    if(ev.key === 'Enter'){
+      if(_rfidActive && _rfidBuffer.length >= RFID_MIN_LENGTH){
+        ev.preventDefault();
+        var uid = _rfidBuffer;
+        _rfidBuffer = '';
+        _rfidActive = false;
+        // If overlay is closed and a reader scan arrived → open overlay with progress
+        if(!overlayOpen) openEmpAuth({ sub: 'Badge détecté — vérification...' });
+        _handleRFIDScan(uid);
+      } else {
+        _rfidBuffer = '';
+        _rfidActive = false;
+      }
+      return;
+    }
+
+    // Only printable characters are part of a UID
+    if(ev.key.length !== 1) return;
+
+    // Gap test: small gap → reader is transmitting
+    if(gap < RFID_MAX_GAP_MS){
+      _rfidActive = true;
+      _rfidBuffer += ev.key;
+      if(_rfidBuffer.length > 64) _rfidBuffer = _rfidBuffer.slice(-64); // cap
+    } else {
+      // Either first key of a scan (ambiguous) or human typing
+      _rfidActive = false;
+      _rfidBuffer = ev.key; // start fresh; if next key comes fast → it's a reader
+    }
+  }, true);
+
+  // ═══════════════════════════════════════════════════════════════
+  // INIT — decide whether to require auth based on URL mode
+  // ═══════════════════════════════════════════════════════════════
+  function _needsAuth(mode){
+    // POS + admin + staff + kds require employee auth; site and ext don't.
+    var PROTECTED = ['pos','admin','staff','kds','stock','home'];
+    return PROTECTED.indexOf(mode) !== -1;
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var mode = params.get('mode') || 'home';
+      _authRequired = _needsAuth(mode);
+
+      // Restore any existing employee session
+      var existing = (typeof LuxAPI !== 'undefined') ? LuxAPI.currentEmployee() : null;
+      if(existing){
+        _updateEmployeeBadge(existing);
+      } else if(_authRequired){
+        // Show the auth overlay
+        setTimeout(function(){ openEmpAuth({}); }, 150);
+      }
+    } catch(e){ console.warn('[LUX Auth]', e); }
+  });
+
+})();
+</script>
+
 </body>
 </html>

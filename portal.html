@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>LUX — بوابة الموظفين</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<script src="api-client.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -409,32 +410,30 @@ function activeEmps(){
 }
 
 // ════════════════════════════════════════════════════════
-//  API Configuration — same as index.html
+//  API Configuration — Railway First (via LuxAPI)
 // ════════════════════════════════════════════════════════
-var API_URL = 'https://cafeslux-api-production.up.railway.app';
+var API_URL = 'https://cafeslux-api-production.up.railway.app'; // kept for legacy references
 
-// Try to load employees from API, fallback to local
+// Initialize LuxAPI ASAP (non-blocking)
+if(window.LuxAPI) LuxAPI.init().catch(function(){});
+
+// Load employees from Railway via LuxAPI (fresh read)
 async function fetchEmpsFromAPI(){
   try {
-    var res = await fetch(API_URL + '/api/employees', {
-      headers: {'Authorization': 'Bearer ' + (localStorage.getItem('lux_auth_token')||'')}
-    });
-    if(res.ok){
-      var data = await res.json();
-      if(data && data.length) { EMPS = data; localStorage.setItem('lux_emps_cache', JSON.stringify(data)); }
+    if(!window.LuxAPI) return;
+    var data = await LuxAPI.getFreshEmployees();
+    if(data && data.length){
+      EMPS = data;
+      localStorage.setItem('lux_emps_cache', JSON.stringify(data));
     }
   } catch(e){ console.warn('[Portal] API offline, using local data'); }
 }
 
-// Sync requests to API
+// Sync advance request via LuxAPI (handles offline queue automatically)
 async function syncReqsToAPI(req){
   try {
-    await fetch(API_URL + '/api/advance-requests', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('lux_auth_token')||'')},
-      body: JSON.stringify(req)
-    });
-  } catch(e){ console.warn('[Portal] Sync failed, stored locally'); }
+    if(window.LuxAPI) await LuxAPI.createAdvanceRequest(req);
+  } catch(e){ console.warn('[Portal] Sync failed:', e.message); }
 }
 
 // ════════════════════════════════════════════════════════
@@ -448,37 +447,31 @@ async function doLogin(){
 
   if(!user || !pass){ errEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور'; return; }
 
-  // Try cloud auth first
+  // Try cloud auth first (via LuxAPI)
   try {
-    var res = await fetch(API_URL + '/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({username: user, password: pass})
-    });
-    if(res.ok){
-      var data = await res.json();
-      if(data.token) localStorage.setItem('lux_auth_token', data.token);
-      if(data.employee){
+    if(window.LuxAPI){
+      var data = await LuxAPI.login(user, pass);
+      if(data && data.employee){
         SESS = {id:data.employee.id, name:data.employee.name, role:data.employee.role, isAdmin:data.employee.role==='admin', salary:Number(data.employee.salary||0)};
         saveSess(); launch(); toast('مرحباً ' + SESS.name + ' 👋'); return;
       }
-    } else if(res.status === 403){
-      // Pending or rejected employee
-      var errData = await res.json().catch(function(){return {};});
-      errEl.textContent = '⏳ ' + (errData.error || 'حسابك في انتظار الموافقة من المدير');
-      // Check if rejected with reason
+    }
+  } catch(e){
+    // Check status codes for better UX
+    if(e && e.status === 403){
+      errEl.textContent = '⏳ ' + (e.message || 'حسابك في انتظار الموافقة من المدير');
       var rejected = JSON.parse(localStorage.getItem('lux_emp_rejected')||'[]');
       var myRejection = rejected.find(function(r){return (r.username||'').toLowerCase() === user;});
       if(myRejection){
         errEl.innerHTML = '❌ تم رفض طلبك<br><span style="font-size:11px;color:var(--dim)">السبب: '+myRejection.reason+'</span>';
       }
       return;
-    } else if(res.status === 401){
-      var errData2 = await res.json().catch(function(){return {};});
-      errEl.textContent = '❌ ' + (errData2.error || 'كلمة المرور خاطئة');
+    } else if(e && e.status === 401){
+      errEl.textContent = '❌ ' + (e.message || 'كلمة المرور خاطئة');
       return;
     }
-  } catch(e){ /* API offline — fallback to local */ }
+    // Other errors → fall through to local auth
+  }
 
   // Local auth fallback — check admin
   if(user === 'admin' || user === 'المدير'){
@@ -519,16 +512,14 @@ async function submitNewEmpRequest(){
   if(!name||!phone||!user||!pass){ toast('⚠️ جميع الحقول المطلوبة (*) إلزامية'); return; }
   if(pass.length < 4){ toast('⚠️ كلمة المرور: 4 أحرف على الأقل'); return; }
   var req = {name:name, phone:phone, cin:cin, username:user, password:pass, status:'pending', requestDate:new Date().toISOString()};
-  // Save locally
-  var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
-  reqs.push(req); localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
-  // Try API
+  // Try API via LuxAPI (handles offline queue + local cache)
   try {
-    await fetch(API_URL + '/api/employees/register', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(req)
-    });
-  } catch(e){}
+    if(window.LuxAPI) await LuxAPI.submitJoinRequest(req);
+  } catch(e){
+    // Fallback: store locally, will be picked up by LuxAPI queue if online later
+    var reqs = JSON.parse(localStorage.getItem('lux_emp_requests')||'[]');
+    reqs.push(req); localStorage.setItem('lux_emp_requests', JSON.stringify(reqs));
+  }
   toast('✅ تم إرسال طلبك — في انتظار موافقة المدير');
   hideNewEmpForm();
 }
@@ -666,12 +657,10 @@ function saveProfile(){
 
 async function syncProfileToAPI(profile){
   try {
-    await fetch(API_URL + '/api/employees/' + SESS.id + '/profile', {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('lux_auth_token')||'')},
-      body: JSON.stringify(profile)
-    });
-  } catch(e){ console.warn('[Portal] Profile sync offline'); }
+    if(window.LuxAPI && SESS && SESS.id){
+      await LuxAPI.updateEmployee(SESS.id, profile);
+    }
+  } catch(e){ console.warn('[Portal] Profile sync:', e.message); }
 }
 
 // ════════════════════════════════════════════════════════
@@ -985,5 +974,11 @@ function toast(msg){
   setTimeout(function(){document.getElementById('ld').classList.add('out');},600);
 })();
 </script>
+
+<!-- Powered by MAESTRO OS — Global footer -->
+<div style="position:fixed;bottom:0;left:0;right:0;z-index:50;padding:5px 12px;background:rgba(7,8,13,.9);backdrop-filter:blur(6px);border-top:1px solid rgba(200,168,75,.12);text-align:center;font-size:9px;color:#5A5D64;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;pointer-events:none;font-family:'Tajawal',sans-serif">
+  Powered by <span style="color:var(--gold)">MAESTRO OS</span> — A subsidiary of NextaGlobal Holding
+</div>
+
 </body>
 </html>
