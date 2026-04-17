@@ -1260,17 +1260,25 @@ function addTakeaway(){
 
 function addToCart(n, p){
   if(!caisse.selectedTable){ toast('⚠ Selectionnez une table'); return; }
-  const ex = caisse.cart.filter(function(c){ return c.n === n; })[0];
-  if(ex) ex.q++;
-  else caisse.cart.push({n:n,p:p,q:1});
+  // v4.1: match by both short and long name keys (incoming WEB orders may use either)
+  const ex = caisse.cart.filter(function(c){ return (c.n||c.name) === n; })[0];
+  if(ex){
+    var curQ = Number(ex.q != null ? ex.q : ex.qty) || 0;
+    ex.q = curQ + 1; ex.qty = ex.q; // keep both in sync
+  } else {
+    caisse.cart.push({ n:n, p:Number(p)||0, q:1, name:n, price:Number(p)||0, qty:1 });
+  }
   renderTicket();
   toast('✓ ' + n);
 }
 
 function rmFromCart(n){
-  const ex = caisse.cart.filter(function(c){ return c.n===n; })[0];
-  if(ex && ex.q > 1) ex.q--;
-  else caisse.cart = caisse.cart.filter(function(c){ return c.n!==n; });
+  const ex = caisse.cart.filter(function(c){ return (c.n||c.name)===n; })[0];
+  if(ex){
+    var curQ = Number(ex.q != null ? ex.q : ex.qty) || 0;
+    if(curQ > 1){ ex.q = curQ - 1; ex.qty = ex.q; }
+    else caisse.cart = caisse.cart.filter(function(c){ return (c.n||c.name) !== n; });
+  }
   renderTicket();
 }
 
@@ -1288,11 +1296,15 @@ function renderTicket(){
   } else {
     let h = '';
     caisse.cart.forEach(function(c){
-      const safeName = esc(c.n);
+      // v4.1: tolerate both {n,p,q} and {name,price,qty} — defaults guard against NaN/undefined
+      const itemName = c.n || c.name || '—';
+      const itemQty  = Number(c.q != null ? c.q : c.qty) || 1;
+      const itemP    = Number(c.p != null ? c.p : c.price) || 0;
+      const safeName = esc(itemName);
       h += '<div class="t-item">';
-      h += '<div class="t-qty">' + c.q + '</div>';
-      h += '<div class="t-name">' + c.n + '</div>';
-      h += '<div class="t-price">' + (c.p*c.q).toFixed(2) + ' DH</div>';
+      h += '<div class="t-qty">' + itemQty + '</div>';
+      h += '<div class="t-name">' + itemName + '</div>';
+      h += '<div class="t-price">' + (itemP*itemQty).toFixed(2) + ' DH</div>';
       h += '<button class="t-rm" data-n="' + safeName + '">x</button>';
       h += '</div>';
     });
@@ -1301,7 +1313,12 @@ function renderTicket(){
       btn.addEventListener('click', function(){ rmFromCart(this.getAttribute('data-n')); });
     });
   }
-  const sub = caisse.cart.reduce(function(s,c){ return s+c.p*c.q; },0);
+  // v4.1: also tolerate both field shapes in subtotal computation
+  const sub = caisse.cart.reduce(function(s,c){
+    const p = Number(c.p != null ? c.p : c.price) || 0;
+    const q = Number(c.q != null ? c.q : c.qty) || 0;
+    return s + p*q;
+  }, 0);
   const tva = sub * 0.1;
   setEl('t-sub', sub.toFixed(2) + ' DH');
   setEl('t-tva', tva.toFixed(2) + ' DH');
@@ -1317,7 +1334,12 @@ function renderTicket(){
 
 function pay(mode){
   if(!caisse.cart.length){ toast('⚠ Aucun article'); return; }
-  const sub = caisse.cart.reduce(function(s,c){ return s+c.p*c.q; },0);
+  // v4.1: tolerate both {p,q} and {price,qty} shapes
+  const sub = caisse.cart.reduce(function(s,c){
+    const p = Number(c.p != null ? c.p : c.price) || 0;
+    const q = Number(c.q != null ? c.q : c.qty) || 0;
+    return s + p*q;
+  }, 0);
   const total = sub * 1.1;
   
   const tx = {
@@ -1488,10 +1510,16 @@ function _renderWebOrdersUI(orders){
     const isPending = o.status==='pending';
     h += '<div class="web-card ' + (isPending?'pending':o.status==='done'?'done':'') + '">';
     h += '<div class="web-id">🌐 Commande #' + String(o.id).slice(-6) + '</div>';
-    h += '<div style="font-size:11px;margin-bottom:4px">👤 ' + (o.customer||'?') + (o.phone?' · '+o.phone:'') + '</div>';
-    h += '<div class="web-items">' + o.items.map(function(i){return i.q+'x '+i.n;}).join(' · ') + '</div>';
+    h += '<div style="font-size:11px;margin-bottom:4px">👤 ' + (o.customer||o.name||'?') + (o.phone?' · '+o.phone:'') + '</div>';
+    // v4.1: tolerate {n,q} and {name,qty}; fall back gracefully
+    var itemsStr = (Array.isArray(o.items) ? o.items : []).map(function(i){
+      var q = i.q != null ? i.q : (i.qty != null ? i.qty : 1);
+      var n = i.n || i.name || '—';
+      return q + 'x ' + n;
+    }).join(' · ');
+    h += '<div class="web-items">' + (itemsStr || '—') + '</div>';
     h += '<div class="web-footer">';
-    h += '<span style="font-family:Playfair Display,serif;color:var(--gold);font-size:15px">' + o.total + ' DH</span>';
+    h += '<span style="font-family:Playfair Display,serif;color:var(--gold);font-size:15px">' + (o.total || '0.00') + ' DH</span>';
     h += '<span class="badge ' + (isPending?'r':o.status==='accepted'?'gold':'g') + '">' + (isPending?'En attente':o.status==='accepted'?'Acceptee':'Terminee') + '</span>';
     h += '</div>';
     if(o.notes) h += '<div style="font-size:10px;color:var(--muted);margin-top:5px">📝 ' + o.notes + '</div>';
@@ -1506,6 +1534,27 @@ function _renderWebOrdersUI(orders){
   el.innerHTML = h;
 }
 
+// v4.1 FIX: Normalize order item shapes — tolerate both short (n/p/q) and
+// long (name/price/qty) keys. Defaults prevent undefined/NaN in renderTicket.
+function _normalizeItem(item){
+  if(!item || typeof item !== 'object') return { n:'—', p:0, q:1 };
+  var name  = item.n     || item.name    || item.productName || item.full_name || '—';
+  var price = item.p     != null ? item.p
+            : item.price != null ? item.price
+            : item.unitPrice != null ? item.unitPrice : 0;
+  var qty   = item.q     != null ? item.q
+            : item.qty   != null ? item.qty
+            : item.quantity != null ? item.quantity : 1;
+  // Coerce to numbers, fall back on NaN guard
+  price = Number(price); if(!isFinite(price)) price = 0;
+  qty   = Number(qty);   if(!isFinite(qty) || qty <= 0) qty = 1;
+  return { n:String(name), p:price, q:qty, name:String(name), price:price, qty:qty };
+}
+function _normalizeItems(items){
+  if(!Array.isArray(items)) return [];
+  return items.map(_normalizeItem);
+}
+
 function acceptWebOrder(btn){
   const id = parseInt(btn.getAttribute('data-woid'));
   const orders = getLS('lux_web_orders',[]);
@@ -1514,16 +1563,18 @@ function acceptWebOrder(btn){
   o.status = 'accepted';
   setLS('lux_web_orders', orders);
   if(typeof LuxAPI !== 'undefined') LuxAPI.updateOrderStatus(id, 'accepted').catch(()=>{});
+  // v4.1: Normalize every item so renderTicket never sees undefined/NaN
+  const safeItems = _normalizeItems(o.items);
   // Load into POS
   const takeId = 'WEB' + String(id).slice(-4);
-  caisse.tableOrders[takeId] = o.items.slice();
+  caisse.tableOrders[takeId] = safeItems.slice();
   caisse.selectedTable = takeId;
-  caisse.cart = o.items.slice();
-  setEl('pos-title', 'Web — ' + (o.customer||''));
+  caisse.cart = safeItems.slice();
+  setEl('pos-title', 'Web — ' + (o.customer || o.name || o.phone || ''));
   renderWebOrders();
   renderTicket();
   showPage('pos');
-  toast('🌐 Commande chargee dans la caisse!');
+  toast('🌐 Commande chargée dans la caisse!');
 }
 
 function rejectWebOrder(btn){
@@ -2640,7 +2691,12 @@ function renderKDS(){
   var orders = getLS('lux_web_orders', []).filter(function(o){ return (o.status||'pending') !== 'delivered'; });
   if(!orders.length){ el.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--muted)">Aucune commande à préparer.</div>'; return; }
   el.innerHTML = orders.slice(0,12).map(function(o, idx){
-    var items = (o.items||[]).map(function(i){ return '<div style="font-size:12px;color:var(--text);margin-bottom:4px">• '+i.q+' × '+i.n+'</div>'; }).join('');
+    // v4.1: tolerate both {n,q} and {name,qty} shapes
+    var items = (o.items||[]).map(function(i){
+      var qty  = i.q != null ? i.q : (i.qty != null ? i.qty : 1);
+      var name = i.n || i.name || '—';
+      return '<div style="font-size:12px;color:var(--text);margin-bottom:4px">• '+qty+' × '+name+'</div>';
+    }).join('');
     var type = o.type === 'delivery' ? '🛵 Livraison' : (o.type === 'table' ? '🪑 Sur place' : '🥡 Emporter');
     return '<div class="card" style="border-color:rgba(201,168,76,.3)">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><div style="font-family:Playfair Display,serif;color:var(--gold);font-size:16px">Commande #'+String(o.id).slice(-6)+'</div><span class="badge gold">'+type+'</span></div>'+
