@@ -1277,8 +1277,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <span class="ts">الموظفون · الرواتب · الطلبات</span>
     </div>
 
-    <!-- LUX Admin (NEW — v4.1) — quick access to the Maestro admin hub -->
-    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();window.open('lux-admin.html','_blank')" onclick="window.open('lux-admin.html','_blank')" style="border-color:rgba(201,168,76,.25)">
+    <!-- LUX Admin (v4.2 — PIN protected like other pro access) -->
+    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();askPIN('lux-admin')" onclick="askPIN('lux-admin')" style="border-color:rgba(201,168,76,.25)">
       <span class="ti">⚙️</span>
       <span class="tn">LUX Admin</span>
       <span class="ts">Stations live · Maestro Hub</span>
@@ -1503,7 +1503,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
     <button class="s-tab" id="st-offers" onclick="switchTab('offers',null);renderOffers()">🌟 Offres Spéciales</button>
     <button class="s-tab" id="st-tracking" onclick="switchTab('tracking',null)">📦 Mes Commandes</button>
     <button class="s-tab" id="st-account" onclick="switchTab('account',null)">👤 Mon Compte</button>
-    <button class="s-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
+    <button class="s-tab non-admin-tab" id="st-reservation" onclick="switchTab('reservation',null);initReservation()">📅 Réserver</button>
     <button class="s-tab admin-only-tab" id="st-admin-dash" onclick="switchTab('admin-dash',null);loadDashboardData()" style="display:none">📊 Dashboard</button>
     <button class="s-tab admin-only-tab" id="st-qr" onclick="switchTab('qr',null);buildQRGrid()" style="display:none">📱 QR Tables</button>
     <button class="s-tab admin-only-tab" id="st-analytics" onclick="switchTab('analytics',null);buildAnalytics()" style="display:none">📊 Analytics</button>
@@ -1817,6 +1817,19 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       </div>
       <input class="res-input" type="text" id="gc-message" placeholder="Message personnalisé (optionnel)..." style="width:100%;margin-bottom:12px">
       <input class="res-input" type="tel" id="gc-phone" placeholder="Téléphone pour recevoir le code" style="width:100%;margin-bottom:14px">
+
+      <!-- v4.2: Payment method selector for gift cards -->
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--muted);letter-spacing:.5px">💳 Mode de paiement</div>
+      <div id="gc-pay-methods" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button type="button" class="gc-pm-btn sel" data-pm="cash" onclick="selectGCPayMethod('cash',this)" style="padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px">💵 Espèces</button>
+        <button type="button" class="gc-pm-btn" data-pm="card" onclick="selectGCPayMethod('card',this)" style="padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px">💳 Carte</button>
+        <button type="button" class="gc-pm-btn" data-pm="paypal" onclick="selectGCPayMethod('paypal',this)" style="padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px">🅿️ PayPal</button>
+        <button type="button" class="gc-pm-btn" data-pm="gpay" onclick="selectGCPayMethod('gpay',this)" style="padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px">G Pay</button>
+      </div>
+      <style>
+        .gc-pm-btn.sel{border-color:var(--gold)!important;background:rgba(201,168,76,.1)!important;color:var(--gold)!important;font-weight:600}
+      </style>
+
       <button onclick="purchaseGiftCard()" style="width:100%;padding:14px;background:var(--gold);color:#000;border:none;border-radius:10px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;cursor:pointer;">🎁 Générer la Carte Cadeau</button>
       <!-- Check balance -->
       <div style="margin-top:24px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">
@@ -2212,7 +2225,7 @@ let orderType = 'table';
 let currentPINTarget = null;
 let pinBuffer = '';
 
-const PINS = { pos: '1234', admin: '9999', staff: '1234', kds: '1234', stock: '9999' };
+const PINS = { pos: '1234', admin: '9999', 'lux-admin': '9999', staff: '1234', kds: '1234', stock: '9999' };
 
 // ─── UTILS ───────────────────────────────────────────────
 function getLS(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
@@ -2614,11 +2627,24 @@ async function loadDashKPIs(){
 }
 
 async function loadDashPreviews(){
+  // v4.2: MERGE server + local cache so newly-submitted items always appear,
+  // even if server is 404. Dedup by id/phone+date+time.
   var resEl = document.getElementById('dash-recent-res');
   if(resEl){
     var reservations = [];
     try { if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()) reservations = await LuxAPI.getReservations(); } catch(e){}
-    if(!reservations.length) reservations = getLS('lux_reservations', []);
+    // Always merge with local cache (includes just-submitted items in offline queue)
+    try {
+      var local = JSON.parse(localStorage.getItem('lux_reservations') || '[]');
+      var seen = {};
+      reservations.forEach(function(r){ seen[(r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'')] = true; });
+      local.forEach(function(r){
+        var k = (r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'');
+        if(!seen[k]){ reservations.push(r); seen[k] = true; }
+      });
+    } catch(_){}
+    // Sort newest first
+    reservations.sort(function(a,b){ return new Date(b.date||b.createdAt||0) - new Date(a.date||a.createdAt||0); });
     if(!reservations.length){
       resEl.innerHTML = '<div style="color:var(--dim);padding:8px 0">Aucune réservation</div>';
     } else {
@@ -2633,6 +2659,16 @@ async function loadDashPreviews(){
   if(empEl){
     var employees = [];
     try { employees = await LuxAPI.getEmployees() || []; } catch(e){}
+    // v4.2: merge with locally-stored join requests (from portal.html)
+    try {
+      var localReqs = JSON.parse(localStorage.getItem('lux_emp_requests') || '[]');
+      var seenU = {};
+      employees.forEach(function(e){ if(e.username) seenU[e.username] = true; });
+      localReqs.forEach(function(r){
+        r.status = r.status || 'pending';
+        if(!r.username || !seenU[r.username]) employees.push(r);
+      });
+    } catch(_){}
     var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
     if(!pending.length){
       empEl.innerHTML = '<div style="color:var(--dim);padding:8px 0">✅ Aucune demande en attente</div>';
@@ -2655,7 +2691,7 @@ function askPIN(target){
   updatePinDots();
   var errEl = document.getElementById('pin-err');
   if(errEl) errEl.textContent = '';
-  var labels = {pos:'Caisse POS',admin:'Administration',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
+  var labels = {pos:'Caisse POS',admin:'Administration','lux-admin':'LUX Admin (Maestro Hub)',staff:'Staff Portal',kds:'Kitchen Display',stock:'Stock'};
   var subEl = document.getElementById('pin-modal-sub');
   if(subEl) subEl.textContent = 'Accès: ' + (labels[target]||target);
   var modal = document.getElementById('pin-modal');
@@ -2715,6 +2751,7 @@ function checkPIN(){
     var routes = {
       'pos':   'cafe-lux.html?mode=pos&focus=1',
       'admin': '__STAY__',
+      'lux-admin': 'lux-admin.html',
       'staff': 'portal.html',
       'kds':   'cafe-lux.html?mode=kds',
       'stock': '__STAY__'
@@ -2742,7 +2779,7 @@ function checkPIN(){
     if(targetUrl === '__STAY__'){
       enterAdminDashboard();
     } else if(targetUrl){
-      if(targetRole === 'staff'){
+      if(targetRole === 'staff' || targetRole === 'lux-admin'){
         window.open(targetUrl, '_blank');
       } else {
         window.location.href = targetUrl;
@@ -2767,6 +2804,8 @@ function showAdminTabs(){
       var role = session.role || '';
       if(['admin','pos','staff','kds','stock'].indexOf(role) !== -1){
         document.querySelectorAll('.admin-only-tab').forEach(function(el){ el.style.display = ''; });
+        // v4.2: hide public-facing duplicates (like Réserver) when admin is logged in
+        document.querySelectorAll('.non-admin-tab').forEach(function(el){ el.style.display = 'none'; });
       }
     }
   } catch(e){}
@@ -3812,7 +3851,8 @@ window.addEventListener('DOMContentLoaded', function(){
   try {
     const params = new URLSearchParams(window.location.search);
     const tableNum = params.get('table');
-    if(tableNum && parseInt(tableNum) >= 1 && parseInt(tableNum) <= 20){
+    if(tableNum && parseInt(tableNum) >= 1 && parseInt(tableNum) <= 50){
+      console.log('[LUX] QR scan detected: Table', tableNum, '— bypassing gateway');
       // Auto-enter public menu (skip gateway)
       setTimeout(function(){
         var gw = document.getElementById('gateway');
@@ -3829,7 +3869,7 @@ window.addEventListener('DOMContentLoaded', function(){
     } else {
       if(typeof detectTableFromURL === 'function') detectTableFromURL();
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[LUX] QR detection error:', e); }
   try {
     if(typeof showAdminTabs === 'function') showAdminTabs();
   } catch(e) {}
@@ -4622,6 +4662,7 @@ function joinGroupOrder(gid, name){
 // FEATURE 6: DIGITAL GIFT CARDS
 // ══════════════════════════════════════════════════════════════
 let selectedGCAmount = 50;
+let selectedGCPayMethod = 'cash'; // v4.2: default payment method
 
 function selectGCAmount(amt, btn){
   selectedGCAmount = amt;
@@ -4629,6 +4670,14 @@ function selectGCAmount(amt, btn){
   btn.classList.add('sel');
   document.getElementById('gc-amount-display').textContent = amt;
 }
+
+// v4.2: Gift Card payment method selector
+function selectGCPayMethod(method, btn){
+  selectedGCPayMethod = method;
+  document.querySelectorAll('.gc-pm-btn').forEach(b => b.classList.remove('sel'));
+  if(btn) btn.classList.add('sel');
+}
+window.selectGCPayMethod = selectGCPayMethod;
 
 function generateGCCode(){
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4645,6 +4694,10 @@ async function purchaseGiftCard(){
   if(!sender||!recipient){ toast('⚠ Offrant et destinataire requis'); return; }
   if(!phone){ toast('⚠ Téléphone requis'); return; }
 
+  // v4.2: validate payment method
+  var pmLabels = {cash:'Espèces', card:'Carte Bancaire', paypal:'PayPal', gpay:'Google Pay'};
+  var payLabel = pmLabels[selectedGCPayMethod] || 'Espèces';
+
   // RAILWAY FIRST — let LuxAPI handle server + offline queue
   var savedGC = null;
   try {
@@ -4653,11 +4706,26 @@ async function purchaseGiftCard(){
       amount: selectedGCAmount,
       balance: selectedGCAmount,
       code: generateGCCode(),
+      payMethod: selectedGCPayMethod,   // v4.2: persist payment method
+      payStatus: selectedGCPayMethod === 'cash' ? 'pending' : 'paid',
       expires: new Date(Date.now() + 365*24*3600*1000).toISOString()
     });
   } catch(e){
     toast('⚠ Erreur: ' + (e.message || 'création échouée'));
     return;
+  }
+
+  // v4.2: also record as transaction for accounting
+  if(typeof LuxAPI !== 'undefined' && LuxAPI.saveTransaction){
+    LuxAPI.saveTransaction({
+      type: 'giftcard_purchase',
+      code: savedGC.code,
+      amount: selectedGCAmount,
+      total: selectedGCAmount,
+      payMethod: selectedGCPayMethod,
+      client: sender,
+      recipient: recipient
+    });
   }
 
   var code = savedGC.code;
@@ -4690,26 +4758,41 @@ async function checkGCBalance(){
   if(!el) return;
   el.innerHTML = '<span style="color:var(--muted)">⏳ Vérification...</span>';
 
-  // RAILWAY FIRST
+  // v4.2: Try server first, fall back to local cache (for cards created offline)
+  var gc = null;
   try {
-    var gc = await LuxAPI.checkGiftCard(code);
-    if(!gc){
-      el.innerHTML = '<span style="color:var(--red)">❌ Code invalide</span>';
-      return;
-    }
-    var expDate = gc.expires ? new Date(gc.expires).toLocaleDateString('fr-MA') : '—';
-    if(gc.balance <= 0){
-      el.innerHTML = '<span style="color:var(--muted)">💳 Carte épuisée · Solde: 0 MAD · Montant initial: '+gc.amount+' MAD</span>';
-    } else if(gc.expires && new Date(gc.expires) < new Date()){
-      el.innerHTML = '<span style="color:var(--red)">⏰ Carte expirée le '+expDate+'</span>';
-    } else {
-      var pct = Math.round((gc.balance/gc.amount)*100);
-      el.innerHTML = '<div style="color:var(--green)">✅ Solde disponible: <strong style="font-size:16px">'+gc.balance+' MAD</strong></div>'
-        +'<div style="font-size:11px;color:var(--muted);margin-top:4px">Utilisé: '+(gc.amount-gc.balance)+' / '+gc.amount+' MAD · Expire: '+expDate+'</div>'
-        +'<div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--gold),#E8C97A);border-radius:3px"></div></div>';
-    }
+    gc = await LuxAPI.checkGiftCard(code);
   } catch(e){
-    el.innerHTML = '<span style="color:var(--red)">⚠ Serveur inaccessible — réessayez</span>';
+    console.warn('[LUX] Gift card check via API failed:', e.message);
+  }
+  // Fallback to local cache (covers offline-created cards not yet synced)
+  if(!gc){
+    try {
+      var local = JSON.parse(localStorage.getItem('lux_gift_cards') || '[]');
+      gc = local.find(function(g){ return g.code === code; }) || null;
+    } catch(_){}
+  }
+
+  if(!gc){
+    el.innerHTML = '<span style="color:var(--red)">❌ Code invalide</span>';
+    return;
+  }
+
+  // v4.2: tolerate both "balance" and "remaining" field names from server
+  var balance = gc.balance != null ? gc.balance : (gc.remaining != null ? gc.remaining : 0);
+  var initial = gc.amount != null ? gc.amount : (gc.initial != null ? gc.initial : balance);
+  var used = Math.max(0, initial - balance);
+
+  var expDate = gc.expires ? new Date(gc.expires).toLocaleDateString('fr-MA') : '—';
+  if(balance <= 0){
+    el.innerHTML = '<span style="color:var(--muted)">💳 Carte épuisée · Solde restant: 0 MAD · Montant initial: '+initial+' MAD</span>';
+  } else if(gc.expires && new Date(gc.expires) < new Date()){
+    el.innerHTML = '<span style="color:var(--red)">⏰ Carte expirée le '+expDate+'</span>';
+  } else {
+    var pct = initial > 0 ? Math.round((balance/initial)*100) : 0;
+    el.innerHTML = '<div style="color:var(--green);font-size:13px">✅ Solde restant: <strong style="font-size:18px">'+balance+' MAD</strong></div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:4px">Utilisé: '+used+' / '+initial+' MAD · Expire: '+expDate+'</div>'
+      +'<div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--gold),#E8C97A);border-radius:3px"></div></div>';
   }
 }
 
@@ -5540,27 +5623,39 @@ async function loadAdminReservations(){
   if(!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
 
-  // v4.1 FIX: Try server first, but NEVER stay stuck on loading — always fall back
-  // to local cache so the admin sees their data (including the ones just submitted).
+  // v4.2: ALWAYS merge server data with local cache so just-submitted reservations
+  // appear immediately (doesn't depend on server success).
   var list = [];
-  var serverFailed = false;
   try {
     list = await LuxAPI.getFreshReservations() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
     console.warn('[LUX] Reservations API failed, using cache:', e.message);
-    // Fall through to local cache
-    try { list = JSON.parse(localStorage.getItem('lux_reservations')) || []; } catch(_){ list = []; }
   }
 
+  // Merge with local cache — dedupe by id OR by phone+date+time
+  try {
+    var local = JSON.parse(localStorage.getItem('lux_reservations') || '[]');
+    var seenIds = {}, seenKeys = {};
+    list.forEach(function(r){
+      if(r.id != null) seenIds[r.id] = true;
+      seenKeys[(r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'')] = true;
+    });
+    local.forEach(function(r){
+      if(r.id != null && seenIds[r.id]) return;
+      var k = (r.phone||'')+'|'+(r.date||'')+'|'+(r.time||'');
+      if(seenKeys[k]) return;
+      list.push(r);
+      seenKeys[k] = true;
+    });
+  } catch(_){}
+
   if(!list.length){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">' +
-      (serverFailed ? '⚠ Serveur inaccessible — aucune donnée en cache' : 'Aucune réservation') + '</div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucune réservation</div>';
     return;
   }
 
@@ -5639,33 +5734,37 @@ async function loadAdminEmployees(){
   if(!listEl) return;
   listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
 
-  // v4.1 FIX: Try Railway first, fall back to local cache (which includes
-  // join-request POSTs still in offline queue + any server hits already cached)
+  // v4.2: ALWAYS merge server + local
   var employees = [];
-  var serverFailed = false;
   try {
     employees = await LuxAPI.getFreshEmployees() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
-    console.warn('[LUX] Employees API failed, using cache:', e.message);
-    // Fall back: read local cache (includes v4.0 lux_employees_full + legacy lux_emp_requests)
-    try { employees = JSON.parse(localStorage.getItem('lux_employees_full')) || []; } catch(_){ employees = []; }
-    // Merge pending join-requests stored locally (portal.html fallback)
-    try {
-      var localReqs = JSON.parse(localStorage.getItem('lux_emp_requests') || '[]');
-      localReqs.forEach(function(r){
-        r.status = r.status || 'pending';
-        if(!employees.some(function(e){ return (e.username||'') === (r.username||'') && (e.username||'') !== ''; })){
-          employees.push(r);
-        }
-      });
-    } catch(_){}
+    console.warn('[LUX] Employees API failed:', e.message);
   }
+  // Merge local caches (employees_full + join-requests from portal)
+  try {
+    var localFull = JSON.parse(localStorage.getItem('lux_employees_full') || '[]');
+    var localReqs = JSON.parse(localStorage.getItem('lux_emp_requests') || '[]');
+    var seenU = {}, seenI = {};
+    employees.forEach(function(e){
+      if(e.username) seenU[e.username] = true;
+      if(e.id != null) seenI[e.id] = true;
+    });
+    localFull.forEach(function(e){
+      if((e.username && seenU[e.username]) || (e.id != null && seenI[e.id])) return;
+      employees.push(e);
+      if(e.username) seenU[e.username] = true;
+    });
+    localReqs.forEach(function(r){
+      r.status = r.status || 'pending';
+      if(!r.username || !seenU[r.username]) employees.push(r);
+    });
+  } catch(_){}
 
   var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
   var active = employees.filter(function(e){ return e.status !== 'pending' && e.role !== 'pending' && e.status !== 'rejected' && e.status !== 'inactive'; });
@@ -5775,33 +5874,35 @@ async function loadAdminCustomers(){
   if(!listEl) return;
   listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
 
-  // v4.1 FIX: Graceful fallback to local cache if server fails — ensures new
-  // customers (registered via enterMonEspace) always appear in admin panel.
+  // v4.2: ALWAYS merge server + local (registerCustomer writes to lux_web_customers)
   var customers = [];
-  var serverFailed = false;
   try {
     customers = await LuxAPI.getFreshCustomers() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
-    console.warn('[LUX] Customers API failed, using cache:', e.message);
-    // Fall back: read local customer cache (lux_web_customers is keyed by phone)
-    try {
-      var localMap = JSON.parse(localStorage.getItem('lux_web_customers') || '{}');
-      customers = Object.values(localMap).map(function(c){
-        return {
-          name: c.name || 'Anonyme',
-          phone: c.phone || '',
-          loyaltyPoints: c.points || c.loyaltyPoints || 0,
-          _count: { orders: (c.orders || []).length }
-        };
-      });
-    } catch(_){ customers = []; }
+    console.warn('[LUX] Customers API failed:', e.message);
   }
+  // Merge local cache — new accounts written by registerCustomer live here
+  try {
+    var localMap = JSON.parse(localStorage.getItem('lux_web_customers') || '{}');
+    var seenPhone = {};
+    customers.forEach(function(c){ if(c.phone) seenPhone[c.phone] = true; });
+    Object.values(localMap).forEach(function(c){
+      if(!c.phone || seenPhone[c.phone]) return;
+      customers.push({
+        name: c.name || 'Anonyme',
+        phone: c.phone || '',
+        loyaltyPoints: c.points || c.loyaltyPoints || 0,
+        _count: { orders: (c.orders || []).length },
+        createdAt: c.created || c.createdAt
+      });
+      seenPhone[c.phone] = true;
+    });
+  } catch(_){}
 
   function getLevel(pts){
     if(pts >= 600) return {name:'Diamond',icon:'💎',color:'#5B8DEF'};
@@ -6210,7 +6311,14 @@ function autoEnterKDS() {
   transform: scale(1.1);
 }
 </style>
-
+  <!-- WhatsApp Button -->
+  <a href="https://wa.me/212677717201?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D9%85%D8%B9%20Caf%C3%A9%20LUX" target="_blank" id="fab-wa" style="width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 16px rgba(37,211,102,.35);transition:all .3s;display:flex;align-items:center;justify-content:center;text-decoration:none" title="📲 WhatsApp">
+    📲
+  </a>
+  <!-- Sync Button (admin only) -->
+  <button id="fab-sync" onclick="runManualSync()" style="display:none;width:48px;height:48px;border-radius:50%;background:var(--bg3);color:var(--gold);border:1px solid var(--border-gold);cursor:pointer;font-size:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .3s;align-items:center;justify-content:center" title="🔄 Sync données">
+    🔄
+  </button>
 </div>
 
 <style>
