@@ -65,7 +65,9 @@
   async function _req(method, path, data, opts = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (_token && !opts.skipAuth)  headers['Authorization'] = 'Bearer ' + _token;
-    if (_empSession && _empSession.id) headers['X-Employee-Id'] = String(_empSession.id);
+    // v4.2: X-Employee-Id header removed — Railway CORS preflight blocked it.
+    // Employee tagging is still done via _withEmp() in the request body for
+    // orders / transactions. This keeps CORS clean without needing server changes.
 
     const fetchOpts = { method, headers };
     if (data !== undefined) fetchOpts.body = JSON.stringify(data);

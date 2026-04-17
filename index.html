@@ -1226,15 +1226,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <span class="ts">Profil · Commandes · Cadeau</span>
     </div>
 
-    <!-- 5. Gaming Zone (NEW — v4.1) -->
-    <div class="gw-tile public" ontouchstart="event.preventDefault();event.stopPropagation();window.open('gaming.html','_blank')" onclick="window.open('gaming.html','_blank')" style="border-color:rgba(0,200,255,.2)">
-      <span class="ti">🎮</span>
-      <span class="tn">Gaming Zone</span>
-      <span class="ts">PS5 Pro · Réserver une station</span>
-      <span class="badge-new" style="background:#00c8ff;color:#000">NEW</span>
-    </div>
-
-    <!-- 6. LUX SaaS B2B -->
+    <!-- 5. LUX SaaS B2B -->
     <div class="gw-tile public saas-tile" ontouchstart="event.preventDefault();event.stopPropagation();window.open('lux-saas.html','_blank')" onclick="window.open('lux-saas.html','_blank')" style="grid-column:span 2">
       <span class="ti">✦</span>
       <span class="tn">LUX SaaS Solution</span>
@@ -1275,13 +1267,6 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
       <span class="ti">👥</span>
       <span class="tn">Staff Portal</span>
       <span class="ts">الموظفون · الرواتب · الطلبات</span>
-    </div>
-
-    <!-- LUX Admin (NEW — v4.1) — quick access to the Maestro admin hub -->
-    <div class="gw-tile private" ontouchstart="event.preventDefault();event.stopPropagation();window.open('lux-admin.html','_blank')" onclick="window.open('lux-admin.html','_blank')" style="border-color:rgba(201,168,76,.25)">
-      <span class="ti">⚙️</span>
-      <span class="tn">LUX Admin</span>
-      <span class="ts">Stations live · Maestro Hub</span>
     </div>
 
   </div>
@@ -1719,12 +1704,33 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="forceSyncDashboard()" style="padding:8px 16px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);border-radius:8px;color:#00c8ff;cursor:pointer;font-size:12px">⚡ Force Refresh</button>
           <button onclick="loadDashboardData()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+          <button onclick="window.open('cafe-lux.html?mode=admin','_blank')" style="padding:8px 16px;background:rgba(201,168,76,.1);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🖥️ POS Complet →</button>
         </div>
       </div>
       <div class="an-kpi-grid" id="dash-kpis" style="margin-bottom:24px">
         <div class="an-kpi"><div class="an-kpi-val" style="color:var(--muted)">—</div><div class="an-kpi-lbl">Chargement...</div></div>
       </div>
-      <!-- v4.1: Quick Access cards removed — accessible from the Gateway now -->
+      <!-- Quick Access Cards: Gaming + LUX Admin (Maestro Hub) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px">
+        <div onclick="openGamingZone()" style="background:linear-gradient(135deg,rgba(0,200,255,.08),rgba(201,168,76,.05));border:1px solid rgba(0,200,255,.25);border-radius:14px;padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(0,200,255,.5)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(0,200,255,.25)'">
+          <div style="font-size:32px;margin-bottom:8px">🎮</div>
+          <div style="font-size:15px;font-weight:700;color:var(--gold)">Gaming Zone</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">PS5 Stations · Maestro Hub</div>
+          <div style="font-size:10px;color:#00c8ff;margin-top:6px;font-weight:600">▶ OUVRIR L'INTERFACE</div>
+        </div>
+        <div onclick="window.open('lux-admin.html','_blank')" style="background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(15,23,42,.5));border:1px solid var(--border-gold);border-radius:14px;padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='var(--gold)'" onmouseout="this.style.transform='';this.style.borderColor='var(--border-gold)'">
+          <div style="font-size:32px;margin-bottom:8px">⚙️</div>
+          <div style="font-size:15px;font-weight:700;color:var(--gold)">LUX Admin</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Statistiques · Stations live</div>
+          <div style="font-size:10px;color:var(--gold);margin-top:6px;font-weight:600">▶ OUVRIR PANEL</div>
+        </div>
+        <div onclick="window.open('portal.html','_blank')" style="background:linear-gradient(135deg,rgba(61,190,122,.06),rgba(15,23,42,.5));border:1px solid rgba(61,190,122,.25);border-radius:14px;padding:22px;cursor:pointer;transition:.2s;text-align:center" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(61,190,122,.5)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(61,190,122,.25)'">
+          <div style="font-size:32px;margin-bottom:8px">👥</div>
+          <div style="font-size:15px;font-weight:700;color:var(--gold)">Staff Portal</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Pointage · Avances · Paie</div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px;font-weight:600">▶ OUVRIR PORTAL</div>
+        </div>
+      </div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <div style="font-size:14px;font-weight:600;color:var(--gold)">📅 Dernières Réservations</div>
@@ -2953,12 +2959,7 @@ function sendOrder(){
   const order={
     id:Date.now(),date:today(),time:nowTime(),
     customer:name,phone,type:orderType,address:addr,notes,
-    // v4.1 FIX: emit BOTH short (n/p/q) AND long (name/price/qty) keys so
-    // any downstream reader (cafe-lux POS renderTicket, KDS, receipt) works.
-    items:cart.map(c=>({
-      n: c.n, p: Number(c.p)||0, q: Number(c.q)||1,
-      name: c.n || '', price: Number(c.p)||0, qty: Number(c.q)||1
-    })),
+    items:cart.map(c=>({n:c.n,p:c.p,q:c.q})),
     subtotal:sub.toFixed(2),deliveryFee:delFee.toFixed(2),
     total:total.toFixed(2),status:'pending'
   };
@@ -2987,7 +2988,12 @@ function sendOrder(){
   document.getElementById('success-ov').classList.add('open');
   // WA + GA tracking
   trackPurchase(order.id, order.total);
-  // (v4.1: removed duplicate LuxAPI.createOrder call — first one at line 2968 already handles it)
+  // Save via API (with offline fallback)
+  LuxAPI.createOrder({
+    customer: name, phone, type: orderType, address: addr, notes,
+    items: order.items, subtotal: order.subtotal, deliveryFee: order.deliveryFee,
+    total: order.total, payMethod: selectedPayMethod || 'cash'
+  }).catch(console.warn);
   sendWANotification(
     `🛒 *Nouvelle Commande #${String(order.id).slice(-6)}*\n` +
     `👤 ${name} · 📞 ${phone}\n` +
@@ -3141,7 +3147,7 @@ function changeGuests(delta){
 }
 
 var _resSubmitting = false;
-function submitReservation(){
+async function submitReservation(){
   if(_resSubmitting) return;
   const name = document.getElementById('res-name')?.value.trim();
   const phone = document.getElementById('res-phone')?.value.trim();
@@ -3157,9 +3163,8 @@ function submitReservation(){
     guests: guestCount, notes, status: 'confirmed'
   };
 
-  // v4.1 FIX: Never block the user's reservation on server failure.
-  // LuxAPI.createReservation already saves locally & queues for later sync.
-  // If it throws (network/404/500), we treat it as "queued" rather than fatal.
+  // RAILWAY FIRST — no local setLS, LuxAPI handles dedup + queue on its own.
+  // If the server returns _duplicate:true, we inform the user but don't error.
   let saved;
   try {
     saved = await LuxAPI.createReservation(res);
@@ -3167,16 +3172,10 @@ function submitReservation(){
       toast('ℹ Cette réservation existe déjà');
     }
   } catch(e){
-    // Log but DO NOT abort — store locally and keep the UX flowing
-    console.warn('[LUX] Reservation queued (server unreachable):', e.message || e);
-    try {
-      var _all = JSON.parse(localStorage.getItem('lux_reservations') || '[]');
-      var _local = Object.assign({}, res, { id: Date.now(), status:'confirmed', _local:true });
-      _all.unshift(_local);
-      localStorage.setItem('lux_reservations', JSON.stringify(_all));
-      saved = _local;
-    } catch(_){ saved = Object.assign({}, res, { id: Date.now() }); }
-    toast('⚠ Mode hors-ligne — réservation mise en file');
+    console.warn('[LUX] Reservation:', e);
+    toast('⚠ ' + (e.message || 'Impossible d\'enregistrer'));
+    _resSubmitting = false;
+    return;
   }
 
   const resId = (saved && saved.id) || Date.now();
@@ -5538,29 +5537,23 @@ if (typeof window._luxCartPatched === 'undefined') {
 async function loadAdminReservations(){
   var el = document.getElementById('admin-res-list');
   if(!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis Railway...</div>';
 
-  // v4.1 FIX: Try server first, but NEVER stay stuck on loading — always fall back
-  // to local cache so the admin sees their data (including the ones just submitted).
   var list = [];
-  var serverFailed = false;
   try {
     list = await LuxAPI.getFreshReservations() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
-    console.warn('[LUX] Reservations API failed, using cache:', e.message);
-    // Fall through to local cache
-    try { list = JSON.parse(localStorage.getItem('lux_reservations')) || []; } catch(_){ list = []; }
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Serveur inaccessible</div>';
+    return;
   }
 
   if(!list.length){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">' +
-      (serverFailed ? '⚠ Serveur inaccessible — aucune donnée en cache' : 'Aucune réservation') + '</div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucune réservation</div>';
     return;
   }
 
@@ -5637,34 +5630,20 @@ async function loadAdminEmployees(){
   var pendWrap = document.getElementById('admin-emps-pending');
   var pendCount = document.getElementById('pending-count');
   if(!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis Railway...</div>';
 
-  // v4.1 FIX: Try Railway first, fall back to local cache (which includes
-  // join-request POSTs still in offline queue + any server hits already cached)
+  // RAILWAY FIRST (FIX 13) — fresh read, no cache
   var employees = [];
-  var serverFailed = false;
   try {
     employees = await LuxAPI.getFreshEmployees() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
-    console.warn('[LUX] Employees API failed, using cache:', e.message);
-    // Fall back: read local cache (includes v4.0 lux_employees_full + legacy lux_emp_requests)
-    try { employees = JSON.parse(localStorage.getItem('lux_employees_full')) || []; } catch(_){ employees = []; }
-    // Merge pending join-requests stored locally (portal.html fallback)
-    try {
-      var localReqs = JSON.parse(localStorage.getItem('lux_emp_requests') || '[]');
-      localReqs.forEach(function(r){
-        r.status = r.status || 'pending';
-        if(!employees.some(function(e){ return (e.username||'') === (r.username||'') && (e.username||'') !== ''; })){
-          employees.push(r);
-        }
-      });
-    } catch(_){}
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Serveur inaccessible. Vérifiez votre connexion.</div>';
+    return;
   }
 
   var pending = employees.filter(function(e){ return e.status === 'pending' || e.role === 'pending'; });
@@ -5773,34 +5752,20 @@ async function loadAdminCustomers(){
   var listEl = document.getElementById('admin-custs-list');
   var kpiEl = document.getElementById('admin-custs-kpi');
   if(!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement...</div>';
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ Chargement depuis Railway...</div>';
 
-  // v4.1 FIX: Graceful fallback to local cache if server fails — ensures new
-  // customers (registered via enterMonEspace) always appear in admin panel.
+  // RAILWAY FIRST (FIX 13) — fresh read
   var customers = [];
-  var serverFailed = false;
   try {
     customers = await LuxAPI.getFreshCustomers() || [];
   } catch(e){
-    serverFailed = true;
     if(e && e.status === 401){
       listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Non authentifié — reconnectez-vous</div>';
       if(typeof tryAdminAPILogin === 'function') await tryAdminAPILogin();
       return;
     }
-    console.warn('[LUX] Customers API failed, using cache:', e.message);
-    // Fall back: read local customer cache (lux_web_customers is keyed by phone)
-    try {
-      var localMap = JSON.parse(localStorage.getItem('lux_web_customers') || '{}');
-      customers = Object.values(localMap).map(function(c){
-        return {
-          name: c.name || 'Anonyme',
-          phone: c.phone || '',
-          loyaltyPoints: c.points || c.loyaltyPoints || 0,
-          _count: { orders: (c.orders || []).length }
-        };
-      });
-    } catch(_){ customers = []; }
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">⚠ Serveur inaccessible</div>';
+    return;
   }
 
   function getLevel(pts){
@@ -6603,15 +6568,18 @@ body.lux-app-active #lux-fab-group{bottom:80px}
     if(!name||!phone){toast('⚠ Nom et téléphone requis');return;}
     if(pass && pass!==pass2){toast('⚠ Les mots de passe ne correspondent pas');return;}
     var customer = {name:name, phone:phone, email:email, password:pass, points:0, created:new Date().toISOString()};
-    // Save locally (for immediate UI + admin-panel fallback visibility)
+    // Save locally
     var custs = JSON.parse(localStorage.getItem('lux_web_customers')||'{}');
     custs[phone] = customer;
     localStorage.setItem('lux_web_customers', JSON.stringify(custs));
     localStorage.setItem('lux_customer_session', JSON.stringify(customer));
-    // v4.1: Route via LuxAPI so it handles online/offline/queue consistently
+    // Try API
     try {
-      if(typeof LuxAPI !== 'undefined') await LuxAPI.registerCustomer(customer);
-    } catch(e){ console.warn('[LUX] registerCustomer queued:', e.message); }
+      if(typeof LuxAPI !== 'undefined') await fetch((window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app')+'/api/customers', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(customer)
+      });
+    } catch(e){}
     toast('✅ Compte créé! Bienvenue '+name);
     showAcctTab('login');
     document.getElementById('acct-phone').value = phone;
