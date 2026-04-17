@@ -377,6 +377,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 }
 .s-tab:hover{color:var(--text);}
 .s-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+/* v4.2: Navigation filter — hides tabs per entry-point */
+.s-tab.nav-hidden{display:none!important;}
 
 /* ── TAB PAGES ── */
 .site-tab-content{display:none;}
@@ -1717,8 +1719,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
           <div style="font-size:12px;color:var(--muted)">Administration · Café LUX Taza</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="forceSyncDashboard()" style="padding:8px 16px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);border-radius:8px;color:#00c8ff;cursor:pointer;font-size:12px">⚡ Force Refresh</button>
-          <button onclick="loadDashboardData()" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
+          <button onclick="loadDashboardData();loadDashPreviews();" style="padding:8px 16px;background:var(--bg3);border:1px solid var(--border-gold);border-radius:8px;color:var(--gold);cursor:pointer;font-size:12px">🔄 Actualiser</button>
         </div>
       </div>
       <div class="an-kpi-grid" id="dash-kpis" style="margin-bottom:24px">
@@ -1810,6 +1811,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
         <div class="gc-amt-btn" onclick="selectGCAmount(100,this)">100 MAD</div>
         <div class="gc-amt-btn" onclick="selectGCAmount(150,this)">150 MAD</div>
         <div class="gc-amt-btn" onclick="selectGCAmount(200,this)">200 MAD</div>
+      </div>
+      <!-- v4.2: Custom amount input -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap">💰 Montant personnalisé:</span>
+        <input type="number" id="gc-custom-amount" min="20" max="5000" step="10" placeholder="Ex: 250"
+               oninput="selectGCCustomAmount(this.value)"
+               style="flex:1;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px">
+        <span style="font-size:12px;color:var(--gold);font-weight:600">MAD</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <input class="res-input" type="text" id="gc-sender" placeholder="Votre nom (offrant)">
@@ -2241,6 +2250,49 @@ function toast(m){
 }
 
 // ─── GATEWAY ─────────────────────────────────────────────
+// v4.2: Navigation filter — controls which top-nav tabs are visible for each entry
+// point from the Gateway. Called by enterPublic / enterPublicOffers / enterMonEspace etc.
+function applyNavFilter(mode){
+  // Restore all tabs first (both public and admin-gated will be re-evaluated)
+  document.querySelectorAll('.s-tab').forEach(function(el){
+    el.classList.remove('nav-hidden');
+  });
+  // Hide the entire navbar for immersive modes
+  var navbar = document.querySelector('.site-tabs');
+  if(navbar){
+    if(mode === 'reservation-only' || mode === 'account-only'){
+      navbar.style.display = 'none';
+      return;
+    } else {
+      navbar.style.display = '';
+    }
+  }
+  // Tab visibility per mode — IDs to KEEP visible
+  var keepIds = null;
+  if(mode === 'commander'){
+    keepIds = ['st-menu', 'st-tracking'];
+  } else if(mode === 'offers'){
+    keepIds = ['st-offers', 'st-giftcard'];
+  }
+  if(keepIds){
+    document.querySelectorAll('.s-tab').forEach(function(el){
+      if(keepIds.indexOf(el.id) === -1){
+        el.classList.add('nav-hidden');
+      }
+    });
+  }
+}
+// v4.2: Restore full nav (used when exiting a filtered mode or when admin is logged in)
+function clearNavFilter(){
+  document.querySelectorAll('.s-tab').forEach(function(el){
+    el.classList.remove('nav-hidden');
+  });
+  var navbar = document.querySelector('.site-tabs');
+  if(navbar) navbar.style.display = '';
+}
+window.applyNavFilter = applyNavFilter;
+window.clearNavFilter = clearNavFilter;
+
 function enterPublic(){
   var gw = document.getElementById('gateway');
   gw.classList.add('hidden');
@@ -2251,6 +2303,7 @@ function enterPublic(){
   if(hero) hero.classList.add('hero-hidden');
   switchTab('menu',null);
   buildMenu();
+  applyNavFilter('commander'); // v4.2: only Menu + Mes Commandes
 }
 function enterPublicOffers(){
   var gw=document.getElementById('gateway');
@@ -2259,6 +2312,7 @@ function enterPublicOffers(){
   document.getElementById('main-site').style.display='block';
   switchTab('offers',null);
   buildMenu();
+  applyNavFilter('offers'); // v4.2: only Offres + Carte Cadeau
 }
 
 function enterMonEspace(){
@@ -2268,6 +2322,7 @@ function enterMonEspace(){
   document.getElementById('main-site').style.display='block';
   switchTab('account',null);
   buildMenu();
+  applyNavFilter('account-only'); // v4.2: hide topbar entirely
 }
 
 function openStaffPortal(){
@@ -2284,6 +2339,7 @@ function enterReservation(){
   switchTab('reservation',null);
   buildMenu();
   initReservation();
+  applyNavFilter('reservation-only'); // v4.2: hide entire topbar
 }
 function enterQR(){
   var gw=document.getElementById('gateway');
@@ -3549,11 +3605,17 @@ function detectTableFromURL(){
   const tableNum = params.get('table');
   if(!tableNum) return;
   const tn = parseInt(tableNum);
-  if(!(tn >= 1 && tn <= 50)) return;
+  if(!(tn >= 1 && tn <= 50)){
+    console.warn('[LUX] Invalid table number in QR:', tableNum);
+    return;
+  }
+  console.log('[LUX] QR scan: Table', tn, 'activated');
   // Pin globally for any checkout/order flow to read
   window.LUX_TABLE = tn;
   try { sessionStorage.setItem('lux_active_table', String(tn)); } catch(e){}
-  setTimeout(function(){
+  // v4.2: Apply UI changes IMMEDIATELY (no setTimeout race) — elements are already
+  // in the DOM by the time this runs (after DOMContentLoaded + buildMenu).
+  var applyTableUI = function(){
     // Auto-select dine-in mode
     try {
       var btn = document.getElementById('ot-table');
@@ -3572,10 +3634,12 @@ function detectTableFromURL(){
     // Hide the hero so user lands directly on the menu
     const hero = document.querySelector('.hero');
     if(hero) hero.classList.add('hero-hidden');
-    toast('📱 Table ' + tn + ' détectée — Bienvenue!');
-    const cp = document.getElementById('cart-panel');
-    if(cp) cp.classList.add('open');
-  }, 800);
+    if(typeof toast === 'function') toast('📱 Table ' + tn + ' détectée — Bienvenue!');
+  };
+  // Retry twice in case elements aren't in DOM yet (QR scan on slow network)
+  applyTableUI();
+  setTimeout(applyTableUI, 300);
+  setTimeout(applyTableUI, 1000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -4669,7 +4733,21 @@ function selectGCAmount(amt, btn){
   document.querySelectorAll('.gc-amt-btn').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
   document.getElementById('gc-amount-display').textContent = amt;
+  // v4.2: clear the custom amount input when a preset is chosen
+  var custom = document.getElementById('gc-custom-amount');
+  if(custom) custom.value = '';
 }
+
+// v4.2: Custom amount handler
+function selectGCCustomAmount(val){
+  var amt = parseInt(val, 10);
+  if(!amt || amt < 20 || amt > 5000) return;
+  selectedGCAmount = amt;
+  // Clear preset selections
+  document.querySelectorAll('.gc-amt-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('gc-amount-display').textContent = amt;
+}
+window.selectGCCustomAmount = selectGCCustomAmount;
 
 // v4.2: Gift Card payment method selector
 function selectGCPayMethod(method, btn){
