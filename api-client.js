@@ -774,9 +774,19 @@
     // ── Employee join request (admin approval workflow) ────────────
     async submitJoinRequest(req) {
       // req: { name, phone, role, cin, ... }
-      if (!_isOnline) { _queue('submitJoinRequest', req); return { ...req, _queued: true }; }
+      // v4.2: ALWAYS save locally first — admin panel reads from here as fallback
+      const local = { ...req, id: req.id || Date.now(), status: req.status || 'pending', _local: true };
+      try {
+        const existing = _ls('emp_requests', []);
+        // Dedupe by username/phone
+        const idx = existing.findIndex(e => (e.username && e.username === local.username) || (e.phone && e.phone === local.phone));
+        if (idx >= 0) existing[idx] = local; else existing.push(local);
+        _lsSet('emp_requests', existing);
+      } catch (e) { console.warn('[LUX] Local save of join request failed:', e); }
+
+      if (!_isOnline) { _queue('submitJoinRequest', req); return local; }
       try { return await _post('/api/employees/join-requests', req); }
-      catch (e) { _queue('submitJoinRequest', req); return { ...req, _queued: true }; }
+      catch (e) { _queue('submitJoinRequest', req); return local; }
     },
     async getJoinRequests() {
       if (!_isOnline) return _ls('join_requests', []);

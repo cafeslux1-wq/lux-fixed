@@ -3897,8 +3897,8 @@ function trackPurchase(orderId, total){
 // Patch enterPublic to also init features
 const _origEnterPublic = typeof enterPublic !== 'undefined' ? enterPublic : function(){};
 
-// ── INIT ALL FEATURES ──
-function initAllFeatures(){
+// ── INIT ALL FEATURES (step 1: core) ──
+function initAllFeatures_core(){
   initWhatsApp();
   initGA();
   initReservation();
@@ -4328,10 +4328,8 @@ function checkMonthlyReportReminder(){
 setInterval(checkMonthlyReportReminder, 3600000); // Check every hour
 checkMonthlyReportReminder();
 
-// ── ENHANCED INIT ──
-const _baseInitAll = typeof initAllFeatures !== 'undefined' ? initAllFeatures : function(){};
-function initAllFeatures(){
-  _baseInitAll();
+// ── ENHANCED INIT (step 2: stock) ──
+function initAllFeatures_stock(){
   checkURLTab();
   // Show stock alert dot if needed
   const items = initStockItems();
@@ -5236,12 +5234,9 @@ function cycleShift(emp, date, td){
 }
 
 // ══════════════════════════════════════════════════════════════
-// MASTER INIT OVERRIDE
+// MASTER INIT (step 3: engagement features)
 // ══════════════════════════════════════════════════════════════
-const _prevInit = typeof initAllFeatures !== 'undefined' ? initAllFeatures : function(){};
-
-function initAllFeatures(){
-  _prevInit();
+function initAllFeatures_engagement(){
   buildSmartSuggestions();
   buildQuickReorder();
   buildSeasonalBanner();
@@ -5655,24 +5650,27 @@ function updateSyncStatus() {
   }
 }
 
-// ── ENHANCED MASTER INIT (API Layer) ──────────────────────────────
-const _apiLayerPrevInit = typeof initAllFeatures !== 'undefined' ? initAllFeatures : function(){};
+// ── MASTER INIT (final — the ONE initAllFeatures that runs on DOMContentLoaded) ──
 async function initAllFeatures() {
-  // Call all previous feature initializers
-  try { _apiLayerPrevInit(); } catch(e) { console.warn('[LUX] Feature init error:', e); }
+  // v4.2: chain all init stages in order — no more recursion
+  try { initAllFeatures_core(); } catch(e){ console.warn('[LUX] Core init:', e); }
+  try { initAllFeatures_stock(); } catch(e){ console.warn('[LUX] Stock init:', e); }
+  try { initAllFeatures_engagement(); } catch(e){ console.warn('[LUX] Engagement init:', e); }
   // Initialize API client
   if (typeof LuxAPI !== 'undefined') {
-    const health = await LuxAPI.init();
-    renderAPIStatus(health ? { status: 'ok' } : null);
-    // Throttled sync: 60s intervals, no UI thrashing
-    setInterval(function(){
-      if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
-        var q = getLS('lux_pending_sync',[]);
-        if(q.length) LuxAPI._flushPending().catch(function(){});
-      }
-    }, 60000);
-    // Single initial sync — no repeated calls
-    updateSyncStatus();
+    try {
+      const health = await LuxAPI.init();
+      renderAPIStatus(health ? { status: 'ok' } : null);
+      // Throttled sync: 60s intervals, no UI thrashing
+      setInterval(function(){
+        if(typeof LuxAPI !== 'undefined' && LuxAPI.isOnline()){
+          var q = getLS('lux_pending_sync',[]);
+          if(q.length) LuxAPI._flushPending().catch(function(){});
+        }
+      }, 60000);
+      // Single initial sync — no repeated calls
+      updateSyncStatus();
+    } catch(e){ console.warn('[LUX] API init:', e); }
   }
 }
 

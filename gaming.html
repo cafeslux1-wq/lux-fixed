@@ -72,9 +72,12 @@
             </div>
             
             <div class="flex gap-3">
-                <button @click="view = view === 'admin' ? 'user' : 'admin'" class="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800 hover:border-[#C9A84C] text-zinc-500 hover:text-[#C9A84C] transition-all shadow-lg">
-                    <i :class="view === 'admin' ? 'fas fa-th-large' : 'fas fa-cog'" class="text-xl"></i>
-                </button>
+                <!-- v4.2: Direct link to LUX Admin (Maestro Hub) — replaces local settings -->
+                <a href="lux-admin.html" target="_blank" title="⚙️ LUX Admin · Stations live · Maestro Hub"
+                   class="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800 hover:border-[#C9A84C] text-zinc-500 hover:text-[#C9A84C] transition-all shadow-lg flex items-center gap-2">
+                    <i class="fas fa-cogs text-xl"></i>
+                    <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Maestro</span>
+                </a>
             </div>
         </header>
 
@@ -189,38 +192,23 @@
                 </div>
             </div>
 
-            <!-- VIEW: ADMIN PANEL -->
+            <!-- VIEW: ADMIN PANEL (v4.2: redirects to Maestro Hub) -->
             <div v-if="view === 'admin'" class="space-y-6 animate-in fade-in slide-in-from-top-4">
-                <div class="lux-card p-10 rounded-[3rem] shadow-2xl">
-                    <h3 class="text-2xl font-black mb-10 flex items-center gap-4 text-right">
-                        <i class="fas fa-tools text-[#C9A84C]"></i> Paramètres Station #{{stationId}}
-                    </h3>
-                    <div class="space-y-10 text-right">
-                        <div>
-                            <label class="text-zinc-600 text-[10px] font-black uppercase mb-6 block tracking-widest">Ajuster le tarif (DH/Heure)</label>
-                            <div class="flex items-center gap-8">
-                                <input type="range" min="10" max="100" step="5" v-model="hourlyRate" class="flex-1 h-3 bg-zinc-800 rounded-full appearance-none">
-                                <span class="text-4xl font-black text-white w-24 text-center tracking-tighter">{{hourlyRate}}</span>
-                            </div>
-                        </div>
-                        <div class="bg-black/30 p-6 rounded-3xl border border-zinc-800 italic text-zinc-500 text-[11px] leading-relaxed">
-                            * Le calcul est effectué à la seconde : ({{hourlyRate}} DH ÷ 3600s). Les changements affectent les nouvelles sessions.
-                        </div>
-                        <button @click="view = 'user'" class="w-full bg-[#C9A84C] text-black font-black py-5 rounded-[2rem] shadow-2xl uppercase text-sm tracking-[0.2em] active:scale-95 transition-all">Enregistrer les modifications</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-5">
-                    <div class="lux-card p-8 rounded-[2.5rem] text-center shadow-lg">
-                        <i class="fas fa-chart-line text-zinc-600 mb-4 text-2xl"></i>
-                        <p class="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Revenus d'aujourd'hui</p>
-                        <p class="text-2xl font-black text-white">420.50 DH</p>
-                    </div>
-                    <div class="lux-card p-8 rounded-[2.5rem] text-center shadow-lg">
-                        <i class="fas fa-clock text-zinc-600 mb-4 text-2xl"></i>
-                        <p class="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">Total Heures Actives</p>
-                        <p class="text-2xl font-black text-white">14.5 h</p>
-                    </div>
+                <div class="lux-card p-10 rounded-[3rem] shadow-2xl text-center">
+                    <i class="fas fa-cogs text-[#C9A84C] text-6xl mb-6"></i>
+                    <h3 class="text-2xl font-black mb-4">إحصائيات Lux AI</h3>
+                    <p class="text-zinc-500 text-sm mb-8 leading-relaxed">
+                        مراقبة محطات الجيمنج الموحدة مع المايسترو.<br>
+                        <span class="text-xs text-zinc-600">Monitoring unifié des stations gaming via le Maestro Hub.</span>
+                    </p>
+                    <a href="lux-admin.html" target="_blank"
+                       class="inline-flex items-center gap-3 bg-[#C9A84C] text-black font-black py-5 px-10 rounded-[2rem] shadow-2xl uppercase text-sm tracking-[0.2em] active:scale-95 transition-all">
+                        <i class="fas fa-external-link-alt"></i>
+                        ⚙️ LUX Admin · Stations live · Maestro Hub
+                    </a>
+                    <button @click="view = 'user'" class="block mt-6 mx-auto text-zinc-500 hover:text-[#C9A84C] text-[10px] font-black uppercase tracking-widest">
+                        ← Retour
+                    </button>
                 </div>
             </div>
 
