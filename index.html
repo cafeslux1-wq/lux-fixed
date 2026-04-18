@@ -3630,7 +3630,10 @@ function _extractTableParam(){
 
 function detectTableFromURL(){
   const tableNum = _extractTableParam();
-  if(!tableNum) return;
+  if(!tableNum){
+    console.log('[LUX] No table param in URL. search=', window.location.search, 'hash=', window.location.hash);
+    return;
+  }
   const tn = parseInt(tableNum);
   if(!(tn >= 1 && tn <= 50)){
     console.warn('[LUX] Invalid table number in QR:', tableNum);
@@ -3640,8 +3643,24 @@ function detectTableFromURL(){
   // Pin globally for any checkout/order flow to read
   window.LUX_TABLE = tn;
   try { sessionStorage.setItem('lux_active_table', String(tn)); } catch(e){}
-  // v4.2: Apply UI changes IMMEDIATELY (no setTimeout race) — elements are already
-  // in the DOM by the time this runs (after DOMContentLoaded + buildMenu).
+
+  // v4.2: HIGHLY VISIBLE banner on phone — confirms the scan worked
+  var showTableBanner = function(){
+    var existing = document.getElementById('lux-table-banner');
+    if(existing) return; // already shown
+    var banner = document.createElement('div');
+    banner.id = 'lux-table-banner';
+    banner.innerHTML = '📱 TABLE ' + tn + ' · Bienvenue au Café LUX · Menu chargé';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,#C9A84C,#E8C97A);color:#1A0A00;padding:14px 20px;text-align:center;font-weight:700;font-size:14px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:"DM Sans",sans-serif;letter-spacing:0.5px';
+    document.body.appendChild(banner);
+    // Auto-dismiss after 4 seconds
+    setTimeout(function(){
+      banner.style.transition = 'opacity 0.5s';
+      banner.style.opacity = '0';
+      setTimeout(function(){ banner.remove(); }, 500);
+    }, 4000);
+  };
+
   var applyTableUI = function(){
     // Auto-select dine-in mode
     try {
@@ -3663,7 +3682,12 @@ function detectTableFromURL(){
     if(hero) hero.classList.add('hero-hidden');
     if(typeof toast === 'function') toast('📱 Table ' + tn + ' détectée — Bienvenue!');
   };
-  // Retry twice in case elements aren't in DOM yet (QR scan on slow network)
+  // v4.2: Show banner immediately (only needs body) + apply UI with retries
+  if(document.body){
+    showTableBanner();
+  } else {
+    document.addEventListener('DOMContentLoaded', showTableBanner);
+  }
   applyTableUI();
   setTimeout(applyTableUI, 300);
   setTimeout(applyTableUI, 1000);
@@ -3974,9 +3998,16 @@ let deferredInstallPrompt = null;
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
+    // v4.2: If URL contains ?table=N, aggressively update SW to avoid stale cache
+    //       blocking the QR flow. This forces fresh content on first QR scan.
+    const hasTableParam = /[?&#]table=\d+/.test(window.location.href);
     navigator.serviceWorker.register('/sw.js', {scope:'/'})
       .then(reg => {
         console.log('[LUX PWA] SW registered:', reg.scope);
+        if(hasTableParam){
+          console.log('[LUX] QR URL detected — forcing SW update');
+          reg.update();
+        }
         // Check for updates every 60s
         setInterval(() => reg.update(), 60000);
       })
