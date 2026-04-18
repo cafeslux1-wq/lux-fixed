@@ -74,40 +74,39 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
-        createApp({
-            data() {
-                return {
-                    apiOnline: true,
-                    // هذه البيانات ستحدث تلقائياً عند ربطها بـ api-client.js
-                    stations: [
-                        { id: 'PS-01', user: 'أحمد', time: '42:10', active: true },
-                        { id: 'PS-02', user: '-', time: '00:00', active: false },
-                        { id: 'PS-03', user: 'ياسين', time: '04:55', active: true },
-                        { id: 'PS-04', user: 'كريم', time: '118:20', active: true }
-                    ]
+       const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            apiOnline: false,
+            stations: [] // تبدأ القائمة فارغة ليتم ملؤها من قاعدة البيانات
+        }
+    },
+    methods: {
+        async refreshData() {
+            try {
+                // جلب البيانات الحقيقية من السيرفر عبر LuxAPI
+                if (window.LuxAPI && window.LuxAPI.getStations) {
+                    const realData = await LuxAPI.getStations();
+                    
+                    // تحويل البيانات لتناسب واجهة العرض
+                    this.stations = realData.map(s => ({
+                        id: s.id, // سيظهر PS-01, PS-02, الخ
+                        user: s.current_user || '-', // إظهار الزبون الحقيقي أو شرطة
+                        time: s.formatted_time || '00:00', 
+                        active: s.status === 'active' // تفعيل اللون الأخضر فقط إذا كانت active
+                    }));
+                    this.apiOnline = true;
                 }
-            },
-            methods: {
-                async refreshData() {
-                    // هنا نستخدم LuxAPI المدمج في api-client.js
-                    try {
-                        if (window.LuxAPI && window.LuxAPI.getStations) {
-                            const data = await LuxAPI.getStations();
-                            this.stations = data;
-                            this.apiOnline = true;
-                        }
-                    } catch (e) {
-                        this.apiOnline = false;
-                    }
-                }
-            },
-            mounted() {
-                // تحديث البيانات كل 10 ثوانٍ تلقائياً
-                this.refreshData();
-                setInterval(this.refreshData, 10000);
+            } catch (e) {
+                console.error("خطأ في الاتصال بقاعدة البيانات:", e);
+                this.apiOnline = false;
             }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+        }
+    },
+    mounted() {
+        this.refreshData();
+        // تحديث حي كل 5 ثوانٍ لمراقبة العدادات والزبائن
+        setInterval(this.refreshData, 5000);
+    }
+}).mount('#app');
