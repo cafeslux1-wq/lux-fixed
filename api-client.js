@@ -1,6 +1,7 @@
 /**
- * Cafés LUX — API Client v5.1 (Production Ready)
+ * Cafés LUX — API Client v5.2 (Production Ready)
  * ✅ تم حل مشكلة getFreshOffers و fetchMenu المفقودة
+ * ✅ تمت إضافة getGamingStations لجلب أجهزة البلايستيشن
  * ✅ يُصدَّر كـ window.LuxAPI
  */
 
@@ -73,16 +74,13 @@
       return data;
     },
 
-    // اسم مستعار لـ getProducts لضمان التوافق مع بعض أجزاء الكود
     async fetchMenu() {
       return this.getProducts();
     },
 
-    // حل مشكلة الخطأ في Console: getFreshOffers is not a function
     async getFreshOffers() {
       try {
         const products = await this.getProducts();
-        // نرجع أول 4 منتجات كـ "عروض" مؤقتة
         return products.slice(0, 4);
       } catch (e) {
         return [];
@@ -229,7 +227,12 @@
       return req('/api/dashboard');
     },
 
-    // ── Gaming ────────────────────────────────────────────────────────
+    // ── Gaming (المحطات والأجهزة) ──────────────────────────────────────
+
+    // جلب قائمة الأجهزة لظهورها في اللوحة
+    async getGamingStations() {
+      return req('/api/gaming/stations');
+    },
 
     async activateGaming(stationId, hours) {
       return req('/api/gaming/activate', {
