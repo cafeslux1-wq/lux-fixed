@@ -3574,26 +3574,31 @@ function buildQRGrid(){
 
 function printQR(tableNum){
   const qrUrl = `${CAFE_URL}/?table=${tableNum}`;
-  // v4.2: higher density (5 → 10) + show URL below for manual verification
-  const qrSVG = LuxQR.toSVG(qrUrl, 10, '#1A0A00', '#FAFAF5');
-  const w = window.open('', '_blank', 'width=420,height=620');
+  // v4.2 FIX: HIGHEST density (10 → 14) + PURE black/white for max scan contrast
+  // Phone cameras need: strong contrast + ≥3cm size + clean white margin
+  const qrSVG = LuxQR.toSVG(qrUrl, 14, '#000000', '#FFFFFF');
+  const w = window.open('', '_blank', 'width=500,height=720');
   w.document.write(`<!DOCTYPE html><html><head><title>QR Table ${tableNum}</title>
   <style>
-    body{font-family:serif;text-align:center;padding:30px;background:#fff;}
-    .logo{font-size:32px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px;}
+    @page { margin: 10mm; size: A4; }
+    body{font-family:serif;text-align:center;padding:20px;background:#fff;margin:0;}
+    .logo{font-size:28px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px;}
     .sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:20px;}
-    svg{border:2px solid #C9A84C;border-radius:8px;padding:10px;background:#fff;max-width:260px;}
-    .tnum{font-size:48px;color:#C9A84C;font-weight:700;margin:12px 0 6px;}
-    .hint{font-size:12px;color:#555;margin-top:8px;}
-    .url{font-size:9px;color:#AAA;margin-top:6px;word-break:break-all;font-family:monospace;}
-    .verify{font-size:10px;color:#333;margin-top:10px;padding:6px;background:#FFF9E0;border:1px dashed #C9A84C;border-radius:4px;}
+    /* CRITICAL: QR must be ≥80mm for reliable phone camera scanning */
+    .qr-wrap{display:inline-block;padding:12px;background:#FFFFFF;border:2px solid #C9A84C;border-radius:12px;margin:10px auto;}
+    svg{display:block;width:80mm;height:80mm;background:#FFFFFF;}
+    .tnum{font-size:48px;color:#C9A84C;font-weight:700;margin:20px 0 6px;}
+    .hint{font-size:13px;color:#333;margin-top:10px;font-weight:600;}
+    .url{font-size:9px;color:#AAA;margin-top:8px;word-break:break-all;font-family:monospace;}
+    .verify{font-size:11px;color:#333;margin:14px auto;padding:8px 14px;background:#FFF9E0;border:1px dashed #C9A84C;border-radius:6px;display:inline-block;font-family:monospace;}
+    @media print { body { padding: 0; } }
   </style></head><body>
   <div class="logo">✦ LUX</div>
   <div class="sub">CAFÉ & PÂTISSERIE · TAZA</div>
-  ${qrSVG}
+  <div class="qr-wrap">${qrSVG}</div>
   <div class="tnum">TABLE ${tableNum}</div>
   <div class="hint">📱 Scannez pour commander directement</div>
-  <div class="verify">Lien: ${qrUrl}</div>
+  <div class="verify">🔗 ${qrUrl}</div>
   <div class="url">cafeslux.com · +212 808524169</div>
   </body></html>`);
   w.document.close();
@@ -4001,12 +4006,36 @@ if('serviceWorker' in navigator){
     // v4.2: If URL contains ?table=N, aggressively update SW to avoid stale cache
     //       blocking the QR flow. This forces fresh content on first QR scan.
     const hasTableParam = /[?&#]table=\d+/.test(window.location.href);
+
+    // v4.2 EMERGENCY FIX: Old sw.js strips query strings.
+    // If the referer looked like a QR scan (contains ?table=) but current URL doesn't,
+    // it means the SW ate our param. Unregister and reload once.
+    const referer = document.referrer || '';
+    const looksLikeLostQR = /[?&#]table=\d+/.test(referer) && !hasTableParam;
+    if(looksLikeLostQR && !sessionStorage.getItem('lux_sw_reset')){
+      console.warn('[LUX] Detected stripped QR param — unregistering old SW and reloading');
+      sessionStorage.setItem('lux_sw_reset', '1');
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        Promise.all(regs.map(r => r.unregister())).then(() => {
+          // Re-navigate with the param restored
+          const match = referer.match(/[?&#]table=(\d+)/);
+          if(match){
+            window.location.href = '/?table=' + match[1];
+          } else {
+            window.location.reload();
+          }
+        });
+      });
+      return;
+    }
+
     navigator.serviceWorker.register('/sw.js', {scope:'/'})
       .then(reg => {
         console.log('[LUX PWA] SW registered:', reg.scope);
         if(hasTableParam){
           console.log('[LUX] QR URL detected — forcing SW update');
           reg.update();
+          if(reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
         }
         // Check for updates every 60s
         setInterval(() => reg.update(), 60000);
