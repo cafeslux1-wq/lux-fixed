@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Café LUX Pro · v3.6 Final Luxury Ultra</title>
-<script>window.LUX_API_URL = 'https://api.cafeslux.com';</script>
+<script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <script src="api-client.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -2556,8 +2556,6 @@ function sendWebOrder(payMethod){
   // ── FIX: Save via API avec le format correct ──────────────
   // customer = objet {name,phone} (pas string)
   // address (pas addr) — correspond au champ server.js
-  // items avec name/price/qty — correspond au schema Prisma
-  // subtotal/total comme numbers — Prisma attend Float
   if(window.LuxAPI){
     LuxAPI.createOrder({
       customer: { name: name, phone: phone },
