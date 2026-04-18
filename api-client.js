@@ -1,15 +1,13 @@
 /**
- * Cafés LUX — API Client v5.0 (Production Ready)
- * ✅ يُصدَّر كـ window.LuxAPI (متوافق مع <script src> العادي)
- * ✅ يستخدم window.LUX_API_URL المُعرَّف في cafe-lux.html
- * ✅ يغطي جميع الـ Endpoints المطلوبة في cafe-lux.html
+ * Cafés LUX — API Client v5.1 (Production Ready)
+ * ✅ تم حل مشكلة getFreshOffers و fetchMenu المفقودة
+ * ✅ يُصدَّر كـ window.LuxAPI
  */
 
 (function (window) {
   'use strict';
 
   // ── الرابط الأساسي ──────────────────────────────────────────────
-  // يقرأ من window.LUX_API_URL إذا كان مُعرَّفًا، وإلا يستخدم Railway
   const BASE = (window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app').replace(/\/$/, '');
 
   // ── حالة الموظف الحالي (Session داخلي) ──────────────────────────
@@ -43,24 +41,28 @@
 
     // ── نظام التهيئة والاتصال ────────────────────────────────────────
 
-    /** تهيئة الـ Client والتحقق من الاتصال */
     async init() {
       try {
         await req('/health');
         _online = true;
-        const dot = document.getElementById('api-dot');
-        if (dot) { dot.style.borderColor = '#3DBE7A'; dot.style.color = '#3DBE7A'; dot.textContent = '⟡ API Online'; }
+        this._updateStatusUI('#3DBE7A', '⟡ API Online');
       } catch {
         _online = false;
-        const dot = document.getElementById('api-dot');
-        if (dot) { dot.style.borderColor = '#E05252'; dot.style.color = '#E05252'; dot.textContent = '⟡ API Offline'; }
+        this._updateStatusUI('#E05252', '⟡ API Offline');
+      }
+    },
+
+    _updateStatusUI(color, text) {
+      const dot = document.getElementById('api-dot');
+      if (dot) {
+        dot.style.borderColor = color;
+        dot.style.color = color;
+        dot.textContent = text;
       }
     },
 
     isOnline() { return _online; },
-
     currentEmployee() { return _currentEmployee; },
-
     switchEmployee() { _currentEmployee = null; },
 
     // ── المنتجات والكاتيجوريز ─────────────────────────────────────────
@@ -71,11 +73,26 @@
       return data;
     },
 
+    // اسم مستعار لـ getProducts لضمان التوافق مع بعض أجزاء الكود
+    async fetchMenu() {
+      return this.getProducts();
+    },
+
+    // حل مشكلة الخطأ في Console: getFreshOffers is not a function
+    async getFreshOffers() {
+      try {
+        const products = await this.getProducts();
+        // نرجع أول 4 منتجات كـ "عروض" مؤقتة
+        return products.slice(0, 4);
+      } catch (e) {
+        return [];
+      }
+    },
+
     async getCategories() {
       try {
         return await req('/api/categories');
       } catch {
-        // إرجاع كاتيجوريز مُستخرجة من الـ Cache إذا فشل الاتصال
         const cached = JSON.parse(localStorage.getItem('lux_menu_cache') || '[]');
         const cats = [...new Set(cached.map(p => p.category).filter(Boolean))];
         return cats.map(c => ({ name: c }));
@@ -111,7 +128,7 @@
           id:           orderData.id || `ORD-${Date.now()}`,
           customerName: orderData.customerName || 'Walk-in Customer',
           total:        orderData.total,
-          items:        orderData.items,   // [{name, price, qty}]
+          items:        orderData.items,
           tableId:      orderData.tableId || null,
           source:       orderData.source  || 'pos'
         })
@@ -224,8 +241,6 @@
 
   // ── تصدير عالمي ──────────────────────────────────────────────────
   window.LuxAPI = LuxAPI;
-
-  // ── دالة checkApiStatus المستدعاة مباشرة من cafe-lux.html ─────────
   window.checkApiStatus = function () { LuxAPI.init(); };
 
 })(window);
