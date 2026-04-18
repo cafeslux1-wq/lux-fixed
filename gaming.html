@@ -94,60 +94,64 @@
     </div>
 
     <script>
-        // التأكد من أن الكود يعمل بعد تحميل المتصفح بالكامل
-        window.addEventListener('load', () => {
-            const { createApp } = Vue;
-            const _qs = new URLSearchParams(window.location.search);
-            
-            createApp({
-                data() {
-                    return {
-                        view: 'user',
-                        stationId: _qs.get('station') || '05',
-                        hourlyRate: 30,
-                        elapsedSeconds: 0,
-                        consumedAmount: 0,
-                        timerInterval: null,
-                        heartbeatInterval: null,
-                        paymentMethods: [
-                            { id: 'especes', label: 'Espèces (Cash)', icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
-                            { id: 'paypal',  label: 'PayPal', icon: 'fab fa-paypal', color: '#0070ba', desc: 'Portefeuille numérique' },
-                            { id: 'googlepay', label: 'Google Pay', icon: 'fab fa-google-pay', color: '#ffffff', desc: 'Paiement rapide' },
-                            { id: 'carte',   label: 'Carte Bancaire', icon: 'fas fa-credit-card', color: '#22d3ee', desc: 'Paiement sécurisé Stripe' }
-                        ]
-                    }
-                },
-                computed: {
-                    formattedTime() {
-                        const h = Math.floor(this.elapsedSeconds / 3600);
-                        const m = Math.floor((this.elapsedSeconds % 3600) / 60);
-                        const s = this.elapsedSeconds % 60;
-                        return `${h > 0 ? h + ':' : ''}${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-                    }
-                },
-                methods: {
-                    async startSession(methodId) {
-                        this.view = 'active';
-                        this.timerInterval = setInterval(() => {
-                            this.elapsedSeconds++;
-                            this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
-                        }, 1000);
+    const { createApp } = Vue;
 
-                        this.heartbeatInterval = setInterval(async () => {
-                            if (window.LuxAPI) {
-                                try { await window.LuxAPI.stationHeartbeat(this.stationId); } catch (e) {}
-                            }
-                        }, 30000);
-                    },
-                    async endSession() {
-                        if (!confirm("Terminer la session ?")) return;
-                        clearInterval(this.timerInterval);
-                        clearInterval(this.heartbeatInterval);
-                        this.view = 'user';
+    // تهيئة المعطيات الأساسية
+    const _params = new URLSearchParams(window.location.search);
+    const _stationId = _params.get('station') || 'PS-01'; // استخدام الـ ID من القائمة التي أرفقتها
+
+    createApp({
+        data() {
+            return {
+                view: 'user',
+                stationId: _stationId,
+                hourlyRate: 30,
+                elapsedSeconds: 0,
+                consumedAmount: 0,
+                timerInterval: null,
+                heartbeatInterval: null,
+                // استعادة كافة وسائل الدفع الأربعة المطلوبة
+                paymentMethods: [
+                    { id: 'especes', label: 'Espèces (Cash)', icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
+                    { id: 'paypal',  label: 'PayPal', icon: 'fab fa-paypal', color: '#0070ba', desc: 'Portefeuille numérique' },
+                    { id: 'googlepay', label: 'Google Pay', icon: 'fab fa-google-pay', color: '#ffffff', desc: 'Paiement rapide' },
+                    { id: 'carte',   label: 'Carte Bancaire', icon: 'fas fa-credit-card', color: '#22d3ee', desc: 'Paiement sécurisé Stripe' }
+                ]
+            }
+        },
+        methods: {
+            async startSession(method) {
+                this.view = 'active';
+                this.elapsedSeconds = 0;
+
+                // محاولة الاتصال بالسيرفر مع حماية الكود من الانهيار في حال فشل الاتصال
+                try {
+                    if (window.LuxAPI) {
+                        await LuxAPI.activateStation(this.stationId, 1);
                     }
+                } catch (e) {
+                    console.warn("⚠️ LuxAPI: Connection failed. Using offline backup mode.");
                 }
-            }).mount('#app');
-        });
-    </script>
-</body>
-</html>
+
+                // بدء العداد المحلي (يعمل بشكل مستقل عن حالة السيرفر)
+                this.timerInterval = setInterval(() => {
+                    this.elapsedSeconds++;
+                    this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
+                }, 1000);
+
+                // إرسال Heartbeat كل 30 ثانية لتحديث حالة المحطة في السيرفر
+                this.heartbeatInterval = setInterval(async () => {
+                    if (window.LuxAPI) {
+                        try { await LuxAPI.stationHeartbeat(this.stationId); } catch(e) {}
+                    }
+                }, 30000);
+            },
+            async endSession() {
+                if (!confirm("Voulez-vous terminer la session ?")) return;
+                clearInterval(this.timerInterval);
+                clearInterval(this.heartbeatInterval);
+                this.view = 'user';
+            }
+        }
+    }).mount('#app');
+</script>
