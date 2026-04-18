@@ -9,9 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="api-client.js" defer></script>
-    
     <style>
         :root { --lux-gold: #C9A84C; --lux-dark: #050505; }
         body { 
@@ -23,22 +20,21 @@
         }
         .lux-card { background: rgba(15, 15, 16, 0.7); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.05); }
         [v-cloak] { display: none; }
-        .font-playfair { font-family: 'Playfair Display', serif; }
     </style>
 </head>
 <body>
     <div id="app" v-cloak class="p-6 md:p-12 flex flex-col items-center">
         
         <header class="w-full max-w-4xl flex justify-between items-center mb-16">
-            <div class="flex items-center gap-5 text-right">
+            <div class="flex items-center gap-5">
                 <div>
-                    <h2 class="text-2xl font-black text-white italic uppercase font-playfair">
+                    <h2 class="text-2xl font-black text-white italic uppercase">
                         LUX <span style="color:var(--lux-gold)">GAMING</span>
                     </h2>
-                    <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] mt-1 uppercase">STATION #{{ stationId }}</p>
+                    <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] mt-1 uppercase">STATION #{{ currentStationId }}</p>
                 </div>
             </div>
-            <div class="text-zinc-500 text-xs font-bold uppercase tracking-widest">
+            <div class="text-zinc-500 text-xs">
                 <i class="fas fa-signal text-[10px] text-green-500 animate-pulse"></i> Online
             </div>
         </header>
@@ -46,13 +42,13 @@
         <main class="w-full max-w-xl">
             <div v-if="view === 'user'" class="space-y-4">
                 <div v-for="method in paymentMethods" :key="method.id" 
-                     @click="startSession(method.id)" 
+                     @click="startSession(method)" 
                      class="lux-card p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:border-[#C9A84C] transition-all group">
                     <div class="flex items-center gap-5">
                         <i :class="method.icon" :style="{color: method.color}" class="text-2xl"></i>
                         <div class="text-right">
-                            <p class="font-bold text-white">{{method.label}}</p>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">{{method.desc}}</p>
+                            <p class="font-bold text-white">{{ method.label }}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">{{ method.desc }}</p>
                         </div>
                     </div>
                     <i class="fas fa-chevron-left text-zinc-800 group-hover:text-[#C9A84C]"></i>
@@ -62,98 +58,93 @@
             <div v-if="view === 'active'" class="lux-card py-20 px-10 rounded-[3rem] text-center border-[#C9A84C]/20">
                 <div class="text-7xl font-mono font-black mb-4 tracking-tighter text-white">{{ formattedTime }}</div>
                 <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12">SESSION ACTIVE</p>
-                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
+                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 transition-all uppercase">
                     Terminer la Session
                 </button>
             </div>
         </main>
     </div>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="api-client.js"></script>
+
     <script>
         const { createApp } = Vue;
 
-createApp({
-  data() {
-    return {
-      stations: [],
-      currentStationId: 'PS-01', // المعرف الافتراضي للمحطة
-      view: 'user', 
-      isloading: false,
-      paymentMethods: [
-        { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
-        { id: 2, label: 'ساعتين', desc: 'SÉANCE 2H', hours: 2, icon: 'fas fa-bolt', color: '#C9A84C' },
-        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', hours: 4, icon: 'fas fa-moon', color: '#C9A84C' }
-      ]
-    };
-  },
-  computed: {
-    currentStation() {
-      return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
-    },
-    formattedTime() {
-      return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
-    },
-    stationId() {
-      return this.currentStationId;
-    }
-  },
-  methods: {
-    async fetchGamingData() {
-      try {
-        if (window.LuxAPI) {
-          const data = await window.LuxAPI.getStations();
-          if (data && data.length > 0) {
-            this.stations = data;
-            // التبديل التلقائي للواجهة بناءً على حالة السيرفر
-            if (this.currentStation && (this.currentStation.status === 'Active' || this.currentStation.status === 'Warning')) {
-              this.view = 'active';
-            } else {
-              this.view = 'user';
+        createApp({
+            data() {
+                return {
+                    stations: [],
+                    currentStationId: 'PS-01', 
+                    view: 'user',
+                    isProcessing: false,
+                    paymentMethods: [
+                        { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
+                        { id: 2, label: 'ساعتين', desc: 'SÉANCE 2H', hours: 2, icon: 'fas fa-bolt', color: '#C9A84C' },
+                        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', hours: 4, icon: 'fas fa-moon', color: '#C9A84C' }
+                    ]
+                }
+            },
+            computed: {
+                currentStation() {
+                    return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
+                },
+                formattedTime() {
+                    return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
+                }
+            },
+            methods: {
+                async refreshData() {
+                    try {
+                        if (window.LuxAPI) {
+                            const data = await window.LuxAPI.getStations();
+                            if (data && data.length > 0) {
+                                this.stations = data;
+                                // تحديث الواجهة بناءً على حالة الجهاز في السيرفر
+                                if (this.currentStation && this.currentStation.status === 'Active') {
+                                    this.view = 'active';
+                                } else {
+                                    this.view = 'user';
+                                }
+                            }
+                        }
+                    } catch (e) { console.error("Update Error:", e); }
+                },
+                async startSession(method) {
+                    if (this.isProcessing) return;
+                    this.isProcessing = true;
+                    try {
+                        // تفعيل المحطة فعلياً في السيرفر
+                        await window.LuxAPI.activateStation(this.currentStationId, method.hours);
+                        this.view = 'active';
+                        await this.refreshData();
+                    } catch (e) {
+                        alert("تعذر الاتصال بالسيرفر لتفعيل المحطة.");
+                    } finally {
+                        this.isProcessing = false;
+                    }
+                },
+                async endSession() {
+                    if (confirm('هل أنت متأكد من إنهاء الجلسة؟')) {
+                        try {
+                            await window.LuxAPI.deactivateStation(this.currentStationId);
+                            this.view = 'user';
+                            await this.refreshData();
+                        } catch (e) { console.error(e); }
+                    }
+                }
+            },
+            mounted() {
+                // جلب رقم المحطة من الرابط (مثال: gaming.html?id=PS-02)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('id')) {
+                    this.currentStationId = urlParams.get('id');
+                }
+                
+                this.refreshData();
+                setInterval(() => this.refreshData(), 5000);
             }
-          }
-        }
-      } catch (error) {
-        console.error("⚠️ خطأ في مزامنة البيانات:", error);
-      }
-    },
-    async startSession(method) {
-      if (this.isloading) return;
-      
-      this.isloading = true;
-      try {
-        // تفعيل الأداء فعلياً عبر السيرفر (Railway)
-        // نستخدم دالة activateStation من ملف api-client.js
-        await window.LuxAPI.activateStation(this.currentStationId, method.hours);
-        
-        this.view = 'active';
-        await this.fetchGamingData(); // تحديث فوري للحالة
-      } catch (error) {
-        alert("عذراً، تعذر بدء الجلسة. تأكد من اتصال السيرفر.");
-        console.error(error);
-      } finally {
-        this.isloading = false;
-      }
-    },
-    async endSession() {
-      if(confirm('هل تريد إنهاء الجلسة فعلياً؟')) {
-        try {
-          await window.LuxAPI.deactivateStation(this.currentStationId);
-          this.view = 'user';
-          await this.fetchGamingData();
-        } catch (error) {
-          console.error("خطأ في إنهاء الجلسة:", error);
-        }
-      }
-    }
-  },
-  mounted() {
-    // التقاط معرف المحطة من الرابط
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('id')) {
-        this.currentStationId = params.get('id');
-    }
-
-    this.fetchGamingData();
-    setInterval(() => this.fetchGamingData(), 5000); // تحديث كل 5 ثوانٍ
-  }
-}).mount('#app');
+        }).mount('#app');
+    </script>
+</body>
+</html>
