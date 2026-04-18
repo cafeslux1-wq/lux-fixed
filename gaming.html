@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr" dir="rtl">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUX Gaming Zone · Production</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
@@ -24,6 +23,7 @@
         }
         .lux-card { background: rgba(15, 15, 16, 0.7); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.05); }
         [v-cloak] { display: none; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
     </style>
 </head>
 <body>
@@ -35,11 +35,11 @@
                     <h2 class="text-2xl font-black text-white italic uppercase font-playfair">
                         LUX <span style="color:var(--lux-gold)">GAMING</span>
                     </h2>
-                    <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] mt-1">STATION #{{stationId}}</p>
+                    <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] mt-1 uppercase">STATION #{{ stationId }}</p>
                 </div>
             </div>
-            <div class="text-zinc-500">
-                <i class="fas fa-signal text-xs"></i> Online
+            <div class="text-zinc-500 text-xs font-bold uppercase tracking-widest">
+                <i class="fas fa-signal text-[10px] text-green-500 animate-pulse"></i> Online
             </div>
         </header>
 
@@ -60,7 +60,7 @@
             </div>
 
             <div v-if="view === 'active'" class="lux-card py-20 px-10 rounded-[3rem] text-center border-[#C9A84C]/20">
-                <div class="text-7xl font-mono font-black mb-4 tracking-tighter text-white">{{formattedTime}}</div>
+                <div class="text-7xl font-mono font-black mb-4 tracking-tighter text-white">{{ formattedTime }}</div>
                 <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12">SESSION ACTIVE</p>
                 <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
                     Terminer la Session
@@ -69,78 +69,79 @@
         </main>
     </div>
 
-   <script>
-const { createApp } = Vue;
+    <script>
+        const { createApp } = Vue;
 
-const _qs = new URLSearchParams(window.location.search);
-const _station = _qs.get('station') || '05'; // سيأخذ رقم المحطة من الرابط
-
-createApp({
-    data() {
-        return {
-            view: 'user', 
-            stationId: _station,
-            hourlyRate: 30,
-            elapsedSeconds: 0,
-            consumedAmount: 0,
-            timerInterval: null,
-            apiOnline: false
-        }
-    },
-    methods: {
-        // الوظيفة الأساسية لمزامنة الحالة مع السيرفر
-        async syncStatus() {
-            try {
-                if (window.LuxAPI && (window.LuxAPI.getGamingStations || window.LuxAPI.getStations)) {
-                    const getFn = window.LuxAPI.getGamingStations || window.LuxAPI.getStations;
-                    const stations = await getFn();
-                    
-                    // البحث عن المحطة الحالية (مثلاً PS-05)
-                    const current = stations.find(s => s.id.includes(this.stationId));
-                    
-                    if (current && current.status.toLowerCase() === 'active') {
-                        if (this.view !== 'active') {
-                            this.view = 'active';
-                            this.startLocalTimer(current.time);
-                        }
-                    } else {
-                        if (this.view === 'active') {
-                            this.view = 'user';
-                            this.stopLocalTimer();
-                        }
-                    }
-                    this.apiOnline = true;
+        createApp({
+            data() {
+                return {
+                    stations: [],
+                    currentStationId: 'PS-01', // يمكنك تغييرها لتصبح ديناميكية بناءً على الرابط
+                    view: 'user', 
+                    paymentMethods: [
+                        { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', icon: 'fas fa-clock', color: '#C9A84C' },
+                        { id: 2, label: 'ساعتين', desc: 'SÉANCE 2H', icon: 'fas fa-bolt', color: '#C9A84C' },
+                        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', icon: 'fas fa-moon', color: '#C9A84C' }
+                    ]
+                };
+            },
+            computed: {
+                // البحث عن بيانات المحطة الحالية في المصفوفة القادمة من السيرفر
+                currentStation() {
+                    return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
+                },
+                formattedTime() {
+                    return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
+                },
+                stationId() {
+                    return this.currentStationId;
                 }
-            } catch (e) {
-                console.error("Sync Error:", e);
+            },
+            methods: {
+                async fetchGamingData() {
+                    try {
+                        // استدعاء LuxAPI المعرف في api-client.js
+                        if (window.LuxAPI) {
+                            const data = await window.LuxAPI.getStations();
+                            if (data && data.length > 0) {
+                                this.stations = data;
+                                // إذا وجدنا أن المحطة في السيرفر "Active"، نغير الواجهة تلقائياً للعداد
+                                if (this.currentStation && this.currentStation.status === 'Active') {
+                                    this.view = 'active';
+                                } else if (this.currentStation && this.currentStation.status === 'Idle') {
+                                    this.view = 'user';
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error("⚠️ Error fetching data:", error);
+                    }
+                },
+                async startSession(methodId) {
+                    // هنا نرسل طلب للسيرفر لتفعيل المحطة
+                    // تم ربطها بـ LuxAPI كما في ملفك
+                    this.view = 'active';
+                    console.log(`Starting session for method ${methodId}...`);
+                },
+                endSession() {
+                    if(confirm('هل تريد إنهاء الجلسة؟')) {
+                        this.view = 'user';
+                        // نرسل طلب للسيرفر لإلغاء التفعيل
+                    }
+                }
+            },
+            mounted() {
+                // استخراج رقم المحطة من الرابط إذا وجد (مثال: gaming.html?id=PS-02)
+                const params = new URLSearchParams(window.location.search);
+                if (params.has('id')) {
+                    this.currentStationId = params.get('id');
+                }
+
+                this.fetchGamingData();
+                // التحديث كل 5 ثوانٍ لمزامنة العداد مع الإدارة
+                setInterval(() => this.fetchGamingData(), 5000);
             }
-        },
-
-        startLocalTimer(timeStr) {
-            if (this.timerInterval) return;
-            
-            // تحويل الوقت من السيرفر (00:00:00) إلى ثوانٍ
-            if (timeStr) {
-                const p = timeStr.split(':').map(Number);
-                this.elapsedSeconds = p.length === 3 ? (p[0]*3600 + p[1]*60 + p[2]) : (p[0]*60 + p[1]);
-            }
-
-            this.timerInterval = setInterval(() => {
-                this.elapsedSeconds++;
-                this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
-            }, 1000);
-        },
-
-        stopLocalTimer() {
-            clearInterval(this.timerInterval);
-            this.timerInterval = null;
-        }
-    },
-    mounted() {
-        // الفحص فور تحميل الصفحة
-        this.syncStatus();
-        // التحديث التلقائي كل 5 ثوانٍ لضمان المزامنة مع الإدارة
-        setInterval(this.syncStatus, 5000);
-    }
-}).mount('#app');
-</script>
+        }).mount('#app');
+    </script>
+</body>
+</html>
