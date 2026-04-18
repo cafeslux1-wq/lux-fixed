@@ -78,40 +78,51 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
+    const { createApp } = Vue;
 
-        createApp({
-            data() {
-                return {
-                    apiOnline: false,
-                    stations: []
-                }
-            },
-            methods: {
-                async fetchStatus() {
-                    try {
-                        if (window.LuxAPI && window.LuxAPI.getGamingStations) {
-                            const data = await window.LuxAPI.getGamingStations();
-                            this.stations = data;
-                            this.apiOnline = true;
-                        } else if (window.LuxAPI && window.LuxAPI.getStations) {
-                             const data = await window.LuxAPI.getStations();
-                             this.stations = data;
-                             this.apiOnline = true;
-                        }
-                    } catch (err) {
-                        console.error("Fetch Error:", err);
-                        this.apiOnline = false;
-                    }
-                }
-            },
-            mounted() {
-                // الفحص الأول
-                this.fetchStatus();
-                // تحديث كل 5 ثوانٍ تلقائياً
-                setInterval(this.fetchStatus, 5000);
+    createApp({
+        data() {
+            return {
+                apiOnline: false,
+                stations: [] // ستبقى فارغة حتى تنجح عملية الجلب
             }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+        },
+        methods: {
+            async fetchStatus() {
+                try {
+                    // فحص جميع الاحتمالات لاسم الدالة في ملف api-client.js
+                    let data = null;
+                    const api = window.LuxAPI;
+
+                    if (api) {
+                        if (typeof api.getGamingStations === 'function') {
+                            data = await api.getGamingStations();
+                        } else if (typeof api.getStations === 'function') {
+                            data = await api.getStations();
+                        }
+                    }
+
+                    if (data && Array.isArray(data)) {
+                        this.stations = data;
+                        this.apiOnline = true;
+                        console.log("تم جلب البيانات بنجاح:", data);
+                    } else {
+                        console.warn("البيانات المستلمة ليست مصفوفة أو فارغة");
+                    }
+                } catch (err) {
+                    console.error("خطأ أثناء جلب البيانات:", err);
+                    this.apiOnline = false;
+                }
+            }
+        },
+        mounted() {
+            // محاولة الجلب فوراً عند التحميل
+            setTimeout(() => {
+                this.fetchStatus();
+            }, 1000); 
+
+            // تحديث دوري كل 5 ثوانٍ
+            setInterval(this.fetchStatus, 5000);
+        }
+    }).mount('#app');
+</script>
