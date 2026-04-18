@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LUX AI · Maestro Admin Hub</title>
+    <title>LUX PRO - لوحة تحكم الإدارة</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     
@@ -14,99 +14,104 @@
     <script src="api-client.js" defer></script>
 
     <style>
-        :root { --lux-cyan: #00f2ff; --lux-dark: #020617; }
-        body { 
-            background-color: var(--lux-dark); 
-            color: white; 
-            font-family: 'Cairo', sans-serif; 
-            min-height: 100vh;
-        }
-        .admin-card { 
-            background: rgba(15, 23, 42, 0.6); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(0, 242, 255, 0.1);
-            border-radius: 2.5rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .admin-card:hover { border-color: var(--lux-cyan); transform: scale(1.02); }
-        .status-active { color: var(--lux-cyan); text-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
-        .status-idle { color: #475569; }
+        body { font-family: 'Cairo', sans-serif; background-color: #020617; color: white; min-height: 100vh; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); transition: all 0.3s ease; }
+        .glass:hover { border-color: #00f2ff; transform: translateY(-2px); }
         [v-cloak] { display: none; }
     </style>
 </head>
 <body>
-    <div id="app" v-cloak class="p-8 md:p-12">
-        <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-16 gap-6">
-             <div class="text-right">
-                <h1 class="text-4xl font-black italic">إحصائيات <span class="text-cyan-400">Lux AI</span></h1>
-                <p class="text-slate-500 mt-2">مراقبة محطات الجيمنج الموحدة مع المايسترو.</p>
+
+    <div id="app" v-cloak class="min-h-screen p-4 md:p-8">
+        
+        <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+            <div class="text-right">
+                <h1 class="text-3xl font-black text-white italic uppercase tracking-tighter">
+                    LUX <span class="text-cyan-400">ADMIN</span>
+                </h1>
+                <p class="text-slate-500 text-xs mt-1 font-bold">نظام مراقبة المحطات الموحد (Maestro)</p>
             </div>
-            <div class="bg-gray-900/50 border border-gray-800 px-6 py-3 rounded-2xl flex items-center gap-3">
-                <div :class="apiOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'" class="w-3 h-3 rounded-full"></div>
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Railway {{ apiOnline ? 'Online' : 'Offline' }}</span>
+            
+            <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800">
+                <div :class="apiOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'" class="w-2 h-2 rounded-full"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    {{ apiOnline ? 'Railway Connected' : 'Connecting...' }}
+                </span>
             </div>
         </header>
 
-        <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div v-for="station in stations" :key="station.id" class="admin-card p-8 flex justify-between items-center group">
-                <div class="flex items-center gap-6">
-                    <div :class="station.active ? 'bg-cyan-500/10 text-cyan-400' : 'bg-slate-800 text-slate-600'" 
-                         class="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl transition-colors">
-                        {{station.id}}
+        <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div v-if="stations.length === 0" class="col-span-full text-center py-20">
+                <i class="fas fa-spinner fa-spin text-3xl text-slate-700 mb-4"></i>
+                <p class="text-slate-500 font-bold">جاري جلب بيانات المحطات من السيرفر...</p>
+            </div>
+
+            <div v-for="station in stations" :key="station.id" class="glass rounded-[2rem] p-6 flex flex-col gap-6">
+                <div class="flex justify-between items-start">
+                    <div class="flex items-center gap-4">
+                        <div :class="station.status === 'active' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'" 
+                             class="w-12 h-12 rounded-2xl flex items-center justify-center font-black">
+                            {{ station.id.replace('PS-', '') }}
+                        </div>
+                        <div class="text-right">
+                            <h3 class="font-bold text-white tracking-tight">المحطة {{ station.id }}</h3>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
+                                الزبون: {{ station.current_user || 'لا يوجد' }}
+                            </p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <h4 class="font-bold text-white text-lg">المحطة #{{station.id}}</h4>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-black">الزبون: {{station.user}}</p>
-                    </div>
+                    <span :class="station.status === 'active' ? 'text-green-500' : 'text-slate-600'" class="text-[10px] font-black uppercase tracking-widest">
+                        ● {{ station.status }}
+                    </span>
                 </div>
-                <div class="text-left">
-                    <div :class="station.active ? 'status-active' : 'status-idle'" class="text-3xl font-mono font-black">
-                        {{station.time}}
+
+                <div class="flex flex-col items-center py-4 bg-slate-950/40 rounded-3xl border border-slate-800/50">
+                    <div :class="station.status === 'active' ? 'text-cyan-400' : 'text-slate-700'" class="text-4xl font-mono font-black tracking-tighter">
+                        {{ station.formatted_time || '00:00:00' }}
                     </div>
-                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">{{station.active ? 'Active' : 'Idle'}}</p>
+                    <p class="text-[8px] text-slate-600 font-bold mt-2 tracking-[0.3em] uppercase">Session Duration</p>
                 </div>
             </div>
         </main>
 
-        <footer class="max-w-6xl mx-auto mt-20 text-center text-[10px] text-slate-700 font-bold uppercase tracking-[0.5em]">
-            LUX x MAESTRO • PROFESSIONAL ADMIN HUB
-        </footer>
     </div>
 
     <script>
-       const { createApp } = Vue;
-createApp({
-    data() {
-        return {
-            apiOnline: false,
-            stations: [] // تبدأ القائمة فارغة ليتم ملؤها من قاعدة البيانات
-        }
-    },
-    methods: {
-        async refreshData() {
-            try {
-                // جلب البيانات الحقيقية من السيرفر عبر LuxAPI
-                if (window.LuxAPI && window.LuxAPI.getStations) {
-                    const realData = await LuxAPI.getStations();
-                    
-                    // تحويل البيانات لتناسب واجهة العرض
-                    this.stations = realData.map(s => ({
-                        id: s.id, // سيظهر PS-01, PS-02, الخ
-                        user: s.current_user || '-', // إظهار الزبون الحقيقي أو شرطة
-                        time: s.formatted_time || '00:00', 
-                        active: s.status === 'active' // تفعيل اللون الأخضر فقط إذا كانت active
-                    }));
-                    this.apiOnline = true;
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    apiOnline: false,
+                    stations: []
                 }
-            } catch (e) {
-                console.error("خطأ في الاتصال بقاعدة البيانات:", e);
-                this.apiOnline = false;
+            },
+            methods: {
+                async fetchStatus() {
+                    try {
+                        if (window.LuxAPI && window.LuxAPI.getGamingStations) {
+                            const data = await window.LuxAPI.getGamingStations();
+                            this.stations = data;
+                            this.apiOnline = true;
+                        } else if (window.LuxAPI && window.LuxAPI.getStations) {
+                             const data = await window.LuxAPI.getStations();
+                             this.stations = data;
+                             this.apiOnline = true;
+                        }
+                    } catch (err) {
+                        console.error("Fetch Error:", err);
+                        this.apiOnline = false;
+                    }
+                }
+            },
+            mounted() {
+                // الفحص الأول
+                this.fetchStatus();
+                // تحديث كل 5 ثوانٍ تلقائياً
+                setInterval(this.fetchStatus, 5000);
             }
-        }
-    },
-    mounted() {
-        this.refreshData();
-        // تحديث حي كل 5 ثوانٍ لمراقبة العدادات والزبائن
-        setInterval(this.refreshData, 5000);
-    }
-}).mount('#app');
+        }).mount('#app');
+    </script>
+</body>
+</html>
