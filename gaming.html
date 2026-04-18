@@ -3,69 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LUX Gaming Zone · Station</title>
+    <title>LUX Gaming Zone · Control</title>
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
         :root { --lux-gold: #C9A84C; --lux-dark: #050505; }
-        body { background-color: var(--lux-dark); color: #FFF; font-family: 'Cairo', sans-serif; min-height: 100vh; background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, transparent 50%); }
+        body { 
+            background-color: var(--lux-dark); 
+            color: #FFF; 
+            font-family: 'Cairo', sans-serif;
+            background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, transparent 50%);
+            min-height: 100vh;
+        }
         .lux-card { background: rgba(15, 15, 16, 0.7); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.05); }
         [v-cloak] { display: none; }
-        .animate-glow { animation: glow 2s infinite; }
-        @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .gold-glow { box-shadow: 0 0 15px rgba(201, 168, 76, 0.1); }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
 <body>
+
     <div id="app" v-cloak class="p-6 md:p-12 flex flex-col items-center">
         
-        <header class="w-full max-w-4xl flex justify-between items-center mb-16">
-            <div class="flex items-center gap-5">
-                <h2 class="text-2xl font-black italic uppercase">LUX <span style="color:var(--lux-gold)">GAMING</span></h2>
+        <header class="w-full max-w-4xl flex justify-between items-center mb-12">
+            <div class="flex flex-col">
+                <h2 class="text-2xl font-black text-white italic uppercase tracking-tighter">
+                    LUX <span style="color:var(--lux-gold)">GAMING</span>
+                </h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    <p class="text-[9px] text-gray-500 font-bold tracking-[0.2em] uppercase">
+                        STATION: {{ currentStationId || '...' }}
+                    </p>
+                </div>
             </div>
-            <div class="text-[9px] text-gray-500 font-bold tracking-[0.3em] uppercase">
-                STATION #{{ currentStationId || '??' }}
+            <div class="opacity-20 w-10">
+                <img src="https://cafeslux.com/logo.png" alt="LUX" class="w-full">
             </div>
         </header>
 
-        <main class="w-full max-w-xl text-center">
+        <main class="w-full max-w-xl">
             
-            <div v-if="view === 'loading'" class="py-20">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-[#C9A84C] border-t-transparent mb-4"></div>
-                <p class="text-zinc-500 text-xs tracking-widest uppercase">جاري مزامنة المحطة...</p>
+            <div v-if="view === 'no_id'" class="lux-card p-12 rounded-[2.5rem] border-red-500/20 text-center">
+                <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-qrcode text-red-500 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-white">المحطة غير معروفة</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    يرجى مسح رمز الـ QR الخاص بالمحطة الموجود على الطاولة للوصول إلى خيارات التحكم.
+                </p>
             </div>
 
-            <div v-if="view === 'no_id'" class="lux-card p-10 rounded-[2.5rem] border-red-500/20">
-                <i class="fas fa-qrcode text-red-500 text-4xl mb-6"></i>
-                <p class="text-gray-400 text-sm">يرجى مسح رمز الـ QR الخاص بالمحطة.</p>
+            <div v-if="view === 'loading'" class="py-20 text-center">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-2 border-[#C9A84C] border-t-transparent mb-4"></div>
+                <p class="text-zinc-500 text-[10px] tracking-widest uppercase">جاري المزامنة مع LUX API...</p>
             </div>
 
-            <div v-if="view === 'user'" class="space-y-4 text-right">
-                <div v-for="method in paymentMethods" :key="method.id" @click="startSession(method)" 
-                     class="lux-card p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:border-[#C9A84C] transition-all active:scale-95">
+            <div v-if="view === 'user'" class="space-y-4">
+                <div v-for="method in paymentMethods" :key="method.id" 
+                     @click="startSession(method)" 
+                     class="lux-card p-6 rounded-[2rem] flex items-center justify-between cursor-pointer border-white/5 hover:border-[#C9A84C] transition-all group active:scale-95 gold-glow">
                     <div class="flex items-center gap-5">
-                        <i :class="method.icon" :style="{color: method.color}" class="text-2xl"></i>
-                        <div>
-                            <p class="font-bold text-white text-lg">{{ method.label }}</p>
-                            <p class="text-[10px] text-gray-500 uppercase">{{ method.desc }}</p>
+                        <div class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C9A84C]/10 transition-colors">
+                            <i :class="method.icon" :style="{color: method.color}" class="text-2xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-white text-lg leading-none mb-1">{{ method.label }}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest">{{ method.desc }}</p>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-left text-zinc-800"></i>
+                    <i class="fas fa-chevron-left text-zinc-800 group-hover:text-[#C9A84C] transition-transform"></i>
                 </div>
             </div>
 
-            <div v-if="view === 'active'" class="lux-card py-16 px-10 rounded-[3rem] border-[#C9A84C]/20">
-                <div class="text-7xl font-mono font-black mb-4 tracking-tighter">{{ formattedTime }}</div>
-                <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12">SESSION ACTIVE</p>
+            <div v-if="view === 'active'" class="lux-card py-16 px-10 rounded-[3rem] text-center border-[#C9A84C]/20 gold-glow">
+                <div class="text-7xl font-mono font-black mb-6 tracking-tighter text-white">{{ formattedTime }}</div>
                 
-                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 hover:text-white transition-all">
+                <div class="flex items-center justify-center gap-3 mb-12 bg-white/5 py-2 px-4 rounded-full w-max mx-auto">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Session En Cours</span>
+                </div>
+
+                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest text-xs">
                     Terminer la Session
                 </button>
             </div>
 
-            <div v-if="isProcessing" class="mt-6 p-4 bg-[#C9A84C]/10 rounded-xl animate-glow">
-                <p class="text-[#C9A84C] text-xs font-bold">جاري تفعيل الجهاز وإرسال الأوامر...</p>
+            <div v-if="isProcessing" class="mt-8 p-4 rounded-2xl bg-[#C9A84C]/5 border border-[#C9A84C]/10 text-center animate-pulse-slow">
+                <p class="text-[#C9A84C] text-[10px] font-bold uppercase tracking-widest">جاري إرسال الطلب للسيرفر...</p>
             </div>
+
         </main>
     </div>
 
@@ -74,6 +104,7 @@
 
     <script>
         const { createApp } = Vue;
+
         createApp({
             data() {
                 return {
@@ -82,75 +113,75 @@
                     view: 'loading',
                     isProcessing: false,
                     paymentMethods: [
-                        { id: 1, label: 'ساعة واحدة', desc: '1 HEURE', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
-                        { id: 2, label: 'ساعتين', desc: '2 HEURES', hours: 2, icon: 'fas fa-bolt', color: '#C9A84C' }
+                        { id: 1, label: 'ساعة واحدة', desc: '1 HEURE DE JEU', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
+                        { id: 2, label: 'ساعتين', desc: '2 HEURES DE JEU', hours: 2, icon: 'fas fa-bolt', color: '#C9A84C' },
+                        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', hours: 4, icon: 'fas fa-moon', color: '#C9A84C' }
                     ]
                 }
             },
             computed: {
                 currentStation() {
+                    if (!this.currentStationId) return null;
                     return this.stations.find(s => String(s.stationId) === String(this.currentStationId) || String(s.id) === String(this.currentStationId));
                 },
                 formattedTime() {
-                    return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
+                    if (!this.currentStation) return "00:00:00";
+                    return this.currentStation.time || this.currentStation.remainingTime || "00:00:00";
                 }
             },
             methods: {
-                async refreshData() {
+                async sync() {
+                    if (this.isProcessing) return;
                     try {
                         if (window.LuxAPI) {
                             const data = await window.LuxAPI.getStations();
-                            if (data && Array.isArray(data)) {
+                            if (data) {
                                 this.stations = data;
-                                
-                                // إذا كنا في حالة معالجة (Processing) لا نغير الـ view فوراً لنمنع القفز بين الصفحات
-                                if (!this.isProcessing) {
-                                    if (this.currentStation) {
-                                        this.view = (this.currentStation.status === 'Active' || this.currentStation.status === 'Warning') ? 'active' : 'user';
-                                    } else {
-                                        // إذا لم يجد المحطة في السيرفر بعد، ولكن المعرف موجود في الرابط، ابقَ في حالة التحميل
-                                        this.view = this.currentStationId ? 'loading' : 'no_id';
-                                    }
+                                const s = this.currentStation;
+                                if (s && (s.status === 'Active' || s.status === 'Warning')) {
+                                    this.view = 'active';
+                                } else {
+                                    this.view = 'user';
                                 }
                             }
                         }
-                    } catch (e) { console.error("Sync Error"); }
+                    } catch (e) { console.error("Sync failed"); }
                 },
                 async startSession(method) {
                     if (this.isProcessing) return;
                     this.isProcessing = true;
-                    this.view = 'active'; // تحول تفاؤلي سريع للعداد
+                    this.view = 'active'; // انتقال تفاؤلي
 
                     try {
                         await window.LuxAPI.activateStation(this.currentStationId, method.hours);
-                        // انتظر 3 ثوانٍ كاملة لضمان استجابة السيرفر وتحديث قاعدة البيانات
-                        setTimeout(async () => {
+                        // ننتظر 2.5 ثانية قبل السماح بالتحديث القادم لضمان استقرار السيرفر
+                        setTimeout(() => {
                             this.isProcessing = false;
-                            await this.refreshData();
-                        }, 3000);
+                            this.sync();
+                        }, 2500);
                     } catch (e) {
-                        alert("فشل التفعيل.");
+                        alert("فشل التفعيل، يرجى المحاولة مرة أخرى.");
                         this.isProcessing = false;
-                        this.refreshData();
+                        this.view = 'user';
                     }
                 },
                 async endSession() {
-                    if (!confirm('إنهاء الجلسة؟')) return;
+                    if (!confirm('هل تريد إنهاء وقت اللعب؟')) return;
                     try {
                         await window.LuxAPI.deactivateStation(this.currentStationId);
-                        this.refreshData();
+                        this.sync();
                     } catch (e) { console.error(e); }
                 }
             },
             mounted() {
                 const params = new URLSearchParams(window.location.search);
-                const id = params.get('id');
-                if (id) {
-                    this.currentStationId = id;
-                    this.refreshData();
-                    setInterval(() => this.refreshData(), 4000);
-                } else {
+                this.currentStationId = params.get('id');
+
+                if (!this.currentStationId) {
                     this.view = 'no_id';
+                } else {
+                    this.sync();
+                    setInterval(() => this.sync(), 4000);
                 }
             }
         }).mount('#app');
