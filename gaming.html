@@ -70,44 +70,86 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
-        createApp({
-            data() {
-                return {
-                    view: 'user',
-                    stationId: new URLSearchParams(window.location.search).get('station') || '05',
-                    elapsedSeconds: 0,
-                    timerInterval: null,
-                    paymentMethods: [
-                        { id: 'especes', label: 'Espèces (Cash)', icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
-                        { id: 'paypal',  label: 'PayPal', icon: 'fab fa-paypal', color: '#0070ba', desc: 'Portefeuille numérique' },
-                        { id: 'googlepay', label: 'Google Pay', icon: 'fab fa-google-pay', color: '#ffffff', desc: 'Paiement rapide' },
-                        { id: 'carte',   label: 'Carte Bancaire', icon: 'fas fa-credit-card', color: '#22d3ee', desc: 'Paiement sécurisé' }
-                    ]
-                }
-            },
-            computed: {
-                formattedTime() {
-                    const h = Math.floor(this.elapsedSeconds / 3600);
-                    const m = Math.floor((this.elapsedSeconds % 3600) / 60);
-                    const s = this.elapsedSeconds % 60;
-                    return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-                }
-            },
-            methods: {
-                startSession(method) {
-                    this.view = 'active';
-                    this.timerInterval = setInterval(() => { this.elapsedSeconds++; }, 1000);
-                },
-                endSession() {
-                    if(confirm("Terminer la session?")) {
-                        clearInterval(this.timerInterval);
-                        this.view = 'user';
-                        this.elapsedSeconds = 0;
+const { createApp } = Vue;
+
+const _qs = new URLSearchParams(window.location.search);
+const _station = _qs.get('station') || '05';
+
+createApp({
+    data() {
+        return {
+            view: 'user', // الواجهة الافتراضية
+            stationId: _station,
+            hourlyRate: 30,
+            elapsedSeconds: 0,
+            consumedAmount: 0,
+            timerInterval: null,
+            heartbeatInterval: null,
+            apiData: null
+        }
+    },
+    computed: {
+        formattedTime() {
+            const h = Math.floor(this.elapsedSeconds / 3600);
+            const m = Math.floor((this.elapsedSeconds % 3600) / 60);
+            const s = this.elapsedSeconds % 60;
+            return `${h > 0 ? h + ':' : ''}${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+    },
+    methods: {
+        // فحص حالة المحطة من السيرفر فور تحميل الصفحة
+        async checkStationStatus() {
+            try {
+                if (window.LuxAPI && window.LuxAPI.getGamingStations) {
+                    const stations = await window.LuxAPI.getGamingStations();
+                    // البحث عن المحطة الحالية في البيانات القادمة من Railway
+                    const current = stations.find(s => s.id.includes(this.stationId));
+                    
+                    if (current && current.status === 'active') {
+                        this.view = 'active';
+                        // تحويل الوقت النصي (مثل 42:10) إلى ثوانٍ لتشغيل العداد
+                        this.syncTimer(current.time || "00:00");
                     }
                 }
+            } catch (e) {
+                console.warn("فشل جلب حالة المحطة، سيتم الاعتماد على التشغيل المحلي.");
             }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+        },
+
+        syncTimer(timeStr) {
+            const parts = timeStr.split(':').map(Number);
+            let totalSeconds = 0;
+            if (parts.length === 2) totalSeconds = (parts[0] * 60) + parts[1];
+            if (parts.length === 3) totalSeconds = (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+            
+            this.elapsedSeconds = totalSeconds;
+            this.startLocalTimer();
+        },
+
+        async startSession(methodId) {
+            this.view = 'active';
+            this.elapsedSeconds = 0;
+
+            try {
+                if (window.LuxAPI && window.LuxAPI.activateStation) {
+                    await window.LuxAPI.activateStation(this.stationId, 1);
+                }
+            } catch (e) {}
+
+            this.startLocalTimer();
+        },
+
+        startLocalTimer() {
+            if (this.timerInterval) clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(() => {
+                this.elapsedSeconds++;
+                this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
+            }, 1000);
+        }
+    },
+    mounted() {
+        // بمجرد فتح الصفحة، نفحص هل المحطة تعمل أصلاً في السيرفر؟
+        this.checkStationStatus();
+    }
+}).mount('#app');
+</script>
