@@ -7,7 +7,7 @@
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
         :root { --lux-gold: #C9A84C; --lux-dark: #050505; }
@@ -28,7 +28,7 @@
         <header class="w-full max-w-4xl flex justify-between items-center mb-16">
             <div class="flex items-center gap-5">
                 <div>
-                    <h2 class="text-2xl font-black text-white italic uppercase">
+                    <h2 class="text-2xl font-black text-white italic uppercase tracking-tighter">
                         LUX <span style="color:var(--lux-gold)">GAMING</span>
                     </h2>
                     <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] mt-1 uppercase">STATION #{{ currentStationId }}</p>
@@ -43,9 +43,11 @@
             <div v-if="view === 'user'" class="space-y-4">
                 <div v-for="method in paymentMethods" :key="method.id" 
                      @click="startSession(method)" 
-                     class="lux-card p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:border-[#C9A84C] transition-all group">
+                     class="lux-card p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:border-[#C9A84C] transition-all group active:scale-95">
                     <div class="flex items-center gap-5">
-                        <i :class="method.icon" :style="{color: method.color}" class="text-2xl"></i>
+                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                            <i :class="method.icon" :style="{color: method.color}" class="text-xl"></i>
+                        </div>
                         <div class="text-right">
                             <p class="font-bold text-white">{{ method.label }}</p>
                             <p class="text-[10px] text-gray-500 uppercase tracking-widest">{{ method.desc }}</p>
@@ -58,9 +60,13 @@
             <div v-if="view === 'active'" class="lux-card py-20 px-10 rounded-[3rem] text-center border-[#C9A84C]/20">
                 <div class="text-7xl font-mono font-black mb-4 tracking-tighter text-white">{{ formattedTime }}</div>
                 <p class="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12">SESSION ACTIVE</p>
-                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 transition-all uppercase">
+                <button @click="endSession" class="w-full bg-red-600/10 text-red-500 py-5 rounded-2xl font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">
                     Terminer la Session
                 </button>
+            </div>
+
+            <div v-if="isProcessing" class="mt-8 text-center text-zinc-500 animate-pulse text-sm">
+                جاري الاتصال بالسيرفر...
             </div>
         </main>
     </div>
@@ -76,7 +82,7 @@
                 return {
                     stations: [],
                     currentStationId: 'PS-01', 
-                    view: 'user',
+                    view: 'user', // الوضع الافتراضي
                     isProcessing: false,
                     paymentMethods: [
                         { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
@@ -87,21 +93,27 @@
             },
             computed: {
                 currentStation() {
+                    // البحث في المصفوفة باستخدام stationId الموحد
                     return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
                 },
                 formattedTime() {
-                    return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
+                    if (!this.currentStation) return "00:00:00";
+                    return this.currentStation.time || this.currentStation.remainingTime || "00:00:00";
                 }
             },
             methods: {
                 async refreshData() {
+                    // نمنع التحديث التلقائي إذا كنا نقوم بعملية تفعيل حالياً لمنع "الاختفاء المفاجئ"
+                    if (this.isProcessing) return;
+
                     try {
                         if (window.LuxAPI) {
                             const data = await window.LuxAPI.getStations();
                             if (data && data.length > 0) {
                                 this.stations = data;
-                                // تحديث الواجهة بناءً على حالة الجهاز في السيرفر
-                                if (this.currentStation && this.currentStation.status === 'Active') {
+                                // تحديث الحالة بناءً على رد السيرفر
+                                const s = this.currentStation;
+                                if (s && (s.status === 'Active' || s.status === 'Warning')) {
                                     this.view = 'active';
                                 } else {
                                     this.view = 'user';
@@ -111,16 +123,21 @@
                     } catch (e) { console.error("Update Error:", e); }
                 },
                 async startSession(method) {
-                    if (this.isProcessing) return;
                     this.isProcessing = true;
+                    // نغير الواجهة فوراً لـ "نشط" ليعرف الزبون أن الطلب قيد التنفيذ
+                    this.view = 'active'; 
+
                     try {
-                        // تفعيل المحطة فعلياً في السيرفر
-                        await window.LuxAPI.activateStation(this.currentStationId, method.hours);
-                        this.view = 'active';
-                        await this.refreshData();
+                        // إرسال الطلب لـ Railway
+                        await window.LuxAPI.activateStation(this.currentStationId, method.hours); 
+                        // انتظر قليلاً ليعالج السيرفر الطلب قبل التحديث التالي
+                        setTimeout(() => {
+                            this.isProcessing = false;
+                            this.refreshData();
+                        }, 2000);
                     } catch (e) {
-                        alert("تعذر الاتصال بالسيرفر لتفعيل المحطة.");
-                    } finally {
+                        alert("خطأ في التفعيل. حاول مرة أخرى.");
+                        this.view = 'user';
                         this.isProcessing = false;
                     }
                 },
@@ -129,19 +146,19 @@
                         try {
                             await window.LuxAPI.deactivateStation(this.currentStationId);
                             this.view = 'user';
-                            await this.refreshData();
+                            this.refreshData();
                         } catch (e) { console.error(e); }
                     }
                 }
             },
             mounted() {
-                // جلب رقم المحطة من الرابط (مثال: gaming.html?id=PS-02)
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.has('id')) {
                     this.currentStationId = urlParams.get('id');
                 }
                 
                 this.refreshData();
+                // تحديث كل 5 ثوانٍ لمزامنة الوقت
                 setInterval(() => this.refreshData(), 5000);
             }
         }).mount('#app');
