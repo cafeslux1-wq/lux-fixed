@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<!-- Cafés LUX v9.2 — Global Gaming Interface (Integrated Edition) -->
 <html lang="fr" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUX Gaming Zone · The Global Standard</title>
     
-    <!-- Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Vue.js for Stable Logic -->
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- LUX API Client (Railway First) -->
-    <script src="api-client.js"></script>
+    
+    <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+    <script src="api-client.js" defer></script>
 
     <style>
         :root { 
@@ -41,26 +40,20 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
         .timer-glow { text-shadow: 0 0 30px rgba(201, 168, 76, 0.3); }
-        
-        /* Gold Filter for the New Logo */
         .logo-gold {
             filter: invert(72%) sepia(17%) saturate(1033%) hue-rotate(1deg) brightness(105%) contrast(105%);
         }
-
         .animate-spin-slow { animation: spin 15s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
         [v-cloak] { display: none; }
     </style>
 </head>
 <body id="app">
     <div v-cloak class="p-6 md:p-12 flex flex-col items-center">
         
-        <!-- Header -->
         <header class="w-full max-w-4xl flex justify-between items-center mb-16">
             <div class="flex items-center gap-5 text-right">
                 <div class="w-16 h-16 bg-zinc-900 rounded-[1.5rem] flex items-center justify-center border border-zinc-800 shadow-2xl overflow-hidden group">
-                    <!-- Using your uploaded Logo -->
                     <img src="image_621b48.png" alt="LUX Logo" class="w-12 h-auto logo-gold transition-transform group-hover:scale-110">
                 </div>
                 <div>
@@ -72,8 +65,7 @@
             </div>
             
             <div class="flex gap-3">
-                <!-- v4.2: Direct link to LUX Admin (Maestro Hub) — replaces local settings -->
-                <a href="lux-admin.html" target="_blank" title="⚙️ LUX Admin · Stations live · Maestro Hub"
+                <a href="lux-admin.html" target="_blank" title="⚙️ LUX Admin"
                    class="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800 hover:border-[#C9A84C] text-zinc-500 hover:text-[#C9A84C] transition-all shadow-lg flex items-center gap-2">
                     <i class="fas fa-cogs text-xl"></i>
                     <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Maestro</span>
@@ -83,64 +75,29 @@
 
         <main class="w-full max-w-xl">
             
-            <!-- VIEW: USER HOME -->
             <div v-if="view === 'user'" class="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <!-- TARIFS BANNER (shown when ?tarifs=1) -->
-                <div v-if="showTarifs" class="lux-card py-10 px-8 rounded-[3rem] border-[#C9A84C]/30 bg-gradient-to-br from-[#1a1206] to-transparent">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-black text-[#C9A84C] font-playfair">💰 Tarifs LUX Gaming</h3>
-                        <button @click="showTarifs = false" class="w-8 h-8 rounded-full bg-zinc-900 text-zinc-500 hover:text-white text-xs">✕</button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div v-for="t in tarifs" :key="t.label" class="bg-black/40 border border-[#C9A84C]/10 rounded-2xl p-4 hover:border-[#C9A84C]/40 transition-all">
-                            <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">{{ t.label }}</p>
-                            <p class="text-2xl font-black text-white mt-1">{{ t.price }} <span class="text-xs text-zinc-500">DH</span></p>
-                            <p class="text-[10px] text-[#C9A84C]/80 mt-1">{{ t.note }}</p>
-                        </div>
-                    </div>
-                    <p class="text-[10px] text-zinc-600 text-center mt-5 leading-relaxed">
-                        PS5 Pro · 4K HDR · Manettes DualSense · Casques 7.1 · Boissons disponibles
-                    </p>
-                </div>
-
                 <div class="lux-card py-16 px-10 rounded-[3.5rem] text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C9A84C]/40 to-transparent"></div>
-                    
                     <div class="w-28 h-28 bg-[#C9A84C]/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-12 border border-[#C9A84C]/10 shadow-inner">
                         <i class="fas fa-play text-[#C9A84C] text-4xl mr-1 opacity-80"></i>
                     </div>
-                    
                     <h2 class="text-4xl font-black mb-4 tracking-tight font-playfair italic">Prêt pour l'aventure ?</h2>
                     <p class="text-zinc-500 text-sm mb-12 leading-relaxed">
                         Votre station est optimisée و جاهزة للاتصال. <br>
                         Tarif Premium : <span class="text-white font-black">{{hourlyRate}} DH / heure</span>
                     </p>
-                    
                     <button @click="view = 'payment'" class="w-full bg-[#C9A84C] text-black py-6 rounded-[2.2rem] font-black text-xl hover:bg-white hover:scale-[1.02] transition-all shadow-[0_20px_40px_rgba(201,168,76,0.15)] uppercase tracking-wider">
                         COMMENCER À JOUER
                     </button>
                 </div>
-
-                <!-- Loyalty Status -->
-                <div class="lux-card p-7 rounded-[2.5rem] flex items-center justify-between border-white/5">
-                    <div class="flex items-center gap-5">
-                        <div class="p-4 bg-zinc-800/50 rounded-2xl text-amber-500 shadow-inner"><i class="fas fa-trophy text-2xl"></i></div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-1">Programme Fidélité LUX</p>
-                            <p class="text-sm font-bold text-zinc-400">75% vers votre heure gratuite</p>
-                        </div>
-                    </div>
-                    <div class="w-14 h-14 rounded-full border-2 border-zinc-800 flex items-center justify-center text-xs font-black text-[#C9A84C]">75%</div>
-                </div>
             </div>
 
-            <!-- VIEW: PAYMENT SELECTION -->
             <div v-if="view === 'payment'" class="space-y-4 animate-in zoom-in-95">
                 <h3 class="text-2xl font-black mb-8 pr-4 flex items-center gap-4">
                     <i class="fas fa-credit-card text-[#C9A84C]"></i> Mode de paiement
                 </h3>
                 <div class="grid grid-cols-1 gap-3">
-                    <button v-for="method in paymentMethods" :key="method.id" @click="startSession(method.id)" class="lux-card p-6 rounded-[2.2rem] flex items-center justify-between hover:border-[#C9A84C] group text-right">
+                    <button v-for="method in paymentMethods" :key="method.id" @click="handleStartSession(method.id)" class="lux-card p-6 rounded-[2.2rem] flex items-center justify-between hover:border-[#C9A84C] group text-right">
                         <div class="flex items-center gap-5">
                             <div class="bg-zinc-800/50 p-4 rounded-2xl group-hover:bg-zinc-700 transition-all shadow-inner">
                                 <i :class="method.icon" :style="{color: method.color}" class="text-xl"></i>
@@ -153,10 +110,9 @@
                         <i class="fas fa-chevron-left text-zinc-800 group-hover:text-[#C9A84C] transition-all"></i>
                     </button>
                 </div>
-                <button @click="view = 'user'" class="w-full py-8 text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em] hover:text-white transition-all">Retour au Menu</button>
+                <button @click="view = 'user'" class="w-full py-8 text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em] hover:text-white transition-all">Retour</button>
             </div>
 
-            <!-- VIEW: ACTIVE SESSION (Timer) -->
             <div v-if="view === 'active'" class="space-y-6 animate-in zoom-in-95 duration-500">
                 <div class="lux-card py-16 px-10 rounded-[4rem] text-center border-[#C9A84C]/20 shadow-[0_0_60px_rgba(201,168,76,0.1)]">
                     <div class="relative w-72 h-72 mx-auto mb-12 flex items-center justify-center">
@@ -167,7 +123,6 @@
                             <p class="text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em]">TEMPS DE JEU ACTIF</p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-5 mb-12">
                         <div class="bg-black/40 p-6 rounded-[2.5rem] border border-zinc-800/50 text-right shadow-inner">
                             <p class="text-zinc-600 text-[9px] font-black uppercase mb-2 tracking-widest">MONTANT CONSOMMÉ</p>
@@ -178,91 +133,39 @@
                             <p class="text-3xl font-black text-white">{{hourlyRate}} <span class="text-xs">DH</span></p>
                         </div>
                     </div>
-
                     <div class="flex gap-4">
-                        <a href="index.html" class="flex-[2] bg-zinc-800 hover:bg-[#C9A84C] hover:text-black py-6 rounded-[2rem] font-black flex items-center justify-center gap-4 transition-all group shadow-xl">
-                            <i class="fas fa-coffee group-hover:animate-bounce"></i> ORDER A DRINK
-                        </a>
-                        <button @click="endSession" class="flex-1 bg-rose-500/10 text-rose-500 hover:bg-red-500 hover:text-white py-6 rounded-[2rem] font-black transition-all text-xs uppercase tracking-tighter">STOP</button>
+                        <button @click="endSession" class="w-full bg-rose-500/10 text-rose-500 hover:bg-red-500 hover:text-white py-6 rounded-[2rem] font-black transition-all uppercase tracking-widest">STOP</button>
                     </div>
-                </div>
-                <div class="flex items-center gap-4 bg-cyan-500/5 border border-cyan-500/10 p-5 rounded-3xl text-cyan-400 text-[10px] font-bold leading-relaxed shadow-sm">
-                    <i class="fas fa-bolt animate-pulse"></i> 
-                    Facturation en temps réel à la seconde pour une transparence totale.
-                </div>
-            </div>
-
-            <!-- VIEW: ADMIN PANEL (v4.2: redirects to Maestro Hub) -->
-            <div v-if="view === 'admin'" class="space-y-6 animate-in fade-in slide-in-from-top-4">
-                <div class="lux-card p-10 rounded-[3rem] shadow-2xl text-center">
-                    <i class="fas fa-cogs text-[#C9A84C] text-6xl mb-6"></i>
-                    <h3 class="text-2xl font-black mb-4">إحصائيات Lux AI</h3>
-                    <p class="text-zinc-500 text-sm mb-8 leading-relaxed">
-                        مراقبة محطات الجيمنج الموحدة مع المايسترو.<br>
-                        <span class="text-xs text-zinc-600">Monitoring unifié des stations gaming via le Maestro Hub.</span>
-                    </p>
-                    <a href="lux-admin.html" target="_blank"
-                       class="inline-flex items-center gap-3 bg-[#C9A84C] text-black font-black py-5 px-10 rounded-[2rem] shadow-2xl uppercase text-sm tracking-[0.2em] active:scale-95 transition-all">
-                        <i class="fas fa-external-link-alt"></i>
-                        ⚙️ LUX Admin · Stations live · Maestro Hub
-                    </a>
-                    <button @click="view = 'user'" class="block mt-6 mx-auto text-zinc-500 hover:text-[#C9A84C] text-[10px] font-black uppercase tracking-widest">
-                        ← Retour
-                    </button>
                 </div>
             </div>
 
         </main>
 
         <footer class="mt-auto pt-20 pb-10 text-center border-t border-zinc-900/50 w-full max-w-2xl opacity-60">
-            <p class="text-[9px] text-[#C9A84C] font-black uppercase tracking-[0.6em] mb-4">WWW.CAFESLUX.COM</p>
-            <div class="flex items-center justify-center gap-4 text-zinc-700 text-[8px] font-bold uppercase tracking-widest mb-3">
-                <span>Maestro Unification Platform</span>
-                <span class="w-1.5 h-1.5 bg-zinc-900 rounded-full"></span>
-                <span>The Global Standard v9.2</span>
-            </div>
             <div class="text-[8px] text-zinc-700 tracking-[0.3em] uppercase font-bold">
                 Powered by <span class="text-[#C9A84C]">MAESTRO OS</span> — A subsidiary of NextaGlobal Holding
             </div>
         </footer>
-
     </div>
 
     <script>
         const { createApp } = Vue;
 
-        // Parse URL params once
-        const _qs = new URLSearchParams(window.location.search);
-        const _initialStation = _qs.get('station') || '05';
-        const _showTarifs = _qs.get('tarifs') === '1';
-
-        // Initialize LuxAPI (non-blocking)
-        if(window.LuxAPI) LuxAPI.init().catch(function(){});
-
         createApp({
             data() {
                 return {
                     view: 'user',
-                    stationId: _initialStation,
+                    stationId: new URLSearchParams(window.location.search).get('station') || '05',
                     hourlyRate: 30,
                     elapsedSeconds: 0,
                     consumedAmount: 0,
                     timerInterval: null,
                     heartbeatInterval: null,
-                    showTarifs: _showTarifs,
-                    // Pricing tiers displayed in the Tarifs banner
-                    tarifs: [
-                        { label: '1h Standard',  price: 30,  note: 'PS5 Pro · 4K' },
-                        { label: '2h Pack',      price: 55,  note: 'Économie 5 DH' },
-                        { label: '3h Pack',      price: 80,  note: 'Économie 10 DH' },
-                        { label: '5h Marathon',  price: 130, note: 'Économie 20 DH' }
-                    ],
+                    stations: [],
                     paymentMethods: [
-                        { id: 'cash',   label: 'Espèces (Cash)',      icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
-                        { id: 'paypal', label: 'PayPal',              icon: 'fab fa-paypal',          color: '#0070ba', desc: 'Portefeuille numérique' },
-                        { id: 'card',   label: 'Carte Bancaire',      icon: 'fas fa-credit-card',     color: '#22d3ee', desc: 'Paiement sécurisé Stripe' },
-                        { id: 'gift',   label: 'Carte Cadeau LUX',    icon: 'fas fa-gift',            color: '#f43f5e', desc: '🎁 Carte Cadeau LUX' },
-                        { id: 'gpay',   label: 'Google Pay',          icon: 'fab fa-google-pay',      color: '#fff',    desc: 'بلمسة واحدة (Google Pay)' }
+                        { id: 'cash',   label: 'Espèces (Cash)', icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
+                        { id: 'paypal', label: 'PayPal', icon: 'fab fa-paypal', color: '#0070ba', desc: 'Portefeuille numérique' },
+                        { id: 'card',   label: 'Carte Bancaire', icon: 'fas fa-credit-card', color: '#22d3ee', desc: 'Paiement sécurisé Stripe' }
                     ]
                 }
             },
@@ -275,92 +178,50 @@
                 }
             },
             methods: {
-                // Notify parent iframe (Maestro Hub) + persist via LuxAPI
-                _syncToMaestro(eventType, extra){
-                    const payload = Object.assign({
-                        source: 'lux-gaming',
-                        event: eventType,
-                        stationId: this.stationId,
-                        hourlyRate: this.hourlyRate,
-                        duration: this.elapsedSeconds,
-                        consumption: this.consumedAmount,
-                        revenue: this.consumedAmount,
-                        timestamp: new Date().toISOString()
-                    }, extra || {});
-
-                    // Tell the parent tab (cafe-lux / index iframe)
+                async loadStations() {
                     try {
-                        if(window.parent && window.parent !== window){
-                            window.parent.postMessage(payload, '*');
+                        if(window.LuxAPI) {
+                            this.stations = await window.LuxAPI.getGamingStations();
                         }
-                    } catch(e){}
-
-                    // Persist via LuxAPI (handles online/offline + queue)
-                    try {
-                        if(window.LuxAPI){
-                            LuxAPI.saveTransaction({
-                                source: 'gaming',
-                                stationId: payload.stationId,
-                                total: Math.round(payload.revenue * 100) / 100,
-                                payMethod: payload.payMethod || 'cash',
-                                event: eventType,
-                                meta: payload
-                            });
-                        }
-                    } catch(e){ console.warn('[Gaming] LuxAPI:', e); }
+                    } catch(e) { console.error("Error loading stations", e); }
                 },
 
-                async startSession(method) {
+                async handleStartSession(method) {
                     this.elapsedSeconds = 0;
                     this.consumedAmount = 0;
                     this.view = 'active';
 
-                    // 1. Tell the server to activate the physical station (opens screen signal)
                     try {
-                        if(window.LuxAPI){
-                            await LuxAPI.activateStation(this.stationId, 1, 'POS', 'GAMING-' + Date.now());
+                        if(window.LuxAPI) {
+                            // تفعيل المحطة عبر الـ API المحدث v5.5
+                            await window.LuxAPI.activateStation(this.stationId, 1);
                         }
-                    } catch(e){ console.warn('[Gaming] activateStation:', e); }
+                    } catch(e) { console.warn('API Activation failed, starting local timer anyway.', e); }
 
-                    // 2. Log session start
-                    this._syncToMaestro('session_start', { payMethod: method, status: 'active' });
-
-                    // 3. Local timer ticks every second (for display)
+                    // Local Timer
                     this.timerInterval = setInterval(() => {
                         this.elapsedSeconds++;
                         this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
-                        if(this.elapsedSeconds % 60 === 0){
-                            this._syncToMaestro('session_tick', { status: 'active', payMethod: method });
-                        }
                     }, 1000);
 
-                    // 4. Server heartbeat every 30s (keeps station marked active)
+                    // Heartbeat every 30s
                     this.heartbeatInterval = setInterval(() => {
-                        if(window.LuxAPI) LuxAPI.stationHeartbeat(this.stationId);
+                        if(window.LuxAPI) window.LuxAPI.stationHeartbeat(this.stationId);
                     }, 30000);
                 },
 
                 async endSession() {
-                    if(!confirm("Voulez-vous vraiment terminer la session ?")) return;
+                    if(!confirm("Terminer la session ?")) return;
                     clearInterval(this.timerInterval);
                     clearInterval(this.heartbeatInterval);
-                    this.timerInterval = null;
-                    this.heartbeatInterval = null;
-
-                    // Tell server to cut the signal
-                    try {
-                        if(window.LuxAPI) await LuxAPI.deactivateStation(this.stationId);
-                    } catch(e){ console.warn('[Gaming] deactivateStation:', e); }
-
-                    this._syncToMaestro('session_end', { status: 'completed' });
                     this.view = 'user';
+                    // إضافة أي منطق إضافي لإنهاء الجلسة برمجياً هنا
                 }
             },
-            beforeUnmount() {
-                if(this.timerInterval) clearInterval(this.timerInterval);
-                if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+            mounted() {
+                this.loadStations();
             }
-        }).mount('#app')
+        }).mount('#app');
     </script>
 </body>
 </html>
