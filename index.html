@@ -3548,7 +3548,8 @@ function buildQRGrid(){
     if(isOcc) occCount++; else freeCount++;
     const cls = 'qr-card ' + (isOcc ? 'occupied' : 'free');
     const qrUrl = `${CAFE_URL}/?table=${i}`;
-    const qrSVG = LuxQR.toSVG(qrUrl, 3, '#1A0A00', '#FAFAF5');
+    // v4.2: higher pixel density (3 → 5) for better scan reliability
+    const qrSVG = LuxQR.toSVG(qrUrl, 5, '#1A0A00', '#FAFAF5');
     html += `<div class="${cls}">
       <div class="qr-num">T${i < 10 ? '0'+i : i}</div>
       <div class="qr-label">Table ${i}</div>
@@ -3558,7 +3559,10 @@ function buildQRGrid(){
       <div class="qr-status-dot ${isOcc ? 'qsd-occ' : 'qsd-free'}">
         <span>${isOcc ? '●' : '●'}</span> ${isOcc ? 'Occupée' : 'Libre'}
       </div>
-      <button class="qr-print-btn" onclick="printQR(${i})">🖨 Imprimer</button>
+      <div style="display:flex;gap:4px;justify-content:center;margin-top:4px">
+        <button class="qr-print-btn" onclick="printQR(${i})" style="flex:1">🖨 Imprimer</button>
+        <button class="qr-print-btn" onclick="window.open('${qrUrl}','_blank')" style="flex:0 0 auto;padding:6px 10px" title="Tester le lien">🔗</button>
+      </div>
     </div>`;
   }
   container.innerHTML = html;
@@ -3570,23 +3574,26 @@ function buildQRGrid(){
 
 function printQR(tableNum){
   const qrUrl = `${CAFE_URL}/?table=${tableNum}`;
-  const qrSVG = LuxQR.toSVG(qrUrl, 5, '#1A0A00', '#FAFAF5');
-  const w = window.open('', '_blank', 'width=420,height=560');
+  // v4.2: higher density (5 → 10) + show URL below for manual verification
+  const qrSVG = LuxQR.toSVG(qrUrl, 10, '#1A0A00', '#FAFAF5');
+  const w = window.open('', '_blank', 'width=420,height=620');
   w.document.write(`<!DOCTYPE html><html><head><title>QR Table ${tableNum}</title>
   <style>
     body{font-family:serif;text-align:center;padding:30px;background:#fff;}
     .logo{font-size:32px;letter-spacing:6px;color:#8B6E2F;margin-bottom:4px;}
     .sub{font-size:10px;letter-spacing:3px;color:#888;margin-bottom:20px;}
-    svg{border:2px solid #C9A84C;border-radius:8px;padding:6px;background:#fff;max-width:180px;}
+    svg{border:2px solid #C9A84C;border-radius:8px;padding:10px;background:#fff;max-width:260px;}
     .tnum{font-size:48px;color:#C9A84C;font-weight:700;margin:12px 0 6px;}
     .hint{font-size:12px;color:#555;margin-top:8px;}
-    .url{font-size:10px;color:#AAA;margin-top:4px;}
+    .url{font-size:9px;color:#AAA;margin-top:6px;word-break:break-all;font-family:monospace;}
+    .verify{font-size:10px;color:#333;margin-top:10px;padding:6px;background:#FFF9E0;border:1px dashed #C9A84C;border-radius:4px;}
   </style></head><body>
   <div class="logo">✦ LUX</div>
   <div class="sub">CAFÉ & PÂTISSERIE · TAZA</div>
   ${qrSVG}
   <div class="tnum">TABLE ${tableNum}</div>
   <div class="hint">📱 Scannez pour commander directement</div>
+  <div class="verify">Lien: ${qrUrl}</div>
   <div class="url">cafeslux.com · +212 808524169</div>
   </body></html>`);
   w.document.close();
@@ -3602,9 +3609,27 @@ function printAllQR(){
 
 // Auto-detect table from URL ?table=N — FIX: persists for the session
 // and pins the table number to every order automatically.
+// v4.2: accept both ?table=N and #table=N (some mobile scanners strip the query)
+function _extractTableParam(){
+  // 1) Standard search params
+  try {
+    const p = new URLSearchParams(window.location.search);
+    if(p.get('table')) return p.get('table');
+  } catch(e){}
+  // 2) Fallback: hash fragment (e.g. /#table=4)
+  try {
+    const h = (window.location.hash || '').replace(/^#/, '');
+    const hp = new URLSearchParams(h);
+    if(hp.get('table')) return hp.get('table');
+    // Also tolerate raw "table=4" in hash
+    const m = h.match(/table=(\d+)/);
+    if(m) return m[1];
+  } catch(e){}
+  return null;
+}
+
 function detectTableFromURL(){
-  const params = new URLSearchParams(window.location.search);
-  const tableNum = params.get('table');
+  const tableNum = _extractTableParam();
   if(!tableNum) return;
   const tn = parseInt(tableNum);
   if(!(tn >= 1 && tn <= 50)){
@@ -3915,8 +3940,8 @@ window.addEventListener('DOMContentLoaded', function(){
   } catch(e) { console.warn('[LUX] Init error:', e); }
   // QR Table scan: auto-bypass gateway
   try {
-    const params = new URLSearchParams(window.location.search);
-    const tableNum = params.get('table');
+    // v4.2: use shared helper so ?table= and #table= both work
+    const tableNum = typeof _extractTableParam === 'function' ? _extractTableParam() : (new URLSearchParams(window.location.search)).get('table');
     if(tableNum && parseInt(tableNum) >= 1 && parseInt(tableNum) <= 50){
       console.log('[LUX] QR scan detected: Table', tableNum, '— bypassing gateway');
       // Auto-enter public menu (skip gateway)
@@ -6389,6 +6414,14 @@ function autoEnterKDS() {
   transform: scale(1.1);
 }
 </style>
+  <!-- WhatsApp Button -->
+  <a href="https://wa.me/212677717201?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D9%85%D8%B9%20Caf%C3%A9%20LUX" target="_blank" id="fab-wa" style="width:48px;height:48px;border-radius:50%;background:#25D366;color:#fff;border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 16px rgba(37,211,102,.35);transition:all .3s;display:flex;align-items:center;justify-content:center;text-decoration:none" title="📲 WhatsApp">
+    📲
+  </a>
+  <!-- Sync Button (admin only) -->
+  <button id="fab-sync" onclick="runManualSync()" style="display:none;width:48px;height:48px;border-radius:50%;background:var(--bg3);color:var(--gold);border:1px solid var(--border-gold);cursor:pointer;font-size:18px;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .3s;align-items:center;justify-content:center" title="🔄 Sync données">
+    🔄
+  </button>
 </div>
 
 <style>
