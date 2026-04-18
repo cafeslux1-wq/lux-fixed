@@ -69,87 +69,68 @@
         </main>
     </div>
 
-    <script>
+   <script>
 const { createApp } = Vue;
 
+// جلب رقم المحطة من الرابط (مثال: gaming.html?station=01)
 const _qs = new URLSearchParams(window.location.search);
-const _station = _qs.get('station') || '05';
+const _stationId = _qs.get('station') || '05'; 
 
 createApp({
     data() {
         return {
-            view: 'user', // الواجهة الافتراضية
-            stationId: _station,
-            hourlyRate: 30,
+            view: 'user', // الواجهة الافتراضية (البداية)
+            stationId: _stationId,
             elapsedSeconds: 0,
-            consumedAmount: 0,
             timerInterval: null,
-            heartbeatInterval: null,
-            apiData: null
-        }
-    },
-    computed: {
-        formattedTime() {
-            const h = Math.floor(this.elapsedSeconds / 3600);
-            const m = Math.floor((this.elapsedSeconds % 3600) / 60);
-            const s = this.elapsedSeconds % 60;
-            return `${h > 0 ? h + ':' : ''}${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            apiOnline: false
         }
     },
     methods: {
-        // فحص حالة المحطة من السيرفر فور تحميل الصفحة
-        async checkStationStatus() {
+        async syncWithServer() {
             try {
                 if (window.LuxAPI && window.LuxAPI.getGamingStations) {
                     const stations = await window.LuxAPI.getGamingStations();
-                    // البحث عن المحطة الحالية في البيانات القادمة من Railway
+                    // البحث عن حالة هذه المحطة تحديداً في السيرفر
                     const current = stations.find(s => s.id.includes(this.stationId));
                     
                     if (current && current.status === 'active') {
-                        this.view = 'active';
-                        // تحويل الوقت النصي (مثل 42:10) إلى ثوانٍ لتشغيل العداد
-                        this.syncTimer(current.time || "00:00");
+                        this.view = 'active'; // التحول التلقائي لواجهة العداد
+                        this.parseTime(current.time);
+                        this.startTimer();
+                    } else if (current && current.status !== 'active') {
+                        this.view = 'user';
+                        this.stopTimer();
                     }
+                    this.apiOnline = true;
                 }
             } catch (e) {
-                console.warn("فشل جلب حالة المحطة، سيتم الاعتماد على التشغيل المحلي.");
+                console.error("Sync Error:", e);
             }
         },
-
-        syncTimer(timeStr) {
+        parseTime(timeStr) {
+            if (!timeStr) return;
             const parts = timeStr.split(':').map(Number);
-            let totalSeconds = 0;
-            if (parts.length === 2) totalSeconds = (parts[0] * 60) + parts[1];
-            if (parts.length === 3) totalSeconds = (parts[0] * 3600) + (parts[1] * 60) + parts[2];
-            
-            this.elapsedSeconds = totalSeconds;
-            this.startLocalTimer();
+            this.elapsedSeconds = parts.length === 3 ? 
+                (parts[0] * 3600) + (parts[1] * 60) + parts[2] : 
+                (parts[0] * 60) + parts[1];
         },
-
-        async startSession(methodId) {
-            this.view = 'active';
-            this.elapsedSeconds = 0;
-
-            try {
-                if (window.LuxAPI && window.LuxAPI.activateStation) {
-                    await window.LuxAPI.activateStation(this.stationId, 1);
-                }
-            } catch (e) {}
-
-            this.startLocalTimer();
-        },
-
-        startLocalTimer() {
-            if (this.timerInterval) clearInterval(this.timerInterval);
+        startTimer() {
+            if (this.timerInterval) return;
             this.timerInterval = setInterval(() => {
                 this.elapsedSeconds++;
-                this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
             }, 1000);
+        },
+        stopTimer() {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
     },
     mounted() {
-        // بمجرد فتح الصفحة، نفحص هل المحطة تعمل أصلاً في السيرفر؟
-        this.checkStationStatus();
+        // الفحص الفوري عند فتح الصفحة
+        this.syncWithServer();
+        // تحديث الحالة كل 5 ثوانٍ لضمان المزامنة مع الإدارة
+        setInterval(this.syncWithServer, 5000);
     }
 }).mount('#app');
-</script>
+</script>    
