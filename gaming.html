@@ -72,35 +72,42 @@
    <script>
 const { createApp } = Vue;
 
-// جلب رقم المحطة من الرابط (مثال: gaming.html?station=01)
 const _qs = new URLSearchParams(window.location.search);
-const _stationId = _qs.get('station') || '05'; 
+const _station = _qs.get('station') || '05'; // سيأخذ رقم المحطة من الرابط
 
 createApp({
     data() {
         return {
-            view: 'user', // الواجهة الافتراضية (البداية)
-            stationId: _stationId,
+            view: 'user', 
+            stationId: _station,
+            hourlyRate: 30,
             elapsedSeconds: 0,
+            consumedAmount: 0,
             timerInterval: null,
             apiOnline: false
         }
     },
     methods: {
-        async syncWithServer() {
+        // الوظيفة الأساسية لمزامنة الحالة مع السيرفر
+        async syncStatus() {
             try {
-                if (window.LuxAPI && window.LuxAPI.getGamingStations) {
-                    const stations = await window.LuxAPI.getGamingStations();
-                    // البحث عن حالة هذه المحطة تحديداً في السيرفر
+                if (window.LuxAPI && (window.LuxAPI.getGamingStations || window.LuxAPI.getStations)) {
+                    const getFn = window.LuxAPI.getGamingStations || window.LuxAPI.getStations;
+                    const stations = await getFn();
+                    
+                    // البحث عن المحطة الحالية (مثلاً PS-05)
                     const current = stations.find(s => s.id.includes(this.stationId));
                     
-                    if (current && current.status === 'active') {
-                        this.view = 'active'; // التحول التلقائي لواجهة العداد
-                        this.parseTime(current.time);
-                        this.startTimer();
-                    } else if (current && current.status !== 'active') {
-                        this.view = 'user';
-                        this.stopTimer();
+                    if (current && current.status.toLowerCase() === 'active') {
+                        if (this.view !== 'active') {
+                            this.view = 'active';
+                            this.startLocalTimer(current.time);
+                        }
+                    } else {
+                        if (this.view === 'active') {
+                            this.view = 'user';
+                            this.stopLocalTimer();
+                        }
                     }
                     this.apiOnline = true;
                 }
@@ -108,29 +115,32 @@ createApp({
                 console.error("Sync Error:", e);
             }
         },
-        parseTime(timeStr) {
-            if (!timeStr) return;
-            const parts = timeStr.split(':').map(Number);
-            this.elapsedSeconds = parts.length === 3 ? 
-                (parts[0] * 3600) + (parts[1] * 60) + parts[2] : 
-                (parts[0] * 60) + parts[1];
-        },
-        startTimer() {
+
+        startLocalTimer(timeStr) {
             if (this.timerInterval) return;
+            
+            // تحويل الوقت من السيرفر (00:00:00) إلى ثوانٍ
+            if (timeStr) {
+                const p = timeStr.split(':').map(Number);
+                this.elapsedSeconds = p.length === 3 ? (p[0]*3600 + p[1]*60 + p[2]) : (p[0]*60 + p[1]);
+            }
+
             this.timerInterval = setInterval(() => {
                 this.elapsedSeconds++;
+                this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
             }, 1000);
         },
-        stopTimer() {
+
+        stopLocalTimer() {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
         }
     },
     mounted() {
-        // الفحص الفوري عند فتح الصفحة
-        this.syncWithServer();
-        // تحديث الحالة كل 5 ثوانٍ لضمان المزامنة مع الإدارة
-        setInterval(this.syncWithServer, 5000);
+        // الفحص فور تحميل الصفحة
+        this.syncStatus();
+        // التحديث التلقائي كل 5 ثوانٍ لضمان المزامنة مع الإدارة
+        setInterval(this.syncStatus, 5000);
     }
 }).mount('#app');
-</script>    
+</script>
