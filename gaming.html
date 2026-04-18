@@ -72,76 +72,88 @@
     <script>
         const { createApp } = Vue;
 
-        createApp({
-            data() {
-                return {
-                    stations: [],
-                    currentStationId: 'PS-01', // يمكنك تغييرها لتصبح ديناميكية بناءً على الرابط
-                    view: 'user', 
-                    paymentMethods: [
-                        { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', icon: 'fas fa-clock', color: '#C9A84C' },
-                        { id: 2, label: 'ساعتين', desc: 'SÉANCE 2H', icon: 'fas fa-bolt', color: '#C9A84C' },
-                        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', icon: 'fas fa-moon', color: '#C9A84C' }
-                    ]
-                };
-            },
-            computed: {
-                // البحث عن بيانات المحطة الحالية في المصفوفة القادمة من السيرفر
-                currentStation() {
-                    return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
-                },
-                formattedTime() {
-                    return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
-                },
-                stationId() {
-                    return this.currentStationId;
-                }
-            },
-            methods: {
-                async fetchGamingData() {
-                    try {
-                        // استدعاء LuxAPI المعرف في api-client.js
-                        if (window.LuxAPI) {
-                            const data = await window.LuxAPI.getStations();
-                            if (data && data.length > 0) {
-                                this.stations = data;
-                                // إذا وجدنا أن المحطة في السيرفر "Active"، نغير الواجهة تلقائياً للعداد
-                                if (this.currentStation && this.currentStation.status === 'Active') {
-                                    this.view = 'active';
-                                } else if (this.currentStation && this.currentStation.status === 'Idle') {
-                                    this.view = 'user';
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.error("⚠️ Error fetching data:", error);
-                    }
-                },
-                async startSession(methodId) {
-                    // هنا نرسل طلب للسيرفر لتفعيل المحطة
-                    // تم ربطها بـ LuxAPI كما في ملفك
-                    this.view = 'active';
-                    console.log(`Starting session for method ${methodId}...`);
-                },
-                endSession() {
-                    if(confirm('هل تريد إنهاء الجلسة؟')) {
-                        this.view = 'user';
-                        // نرسل طلب للسيرفر لإلغاء التفعيل
-                    }
-                }
-            },
-            mounted() {
-                // استخراج رقم المحطة من الرابط إذا وجد (مثال: gaming.html?id=PS-02)
-                const params = new URLSearchParams(window.location.search);
-                if (params.has('id')) {
-                    this.currentStationId = params.get('id');
-                }
-
-                this.fetchGamingData();
-                // التحديث كل 5 ثوانٍ لمزامنة العداد مع الإدارة
-                setInterval(() => this.fetchGamingData(), 5000);
+createApp({
+  data() {
+    return {
+      stations: [],
+      currentStationId: 'PS-01', // المعرف الافتراضي للمحطة
+      view: 'user', 
+      isloading: false,
+      paymentMethods: [
+        { id: 1, label: 'ساعة واحدة', desc: 'SÉANCE 1H', hours: 1, icon: 'fas fa-clock', color: '#C9A84C' },
+        { id: 2, label: 'ساعتين', desc: 'SÉANCE 2H', hours: 2, icon: 'fas fa-bolt', color: '#C9A84C' },
+        { id: 3, label: 'عرض السهرة', desc: 'OFFRE NIGHT', hours: 4, icon: 'fas fa-moon', color: '#C9A84C' }
+      ]
+    };
+  },
+  computed: {
+    currentStation() {
+      return this.stations.find(s => s.stationId === this.currentStationId || s.id === this.currentStationId);
+    },
+    formattedTime() {
+      return this.currentStation ? (this.currentStation.time || this.currentStation.remainingTime || "00:00:00") : "00:00:00";
+    },
+    stationId() {
+      return this.currentStationId;
+    }
+  },
+  methods: {
+    async fetchGamingData() {
+      try {
+        if (window.LuxAPI) {
+          const data = await window.LuxAPI.getStations();
+          if (data && data.length > 0) {
+            this.stations = data;
+            // التبديل التلقائي للواجهة بناءً على حالة السيرفر
+            if (this.currentStation && (this.currentStation.status === 'Active' || this.currentStation.status === 'Warning')) {
+              this.view = 'active';
+            } else {
+              this.view = 'user';
             }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+          }
+        }
+      } catch (error) {
+        console.error("⚠️ خطأ في مزامنة البيانات:", error);
+      }
+    },
+    async startSession(method) {
+      if (this.isloading) return;
+      
+      this.isloading = true;
+      try {
+        // تفعيل الأداء فعلياً عبر السيرفر (Railway)
+        // نستخدم دالة activateStation من ملف api-client.js
+        await window.LuxAPI.activateStation(this.currentStationId, method.hours);
+        
+        this.view = 'active';
+        await this.fetchGamingData(); // تحديث فوري للحالة
+      } catch (error) {
+        alert("عذراً، تعذر بدء الجلسة. تأكد من اتصال السيرفر.");
+        console.error(error);
+      } finally {
+        this.isloading = false;
+      }
+    },
+    async endSession() {
+      if(confirm('هل تريد إنهاء الجلسة فعلياً؟')) {
+        try {
+          await window.LuxAPI.deactivateStation(this.currentStationId);
+          this.view = 'user';
+          await this.fetchGamingData();
+        } catch (error) {
+          console.error("خطأ في إنهاء الجلسة:", error);
+        }
+      }
+    }
+  },
+  mounted() {
+    // التقاط معرف المحطة من الرابط
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('id')) {
+        this.currentStationId = params.get('id');
+    }
+
+    this.fetchGamingData();
+    setInterval(() => this.fetchGamingData(), 5000); // تحديث كل 5 ثوانٍ
+  }
+}).mount('#app');
