@@ -9,148 +9,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     
     <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
     <script src="api-client.js" defer></script>
 
     <style>
-        :root { 
-            --lux-gold: #C9A84C; 
-            --lux-dark: #050505; 
-            --lux-card: rgba(15, 15, 16, 0.7);
-        }
-        body { 
-            font-family: 'Inter', 'Cairo', sans-serif; 
-            background-color: var(--lux-dark); 
-            color: #FFF; 
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at 50% -20%, #1a1a1a 0%, transparent 50%);
-            min-height: 100vh;
-        }
-        .lux-card { 
-            background: var(--lux-card); 
-            backdrop-filter: blur(25px); 
-            border: 1px solid rgba(255, 255, 255, 0.03); 
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .lux-card:hover {
-            border-color: var(--lux-gold);
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-        .timer-glow { text-shadow: 0 0 30px rgba(201, 168, 76, 0.3); }
-        .logo-gold {
-            filter: invert(72%) sepia(17%) saturate(1033%) hue-rotate(1deg) brightness(105%) contrast(105%);
-        }
-        .animate-spin-slow { animation: spin 15s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        :root { --lux-gold: #C9A84C; --lux-dark: #050505; --lux-card: rgba(15, 15, 16, 0.7); }
+        body { font-family: 'Inter', 'Cairo', sans-serif; background-color: var(--lux-dark); color: #FFF; min-height: 100vh; }
+        .lux-card { background: var(--lux-card); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.03); }
         [v-cloak] { display: none; }
     </style>
 </head>
-<body id="app">
-    <div v-cloak class="p-6 md:p-12 flex flex-col items-center">
-        
-        <header class="w-full max-w-4xl flex justify-between items-center mb-16">
-            <div class="flex items-center gap-5 text-right">
-                <div class="w-16 h-16 bg-zinc-900 rounded-[1.5rem] flex items-center justify-center border border-zinc-800 shadow-2xl overflow-hidden group">
-                    <img src="image_621b48.png" alt="LUX Logo" class="w-12 h-auto logo-gold transition-transform group-hover:scale-110">
-                </div>
-                <div>
-                    <h2 class="text-2xl font-black text-white uppercase italic leading-none font-playfair">
-                        LUX <span style="color:var(--lux-gold)">GAMING</span>
-                    </h2>
-                    <p class="text-[9px] text-zinc-600 font-black uppercase tracking-[0.4em] mt-2">Station #{{stationId}} · Global Ecosystem</p>
-                </div>
-            </div>
-            
-            <div class="flex gap-3">
-                <a href="lux-admin.html" target="_blank" title="⚙️ LUX Admin"
-                   class="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800 hover:border-[#C9A84C] text-zinc-500 hover:text-[#C9A84C] transition-all shadow-lg flex items-center gap-2">
-                    <i class="fas fa-cogs text-xl"></i>
-                    <span class="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Maestro</span>
-                </a>
-            </div>
-        </header>
+<body>
+    <div id="app" v-cloak>
+        <div class="p-6 md:p-12 flex flex-col items-center">
+            <header class="w-full max-w-4xl flex justify-between items-center mb-16">
+                <h2 class="text-2xl font-black text-white italic font-playfair">
+                    LUX <span style="color:var(--lux-gold)">GAMING</span>
+                </h2>
+                <div class="text-[10px] text-zinc-500 uppercase tracking-widest">Station #{{stationId}}</div>
+            </header>
 
-        <main class="w-full max-w-xl">
-            
-            <div v-if="view === 'user'" class="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div class="lux-card py-16 px-10 rounded-[3.5rem] text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#C9A84C]/40 to-transparent"></div>
-                    <div class="w-28 h-28 bg-[#C9A84C]/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-12 border border-[#C9A84C]/10 shadow-inner">
-                        <i class="fas fa-play text-[#C9A84C] text-4xl mr-1 opacity-80"></i>
-                    </div>
-                    <h2 class="text-4xl font-black mb-4 tracking-tight font-playfair italic">Prêt pour l'aventure ?</h2>
-                    <p class="text-zinc-500 text-sm mb-12 leading-relaxed">
-                        Votre station est optimisée و جاهزة للاتصال. <br>
-                        Tarif Premium : <span class="text-white font-black">{{hourlyRate}} DH / heure</span>
-                    </p>
-                    <button @click="view = 'payment'" class="w-full bg-[#C9A84C] text-black py-6 rounded-[2.2rem] font-black text-xl hover:bg-white hover:scale-[1.02] transition-all shadow-[0_20px_40px_rgba(201,168,76,0.15)] uppercase tracking-wider">
-                        COMMENCER À JOUER
+            <main class="w-full max-w-xl">
+                <div v-if="view === 'user'" class="lux-card py-16 px-10 rounded-[3.5rem] text-center">
+                    <h2 class="text-3xl font-black mb-8 font-playfair italic">Prêt pour l'aventure ?</h2>
+                    <button @click="view = 'payment'" class="w-full bg-[#C9A84C] text-black py-6 rounded-[2.2rem] font-black text-xl hover:scale-[1.02] transition-all shadow-lg">
+                        COMMENCER
                     </button>
                 </div>
-            </div>
 
-            <div v-if="view === 'payment'" class="space-y-4 animate-in zoom-in-95">
-                <h3 class="text-2xl font-black mb-8 pr-4 flex items-center gap-4">
-                    <i class="fas fa-credit-card text-[#C9A84C]"></i> Mode de paiement
-                </h3>
-                <div class="grid grid-cols-1 gap-3">
-                    <button v-for="method in paymentMethods" :key="method.id" @click="handleStartSession(method.id)" class="lux-card p-6 rounded-[2.2rem] flex items-center justify-between hover:border-[#C9A84C] group text-right">
-                        <div class="flex items-center gap-5">
-                            <div class="bg-zinc-800/50 p-4 rounded-2xl group-hover:bg-zinc-700 transition-all shadow-inner">
-                                <i :class="method.icon" :style="{color: method.color}" class="text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-white text-base">{{method.label}}</p>
-                                <p class="text-[9px] text-zinc-600 font-black uppercase tracking-widest mt-1">{{method.desc}}</p>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-left text-zinc-800 group-hover:text-[#C9A84C] transition-all"></i>
+                <div v-if="view === 'payment'" class="space-y-4">
+                    <button v-for="method in paymentMethods" @click="handleStartSession(method.id)" class="lux-card w-full p-6 rounded-[2.2rem] flex justify-between items-center hover:border-[#C9A84C]">
+                        <span class="font-bold">{{method.label}}</span>
+                        <i :class="method.icon" :style="{color: method.color}"></i>
                     </button>
                 </div>
-                <button @click="view = 'user'" class="w-full py-8 text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em] hover:text-white transition-all">Retour</button>
-            </div>
 
-            <div v-if="view === 'active'" class="space-y-6 animate-in zoom-in-95 duration-500">
-                <div class="lux-card py-16 px-10 rounded-[4rem] text-center border-[#C9A84C]/20 shadow-[0_0_60px_rgba(201,168,76,0.1)]">
-                    <div class="relative w-72 h-72 mx-auto mb-12 flex items-center justify-center">
-                        <div class="absolute inset-0 rounded-full border-[10px] border-zinc-800/30"></div>
-                        <div class="absolute inset-0 rounded-full border-[10px] border-[#C9A84C] border-t-transparent animate-spin-slow opacity-40 shadow-[0_0_30px_rgba(201,168,76,0.2)]"></div>
-                        <div class="z-10">
-                            <div class="text-7xl font-mono font-black text-white mb-2 timer-glow tracking-tighter">{{formattedTime}}</div>
-                            <p class="text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em]">TEMPS DE JEU ACTIF</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-5 mb-12">
-                        <div class="bg-black/40 p-6 rounded-[2.5rem] border border-zinc-800/50 text-right shadow-inner">
-                            <p class="text-zinc-600 text-[9px] font-black uppercase mb-2 tracking-widest">MONTANT CONSOMMÉ</p>
-                            <p class="text-3xl font-black text-green-500">{{consumedAmount.toFixed(2)}} <span class="text-xs">DH</span></p>
-                        </div>
-                        <div class="bg-black/40 p-6 rounded-[2.5rem] border border-zinc-800/50 text-right shadow-inner">
-                            <p class="text-zinc-600 text-[9px] font-black uppercase mb-2 tracking-widest">TARIF HORAIRE</p>
-                            <p class="text-3xl font-black text-white">{{hourlyRate}} <span class="text-xs">DH</span></p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <button @click="endSession" class="w-full bg-rose-500/10 text-rose-500 hover:bg-red-500 hover:text-white py-6 rounded-[2rem] font-black transition-all uppercase tracking-widest">STOP</button>
-                    </div>
+                <div v-if="view === 'active'" class="lux-card py-16 px-10 rounded-[4rem] text-center">
+                    <div class="text-7xl font-mono font-black mb-8">{{formattedTime}}</div>
+                    <button @click="endSession" class="bg-rose-500 text-white px-12 py-4 rounded-full font-black uppercase tracking-widest">STOP</button>
                 </div>
-            </div>
-
-        </main>
-
-        <footer class="mt-auto pt-20 pb-10 text-center border-t border-zinc-900/50 w-full max-w-2xl opacity-60">
-            <div class="text-[8px] text-zinc-700 tracking-[0.3em] uppercase font-bold">
-                Powered by <span class="text-[#C9A84C]">MAESTRO OS</span> — A subsidiary of NextaGlobal Holding
-            </div>
-        </footer>
+            </main>
+        </div>
     </div>
 
     <script>
         const { createApp } = Vue;
-
         createApp({
             data() {
                 return {
@@ -158,14 +63,11 @@
                     stationId: new URLSearchParams(window.location.search).get('station') || '05',
                     hourlyRate: 30,
                     elapsedSeconds: 0,
-                    consumedAmount: 0,
                     timerInterval: null,
                     heartbeatInterval: null,
-                    stations: [],
                     paymentMethods: [
-                        { id: 'cash',   label: 'Espèces (Cash)', icon: 'fas fa-money-bill-wave', color: '#22c55e', desc: 'Paiement au comptoir' },
-                        { id: 'paypal', label: 'PayPal', icon: 'fab fa-paypal', color: '#0070ba', desc: 'Portefeuille numérique' },
-                        { id: 'card',   label: 'Carte Bancaire', icon: 'fas fa-credit-card', color: '#22d3ee', desc: 'Paiement sécurisé Stripe' }
+                        { id: 'cash', label: 'Cash', icon: 'fas fa-money-bill-wave', color: '#22c55e' },
+                        { id: 'card', label: 'Carte', icon: 'fas fa-credit-card', color: '#22d3ee' }
                     ]
                 }
             },
@@ -174,52 +76,36 @@
                     const h = Math.floor(this.elapsedSeconds / 3600);
                     const m = Math.floor((this.elapsedSeconds % 3600) / 60);
                     const s = this.elapsedSeconds % 60;
-                    return `${h > 0 ? h + ':' : ''}${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+                    return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
                 }
             },
             methods: {
-                async loadStations() {
-                    try {
-                        if(window.LuxAPI) {
-                            this.stations = await window.LuxAPI.getGamingStations();
-                        }
-                    } catch(e) { console.error("Error loading stations", e); }
-                },
-
                 async handleStartSession(method) {
-                    this.elapsedSeconds = 0;
-                    this.consumedAmount = 0;
                     this.view = 'active';
-
-                    try {
-                        if(window.LuxAPI) {
-                            // تفعيل المحطة عبر الـ API المحدث v5.5
+                    this.elapsedSeconds = 0;
+                    
+                    // محاولة التفعيل عبر الـ API
+                    if(window.LuxAPI && window.LuxAPI.activateStation) {
+                        try {
                             await window.LuxAPI.activateStation(this.stationId, 1);
+                        } catch(e) { console.error("Activation Error", e); }
+                    }
+
+                    this.timerInterval = setInterval(() => { this.elapsedSeconds++; }, 1000);
+                    
+                    // Heartbeat كل 30 ثانية
+                    this.heartbeatInterval = setInterval(async () => {
+                        if(window.LuxAPI && window.LuxAPI.stationHeartbeat) {
+                            try { await window.LuxAPI.stationHeartbeat(this.stationId); } catch(e) {}
                         }
-                    } catch(e) { console.warn('API Activation failed, starting local timer anyway.', e); }
-
-                    // Local Timer
-                    this.timerInterval = setInterval(() => {
-                        this.elapsedSeconds++;
-                        this.consumedAmount = (this.hourlyRate / 3600) * this.elapsedSeconds;
-                    }, 1000);
-
-                    // Heartbeat every 30s
-                    this.heartbeatInterval = setInterval(() => {
-                        if(window.LuxAPI) window.LuxAPI.stationHeartbeat(this.stationId);
                     }, 30000);
                 },
-
                 async endSession() {
-                    if(!confirm("Terminer la session ?")) return;
+                    if(!confirm("Terminer?")) return;
                     clearInterval(this.timerInterval);
                     clearInterval(this.heartbeatInterval);
                     this.view = 'user';
-                    // إضافة أي منطق إضافي لإنهاء الجلسة برمجياً هنا
                 }
-            },
-            mounted() {
-                this.loadStations();
             }
         }).mount('#app');
     </script>
