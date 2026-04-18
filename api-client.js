@@ -1,8 +1,8 @@
 /**
- * Cafés LUX — API Client v5.2 (Production Ready)
+ * Cafés LUX — API Client v5.3 (Final Production Version)
+ * ✅ تم حل مشكلة التصدير (Export) والتعرف على LuxAPI في المتصفح
  * ✅ تم حل مشكلة getFreshOffers و fetchMenu المفقودة
  * ✅ تمت إضافة getGamingStations لجلب أجهزة البلايستيشن
- * ✅ يُصدَّر كـ window.LuxAPI
  */
 
 (function (window) {
@@ -47,6 +47,7 @@
         await req('/health');
         _online = true;
         this._updateStatusUI('#3DBE7A', '⟡ API Online');
+        console.log("✅ LuxAPI System Connected");
       } catch {
         _online = false;
         this._updateStatusUI('#E05252', '⟡ API Offline');
@@ -229,7 +230,6 @@
 
     // ── Gaming (المحطات والأجهزة) ──────────────────────────────────────
 
-    // جلب قائمة الأجهزة لظهورها في اللوحة
     async getGamingStations() {
       return req('/api/gaming/stations');
     },
@@ -242,8 +242,17 @@
     }
   };
 
-  // ── تصدير عالمي ──────────────────────────────────────────────────
+  // ── التصدير والتشغيل النهائي ───────────────────────────────────────
   window.LuxAPI = LuxAPI;
+  
+  // دالة مساعدة للموافقة على الفحص
   window.checkApiStatus = function () { LuxAPI.init(); };
+
+  // تشغيل التلقائي عند جاهزية الصفحة
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    LuxAPI.init();
+  } else {
+    window.addEventListener('DOMContentLoaded', () => LuxAPI.init());
+  }
 
 })(window);
