@@ -163,14 +163,43 @@ input,button,select,textarea{font-family:inherit}
 .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:rgba(201,168,76,.5)}
 .field-select option{background:#1A1A1A}
 .field-textarea{resize:vertical;min-height:60px}
-.pay-methods-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 18px}
-.pay-method-btn{
-  padding:10px;background:#1A1A1A;border:1.5px solid rgba(201,168,76,.15);
-  border-radius:10px;color:rgba(240,232,213,.6);font-size:12px;font-weight:600;
-  cursor:pointer;text-align:center;transition:.2s;
+.pay-methods-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 6px;
 }
-.pay-method-btn:hover{border-color:rgba(201,168,76,.4);color:var(--gold)}
-.pay-method-btn.selected{border-color:var(--gold);background:rgba(201,168,76,.08);color:var(--gold)}
+.pay-method-btn{
+  position:relative;padding:14px 8px 12px;background:#161616;
+  border:2px solid rgba(201,168,76,.12);border-radius:14px;
+  color:rgba(240,232,213,.55);font-size:11px;font-weight:700;
+  cursor:pointer;text-align:center;transition:.2s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  -webkit-tap-highlight-color:transparent;
+}
+.pay-method-btn .pay-icon{font-size:22px;line-height:1}
+.pay-method-btn .pay-label{font-size:10px;letter-spacing:.3px;line-height:1.3}
+.pay-method-btn:hover{border-color:rgba(201,168,76,.35);color:var(--gold);background:#1A1A1A}
+.pay-method-btn.selected{
+  border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold);
+  box-shadow:0 0 0 3px rgba(201,168,76,.12);
+}
+.pay-method-btn.selected::after{
+  content:'✓';position:absolute;top:6px;right:8px;
+  font-size:10px;font-weight:900;color:var(--gold);
+}
+/* Gift card code input */
+.gift-card-field{
+  display:none;margin-top:8px;margin-bottom:4px;
+  animation:slide-in .2s ease;
+}
+@keyframes slide-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.gift-card-field.show{display:block}
+.gift-card-input{
+  width:100%;background:#1A1A1A;border:2px solid var(--gold);border-radius:10px;
+  color:var(--gold);padding:11px 14px;font-size:14px;font-weight:700;
+  outline:none;letter-spacing:2px;text-transform:uppercase;
+  text-align:center;font-family:monospace;
+}
+.gift-card-input::placeholder{color:rgba(201,168,76,.3);letter-spacing:1px;font-size:12px}
+.gift-card-hint{font-size:10px;color:rgba(201,168,76,.5);text-align:center;margin-top:5px;letter-spacing:.5px}
 .modal-actions{display:flex;gap:8px;margin-top:4px}
 .btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(201,168,76,.2);border-radius:10px;color:rgba(240,232,213,.4);font-size:12px;cursor:pointer}
 .btn-confirm{flex:2;padding:12px;background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px}
@@ -362,7 +391,9 @@ input,button,select,textarea{font-family:inherit}
     margin:0;
   }
   .modal-title{ font-size:16px;margin-bottom:14px }
-  .pay-methods-grid{ grid-template-columns:repeat(2,1fr) }
+  /* Gift card input on mobile */
+  .pay-methods-grid{ grid-template-columns:repeat(3,1fr) }
+  .gift-card-input{ font-size:16px;padding:13px 14px }
 
   /* ── Success banner ───────────────────────────────────── */
   .success-banner{
@@ -476,12 +507,37 @@ input,button,select,textarea{font-family:inherit}
       <textarea id="f-notes" class="field-textarea" placeholder="Allergies, préférences..."></textarea>
     </div>
 
-    <div class="field-label" style="margin-bottom:8px">Mode de paiement</div>
+    <div class="field-label" style="margin-bottom:10px;color:rgba(240,232,213,.6)">
+      Mode de paiement <span style="color:var(--red)">*</span>
+    </div>
     <div class="pay-methods-grid">
-      <div class="pay-method-btn selected" data-pay="cash" onclick="selectPay(this)">💵 Espèces</div>
-      <div class="pay-method-btn" data-pay="card" onclick="selectPay(this)">💳 Carte</div>
-      <div class="pay-method-btn" data-pay="paypal" onclick="selectPay(this)">🅿️ PayPal</div>
-      <div class="pay-method-btn" data-pay="tpe" onclick="selectPay(this)">📟 TPE</div>
+
+      <button class="pay-method-btn" type="button" data-pay="cash" onclick="selectPay(this)">
+        <span class="pay-icon">💵</span>
+        <span class="pay-label">Espèces</span>
+      </button>
+
+      <button class="pay-method-btn" type="button" data-pay="tpe" onclick="selectPay(this)">
+        <span class="pay-icon">💳</span>
+        <span class="pay-label">Carte<br>Bancaire</span>
+      </button>
+
+      <button class="pay-method-btn" type="button" data-pay="gift_card" onclick="selectPay(this)">
+        <span class="pay-icon">🎁</span>
+        <span class="pay-label">Carte<br>Cadeau LUX</span>
+      </button>
+
+    </div>
+
+    <!-- Gift card code — visible only when gift_card selected -->
+    <div class="gift-card-field" id="gift-card-field">
+      <input type="text" id="f-gift-code"
+             class="gift-card-input"
+             placeholder="CODE-XXXX-XXXX"
+             maxlength="20"
+             autocomplete="off"
+             oninput="this.value=this.value.toUpperCase()">
+      <div class="gift-card-hint">✦ Entrez le code figurant sur votre carte cadeau LUX</div>
     </div>
 
     <div class="modal-actions">
@@ -1400,7 +1456,7 @@ const MENU = [
 
 // ── Cart State ────────────────────────────────────────────────
 var cart    = [];
-var payMode = 'cash';
+var payMode = '';  // '' = not selected yet
 
 // ── Utility ───────────────────────────────────────────────────
 function toast(msg) {
@@ -1599,6 +1655,13 @@ function openOrderModal() {
 
 function closeModal() {
   document.getElementById('order-modal').classList.remove('open');
+  // Reset payment selection for next order
+  payMode = '';
+  document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
+  var gc = document.getElementById('gift-card-field');
+  if (gc) gc.classList.remove('show');
+  var gcInp = document.getElementById('f-gift-code');
+  if (gcInp) gcInp.value = '';
 }
 
 function toggleAddress() {
@@ -1611,17 +1674,50 @@ function selectPay(btn) {
   document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
   btn.classList.add('selected');
   payMode = btn.getAttribute('data-pay');
+
+  // Show gift card code input only when gift_card is selected
+  var gcField = document.getElementById('gift-card-field');
+  if (gcField) {
+    if (payMode === 'gift_card') {
+      gcField.classList.add('show');
+      setTimeout(function() {
+        var inp = document.getElementById('f-gift-code');
+        if (inp) inp.focus();
+      }, 150);
+    } else {
+      gcField.classList.remove('show');
+      var inp = document.getElementById('f-gift-code');
+      if (inp) inp.value = '';
+    }
+  }
 }
 
 function confirmOrder() {
-  var name  = document.getElementById('f-name').value.trim();
-  var phone = document.getElementById('f-phone').value.trim();
-  var type  = document.getElementById('f-type').value;
-  var addr  = document.getElementById('f-addr').value.trim();
-  var notes = document.getElementById('f-notes').value.trim();
+  var name     = document.getElementById('f-name').value.trim();
+  var phone    = document.getElementById('f-phone').value.trim();
+  var type     = document.getElementById('f-type').value;
+  var addr     = document.getElementById('f-addr').value.trim();
+  var notes    = document.getElementById('f-notes').value.trim();
+  var giftCode = (document.getElementById('f-gift-code') || {}).value
+                   ? document.getElementById('f-gift-code').value.trim().toUpperCase()
+                   : '';
 
-  if (!name)  { toast('⚠ Entrez votre prénom'); return; }
-  // phone is optional — no longer required for WhatsApp
+  // ── Validations ──────────────────────────────────────────
+  if (!name)    { toast('⚠ Entrez votre prénom'); return; }
+  if (!payMode) {
+    // Flash all payment buttons to alert user
+    document.querySelectorAll('.pay-method-btn').forEach(function(b) {
+      b.style.borderColor = 'rgba(231,76,60,.6)';
+      setTimeout(function(){ b.style.borderColor = ''; }, 1000);
+    });
+    toast('⚠ Choisissez un mode de paiement');
+    return;
+  }
+  if (payMode === 'gift_card' && !giftCode) {
+    var gcInput = document.getElementById('f-gift-code');
+    if (gcInput) { gcInput.style.borderColor = 'var(--red)'; gcInput.focus(); setTimeout(function(){ gcInput.style.borderColor = 'var(--gold)'; }, 1000); }
+    toast('⚠ Entrez le code de votre carte cadeau'); return;
+  }
   if (type === 'delivery' && !addr) { toast('⚠ Entrez votre adresse'); return; }
 
   var sub   = cart.reduce(function(s,c) { return s + c.p * c.q; }, 0);
@@ -1632,17 +1728,30 @@ function confirmOrder() {
     return { name: c.n, price: c.p, qty: c.q };
   });
 
+  // Build POS-enriched note
+  var posNote = notes;
+  if (payMode === 'tpe')       posNote = '💳 TPE requis à la table' + (notes ? ' — ' + notes : '');
+  if (payMode === 'gift_card') posNote = '🎁 Carte Cadeau: ' + giftCode + (notes ? ' — ' + notes : '');
+  if (payMode === 'cash')      posNote = '💵 Espèces' + (notes ? ' — ' + notes : '');
+
   var order = {
-    source:     'web',
-    type:       type,
-    address:    addr,
-    notes:      notes,
-    payMethod:  payMode,
-    table:      null,
-    items:      apiItems,
-    subtotal:   sub,
-    total:      total,
-    customer:   { name: name, phone: phone },
+    source:        'web',
+    type:          type,
+    address:       addr,
+    notes:         posNote,
+    payMethod:     payMode,
+    giftCardCode:  giftCode || null,   // null if not gift card
+    table:         detectTableNum(),
+    items:         apiItems,
+    subtotal:      sub,
+    total:         total,
+    customer:      { name: name, phone: phone },
+    _posHint: {
+      method:       payMode,
+      giftCardCode: giftCode || null,
+      needsTpe:     payMode === 'tpe',
+      isGiftCard:   payMode === 'gift_card',
+    },
   };
 
   var confirmBtn = document.querySelector('.btn-confirm');
@@ -1682,6 +1791,11 @@ function showSuccess(name, ref) {
 }
 
 // ── QR Table detection ────────────────────────────────────────
+function detectTableNum() {
+  var p = new URLSearchParams(window.location.search);
+  return p.get('table') || p.get('table_id') || p.get('qr') || null;
+}
+
 function detectTable() {
   var p = new URLSearchParams(window.location.search);
   var table = p.get('table') || p.get('table_id') || p.get('qr');
