@@ -1,0 +1,135 @@
+/* ════════════════════════════════════════════════════
+   CAFÉ LUX — Gold/Carbon Design Tokens
+   Import this first in every page
+════════════════════════════════════════════════════ */
+:root {
+  /* ── Gold Palette ──────────────────────────────── */
+  --gold:     #C9A84C;
+  --gold-l:   #E8C97A;
+  --gold-d:   #8B6E2F;
+  --gold-faint: rgba(201,168,76,.08);
+  --gold-glow:  rgba(201,168,76,.25);
+
+  /* ── Carbon Backgrounds ──────────────────────────── */
+  --bg:   #0D0D0D;
+  --bg2:  #131313;
+  --bg3:  #1A1A1A;
+  --bg4:  #222222;
+  --bg5:  #2A2A2A;
+
+  /* ── Typography ───────────────────────────────────── */
+  --text:   #F0E8D5;
+  --muted:  rgba(240,232,213,.45);
+  --text2:  rgba(240,232,213,.65);
+
+  /* ── Semantic Colors ──────────────────────────────── */
+  --green:  #2ECC71;
+  --red:    #E74C3C;
+  --blue:   #3498DB;
+  --orange: #E67E22;
+
+  /* ── Borders ──────────────────────────────────────── */
+  --border:  rgba(201,168,76,.15);
+  --border2: rgba(201,168,76,.30);
+
+  /* ── Spacing & Radius ─────────────────────────────── */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+
+  /* ── Shadows ──────────────────────────────────────── */
+  --shadow:     0 4px 24px rgba(0,0,0,.4);
+  --shadow-gold: 0 0 20px rgba(201,168,76,.12);
+  --shadow-lg:  0 20px 60px rgba(0,0,0,.6);
+
+  /* ── Typography scale ─────────────────────────────── */
+  --font-display: 'Playfair Display', 'Cinzel', serif;
+  --font-body:    'DM Sans', 'Cairo', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* ── Layout ───────────────────────────────────────── */
+  --topbar-h:  56px;
+  --sidebar-w: 220px;
+}
+
+/* ── Base Reset ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+/* ── Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── Utility Classes ─────────────────────────────────── */
+.gold   { color: var(--gold); }
+.muted  { color: var(--muted); }
+.green  { color: var(--green); }
+.red    { color: var(--red); }
+.mono   { font-family: var(--font-mono); }
+.serif  { font-family: var(--font-display); }
+
+.hidden  { display: none !important; }
+.gone    { display: none !important; visibility: hidden !important; }
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes lux-fade-in   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+@keyframes lux-pulse      { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes lux-glow-pulse { 0%,100%{box-shadow:0 0 8px var(--gold-glow)} 50%{box-shadow:0 0 24px var(--gold-glow)} }
+
+.animate-in   { animation: lux-fade-in .2s ease; }
+.pulse        { animation: lux-pulse 2s infinite; }
+.glow-pulse   { animation: lux-glow-pulse 2s infinite; }
+
+/* ── Gold Gradient Buttons ─────────────────────────────── */
+.btn-gold {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--gold-d), var(--gold));
+  border: none; border-radius: var(--r-md);
+  color: #000; font-family: var(--font-body);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: .2s; letter-spacing: .5px;
+}
+.btn-gold:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-ghost {
+  padding: 9px 18px; background: transparent;
+  border: 1px solid var(--border2); border-radius: var(--r-md);
+  color: var(--gold); font-family: var(--font-body);
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s;
+}
+.btn-ghost:hover { background: var(--gold-faint); }
+.btn-danger { background: linear-gradient(135deg,#9B2335,var(--red)); color: #fff; }
+
+/* ── Card ──────────────────────────────────────────────── */
+.lux-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 18px;
+}
+.lux-card:hover { border-color: var(--border2); }
+
+/* ── Badge ─────────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; letter-spacing: .5px;
+}
+.badge-gold    { background: rgba(201,168,76,.15); color: var(--gold);  }
+.badge-green   { background: rgba(46,204,113,.15); color: var(--green); }
+.badge-red     { background: rgba(231,76,60,.15);  color: var(--red);   }
+.badge-blue    { background: rgba(52,152,219,.15); color: var(--blue);  }
+.badge-gray    { background: rgba(255,255,255,.06);color: var(--muted); }
+
+/* ── Toast ─────────────────────────────────────────────── */
+#lux-toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--r-md); padding: 10px 18px;
+  font-size: 12px; color: var(--text);
+  box-shadow: var(--shadow); pointer-events: none;
+  transform: translateY(60px); opacity: 0; transition: .3s ease;
+}
+#lux-toast.show           { transform: none; opacity: 1; }
+#lux-toast.toast-success  { border-color: rgba(46,204,113,.4); color: var(--green); }
+#lux-toast.toast-error    { border-color: rgba(231,76,60,.4);  color: var(--red); }
+#lux-toast.toast-gold     { border-color: var(--border2); color: var(--gold); }

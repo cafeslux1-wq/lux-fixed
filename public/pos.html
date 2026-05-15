@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D0D">
+<title>CAFÉ LUX — POS Caisse</title>
+
+<script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+<script src="../src/js/api/api-client.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ── Tokens ──────────────────────────────────────────────── */
+:root{
+  --gold:#C9A84C;--gold-l:#E8C97A;--gold-d:#8B6E2F;
+  --bg:#080808;--bg2:#0F0F0F;--bg3:#1A1A1A;--bg4:#222;
+  --text:#F0E8D5;--muted:rgba(240,232,213,.45);--text2:rgba(240,232,213,.7);
+  --border:rgba(201,168,76,.15);--border2:rgba(201,168,76,.35);
+  --green:#2ECC71;--red:#E74C3C;--blue:#3498DB;--orange:#F39C12;
+  --font-d:'Playfair Display',serif;
+  --font-b:'DM Sans',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --topbar:48px;
+  --tables-w:160px;
+  --ticket-w:280px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:13px}
+button,input,select{font-family:var(--font-b);font-size:12px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── Topbar ─────────────────────────────────────────────── */
+.topbar{
+  height:var(--topbar);background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:8px;
+  position:fixed;top:0;left:0;right:0;z-index:100;
+}
+.topbar-logo{font-family:var(--font-d);color:var(--gold);font-size:14px;letter-spacing:2px}
+.topbar-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.topbar-title{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1px}
+#clock{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-left:auto}
+.btn-sm{padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;font-size:11px;transition:.15s}
+.btn-sm:hover{border-color:var(--border2);color:var(--gold)}
+#pos-kpi-bar{display:flex;gap:12px;margin-left:12px}
+.pos-kpi{font-size:10px;color:var(--muted)}
+.pos-kpi span{color:var(--gold);font-family:var(--font-m);font-weight:700}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.pos-layout{
+  display:flex;height:100vh;padding-top:var(--topbar);overflow:hidden;
+}
+
+/* ═══ TABLES PANEL ══════════════════════════════════════════ */
+.pos-tables{
+  width:var(--tables-w);flex-shrink:0;background:var(--bg2);
+  border-right:1px solid var(--border);overflow-y:auto;padding:10px 8px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.sec-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:6px 4px 3px;opacity:.7}
+.tbl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.tbl-btn{
+  padding:8px 4px;background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:8px;text-align:center;cursor:pointer;transition:.15s;
+}
+.tbl-btn:hover{border-color:var(--border2)}
+.tbl-btn.sel{background:rgba(201,168,76,.12);border-color:var(--gold)}
+.tbl-btn.occ{border-color:rgba(231,76,60,.3);background:rgba(231,76,60,.05)}
+.tbl-btn.ea{border-color:rgba(52,152,219,.3);background:rgba(52,152,219,.05)}
+.tbl-num{font-family:var(--font-d);font-size:16px;color:var(--text);line-height:1}
+.tbl-status{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
+.tbl-btn.sel .tbl-num{color:var(--gold)}
+.tbl-btn.sel .tbl-status{color:var(--gold-d)}
+.tbl-btn.occ .tbl-num{color:var(--red)}
+.tbl-btn.ea  .tbl-num{color:var(--blue)}
+.takeaway-row{display:flex;flex-wrap:wrap;gap:4px}
+.ea-chip{padding:4px 10px;background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.3);border-radius:12px;font-size:10px;color:var(--blue);cursor:pointer;transition:.15s}
+.ea-chip:hover,.ea-chip.sel{background:rgba(52,152,219,.2);border-color:var(--blue)}
+#rfid-badge{font-size:10px;color:var(--muted);padding:6px 4px;line-height:1.4}
+#rfid-badge.active{color:var(--green)}
+
+/* ═══ MENU PANEL ════════════════════════════════════════════ */
+.pos-menu{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
+}
+.menu-tabs{
+  display:flex;gap:0;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid var(--border);scrollbar-width:none;
+}
+.menu-tabs::-webkit-scrollbar{display:none}
+.m-tab{
+  padding:10px 14px;background:transparent;border:none;border-bottom:2px solid transparent;
+  color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s;
+}
+.m-tab:hover{color:var(--text2);background:rgba(201,168,76,.04)}
+.m-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.04)}
+.menu-items{flex:1;overflow-y:auto;padding:10px 12px}
+.m-sec{display:none}
+.m-sec.active{display:block}
+.m-cat-lbl{
+  font-family:var(--font-d);font-size:13px;color:var(--gold);
+  margin:4px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);
+}
+.m-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:14px}
+.m-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 8px;cursor:pointer;transition:.15s;text-align:center;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+.m-card:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-1px)}
+.m-card:active{transform:scale(.96)}
+.m-card.sig{border-color:rgba(201,168,76,.4)}
+.m-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.3}
+.m-price{font-family:var(--font-d);font-size:13px;color:var(--gold);font-weight:700}
+.m-card.sig .m-price::before{content:'⭐ ';font-size:9px}
+
+/* ═══ TICKET PANEL ══════════════════════════════════════════ */
+.pos-ticket{
+  width:var(--ticket-w);flex-shrink:0;background:var(--bg2);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.ticket-header{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.ticket-title{font-family:var(--font-d);font-size:13px;color:var(--gold);letter-spacing:1.5px}
+#pos-table-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px}
+.ticket-items{flex:1;overflow-y:auto;padding:4px 0}
+.t-item{display:flex;align-items:center;padding:5px 10px;border-bottom:1px solid rgba(201,168,76,.04);gap:5px}
+.t-qty{
+  width:22px;height:22px;background:rgba(201,168,76,.08);border:1px solid var(--border2);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;color:var(--gold);flex-shrink:0;
+}
+.t-name{flex:1;font-size:11px;color:var(--text2);line-height:1.3}
+.t-line-price{font-family:var(--font-m);font-size:11px;color:var(--gold);flex-shrink:0}
+.t-rm{
+  width:18px;height:18px;background:transparent;border:none;cursor:pointer;
+  color:var(--muted);font-size:14px;line-height:1;flex-shrink:0;transition:.15s;
+}
+.t-rm:hover{color:var(--red)}
+.ticket-empty{display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:11px}
+/* Totals */
+.ticket-footer{padding:10px 12px;flex-shrink:0}
+.t-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px}
+.t-total-row{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)}
+.t-total-label{font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.t-total-amount{font-family:var(--font-m);font-size:21px;color:var(--gold);font-weight:700}
+/* Pay grid */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px}
+.pay-btn{
+  padding:9px 4px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;
+  transition:.15s;text-align:center;
+}
+.pay-btn:hover{border-color:var(--border2);color:var(--text)}
+.pay-btn.cb{border-color:rgba(52,152,219,.3);color:var(--blue)}
+.pay-btn.esp{border-color:rgba(46,204,113,.3);color:var(--green)}
+.pay-btn.main{
+  grid-column:1/-1;padding:12px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;color:#000;font-size:13px;font-weight:900;border-radius:10px;
+  letter-spacing:.5px;
+}
+.pay-btn.main:hover{background:linear-gradient(135deg,var(--gold),var(--gold-l));transform:translateY(-1px)}
+.pay-btn.main:active{transform:scale(.98)}
+
+/* ═══ PIN MODAL ════════════════════════════════════════════ */
+#pin-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);
+  z-index:9000;display:flex;align-items:center;justify-content:center;
+}
+.pin-box{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:22px;
+  padding:36px 28px;width:92%;max-width:320px;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.8);
+}
+.pin-logo{font-family:var(--font-d);font-size:24px;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
+.pin-sub{font-size:11px;color:var(--muted);margin-bottom:22px}
+#pin-input{
+  width:100%;text-align:center;background:var(--bg3);
+  border:1.5px solid var(--border2);border-radius:12px;
+  color:var(--text);padding:14px;font-size:26px;letter-spacing:12px;
+  outline:none;transition:.2s;display:block;margin-bottom:14px;
+}
+#pin-input:focus{border-color:var(--gold)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.pin-key{
+  padding:14px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:12px;color:var(--text);font-size:16px;font-weight:700;cursor:pointer;
+  transition:.15s;
+}
+.pin-key:hover{background:var(--bg4);border-color:var(--border2)}
+.pin-key:active{transform:scale(.93)}
+.pin-key.del{color:var(--red)}
+.pin-key.ok{background:linear-gradient(135deg,var(--gold-d),var(--gold));border-color:transparent;color:#000;font-size:14px}
+#pin-error{font-size:11px;color:var(--red);min-height:16px;margin-bottom:8px}
+.pin-bypass{font-size:10px;color:rgba(201,168,76,.3);cursor:pointer;margin-top:8px}
+.pin-bypass:hover{color:rgba(201,168,76,.5)}
+
+/* ═══ PRINT OVERLAY ════════════════════════════════════════ */
+#print-overlay{
+  display:none;position:fixed;inset:0;background:#fff;z-index:9999;
+  overflow:auto;padding:20px;
+}
+#print-close{position:fixed;top:16px;right:16px;padding:9px 16px;border:none;border-radius:8px;background:#111;color:#fff;cursor:pointer;font-weight:700;z-index:10000}
+#print-sheet{max-width:320px;margin:0 auto;background:#fff;color:#000;padding:10px}
+
+/* ═══ TOAST ════════════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(40px);
+  background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
+  padding:8px 18px;font-size:11px;color:var(--text);z-index:8000;
+  opacity:0;transition:.25s ease;pointer-events:none;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media print{
+  body>*{display:none}
+  #print-overlay{display:block!important;position:static;background:#fff}
+  #print-close{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ PIN OVERLAY ══════════════════════════════════════════ -->
+<div id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-logo">✦ LUX POS</div>
+    <div class="pin-sub">Caisse Professionnelle · Code PIN requis</div>
+    <input id="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="• • • •" readonly>
+    <div class="pin-keypad" id="pin-keypad"></div>
+    <div id="pin-error"></div>
+    <div class="pin-bypass" onclick="bypassPin()">Continuer sans PIN (mode demo)</div>
+  </div>
+</div>
+
+<!-- ═══ TOPBAR ════════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="topbar-logo">✦ LUX</div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-title" id="pos-mode-label">POS CAISSE</div>
+  <div id="pos-kpi-bar">
+    <div class="pos-kpi">CA <span id="kpi-ca">0</span> DH</div>
+    <div class="pos-kpi">Tickets <span id="kpi-orders">0</span></div>
+  </div>
+  <div id="clock"></div>
+  <div class="topbar-sep"></div>
+  <button class="btn-sm" onclick="window.location.href='index.html'">← Accueil</button>
+  <button class="btn-sm" style="margin-left:4px" onclick="renderHome()">🔄</button>
+</div>
+
+<!-- ═══ LAYOUT ════════════════════════════════════════════════ -->
+<div class="pos-layout">
+
+  <!-- ── Tables Panel ────────────────────────────── -->
+  <div class="pos-tables">
+    <div class="sec-label">Tables</div>
+    <div class="tbl-grid" id="tbl-grid"></div>
+
+    <div class="sec-label" style="margin-top:10px">
+      À Emporter
+      <button class="btn-sm" style="float:right;font-size:9px;padding:2px 8px" onclick="addTakeaway()">+</button>
+    </div>
+    <div class="takeaway-row" id="takeaway-list"></div>
+
+    <div class="sec-label" style="margin-top:10px">RFID Client</div>
+    <div id="rfid-badge">Aucun client</div>
+    <button class="btn-sm" style="width:100%;margin-top:4px;font-size:10px" onclick="clearClient()">Effacer client</button>
+  </div>
+
+  <!-- ── Menu Panel ──────────────────────────────── -->
+  <div class="pos-menu">
+    <div class="menu-tabs" id="menu-tabs"></div>
+    <div class="menu-items" id="menu-items"></div>
+  </div>
+
+  <!-- ── Ticket Panel ────────────────────────────── -->
+  <div class="pos-ticket">
+    <div class="ticket-header">
+      <span class="ticket-title">✦ TICKET</span>
+      <span id="pos-table-label">—</span>
+      <button class="btn-sm" style="font-size:10px;padding:3px 8px" onclick="clearCart()">Vider</button>
+    </div>
+    <div class="ticket-items" id="ticket-items">
+      <div class="ticket-empty">Sélectionnez une table</div>
+    </div>
+    <div class="ticket-footer">
+      <div class="t-row"><span>Sous-total</span><span id="t-sub">0.00 DH</span></div>
+      <div class="t-row"><span>TVA 10%</span><span id="t-tva">0.00 DH</span></div>
+      <div class="t-total-row">
+        <span class="t-total-label">Total</span>
+        <span class="t-total-amount" id="t-total">0.00 DH</span>
+      </div>
+      <div class="pay-grid">
+        <button class="pay-btn cb"  onclick="pay('CB')">💳 CB</button>
+        <button class="pay-btn esp" onclick="pay('Especes')">💵 Espèces</button>
+        <button class="pay-btn"     onclick="pay('TPE')">📟 TPE</button>
+        <button class="pay-btn main" onclick="pay('Encaissement')">✦ Encaisser</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /pos-layout -->
+
+<!-- ═══ PRINT OVERLAY ════════════════════════════════════════ -->
+<div id="print-overlay">
+  <button id="print-close" onclick="closePrint()">✕ Fermer</button>
+  <div id="print-sheet"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════
+//  MENU DATA (static fallback — also fetched from API)
+// ════════════════════════════════════════════════════════════
+const MENU = [{"id":"pdej","icon":"🍳","title":"Petit-Déjeuner","sub":"Café offert","items":[{"n":"Classic Breakfast","p":22,"s":"Pain, oeuf, olives"},{"n":"Chamali","p":27},{"n":"Omelette au Fromage","p":30},{"n":"Moroccan Breakfast","p":35,"sig":true},{"n":"Morning Lux","p":35,"sig":true}]},{"id":"cafes","icon":"☕","title":"Cafes Classiques","items":[{"n":"Espresso","p":7},{"n":"Espresso Prestige","p":9},{"n":"Double Espresso","p":14},{"n":"Cafe Separe","p":12},{"n":"Capsule","p":10},{"n":"Lait Chocolat","p":12},{"n":"Lait Chaud","p":9},{"n":"Lait Verveine","p":12},{"n":"Lait Aromatise","p":10}]},{"id":"cremeux","icon":"🥛","title":"Les Cremeux","items":[{"n":"Cafe Creme","p":10},{"n":"Cappuccino","p":12},{"n":"Cafe Chocolat","p":14},{"n":"Chocolat Fondu","p":20}]},{"id":"infusions","icon":"🍵","title":"Infusions","items":[{"n":"The Marocain","p":9},{"n":"Golden Tea","p":9},{"n":"The Royal","p":20,"sig":true}]},{"id":"jus","icon":"🥤","title":"Jus Frais","items":[{"n":"Banane","p":15},{"n":"Pomme","p":15},{"n":"Orange","p":16},{"n":"Citron","p":16},{"n":"Mangue","p":19},{"n":"Ananas","p":19},{"n":"Avocat","p":20},{"n":"Avocat Royal","p":25,"sig":true}]},{"id":"sig","icon":"⭐","title":"Signature LUX","items":[{"n":"Lux Matcha Bloom","p":20,"sig":true},{"n":"Queen's Rose Coffee","p":30,"sig":true},{"n":"Mojito","p":25},{"n":"Panache LUX","p":25},{"n":"Cocktail Royal","p":30},{"n":"Zaazaa Lux","p":35,"sig":true}]},{"id":"crepes","icon":"🥞","title":"Crepes","items":[{"n":"Crepe Nutella","p":23},{"n":"Crepe Fruits","p":26},{"n":"Crepe Royale","p":30,"sig":true},{"n":"Crepe Fromage","p":25},{"n":"Crepe Thon Fromage","p":35},{"n":"Pack Crepes","p":35}]},{"id":"resto","icon":"🍽","title":"Restaurant","items":[{"n":"LUX Power Toast","p":25,"sig":true},{"n":"Harira","p":14},{"n":"Meskouta","p":5},{"n":"Cake Prestige","p":10},{"n":"Sables 7pcs","p":13},{"n":"Salade Fruits Royale","p":40},{"n":"Plateau Gateaux","p":100}]},{"id":"soft","icon":"🥫","title":"Soft & Shakes","items":[{"n":"Soda","p":12},{"n":"Red Bull","p":20},{"n":"Milkshake Classic","p":35}]}];
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+var caisse = {
+  selectedTable: null,
+  cart:          [],
+  tableOrders:   {},
+  takeawayCount: 1,
+  currentClient: null,
+  todayCA:       0,
+  todayOrders:   0,
+};
+
+// ════════════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════════════
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
+function getLS(k,d){ try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;} }
+function setLS(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+function nowTime(){ return new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}); }
+function todayDate(){ return new Date().toLocaleDateString('fr-MA'); }
+function setEl(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
+
+var _toastTimer;
+function toast(msg, col) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  if(col) el.style.borderColor = col; else el.style.borderColor = '';
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
+
+function updateClock(){
+  setEl('clock', nowTime());
+  setEl('kpi-ca', caisse.todayCA.toFixed(2));
+  setEl('kpi-orders', caisse.todayOrders);
+}
+setInterval(updateClock, 1000);
+
+// ════════════════════════════════════════════════════════════
+//  PIN SYSTEM
+// ════════════════════════════════════════════════════════════
+var _pinValue = '';
+var CORRECT_PIN = '1234'; // Change in production
+
+function buildPinKeypad() {
+  var pad = document.getElementById('pin-keypad');
+  var keys = ['1','2','3','4','5','6','7','8','9','←','0','✓'];
+  pad.innerHTML = keys.map(function(k) {
+    var cls = k==='←' ? 'pin-key del' : k==='✓' ? 'pin-key ok' : 'pin-key';
+    return '<button class="'+cls+'" onclick="pinKey(\''+k+'\')">'+k+'</button>';
+  }).join('');
+}
+
+function pinKey(k) {
+  if (k === '←') {
+    _pinValue = _pinValue.slice(0,-1);
+  } else if (k === '✓') {
+    checkPin();
+    return;
+  } else if (_pinValue.length < 6) {
+    _pinValue += k;
+  }
+  document.getElementById('pin-input').value = '•'.repeat(_pinValue.length);
+}
+
+function checkPin() {
+  var api = window.LuxAPI;
+  var errEl = document.getElementById('pin-error');
+
+  // Try local PIN first (instant)
+  if (_pinValue === CORRECT_PIN) {
+    openPOS();
+    return;
+  }
+
+  // Try API PIN
+  if (api) {
+    errEl.textContent = 'Vérification...';
+    api.loginPin(_pinValue).then(function(data) {
+      if (data && data.token) {
+        openPOS();
+      } else {
+        pinFail();
+      }
+    }).catch(function() {
+      // API down — accept local PIN fallback
+      pinFail();
+    });
+  } else {
+    pinFail();
+  }
+}
+
+function pinFail() {
+  _pinValue = '';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').textContent = '⚠ Code incorrect';
+  var inp = document.getElementById('pin-input');
+  inp.style.borderColor = 'var(--red)';
+  setTimeout(function(){ inp.style.borderColor = ''; document.getElementById('pin-error').textContent = ''; }, 1500);
+}
+
+function openPOS() {
+  document.getElementById('pin-overlay').style.display = 'none';
+  toast('✅ Accès autorisé · Bienvenue', 'rgba(46,204,113,.5)');
+  loadDailyStats();
+}
+
+function bypassPin() {
+  document.getElementById('pin-overlay').style.display = 'none';
+  toast('Mode démo activé');
+}
+
+// ════════════════════════════════════════════════════════════
+//  TABLES
+// ════════════════════════════════════════════════════════════
+function buildTables() {
+  var grid = document.getElementById('tbl-grid');
+  var h = '';
+  for (var i = 1; i <= 12; i++) {
+    var isSel  = caisse.selectedTable === i;
+    var isOcc  = caisse.tableOrders[i] && caisse.tableOrders[i].length > 0;
+    var cls = 'tbl-btn' + (isSel ? ' sel' : (isOcc ? ' occ' : ''));
+    var st  = isSel ? 'Sélec' : (isOcc ? 'En cours' : 'Libre');
+    h += '<div class="' + cls + '" onclick="selectTable(' + i + ')">';
+    h += '<div class="tbl-num">' + i + '</div>';
+    h += '<div class="tbl-status">' + st + '</div>';
+    h += '</div>';
+  }
+  grid.innerHTML = h;
+  buildTakeawayList();
+}
+
+function buildTakeawayList() {
+  var list = document.getElementById('takeaway-list');
+  var h = '';
+  Object.keys(caisse.tableOrders).forEach(function(k) {
+    if (String(k).charAt(0) === 'E') {
+      var isSel = caisse.selectedTable === k;
+      h += '<div class="ea-chip' + (isSel ? ' sel' : '') + '" onclick="selectTable(\'' + k + '\')">' + k + '</div>';
+    }
+  });
+  list.innerHTML = h || '<div style="font-size:10px;color:var(--muted)">Aucun</div>';
+}
+
+function selectTable(n) {
+  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = caisse.cart.slice();
+  caisse.selectedTable = n;
+  caisse.cart = (caisse.tableOrders[n] || []).slice();
+  buildTables();
+  var label = String(n).charAt(0) === 'E' ? n : 'Table ' + n;
+  setEl('pos-table-label', label);
+  setEl('pos-mode-label', label.toUpperCase());
+  renderTicket();
+}
+
+function addTakeaway() {
+  var id = 'E' + caisse.takeawayCount++;
+  caisse.tableOrders[id] = [];
+  selectTable(id);
+  toast('Nouveau ticket: ' + id);
+}
+
+// ════════════════════════════════════════════════════════════
+//  CART
+// ════════════════════════════════════════════════════════════
+function addToCart(name, price) {
+  if (!caisse.selectedTable) { toast('⚠ Sélectionnez une table'); return; }
+  var ex = caisse.cart.find(function(c){ return c.n === name; });
+  if (ex) { ex.q++; }
+  else { caisse.cart.push({ n: name, p: price, q: 1 }); }
+  renderTicket();
+  toast('+ ' + name, 'rgba(201,168,76,.4)');
+}
+
+function rmFromCart(name) {
+  var ex = caisse.cart.find(function(c){ return c.n === name; });
+  if (!ex) return;
+  if (ex.q > 1) ex.q--;
+  else caisse.cart = caisse.cart.filter(function(c){ return c.n !== name; });
+  renderTicket();
+}
+
+function clearCart() {
+  caisse.cart = [];
+  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = [];
+  renderTicket();
+}
+
+function renderTicket() {
+  var el = document.getElementById('ticket-items');
+  if (!caisse.cart.length) {
+    el.innerHTML = '<div class="ticket-empty">' + (caisse.selectedTable ? 'Panier vide' : 'Sélectionnez une table') + '</div>';
+  } else {
+    var h = '';
+    caisse.cart.forEach(function(c) {
+      h += '<div class="t-item">';
+      h += '<div class="t-qty">' + c.q + '</div>';
+      h += '<div class="t-name">' + c.n + '</div>';
+      h += '<div class="t-line-price">' + (c.p * c.q).toFixed(2) + ' DH</div>';
+      h += '<button class="t-rm" data-n="' + esc(c.n) + '">×</button>';
+      h += '</div>';
+    });
+    el.innerHTML = h;
+    el.querySelectorAll('.t-rm').forEach(function(btn) {
+      btn.addEventListener('click', function() { rmFromCart(this.getAttribute('data-n')); });
+    });
+  }
+  var sub   = caisse.cart.reduce(function(s,c){ return s + c.p * c.q; }, 0);
+  var tva   = sub * 0.1;
+  var total = sub + tva;
+  setEl('t-sub',   sub.toFixed(2)   + ' DH');
+  setEl('t-tva',   tva.toFixed(2)   + ' DH');
+  setEl('t-total', total.toFixed(2) + ' DH');
+
+  if (caisse.currentClient) {
+    var badge = document.getElementById('rfid-badge');
+    badge.textContent = '👤 ' + caisse.currentClient.name + ' · ' + (caisse.currentClient.points||0) + ' pts';
+    badge.className = 'active';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  PAYMENT
+// ════════════════════════════════════════════════════════════
+function pay(mode) {
+  if (!caisse.cart.length) { toast('⚠ Panier vide'); return; }
+
+  var sub   = caisse.cart.reduce(function(s,c){ return s + c.p * c.q; }, 0);
+  var tva   = +(sub * 0.1).toFixed(2);
+  var total = +(sub + tva).toFixed(2);
+  var table = caisse.selectedTable || '-';
+  var type  = String(table).charAt(0) === 'E' ? 'takeaway' : 'table';
+
+  var tx = {
+    id:       Date.now(),
+    date:     todayDate(),
+    time:     nowTime(),
+    table:    table,
+    type:     type,
+    items:    caisse.cart.slice(),
+    subtotal: sub.toFixed(2),
+    tva:      tva.toFixed(2),
+    total:    total.toFixed(2),
+    mode:     mode,
+    client:   caisse.currentClient ? caisse.currentClient.name : null,
+    source:   'pos',
+  };
+
+  // Save locally
+  var txs = getLS('lux_transactions', []);
+  txs.unshift(tx);
+  setLS('lux_transactions', txs.slice(0, 500));
+
+  // Update daily stats
+  var daily = getLS('lux_daily', {});
+  if (daily.date !== todayDate()) { daily.ca = 0; daily.orders = 0; daily.date = todayDate(); }
+  daily.ca     = (parseFloat(daily.ca||0) + total).toFixed(2);
+  daily.orders = (daily.orders||0) + 1;
+  setLS('lux_daily', daily);
+  caisse.todayCA     += total;
+  caisse.todayOrders += 1;
+  updateClock();
+
+  // Loyalty points
+  if (caisse.currentClient) {
+    var pts = Math.floor(sub / 10);
+    caisse.currentClient.points = (caisse.currentClient.points||0) + pts;
+    if (pts) toast('⭐ +' + pts + ' pts fidélité — ' + caisse.currentClient.name);
+  }
+
+  // Push to API
+  var api = window.LuxAPI;
+  if (api) {
+    api.createOrder({
+      source:    'pos',
+      type:      type,
+      table:     String(table),
+      payMethod: mode,
+      items:     caisse.cart.map(function(c){ return {name:c.n,price:c.p,qty:c.q}; }),
+      subtotal:  sub,
+      total:     total,
+    }).catch(function() {});
+  }
+
+  // Print
+  printTicket(tx);
+
+  // Clear
+  caisse.cart = [];
+  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = [];
+  caisse.currentClient = null;
+  renderTicket();
+  buildTables();
+  toast('✅ ' + total.toFixed(2) + ' DH · ' + mode, 'rgba(46,204,113,.4)');
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRINT TICKET
+// ════════════════════════════════════════════════════════════
+function printTicket(tx) {
+  var rows = tx.items.map(function(c) {
+    return '<tr><td style="padding:2px 0">' + (c.n||c.name) + '</td>' +
+           '<td style="text-align:center;padding:0 8px">' + (c.q||c.qty) + '</td>' +
+           '<td style="text-align:right">' + ((c.p||c.price) * (c.q||c.qty)).toFixed(2) + '</td></tr>';
+  }).join('');
+
+  var html = [
+    '<div style="font-family:monospace;font-size:12px;width:260px;margin:0 auto;color:#000">',
+    '<div style="text-align:center;margin-bottom:8px">',
+    '<div style="font-size:18px;font-weight:900;letter-spacing:4px">CAFÉ LUX</div>',
+    '<div style="font-size:10px">Résidence Ziat N28 — Taza</div>',
+    '<div style="font-size:10px">+212 808 524 169 · cafeslux.com</div>',
+    '</div>',
+    '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
+    '<div>' + tx.date + ' ' + tx.time + '</div>',
+    '<div>' + (tx.type==='takeaway'?'À Emporter: ':'Table: ') + tx.table + '</div>',
+    '<div>Mode: ' + tx.mode + '</div>',
+    (tx.client ? '<div>Client: ' + tx.client + '</div>' : ''),
+    '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
+    '<table style="width:100%;border-collapse:collapse">',
+    '<thead><tr><th style="text-align:left">Article</th><th>Qté</th><th>Prix</th></tr></thead>',
+    '<tbody>' + rows + '</tbody>',
+    '</table>',
+    '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
+    '<div>Sous-total: ' + tx.subtotal + ' DH</div>',
+    '<div>TVA 10%: ' + tx.tva + ' DH</div>',
+    '<div style="font-weight:900;font-size:14px;margin-top:4px">TOTAL: ' + tx.total + ' DH</div>',
+    '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
+    '<div style="text-align:center;margin-top:8px">✦ Merci de votre visite ✦</div>',
+    '</div>'
+  ].join('');
+
+  document.getElementById('print-sheet').innerHTML = html;
+  document.getElementById('print-overlay').style.display = 'block';
+  setTimeout(function() { window.print(); }, 150);
+}
+
+function closePrint() {
+  document.getElementById('print-overlay').style.display = 'none';
+}
+window.addEventListener('afterprint', closePrint);
+
+// ════════════════════════════════════════════════════════════
+//  MENU RENDER
+// ════════════════════════════════════════════════════════════
+function buildMenu(menuData) {
+  var tabs  = document.getElementById('menu-tabs');
+  var items = document.getElementById('menu-items');
+  var tabH = '', itemH = '';
+
+  menuData.forEach(function(cat, i) {
+    tabH += '<button class="m-tab' + (i===0?' active':'') + '" data-cat="' + cat.id + '"' +
+            ' onclick="switchTab(\'' + cat.id + '\',this)">' + cat.icon + ' ' + cat.title + '</button>';
+
+    itemH += '<div class="m-sec' + (i===0?' active':'') + '" id="ms-' + cat.id + '">';
+    itemH += '<div class="m-cat-lbl">' + cat.icon + ' ' + cat.title + (cat.sub?'<span style="font-size:10px;color:var(--muted);margin-left:8px">'+cat.sub+'</span>':'') + '</div>';
+    itemH += '<div class="m-grid">';
+    cat.items.forEach(function(it) {
+      var cls = 'm-card' + (it.sig ? ' sig' : '');
+      itemH += '<div class="' + cls + '" data-n="' + esc(it.n) + '" data-p="' + it.p + '">';
+      itemH += '<div class="m-name">' + it.n + '</div>';
+      itemH += '<div class="m-price">' + it.p + ' DH</div>';
+      itemH += '</div>';
+    });
+    itemH += '</div></div>';
+  });
+
+  tabs.innerHTML  = tabH;
+  items.innerHTML = itemH;
+
+  items.querySelectorAll('.m-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      addToCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
+    });
+  });
+}
+
+function switchTab(catId, btn) {
+  document.querySelectorAll('.m-tab').forEach(function(b)  { b.classList.remove('active'); });
+  document.querySelectorAll('.m-sec').forEach(function(s)  { s.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  var sec = document.getElementById('ms-' + catId);
+  if (sec) sec.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════
+//  RFID
+// ════════════════════════════════════════════════════════════
+var _rfidBuf = '', _rfidTimer;
+document.addEventListener('keydown', function(e) {
+  var tag = document.activeElement ? document.activeElement.tagName : '';
+  if (tag==='INPUT'||tag==='TEXTAREA') return;
+  if (e.key === 'Enter') {
+    if (_rfidBuf.length >= 4) handleRFID(_rfidBuf.trim().toUpperCase());
+    _rfidBuf = ''; clearTimeout(_rfidTimer);
+  } else if (e.key.length === 1) {
+    clearTimeout(_rfidTimer);
+    _rfidBuf += e.key;
+    _rfidTimer = setTimeout(function(){ _rfidBuf = ''; }, 400);
+  }
+});
+
+function handleRFID(uid) {
+  var clients = getLS('lux_clients_rfid', {});
+  var client  = clients[uid];
+  var badge   = document.getElementById('rfid-badge');
+  if (client) {
+    caisse.currentClient = client;
+    badge.textContent = '👤 ' + client.name + ' · ' + (client.points||0) + ' pts';
+    badge.className   = 'active';
+    toast('✦ Client: ' + client.name);
+  } else {
+    caisse.currentClient = { uid: uid, name: 'Nouveau #' + uid.slice(-4), points: 0 };
+    badge.textContent = '👤 Nouveau: ' + uid;
+    badge.className   = 'active';
+    toast('Nouveau client RFID: ' + uid);
+  }
+}
+
+function clearClient() {
+  caisse.currentClient = null;
+  var badge = document.getElementById('rfid-badge');
+  badge.textContent = 'Aucun client';
+  badge.className   = '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOAD DAILY STATS
+// ════════════════════════════════════════════════════════════
+function loadDailyStats() {
+  var daily = getLS('lux_daily', {});
+  if (daily.date === todayDate()) {
+    caisse.todayCA     = parseFloat(daily.ca || 0);
+    caisse.todayOrders = daily.orders || 0;
+    updateClock();
+  }
+  // Try to load live menu from API
+  var api = window.LuxAPI;
+  if (api) {
+    api.getMenu().then(function(data) {
+      if (Array.isArray(data) && data.length) {
+        // Transform API format to our MENU format
+        var apiMenu = data.map(function(cat) {
+          return {
+            id:    String(cat.id),
+            icon:  cat.icon || '🍽',
+            title: cat.name,
+            items: (cat.products || cat.items || []).map(function(p) {
+              return { n: p.name, p: p.price, sig: p.isSignature };
+            }),
+          };
+        });
+        buildMenu(apiMenu);
+        toast('Menu chargé depuis le serveur ✓');
+      }
+    }).catch(function() { /* keep static MENU */ });
+  }
+}
+
+function renderHome() {
+  var daily = getLS('lux_daily', {});
+  if (daily.date === todayDate()) {
+    caisse.todayCA     = parseFloat(daily.ca || 0);
+    caisse.todayOrders = daily.orders || 0;
+    updateClock();
+  }
+  toast('Actualisé');
+}
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  buildMenu(MENU);
+  buildTables();
+  buildPinKeypad();
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Keyboard PIN support
+  document.getElementById('pin-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPin();
+    else if (/^\d$/.test(e.key)) { _pinValue += e.key; this.value = '•'.repeat(_pinValue.length); }
+    else if (e.key === 'Backspace') { _pinValue = _pinValue.slice(0,-1); this.value = '•'.repeat(_pinValue.length); }
+    e.preventDefault();
+  });
+
+  // Check if already authenticated
+  if (window.LuxAPI && window.LuxAPI.isAuthenticated && window.LuxAPI.isAuthenticated()) {
+    openPOS();
+  }
+});
+</script>
+
+</body>
+</html>

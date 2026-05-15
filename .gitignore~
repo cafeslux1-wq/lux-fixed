@@ -1,0 +1,4 @@
+# رابط قاعدة بيانات Postgres من Railway
+	DATABASE_URL="postgresql://postgres:kgNEarMpxbBNQFchRjhYbwMOhKpLedWj@postgres.railway.internal:5432/railway"
+		# المنفذ الذي سيعمل عليه السيرفر (اختياري، الافتراضي 8080)
+PORT=8080

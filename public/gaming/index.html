@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUX GAMING — Maestro Ultra Premium</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Cinzel:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <!-- ✅ إضافة Socket.io للتواصل الفوري -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+
+    <style>
+        :root {
+            --gold: #C9A84C; --gold-light: #E8C97A; --gold-dark: #8B6E2F;
+            --dark: #050505; --bg-glass: rgba(15, 23, 42, 0.95);
+            --border: rgba(201, 168, 76, 0.25);
+            --green: #2ECC71; --red: #E74C3C;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--dark); 
+            color: white; 
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% -20%, rgba(201, 168, 76, 0.15) 0%, transparent 60%);
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-wrapper { width: 100%; max-width: 480px; padding: 20px 15px; position: relative; z-index: 1; }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .lux-logo { font-family: 'Cinzel', serif; font-size: 36px; letter-spacing: 4px; color: #fff; text-shadow: 0 0 15px rgba(201,168,76,0.3); }
+        .lux-logo span { color: var(--gold); }
+        .maestro-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(201,168,76,0.1); border: 1px solid var(--border);
+            padding: 8px 20px; border-radius: 50px; font-size: 13px; color: var(--gold); margin-top: 10px;
+            font-weight: 700; text-transform: uppercase;
+        }
+
+        .glass-card {
+            background: var(--bg-glass); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 28px;
+            padding: 25px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            animation: slideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .active-session-box {
+            background: linear-gradient(145deg, #0f172a, #050505);
+            border: 2px solid var(--gold); border-radius: 24px;
+            padding: 25px; margin-bottom: 30px; text-align: center;
+            box-shadow: 0 15px 35px rgba(201,168,76,0.2);
+            position: relative; overflow: hidden;
+        }
+        .active-session-box::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(transparent, var(--gold), transparent, transparent);
+            animation: rotate 4s linear infinite; z-index: 0; opacity: 0.1;
+        }
+        @keyframes rotate { to { transform: rotate(360deg); } }
+
+        .timer-container { position: relative; z-index: 1; margin: 15px 0; }
+        .timer-val { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 700; color: #fff; line-height: 1; }
+        
+        .money-spent-box {
+            background: rgba(201,168,76,0.1);
+            border: 1px solid var(--gold);
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .money-spent-label {
+            font-size: 12px;
+            color: var(--gold-light);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .money-spent-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .money-spent-value .currency {
+            font-size: 1rem;
+            color: var(--gold-light);
+            margin-right: 5px;
+        }
+
+        .player-name-active { font-size: 18px; font-weight: 900; color: #fff; z-index: 1; position: relative; margin-top: 10px; }
+
+        .section-title { font-size: 15px; color: var(--gold); font-weight: 900; margin: 25px 0 15px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+        
+        .stations-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 25px; }
+        .st-item {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px; padding: 25px 10px; text-align: center; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .st-item:hover { transform: translateY(-5px); background: rgba(255,255,255,0.05); }
+        .st-item.selected { border-color: var(--gold); background: rgba(201,168,76,0.15); box-shadow: 0 0 25px rgba(201,168,76,0.2); }
+        .st-item.is-busy { border-color: rgba(231, 76, 60, 0.2); background: rgba(231, 76, 60, 0.05); }
+        
+        .st-icon { font-size: 30px; margin-bottom: 12px; display: block; }
+        .st-label { font-size: 16px; font-weight: 900; display: block; margin-bottom: 4px; color: #fff; }
+        .st-status { font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+
+        .options-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .pay-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .opt-card {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 15px 5px; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .opt-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.12); }
+        .opt-card i { font-size: 20px; margin-bottom: 8px; display: block; color: var(--gold); }
+        .opt-card b { font-size: 14px; display: block; }
+        .opt-card span { font-size: 11px; color: var(--gold-light); font-weight: bold; }
+
+        .lux-input {
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px; border-radius: 14px; color: white; font-family: 'Cairo'; margin-bottom: 15px;
+            font-size: 15px; transition: 0.3s;
+        }
+        .lux-input:focus { border-color: var(--gold); background: rgba(0,0,0,0.7); }
+
+        #card-element { 
+            background: rgba(0,0,0,0.5); padding: 18px; border-radius: 14px; 
+            border: 1px solid var(--gold); margin: 15px 0; 
+        }
+
+        .btn-pay {
+            width: 100%; padding: 18px; border-radius: 18px; border: none; font-family: 'Cairo';
+            font-weight: 900; font-size: 17px; cursor: pointer; transition: 0.4s;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #000;
+            box-shadow: 0 10px 30px rgba(201,168,76,0.3);
+        }
+        .btn-pay:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-pay:active { transform: scale(0.96); }
+
+        .btn-service {
+            background: transparent; 
+            border: 1px solid var(--border); 
+            color: var(--gold);
+            margin-top: 15px; 
+            font-weight: 700; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 14px;
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px;
+            font-family: 'Cairo';
+            font-size: 14px;
+            transition: 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        .btn-service:hover {
+            background: rgba(201,168,76,0.1);
+            border-color: var(--gold);
+        }
+
+        @media (max-width: 380px) {
+            .lux-logo { font-size: 28px; }
+            .timer-val { font-size: 42px; }
+            .money-spent-value { font-size: 1.5rem; }
+        }
+
+        [v-cloak] { display: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+            margin-left: 8px;
+        }
+        
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 9999;
+            animation: fadeInUp 0.3s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="app-wrapper" v-cloak>
+    <header class="header">
+        <div class="lux-logo">LUX <span>GAMING</span></div>
+        <div class="maestro-badge">
+            <i class="fas fa-crown"></i> Maestro Ultra v9.0
+        </div>
+    </header>
+
+    <!-- Active Session Card -->
+    <div v-if="activeSession" class="active-session-box">
+        <div style="font-size: 13px; color: var(--gold); font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; z-index: 1;">
+            <i class="fas fa-headset"></i> 
+            الجلسة نشطة على: {{ activeSession.stationLabel }}
+            <span class="pulse-dot"></span>
+        </div>
+        
+        <div class="timer-container">
+            <div class="timer-val">{{ timerDisplay }}</div>
+        </div>
+
+        <div class="money-spent-box">
+            <div class="money-spent-label">
+                <i class="fas fa-coins"></i> الرصيد المستهلك
+            </div>
+            <div class="money-spent-value">
+                {{ consumedMoney }} <span class="currency">MAD</span>
+            </div>
+        </div>
+
+        <div class="player-name-active">
+            <i class="fas fa-user"></i> {{ activeSession.playerName }}
+        </div>
+
+        <button @click="resetSelection" class="btn-service" style="margin-top: 20px;">
+            <i class="fas fa-gamepad"></i> حجز جهاز آخر
+        </button>
+    </div>
+
+    <!-- Booking Card -->
+    <main class="glass-card" v-if="!activeSession">
+        <div class="section-title"><i class="fas fa-layer-group"></i> 1. اختر محطة اللعب:</div>
+        <div class="stations-grid">
+            <div v-for="s in stations" :key="s.id" 
+                 class="st-item" 
+                 :class="{ 'selected': selectedId == s.id, 'is-busy': s.status === 'active' }"
+                 @click="handleStationClick(s)">
+                <i class="st-icon fas" :class="s.status === 'active' ? 'fa-user-astronaut' : 'fa-gamepad'" 
+                   :style="{color: s.status === 'active' ? 'var(--red)' : 'var(--green)'}"></i>
+                <span class="st-label">{{ s.label }}</span>
+                <span class="st-status" :style="{color: s.status === 'active' ? 'var(--red)' : 'var(--green)'}">
+                    {{ s.status === 'active' ? '● مشغول' : '● متاح' }}
+                </span>
+            </div>
+        </div>
+
+        <div v-if="selectedStation && selectedStation.status !== 'active'">
+            <div class="section-title"><i class="fas fa-hourglass-start"></i> 2. مدة الجلسة:</div>
+            <div class="options-row">
+                <div v-for="p in plans" :key="p.id" 
+                     class="opt-card" 
+                     :class="{selected: selectedPlan && selectedPlan.id === p.id}"
+                     @click="selectPlan(p)">
+                    <b>{{ p.hours }} ساعة</b>
+                    <span>{{ p.price }} DH</span>
+                </div>
+            </div>
+
+            <div class="section-title"><i class="fas fa-credit-card"></i> 3. وسيلة الدفع:</div>
+            <div class="pay-row">
+                <div class="opt-card" :class="{selected: method === 'cash'}" @click="method = 'cash'">
+                    <i class="fas fa-money-bill-wave"></i><span>كاش</span>
+                </div>
+                <div class="opt-card" :class="{selected: method === 'stripe'}" @click="initStripe">
+                    <i class="fab fa-stripe-s"></i><span>بطاقة</span>
+                </div>
+                <div class="opt-card" :class="{selected: method === 'tpe'}" @click="method = 'tpe'">
+                    <i class="fas fa-mobile-alt"></i><span>TPE</span>
+                </div>
+            </div>
+
+            <div id="card-element" v-show="method === 'stripe'"></div>
+
+            <input type="text" v-model="playerName" class="lux-input" placeholder="أدخل اسم اللاعب...">
+
+            <button class="btn-pay" @click="processBooking" :disabled="loading">
+                <i v-if="loading" class="fas fa-circle-notch fa-spin"></i>
+                <span v-else>بدء التجربة الآن ⚡</span>
+            </button>
+        </div>
+
+        <div v-else-if="selectedStation && selectedStation.status === 'active'" style="text-align:center; padding:20px; border:1px solid rgba(231,76,60,0.3); border-radius:20px; margin-top:20px;">
+            <i class="fas fa-lock" style="color:var(--red); font-size:30px; margin-bottom:15px;"></i>
+            <p style="font-size:14px; font-weight:700;">هذا الجهاز قيد الاستخدام حالياً.<br>تفضل باختيار جهاز متاح من القائمة.</p>
+        </div>
+    </main>
+    
+    <div v-if="toastMessage" class="toast-notification">{{ toastMessage }}</div>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            stations: [],
+            selectedId: null,
+            selectedStation: null,
+            activeSession: null,
+            loading: false,
+            method: 'cash',
+            playerName: '',
+            selectedPlan: null,
+            timerDisplay: '00:00:00',
+            consumedMoney: "0.00",
+            stripe: null,
+            card: null,
+            socket: null,
+            toastMessage: '',
+            currentStationId: null,
+            plans: [
+                { id: 1, hours: 1, price: 30 },
+                { id: 2, hours: 2, price: 55 },
+                { id: 3, hours: 3, price: 80 }
+            ]
+        }
+    },
+    methods: {
+        showToast(msg) {
+            this.toastMessage = msg;
+            setTimeout(() => { this.toastMessage = ''; }, 3000);
+        },
+        
+        // ✅ تحديث الأسعار في خطط الدفع بناءً على السعر الجديد
+        updatePlansWithNewRate(hourlyRate) {
+            console.log(`💰 تحديث خطط الدفع بالسعر الجديد: ${hourlyRate} DH/ساعة`);
+            this.plans = [
+                { id: 1, hours: 1, price: Math.round(hourlyRate * 1) },
+                { id: 2, hours: 2, price: Math.round(hourlyRate * 2 * 0.95) }, // خصم 5% للساعتين
+                { id: 3, hours: 3, price: Math.round(hourlyRate * 3 * 0.9) }    // خصم 10% للثلاث ساعات
+            ];
+            this.showToast(`✨ تم تحديث الأسعار: ${hourlyRate} درهم/ساعة`);
+        },
+        
+        // ✅ الاتصال بـ Socket.io واستقبال تحديثات الأسعار
+        initSocket() {
+            if (this.socket) return;
+            
+            try {
+                this.socket = io(window.LUX_API_URL);
+                console.log("🔌 تم الاتصال بخادم Socket.io");
+                
+                this.socket.on('connect', () => {
+                    console.log("✅ Socket.io متصل بنجاح");
+                });
+                
+                this.socket.on('station:rate_updated', (data) => {
+                    console.log("📡 استقبال تحديث السعر:", data);
+                    
+                    if (data.stationId == this.currentStationId || data.stationId == this.selectedId) {
+                        console.log(`💰 تحديث السعر للجهاز ${data.stationId} إلى ${data.hourlyRate} DH/ساعة`);
+                        this.updatePlansWithNewRate(data.hourlyRate);
+                        
+                        // تحديث السعر في المحطة المحددة
+                        if (this.selectedStation) {
+                            this.selectedStation.hourlyRate = data.hourlyRate;
+                        }
+                        
+                        // تحديث في قائمة المحطات
+                        const stationIndex = this.stations.findIndex(s => s.id == data.stationId);
+                        if (stationIndex !== -1) {
+                            this.stations[stationIndex].hourlyRate = data.hourlyRate;
+                        }
+                        
+                        this.showToast(`💰 تم تحديث السعر إلى ${data.hourlyRate} درهم/ساعة`);
+                    }
+                });
+                
+                this.socket.on('disconnect', () => {
+                    console.warn("⚠️ Socket.io غير متصل، محاولة إعادة الاتصال...");
+                });
+            } catch (e) {
+                console.error("❌ خطأ في اتصال Socket.io:", e);
+            }
+        },
+        
+        async sync() {
+            try {
+                const res = await axios.get(`${window.LUX_API_URL}/api/gaming/stations`);
+                const allData = res.data.data || res.data;
+                console.log("📡 بيانات المحطات من الخادم:", allData);
+                this.stations = allData;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const queryId = urlParams.get('id');
+                
+                if (queryId) {
+                    this.currentStationId = parseInt(queryId);
+                }
+                
+                if (!this.selectedId && queryId) {
+                    this.selectedId = queryId;
+                }
+
+                if (this.selectedId) {
+                    this.selectedStation = this.stations.find(s => s.id == this.selectedId);
+                    console.log("🎯 المحطة المحددة:", this.selectedStation);
+                    
+                    if (this.selectedStation && this.selectedStation.status === 'active' && this.selectedStation.currentSession) {
+                        this.activeSession = {
+                            ...this.selectedStation.currentSession,
+                            stationLabel: this.selectedStation.label
+                        };
+                        console.log("🎮 الجلسة النشطة:", this.activeSession);
+                        this.startTimer();
+                    } else {
+                        this.activeSession = null;
+                        if (window.timerInterval) {
+                            clearInterval(window.timerInterval);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("❌ خطأ في المزامنة:", e);
+            }
+        },
+
+        handleStationClick(s) {
+            this.selectedId = s.id;
+            this.currentStationId = s.id;
+            this.selectedStation = s;
+            const newUrl = window.location.pathname + '?id=' + s.id;
+            window.history.pushState({path: newUrl}, '', newUrl);
+            
+            if (s.status === 'active' && s.currentSession) {
+                this.activeSession = { ...s.currentSession, stationLabel: s.label };
+                this.startTimer();
+            } else {
+                this.activeSession = null;
+                if (window.timerInterval) {
+                    clearInterval(window.timerInterval);
+                }
+                this.timerDisplay = '00:00:00';
+                this.consumedMoney = '0.00';
+            }
+        },
+
+        resetSelection() {
+            console.log("🔄 إعادة تعيين - حجز جهاز آخر");
+            
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+                window.timerInterval = null;
+            }
+            
+            this.activeSession = null;
+            this.selectedId = null;
+            this.selectedStation = null;
+            this.selectedPlan = null;
+            this.playerName = '';
+            this.consumedMoney = "0.00";
+            this.timerDisplay = "00:00:00";
+            this.currentStationId = null;
+            
+            const newUrl = window.location.pathname;
+            window.history.pushState({path: newUrl}, '', newUrl);
+            
+            this.sync();
+        },
+
+        selectPlan(plan) {
+            this.selectedPlan = plan;
+        },
+
+        startTimer() {
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+                window.timerInterval = null;
+            }
+            
+            if (!this.activeSession) {
+                console.warn("⚠️ لا توجد جلسة نشطة");
+                return;
+            }
+
+            const startedAt = this.activeSession.startedAt;
+            const endsAt = this.activeSession.endsAt;
+            
+            if (!startedAt || !endsAt) {
+                console.error("❌ بيانات الوقت غير مكتملة:", { startedAt, endsAt });
+                this.timerDisplay = "00:00:00";
+                this.consumedMoney = "0.00";
+                return;
+            }
+
+            let totalPrice = parseFloat(this.activeSession.totalPrice);
+            
+            if (!totalPrice || totalPrice <= 0 || isNaN(totalPrice)) {
+                const startTime = new Date(startedAt).getTime();
+                const endTime = new Date(endsAt).getTime();
+                const hours = (endTime - startTime) / (1000 * 60 * 60);
+                totalPrice = Math.round(hours * 30);
+                console.log("⚙️ تم حساب السعر تلقائياً:", totalPrice, "MAD لـ", hours, "ساعة");
+            }
+
+            console.log("✅ بدء العداد - السعر:", totalPrice, "MAD");
+
+            window.timerInterval = setInterval(() => {
+                const now = Date.now();
+                const start = new Date(startedAt).getTime();
+                const ends = new Date(endsAt).getTime();
+                const diff = ends - now;
+                
+                if (diff <= 0) {
+                    this.timerDisplay = "00:00:00";
+                    this.consumedMoney = totalPrice.toFixed(2);
+                    console.log("🏁 انتهت الجلسة - الرصيد المستهلك:", this.consumedMoney, "MAD");
+                    clearInterval(window.timerInterval);
+                    window.timerInterval = null;
+                    this.sync();
+                    return;
+                }
+                
+                const totalDuration = ends - start;
+                
+                if (totalDuration > 0) {
+                    const elapsed = now - start;
+                    const pricePerMs = totalPrice / totalDuration;
+                    const spent = elapsed * pricePerMs;
+                    this.consumedMoney = Math.min(spent, totalPrice).toFixed(2);
+                }
+
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                this.timerDisplay = `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+            }, 1000);
+        },
+
+        async initStripe() {
+            this.method = 'stripe';
+            if (!this.stripe) {
+                try {
+                    this.stripe = Stripe('pk_test_51P2uUXRux7q6N08E9uUv4S...'); 
+                    const elements = this.stripe.elements();
+                    this.card = elements.create('card', { 
+                        style: { base: { color: '#ffffff', fontSize: '16px', fontFamily: 'Cairo' } } 
+                    });
+                    setTimeout(() => {
+                        const cardElement = document.getElementById('card-element');
+                        if (cardElement && this.card) {
+                            this.card.mount('#card-element');
+                        }
+                    }, 200);
+                } catch (e) {
+                    console.error("Stripe init error:", e);
+                }
+            }
+        },
+
+        async processBooking() {
+            if (!this.selectedPlan) {
+                return alert("الرجاء اختيار مدة الجلسة");
+            }
+
+            this.loading = true;
+
+            try {
+                let token = 'CASH';
+                if (this.method === 'stripe' && this.card) {
+                    try {
+                        const result = await this.stripe.createToken(this.card);
+                        if (result.error) throw new Error(result.error.message);
+                        token = result.token.id;
+                    } catch (e) {
+                        console.error("Stripe token error:", e);
+                    }
+                }
+
+                const payload = {
+                    stationId: String(this.selectedId),
+                    hours: this.selectedPlan.hours,
+                    playerName: this.playerName || 'زبون LUX',
+                    paymentMethod: this.method,
+                    paymentToken: token,
+                    paymentStatus: this.method === 'stripe' ? 'paid' : 'pending'
+                };
+
+                const res = await axios.post(`${window.LUX_API_URL}/api/gaming/activate`, payload);
+
+                if (res.status === 200 || res.status === 201) {
+                    this.showToast("✅ تم تفعيل جهازك بنجاح!");
+                    this.selectedPlan = null;
+                    this.playerName = '';
+                    await this.sync();
+                }
+            } catch (e) {
+                console.error("Booking error:", e);
+                alert(e.message || "فشل الاتصال بالإدارة");
+            } finally {
+                this.loading = false;
+            }
+        }
+    },
+    mounted() {
+        console.log("🚀 تطبيق LUX GAMING جاهز");
+        this.initSocket();
+        this.sync();
+        
+        this.syncInterval = setInterval(() => {
+            this.sync();
+        }, 15000);
+    },
+    beforeUnmount() {
+        if (window.timerInterval) {
+            clearInterval(window.timerInterval);
+            window.timerInterval = null;
+        }
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval);
+        }
+        if (this.socket) {
+            this.socket.disconnect();
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

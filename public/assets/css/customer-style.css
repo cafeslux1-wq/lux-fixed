@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════════════════
+   CAFÉ LUX — customer-style.css
+   Extracted from index.html — public/assets/css/customer-style.css
+   Layout shell for the MAESTRO V12 SPA
+   Depends on: ../../../src/css/gold-theme.css (CSS variables)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 16px;
+  letter-spacing: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Navigation Tabs ─────────────────────────────────────────── */
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .15s;
+  white-space: nowrap;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+}
+.nav-tab:hover     { color: var(--text); background: var(--bg3); }
+.nav-tab.active    { background: var(--gold); color: #000; border-color: var(--gold); }
+
+/* ── Customer Mode: hide admin-only tabs ─────────────────────── */
+body.customer-mode .nav-tab.admin-only { display: none !important; }
+
+/* ── Main Content Shell ──────────────────────────────────────── */
+.main-content {
+  height: calc(100vh - var(--topbar-h));
+  overflow: hidden;
+}
+
+/* ── Page System (SPA) ───────────────────────────────────────── */
+.page {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+}
+.page.active {
+  display: flex;
+  flex-direction: column;
+  animation: lux-fade-in .2s ease;
+}
+
+/* ── KPI Cards (Dashboard) ───────────────────────────────────── */
+.kpi {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  transition: border-color .15s;
+}
+.kpi:hover { border-color: var(--border2); }
+
+.kpi-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+#dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+
+/* ── Clock ───────────────────────────────────────────────────── */
+#main-clock {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ── Booking Modal ───────────────────────────────────────────── */
+#booking-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .8);
+  backdrop-filter: blur(6px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
+#booking-modal.open { display: flex; animation: lux-fade-in .2s ease; }
+
+.booking-modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-xl);
+  padding: 28px;
+  width: 92%;
+  max-width: 440px;
+}
+.booking-modal-title {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 15px;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+/* ── Field Input (shared) ────────────────────────────────────── */
+.field-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--font-body, sans-serif);
+  transition: border-color .15s;
+}
+.field-input:focus { border-color: var(--border2); }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .topbar { padding: 0 10px; gap: 8px; }
+  .nav-tab { padding: 5px 10px; font-size: 10px; }
+  #dashboard-stats { grid-template-columns: 1fr 1fr; padding: 12px; }
+}

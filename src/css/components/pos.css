@@ -1,0 +1,80 @@
+/* ════════ POS COMPONENT STYLES ════════ */
+.pos-layout { display: flex; height: calc(100vh - var(--topbar-h)); overflow: hidden; }
+
+/* ── Menu Panel ──────────────────────────────────── */
+.pos-menu {
+  flex: 1; overflow-y: auto; padding: 16px;
+  background: var(--bg);
+}
+.pos-cat-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.pos-cat-btn {
+  padding: 6px 14px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 20px;
+  color: var(--muted); font-size: 11px; cursor: pointer;
+  transition: .15s;
+}
+.pos-cat-btn.active, .pos-cat-btn:hover {
+  background: var(--gold-faint); border-color: var(--gold-d); color: var(--gold);
+}
+.pos-items-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.pos-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px; text-align: center;
+  cursor: pointer; transition: .15s; position: relative; overflow: hidden;
+}
+.pos-item:hover { border-color: var(--border2); background: var(--bg3); transform: translateY(-1px); }
+.pos-item.sig::before {
+  content: '✦'; position: absolute; top: 6px; right: 8px;
+  color: var(--gold); font-size: 10px;
+}
+.pos-item-img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; margin: 0 auto 6px; display: block; }
+.pos-item-name { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.pos-item-price { font-family: var(--font-mono); font-size: 11px; color: var(--gold); }
+
+/* ── Ticket Panel ────────────────────────────────── */
+.pos-ticket {
+  width: 300px; flex-shrink: 0;
+  background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ticket-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ticket-title { font-family: var(--font-display); font-size: 14px; color: var(--gold); letter-spacing: 2px; }
+.ticket-items { flex: 1; overflow-y: auto; padding: 8px 0; }
+.ticket-row {
+  display: flex; align-items: center; padding: 8px 14px; gap: 8px;
+  border-bottom: 1px solid rgba(201,168,76,.04);
+}
+.ticket-row:last-child { border-bottom: none; }
+.ticket-qty {
+  width: 22px; height: 22px; background: var(--gold-faint);
+  border: 1px solid var(--border2); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 900; color: var(--gold); flex-shrink: 0;
+}
+.ticket-name { flex: 1; font-size: 11px; }
+.ticket-price { font-family: var(--font-mono); font-size: 11px; color: var(--gold); flex-shrink: 0; }
+.ticket-rm { width: 18px; text-align: center; cursor: pointer; color: var(--muted); font-size: 12px; transition: .1s; }
+.ticket-rm:hover { color: var(--red); }
+.ticket-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
+.ticket-total { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.ticket-total-label { font-size: 12px; color: var(--muted); }
+.ticket-total-amount { font-family: var(--font-mono); font-size: 20px; color: var(--gold); font-weight: 700; }
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pay-btn {
+  padding: 10px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  color: var(--text); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: .15s; text-align: center;
+}
+.pay-btn:hover { border-color: var(--border2); background: var(--bg4); }
+.pay-btn.cash  { border-color: rgba(46,204,113,.3);  color: var(--green); }
+.pay-btn.card  { border-color: rgba(52,152,219,.3);  color: var(--blue);  }

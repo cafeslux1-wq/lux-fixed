@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUX ADMIN — Maestro Monitoring | لوحة التحكم الذهبية</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --gold:#C9A84C; --gold-dim:#8B6E2F; --gold-glow:rgba(201,168,76,0.15); }
+        body { font-family:'Cairo',sans-serif; background-color:#040914; color:white; min-height:100vh; }
+
+        .station-box { background:#0b1120; border:1px solid #1e293b; border-radius:4px; transition:0.3s; margin-bottom:0; }
+        .station-box.status-active     { border-color:#ef4444; box-shadow:0 0 20px rgba(239,68,68,0.15); }
+        .station-box.status-pending,
+        .station-box.status-awaiting   { border-color:#f59e0b; box-shadow:0 0 15px rgba(245,158,11,0.2); }
+        .station-box.status-available  { border-color:#1e293b; }
+        .station-box.status-maintenance{ border-color:#6b7280; opacity:0.6; }
+        .timer-box { border:1px solid rgba(255,255,255,0.2); border-radius:2rem; padding:1.5rem; text-align:center; margin:1.5rem 0; background:rgba(0,0,0,0.3); }
+        .badge-pending  { background:#f59e0b; color:#000; animation:pulse-badge 1.5s infinite; display:inline-block; padding:4px 12px; border-radius:4px; font-size:10px; font-weight:bold; }
+        .badge-active   { background:#ef4444; color:#fff; display:inline-block; padding:4px 12px; border-radius:4px; font-size:10px; font-weight:bold; }
+        .badge-available{ background:#10b981; color:#fff; display:inline-block; padding:4px 12px; border-radius:4px; font-size:10px; font-weight:bold; }
+        .btn { width:100%; padding:0.75rem; font-size:0.8rem; font-weight:900; transition:0.2s; border-radius:0.5rem; cursor:pointer; border:none; }
+        .btn-approve { background:#f59e0b; color:#000; }
+        .btn-approve:hover { background:#d97706; }
+        .btn-stop    { color:#ef4444; background:transparent; border:1px solid rgba(239,68,68,0.3); }
+        .btn-stop:hover { background:rgba(239,68,68,0.1); }
+        .btn-manual  { color:white; background:transparent; border:1px solid rgba(255,255,255,0.1); }
+        .btn-manual:hover { background:rgba(255,255,255,0.05); }
+        .btn-price-edit { background:rgba(201,168,76,0.15); border:1px solid var(--gold); color:var(--gold); border-radius:8px; padding:4px 12px; font-size:11px; font-weight:bold; cursor:pointer; transition:0.2s; }
+        .btn-price-edit:hover { background:rgba(201,168,76,0.3); transform:scale(0.98); }
+        .stat-card { background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:1rem; text-align:center; }
+        
+        .balance-consumption { font-size:13px; background:#00000055; border-radius:12px; padding:6px 12px; margin-top:8px; text-align:center; font-weight:bold; letter-spacing:0.5px; }
+        .balance-amount { color:#10b981; font-size:14px; font-family:monospace; }
+        .balance-debit { color:var(--gold); font-size:12px; }
+        
+        .qr-section {
+            background:#0b1120;
+            border:1px solid rgba(201,168,76,0.2);
+            border-radius:16px;
+            padding:32px;
+            margin-top:40px;
+        }
+        .qr-section-title {
+            font-family:'Cinzel',serif;
+            font-size:18px;
+            font-weight:700;
+            color:var(--gold);
+            letter-spacing:3px;
+            text-transform:uppercase;
+            margin-bottom:4px;
+        }
+        .qr-section-sub { font-size:11px; color:rgba(255,255,255,0.3); letter-spacing:1px; margin-bottom:28px; }
+
+        .qr-controls { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:28px; }
+        .qr-select-wrap { flex:1; min-width:200px; }
+        .qr-label { display:block; font-size:10px; font-weight:700; letter-spacing:2px; color:rgba(255,255,255,0.35); text-transform:uppercase; margin-bottom:8px; }
+        .qr-select {
+            width:100%; background:#040914; border:1px solid rgba(201,168,76,0.25);
+            border-radius:10px; color:white; font-family:'Cairo',sans-serif;
+            font-size:14px; font-weight:700; padding:12px 16px; cursor:pointer;
+            outline:none; appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C9A84C' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat:no-repeat; background-position:left 12px center;
+        }
+        .qr-select:focus { border-color:var(--gold); }
+        .qr-gen-btn {
+            padding:12px 24px;
+            background:linear-gradient(135deg,var(--gold-dim),var(--gold));
+            border:none; border-radius:10px; color:#000;
+            font-family:'Cairo',sans-serif; font-size:13px; font-weight:900;
+            cursor:pointer; white-space:nowrap; transition:all .2s;
+            display:flex; align-items:center; gap:8px;
+        }
+        .qr-gen-btn:hover { filter:brightness(1.1); transform:translateY(-1px); }
+        .qr-gen-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .qr-all-btn {
+            padding:12px 20px; background:transparent;
+            border:1px solid rgba(201,168,76,0.3); border-radius:10px;
+            color:var(--gold); font-family:'Cairo',sans-serif; font-size:12px;
+            font-weight:700; cursor:pointer; transition:all .2s;
+        }
+        .qr-all-btn:hover { background:rgba(201,168,76,.08); }
+        .qr-result {
+            display:flex; gap:28px; align-items:flex-start; flex-wrap:wrap;
+            background:rgba(201,168,76,0.04); border:1px solid rgba(201,168,76,0.15);
+            border-radius:14px; padding:24px; animation:fade-up .3s ease;
+        }
+        .qr-canvas-wrap { background:#fff; padding:12px; border-radius:12px; flex-shrink:0; box-shadow:0 0 24px rgba(201,168,76,0.2); display:inline-block; }
+        .qr-info { flex:1; min-width:180px; }
+        .qr-info-station { font-family:'Cinzel',serif; font-size:22px; color:var(--gold); font-weight:700; margin-bottom:4px; }
+        .qr-info-type { font-size:11px; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:2px; margin-bottom:14px; }
+        .qr-info-url { font-size:11px; color:rgba(255,255,255,.4); word-break:break-all; font-family:monospace; background:rgba(0,0,0,.3); padding:8px 12px; border-radius:8px; margin-bottom:16px; }
+        .qr-action-btns { display:flex; gap:10px; flex-wrap:wrap; }
+        .qr-dl-btn {
+            padding:8px 18px; background:var(--gold); border:none; border-radius:8px;
+            color:#000; font-family:'Cairo',sans-serif; font-size:12px; font-weight:900;
+            cursor:pointer; display:flex; align-items:center; gap:6px;
+        }
+        .qr-dl-btn:hover { filter:brightness(1.1); }
+        .qr-print-btn {
+            padding:8px 18px; background:transparent;
+            border:1px solid rgba(255,255,255,.15); border-radius:8px;
+            color:rgba(255,255,255,.6); cursor:pointer; display:flex; align-items:center; gap:6px;
+        }
+        .qr-print-btn:hover { background:rgba(255,255,255,.05); color:#fff; }
+        .qr-all-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(195px,1fr)); gap:18px; margin-top:20px; }
+        .qr-all-card { background:#040914; border:1px solid rgba(201,168,76,0.15); border-radius:14px; padding:20px; text-align:center; }
+        .qr-all-label { font-family:'Cinzel',serif; font-size:14px; color:var(--gold); font-weight:700; margin:10px 0 3px; }
+        .qr-all-type { font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+        .qr-all-dl {
+            font-size:11px; font-weight:700; color:var(--gold); cursor:pointer;
+            background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.2);
+            border-radius:6px; padding:6px 14px; margin-top:8px; display:inline-block;
+        }
+        .qr-all-dl:hover { background:rgba(201,168,76,.15); }
+        .qr-status-badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:10px; font-weight:700; margin-bottom:10px; }
+        .qr-status-available   { background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.3); }
+        .qr-status-active      { background:rgba(239,68,68,.15);  color:#ef4444; border:1px solid rgba(239,68,68,.3);  }
+        .qr-status-awaiting    { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+        
+        .price-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:10000; }
+        .price-card { background:#0b1120; border:1px solid var(--gold); border-radius:20px; padding:28px; width:300px; text-align:center; }
+        
+        @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        
+        [v-cloak] { display: none; }
+        
+        @media print {
+            .station-section, .qr-controls, .qr-print-btn, .qr-dl-btn, header, .qr-gen-btn, .qr-all-btn { display:none !important; }
+            .qr-section { background:#fff !important; border:none !important; color:#000 !important; }
+            .qr-all-card { background:#fff !important; border:1px solid #ccc !important; color:#000 !important; }
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+<div id="app" v-cloak class="max-w-7xl mx-auto">
+
+    <!-- HEADER -->
+    <header class="flex justify-between items-start mb-8 border-b border-gray-800 pb-6 flex-wrap gap-4">
+        <div class="flex items-center gap-4 flex-wrap">
+            <div class="border border-gray-700 rounded-lg px-4 py-2 flex items-center gap-3">
+                <span class="text-xs font-bold uppercase tracking-widest">RAILWAY</span>
+                <div class="w-2 h-2 rounded-full transition-colors" :class="apiOnline ? 'bg-green-500' : 'bg-red-500'"></div>
+                <span class="text-xs" :class="apiOnline ? 'text-green-400' : 'text-red-400'">{{ apiOnline ? 'متصل' : 'غير متصل' }}</span>
+            </div>
+            <div class="flex gap-3 text-xs">
+                <div class="stat-card"><div class="text-green-400 font-bold text-lg">{{ stationsAvailable }}</div><div class="text-gray-500">متاح</div></div>
+                <div class="stat-card"><div class="text-yellow-400 font-bold text-lg">{{ stationsPending }}</div><div class="text-gray-500">انتظار</div></div>
+                <div class="stat-card"><div class="text-red-400 font-bold text-lg">{{ stationsActive }}</div><div class="text-gray-500">نشط</div></div>
+            </div>
+        </div>
+        <div class="text-left"><h1 class="text-3xl font-black italic uppercase tracking-tighter">LUX <span class="text-white">ADMIN</span></h1><p class="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Maestro Monitoring System</p></div>
+    </header>
+
+    <!-- STATIONS GRID -->
+    <div class="station-section">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="station in stations" :key="station.id" class="station-box p-6" :class="stationClass(station)">
+                <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+                    <div>
+                        <div v-if="station.status === 'awaiting_activation' || station.status === 'pending'" class="badge-pending">⚡ مطلوب تفعيل — {{ getPaymentName(station.currentSession?.paymentMethod) }}</div>
+                        <div v-else-if="station.status === 'active'" class="badge-active">🎮 نشط</div>
+                        <div v-else-if="station.status === 'available'" class="badge-available">✅ متاح</div>
+                        <div v-else class="text-gray-500 text-[10px] px-3 py-1 rounded-sm border border-gray-600">{{ station.status }}</div>
+                    </div>
+                    <div class="text-right flex items-center gap-2">
+                        <span class="font-bold text-lg">{{ station.label }}</span>
+                        <span class="text-gray-500 text-xs uppercase">{{ station.type }}</span>
+                        <button @click="openPriceModal(station)" class="btn-price-edit" title="تعديل سعر الساعة"><i class="fas fa-tag"></i> {{ station.hourlyRate || 25 }} DH</button>
+                    </div>
+                </div>
+                <div v-if="station.currentSession" class="text-xs text-gray-400 mb-2 text-right">
+                    <span>👤 {{ station.currentSession.playerName || 'لاعب' }}</span>
+                    <span class="mx-2">·</span>
+                    <span>{{ station.currentSession.hours }}س</span>
+                    <span class="mx-2">·</span>
+                    <span class="text-yellow-400 font-bold">{{ station.currentSession.total }} درهم</span>
+                </div>
+                <div class="timer-box">
+                    <span class="text-4xl font-mono font-black tracking-widest">{{ getTimer(station) }}</span>
+                    <div v-if="station.status === 'active' && station.currentSession" class="text-xs text-gray-500 mt-1">ينتهي: {{ formatTime(station.currentSession.endsAt) }}</div>
+                </div>
+                <!-- عرض استهلاك الرصيد -->
+                <div v-if="station.status === 'active' && station.currentSession" class="balance-consumption">
+                    <i class="fas fa-coins"></i> الرصيد المستهلك: <span class="balance-amount">{{ getConsumedBalance(station) }} DH</span>
+                    <div class="balance-debit"><i class="fas fa-chart-line"></i> {{ getDebitRate(station) }} DH/دقيقة</div>
+                </div>
+                <div class="flex flex-col gap-2 mt-2">
+                    <button v-if="station.status === 'awaiting_activation' || station.status === 'pending'" @click="approve(station.id)" class="btn btn-approve">✅ تأكيد الدفع وتفعيل الوقت</button>
+                    <div v-if="station.status === 'available'" class="grid grid-cols-2 gap-2">
+                        <button @click="manual(station.id, 0.5)" class="btn btn-manual text-xs">½ ساعة</button>
+                        <button @click="manual(station.id, 1)" class="btn btn-manual text-xs">1 ساعة</button>
+                        <button @click="manual(station.id, 1.5)" class="btn btn-manual text-xs">1.5 ساعة</button>
+                        <button @click="manual(station.id, 2)" class="btn btn-manual text-xs">2 ساعة</button>
+                    </div>
+                    <button v-if="station.status === 'active'" @click="stop(station.id)" class="btn btn-stop">⏹ إنهاء الجلسة</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="stations.length === 0 && !apiOnline" class="text-center py-20 text-gray-600"><div class="text-4xl mb-4">❌</div><div>السيرفر غير متصل</div></div>
+        <div v-if="stations.length === 0 && apiOnline" class="text-center py-20 text-gray-600"><div class="text-4xl mb-4">🎮</div><div>لا توجد أجهزة</div></div>
+    </div>
+
+    <!-- QR CODE GENERATOR -->
+    <div class="qr-section">
+        <div class="flex justify-between items-start mb-1 flex-wrap gap-3">
+            <div><h2 class="qr-section-title"><i class="fas fa-qrcode" style="color:var(--gold);margin-left:10px"></i> مولد رموز QR</h2><p class="qr-section-sub">رمز QR صالح للحجز المباشر</p></div>
+            <button class="qr-all-btn" @click="generateAllQR"><i class="fas fa-th"></i> إنشاء جميع الرموز</button>
+        </div>
+        <div class="qr-controls">
+            <div class="qr-select-wrap">
+                <label class="qr-label">اختر الجهاز</label>
+                <select class="qr-select" v-model="qr.selectedId">
+                    <option value="" disabled>-- اختر جهازاً --</option>
+                    <option v-for="s in stations" :key="s.id" :value="s.id">{{ s.label }} · {{ (s.type || '').toUpperCase() }} {{ s.status === 'active' ? '🔴' : s.status === 'available' ? '🟢' : '🟡' }}</option>
+                </select>
+            </div>
+            <div>
+                <label class="qr-label">الحجم</label>
+                <select class="qr-select" v-model="qr.size" style="width:115px">
+                    <option :value="128">صغير</option>
+                    <option :value="180">متوسط</option>
+                    <option :value="240">كبير</option>
+                    <option :value="320">طباعة</option>
+                </select>
+            </div>
+            <button class="qr-gen-btn" :disabled="!qr.selectedId" @click="generateSingleQR"><i class="fas fa-qrcode"></i> إنشاء رمز QR</button>
+        </div>
+        <div v-if="qr.singleResult" class="qr-result">
+            <div class="qr-canvas-wrap" id="qr-single-canvas"></div>
+            <div class="qr-info">
+                <div class="qr-info-station">{{ qr.singleResult.label }}</div>
+                <div class="qr-info-type">{{ (qr.singleResult.type || '').toUpperCase() }} · SCAN & PLAY</div>
+                <div class="qr-info-url">{{ qr.singleResult.url }}</div>
+                <div class="qr-action-btns">
+                    <button class="qr-dl-btn" @click="downloadQR('qr-single-canvas', qr.singleResult.label)"><i class="fas fa-download"></i> تحميل PNG</button>
+                    <button class="qr-print-btn" @click="printSingleQR"><i class="fas fa-print"></i> طباعة</button>
+                    <button class="qr-print-btn" @click="copyURL(qr.singleResult.url)"><i class="fas fa-copy"></i> نسخ الرابط</button>
+                </div>
+                <div v-if="qr.copied" style="font-size:12px;color:#10b981;margin-top:8px;">✓ تم نسخ الرابط!</div>
+            </div>
+        </div>
+        <div v-if="qr.showAll && stations.length > 0">
+            <div class="flex justify-between items-center mt-8 mb-4">
+                <h3 style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);">جميع الأجهزة — {{ stations.length }} رمز</h3>
+                <button class="qr-print-btn" onclick="window.print()"><i class="fas fa-print"></i> طباعة الكل</button>
+            </div>
+            <div class="qr-all-grid">
+                <div v-for="s in stations" :key="'qr-all-' + s.id" class="qr-all-card">
+                    <div class="qr-canvas-wrap" :id="'qr-all-' + s.id"></div>
+                    <div class="qr-all-label">{{ s.label }}</div>
+                    <div class="qr-all-type">{{ (s.type || '').toUpperCase() }}</div>
+                    <button class="qr-all-dl" @click="downloadQR('qr-all-' + s.id, s.label)"><i class="fas fa-download"></i> تحميل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal تعديل السعر -->
+    <div v-if="priceModal.show" class="price-modal" @click.self="priceModal.show=false">
+        <div class="price-card">
+            <h3 style="color:var(--gold);font-family:Cinzel;">تعديل سعر الساعة</h3>
+            <p class="text-sm text-gray-400 mt-1">{{ priceModal.station?.label }}</p>
+            <input type="number" v-model.number="priceModal.newRate" class="w-full mt-4 p-2 rounded bg-gray-800 border border-gray-600 text-white text-center" step="5" min="5">
+            <div class="flex gap-2 mt-5">
+                <button @click="updateHourlyRate" class="bg-gold text-black px-4 py-2 rounded font-bold w-full" style="background:var(--gold);">تحديث</button>
+                <button @click="priceModal.show=false" class="bg-gray-700 text-white px-4 py-2 rounded w-full">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+(function() {
+    const { createApp, ref, computed, onMounted } = Vue;
+    
+    const API_BASE = 'https://cafeslux-api-production.up.railway.app';
+    const GAMING_URL = 'public/gaming.html';
+    
+    createApp({
+        setup() {
+            // State
+            const apiOnline = ref(false);
+            const stations = ref([]);
+            const qr = ref({
+                selectedId: '',
+                size: 180,
+                singleResult: null,
+                showAll: false,
+                copied: false
+            });
+            const priceModal = ref({
+                show: false,
+                station: null,
+                newRate: 25
+            });
+            
+            // Computed
+            const stationsAvailable = computed(() => stations.value.filter(s => s.status === 'available').length);
+            const stationsPending = computed(() => stations.value.filter(s => s.status === 'awaiting_activation' || s.status === 'pending').length);
+            const stationsActive = computed(() => stations.value.filter(s => s.status === 'active').length);
+            
+            // Methods
+            const stationClass = (station) => {
+                const map = {
+                    active: 'status-active',
+                    awaiting_activation: 'status-pending',
+                    pending: 'status-pending',
+                    available: 'status-available',
+                    maintenance: 'status-maintenance'
+                };
+                return map[station.status] || '';
+            };
+            
+            const getPaymentName = (code) => {
+                const m = { cash: 'نقداً', card: 'بطاقة بنكية', paypal: 'PayPal', tpe: 'TPE', googlepay: 'Google Pay' };
+                return m[code] || 'نقداً';
+            };
+            
+            const getTimer = (station) => {
+                if (station.status !== 'active' || !station.currentSession?.endsAt) {
+                    return station.status === 'available' ? '--:--:--' : '00:00:00';
+                }
+                const r = new Date(station.currentSession.endsAt) - Date.now();
+                if (r <= 0) return '⏰ انتهى';
+                const h = Math.floor(r / 3600000);
+                const m = Math.floor((r % 3600000) / 60000);
+                const s = Math.floor((r % 60000) / 1000);
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            };
+            
+            const getConsumedBalance = (station) => {
+                if (!station.currentSession || !station.currentSession.startedAt) return '0.00';
+                const elapsed = (Date.now() - new Date(station.currentSession.startedAt)) / 1000 / 3600;
+                const rate = station.hourlyRate || 25;
+                const consumed = elapsed * rate;
+                return consumed.toFixed(2);
+            };
+            
+            const getDebitRate = (station) => {
+                const rate = station.hourlyRate || 25;
+                return (rate / 60).toFixed(2);
+            };
+            
+            const formatTime = (isoStr) => {
+                if (!isoStr) return '';
+                return new Date(isoStr).toLocaleTimeString('ar-MA', { hour: '2-digit', minute: '2-digit' });
+            };
+            
+            const sync = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations`);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    stations.value = data;
+                    apiOnline.value = true;
+                } catch (e) {
+                    console.error('[Admin] sync error:', e.message);
+                    apiOnline.value = false;
+                }
+            };
+            
+            const approve = async (stationId) => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/confirm`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'confirm' })
+                    });
+                    if (res.ok) await sync();
+                    else alert('فشل التأكيد — ' + res.status);
+                } catch (e) { console.error(e); }
+            };
+            
+            const manual = async (stationId, hours) => {
+                try {
+                    const station = stations.value.find(s => s.id === stationId);
+                    const hourlyRate = station?.hourlyRate || 25;
+                    const res = await fetch(`${API_BASE}/api/gaming/activate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stationId, hours, paymentMethod: 'cash', hourlyRate })
+                    });
+                    if (res.ok) await sync();
+                    else { const err = await res.json().catch(() => ({})); alert('فشل التفعيل: ' + (err.error || res.status)); }
+                } catch (e) { console.error(e); }
+            };
+            
+            const stop = async (stationId) => {
+                if (!confirm('هل أنت متأكد من إنهاء هذه الجلسة؟')) return;
+                try {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/deactivate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    if (res.ok) await sync();
+                    else alert('فشل الإنهاء — ' + res.status);
+                } catch (e) { console.error(e); }
+            };
+            
+            const openPriceModal = (station) => {
+                priceModal.value.station = station;
+                priceModal.value.newRate = station.hourlyRate || 25;
+                priceModal.value.show = true;
+            };
+            
+            const updateHourlyRate = async () => {
+                if (!priceModal.value.station) return;
+                const stationId = priceModal.value.station.id;
+                const newRate = priceModal.value.newRate;
+                try {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/rate`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ hourlyRate: newRate })
+                    });
+                    if (res.ok) {
+                        priceModal.value.show = false;
+                        await sync();
+                    } else {
+                        const idx = stations.value.findIndex(s => s.id === stationId);
+                        if (idx !== -1) stations.value[idx].hourlyRate = newRate;
+                        priceModal.value.show = false;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    priceModal.value.show = false;
+                }
+            };
+            
+            const stationURL = (stationId) => {
+                const baseUrl = window.location.origin + window.location.pathname.replace(/admin\.html.*$/, '');
+                return `${baseUrl}${GAMING_URL}?id=${stationId}`;
+            };
+            
+            const renderQR = (containerId, url, size) => {
+                const el = document.getElementById(containerId);
+                if (!el) { console.warn('[QR] Container not found:', containerId); return; }
+                el.innerHTML = '';
+                new QRCode(el, {
+                    text: url,
+                    width: size,
+                    height: size,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            };
+            
+            const generateSingleQR = async () => {
+                if (!qr.value.selectedId) return;
+                const station = stations.value.find(s => s.id === qr.value.selectedId);
+                if (!station) return;
+                const url = stationURL(station.id);
+                qr.value.singleResult = { id: station.id, label: station.label, type: station.type, status: station.status, url };
+                qr.value.showAll = false;
+                await new Promise(resolve => setTimeout(resolve, 50));
+                renderQR('qr-single-canvas', url, qr.value.size);
+            };
+            
+            const generateAllQR = async () => {
+                qr.value.showAll = true;
+                qr.value.singleResult = null;
+                await new Promise(resolve => setTimeout(resolve, 50));
+                for (const station of stations.value) {
+                    const url = stationURL(station.id);
+                    renderQR(`qr-all-${station.id}`, url, 150);
+                }
+            };
+            
+            const downloadQR = (containerId, label) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                const qrCanvas = container.querySelector('canvas');
+                if (!qrCanvas) { alert('يرجى إنشاء رمز QR أولاً'); return; }
+                
+                const QR_SIZE = qrCanvas.width;
+                const PADDING = 24;
+                const HEADER_H = 32;
+                const LABEL_H = 36;
+                const TAG_H = 28;
+                const cardW = QR_SIZE + PADDING * 2;
+                const cardH = HEADER_H + QR_SIZE + LABEL_H + TAG_H + PADDING * 2;
+                const offscreen = document.createElement('canvas');
+                offscreen.width = cardW;
+                offscreen.height = cardH;
+                const ctx = offscreen.getContext('2d');
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, cardW, cardH);
+                ctx.strokeStyle = '#C9A84C';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(2, 2, cardW - 4, cardH - 4);
+                ctx.fillStyle = '#C9A84C';
+                ctx.textAlign = 'center';
+                ctx.font = `bold ${Math.round(QR_SIZE * 0.07)}px 'Cinzel', Georgia, serif`;
+                ctx.fillText('✦ CAFÉ LUX GAMING', cardW / 2, PADDING + 20);
+                ctx.drawImage(qrCanvas, PADDING, PADDING + HEADER_H, QR_SIZE, QR_SIZE);
+                ctx.fillStyle = '#000000';
+                ctx.font = `900 ${Math.round(QR_SIZE * 0.1)}px 'Cairo', Arial, sans-serif`;
+                ctx.fillText(label || '', cardW / 2, PADDING + HEADER_H + QR_SIZE + LABEL_H - 4);
+                ctx.fillStyle = '#C9A84C';
+                ctx.font = `bold ${Math.round(QR_SIZE * 0.07)}px 'Cinzel', Georgia, serif`;
+                ctx.fillText('Scan to Play  ·  امسح للعب', cardW / 2, PADDING + HEADER_H + QR_SIZE + LABEL_H + TAG_H - 2);
+                
+                const link = document.createElement('a');
+                const safeName = (label || 'station').replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '-');
+                link.download = `QR-LUX-${safeName}.png`;
+                link.href = offscreen.toDataURL('image/png');
+                link.click();
+            };
+            
+            const printSingleQR = () => {
+                const container = document.getElementById('qr-single-canvas');
+                if (!container) return;
+                const qrCanvas = container.querySelector('canvas');
+                if (!qrCanvas) return;
+                const station = qr.value.singleResult;
+                const QR_SIZE = qrCanvas.width;
+                const PADDING = 28;
+                const HEADER_H = 36;
+                const LABEL_H = 40;
+                const TAG_H = 32;
+                const cardW = QR_SIZE + PADDING * 2;
+                const cardH = HEADER_H + QR_SIZE + LABEL_H + TAG_H + PADDING * 2;
+                const off = document.createElement('canvas');
+                off.width = cardW;
+                off.height = cardH;
+                const ctx = off.getContext('2d');
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, cardW, cardH);
+                ctx.strokeStyle = '#C9A84C';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(2, 2, cardW - 4, cardH - 4);
+                ctx.fillStyle = '#C9A84C';
+                ctx.textAlign = 'center';
+                ctx.font = `bold ${Math.round(QR_SIZE * 0.07)}px 'Cinzel', Georgia, serif`;
+                ctx.fillText('✦ CAFÉ LUX GAMING', cardW / 2, PADDING + 22);
+                ctx.drawImage(qrCanvas, PADDING, PADDING + HEADER_H, QR_SIZE, QR_SIZE);
+                ctx.fillStyle = '#000000';
+                ctx.font = `900 ${Math.round(QR_SIZE * 0.1)}px 'Cairo', Arial, sans-serif`;
+                ctx.fillText(station.label || '', cardW / 2, PADDING + HEADER_H + QR_SIZE + LABEL_H - 4);
+                ctx.fillStyle = '#C9A84C';
+                ctx.font = `bold ${Math.round(QR_SIZE * 0.07)}px 'Cinzel', Georgia, serif`;
+                ctx.fillText('Scan to Play  ·  امسح للعب', cardW / 2, PADDING + HEADER_H + QR_SIZE + LABEL_H + TAG_H - 2);
+                
+                const cardImg = off.toDataURL('image/png');
+                const win = window.open('', '_blank', 'width=440,height=600');
+                const html = [
+                    '<!DOCTYPE html><html dir="ltr"><head>',
+                    '<meta charset="UTF-8">',
+                    '<title>QR — ' + station.label + '</title>',
+                    '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">',
+                    '<style>',
+                    'body{background:#f5f5f0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}',
+                    '.card{background:#fff;border:3px solid #C9A84C;border-radius:12px;padding:20px;display:inline-block;}',
+                    '.card img{display:block;margin:0 auto;}',
+                    '@media print{body{background:#fff;padding:0;}}',
+                    '</style></head><body>',
+                    '<div class="card"><img src="' + cardImg + '" width="' + cardW + '" height="' + cardH + '" alt="QR"></div>',
+                    '<script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);};<\/script>',
+                    '</body></html>'
+                ].join('\n');
+                win.document.write(html);
+                win.document.close();
+            };
+            
+            const copyURL = async (url) => {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    qr.value.copied = true;
+                    setTimeout(() => { qr.value.copied = false; }, 2500);
+                } catch {
+                    prompt('انسخ الرابط يدوياً:', url);
+                }
+            };
+            
+            // Lifecycle
+            onMounted(() => {
+                sync();
+                setInterval(sync, 3000);
+                // Force update for timers
+                setInterval(() => {
+                    stations.value = [...stations.value];
+                }, 1000);
+            });
+            
+            return {
+                apiOnline,
+                stations,
+                qr,
+                priceModal,
+                stationsAvailable,
+                stationsPending,
+                stationsActive,
+                stationClass,
+                getPaymentName,
+                getTimer,
+                getConsumedBalance,
+                getDebitRate,
+                formatTime,
+                sync,
+                approve,
+                manual,
+                stop,
+                openPriceModal,
+                updateHourlyRate,
+                generateSingleQR,
+                generateAllQR,
+                downloadQR,
+                printSingleQR,
+                copyURL
+            };
+        }
+    }).mount('#app');
+})();
+</script>
+</body>
+</html>

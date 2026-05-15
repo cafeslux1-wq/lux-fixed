@@ -1,0 +1,83 @@
+/* ════════ GAMING COMPONENT STYLES ════════ */
+.gaming-layout { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+.stations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+
+.station-card {
+  background: var(--bg2); border: 2px solid var(--border);
+  border-radius: var(--r-lg); padding: 18px; position: relative;
+  overflow: hidden; cursor: pointer; transition: .2s;
+}
+.station-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+/* ── Status variants ──────────────────────────────── */
+.station-card.available  { border-color: rgba(46,204,113,.3); }
+.station-card.active     { border-color: rgba(201,168,76,.4); }
+.station-card.awaiting   { border-color: rgba(231,176,0,.4);  }
+.station-card.maintenance{ border-color: rgba(231,76,60,.3);  }
+.station-card.alarming   {
+  border-color: var(--red) !important;
+  animation: station-alarm .5s ease infinite;
+}
+@keyframes station-alarm {
+  0%,100% { box-shadow: none; }
+  50%     { box-shadow: 0 0 30px rgba(231,76,60,.5); }
+}
+
+/* ── Status indicator dot ─────────────────────────── */
+.station-status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  display: inline-block; margin-right: 6px;
+}
+.station-status-dot.available   { background: var(--green); animation: lux-pulse 2s infinite; }
+.station-status-dot.active      { background: var(--gold);  animation: lux-pulse 1.5s infinite; }
+.station-status-dot.awaiting    { background: #F39C12; }
+.station-status-dot.maintenance { background: var(--red); }
+
+/* ── Card content ─────────────────────────────────── */
+.station-type-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--bg4); border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px 8px;
+  font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.station-label { font-family: var(--font-display); font-size: 16px; color: var(--gold); margin-bottom: 4px; }
+.station-player { font-size: 12px; color: var(--text); font-weight: 600; }
+.station-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.station-timer {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  color: var(--gold); margin: 10px 0; text-align: center;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+.station-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.station-btn {
+  flex: 1; min-width: 60px; padding: 8px 4px; text-align: center;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r-sm); font-size: 10px; font-weight: 700;
+  cursor: pointer; transition: .15s; color: var(--text);
+}
+.station-btn:hover { background: var(--bg4); border-color: var(--border2); }
+.station-btn.confirm { border-color: rgba(46,204,113,.3); color: var(--green); }
+.station-btn.end     { border-color: rgba(231,76,60,.3);  color: var(--red); }
+.station-btn.alarm-dismiss {
+  width: 100%; background: rgba(231,76,60,.1);
+  border-color: rgba(231,76,60,.4); color: var(--red); font-size: 11px;
+}
+
+/* ── Session booking modal ───────────────────────── */
+.booking-plan {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 12px;
+  cursor: pointer; transition: .15s; text-align: center;
+}
+.booking-plan:hover, .booking-plan.selected {
+  border-color: var(--gold-d); background: var(--gold-faint);
+}
+.booking-plan-hours { font-family: var(--font-mono); font-size: 18px; color: var(--gold); font-weight: 700; }
+.booking-plan-price { font-size: 11px; color: var(--muted); }
+.plans-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
