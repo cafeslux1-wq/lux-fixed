@@ -196,96 +196,193 @@ input,button,select,textarea{font-family:inherit}
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ── Responsive ────────────────────────────────────────────── */
-@media(max-width:768px){
-  :root{ --topbar-h:54px; }
+/* ══════════════════════════════════════════════════════════
+   MOBILE — Full redesign (≤900px)
+   Architecture:
+     - Topbar: ← Back | ✦ LUX | [🛒 N articles]
+     - Category tabs: horizontal scroll bar under topbar
+     - Content: full-width 2-col cards
+     - Bottom CTA: sticky COMMANDER button
+   ══════════════════════════════════════════════════════════ */
 
-  /* Sidebar hidden — bottom tab replaced by fab */
+/* ── Mobile category tabs strip ──────────────────────────── */
+.mobile-cats{
+  display:none;
+  position:fixed;top:var(--topbar-h);left:0;right:0;z-index:150;
+  background:var(--dark);border-bottom:1px solid rgba(201,168,76,.15);
+  overflow-x:auto;white-space:nowrap;padding:8px 10px;gap:6px;
+  scrollbar-width:none;
+}
+.mobile-cats::-webkit-scrollbar{display:none}
+.mobile-cat-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 14px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(201,168,76,.15);border-radius:20px;
+  font-size:11px;font-weight:600;color:rgba(240,232,213,.6);
+  cursor:pointer;transition:.15s;flex-shrink:0;
+}
+.mobile-cat-chip:hover{border-color:rgba(201,168,76,.4);color:var(--gold)}
+.mobile-cat-chip.active{
+  background:rgba(201,168,76,.15);border-color:var(--gold);
+  color:var(--gold);font-weight:700;
+}
+
+/* ── Sticky Commander CTA ─────────────────────────────────── */
+.mobile-cta{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:linear-gradient(to top, var(--dark) 70%, transparent);
+  padding:12px 16px 20px;
+}
+.mobile-cta-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;border-radius:14px;color:#000;
+  font-family:var(--font-display);font-size:16px;font-weight:900;
+  cursor:pointer;letter-spacing:.5px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 4px 20px rgba(201,168,76,.35);
+  transition:.2s;
+}
+.mobile-cta-btn:active{transform:scale(.98)}
+.mobile-cta-left{display:flex;align-items:center;gap:10px}
+.mobile-cta-icon{font-size:20px}
+.mobile-cta-text{font-size:15px}
+.mobile-cta-badge{
+  background:#000;color:var(--gold);
+  border-radius:20px;padding:4px 12px;
+  font-size:13px;font-weight:900;
+}
+
+@media(max-width:900px){
+
+  /* Variables */
+  :root{
+    --topbar-h: 56px;
+    --cats-h:   50px;
+    --cta-h:    80px;
+    --content-top: calc(var(--topbar-h) + var(--cats-h));
+  }
+
+  /* body overflow fix */
+  body{ overflow:hidden }
+
+  /* ── Topbar mobile ──────────────────────────────────────── */
+  .topbar{
+    height:var(--topbar-h);
+    padding:0 12px;gap:8px;
+  }
+  .topbar-logo{ font-size:16px; letter-spacing:2px; flex:1; text-align:center }
+  .topbar-title{ display:none }
+  .btn-back{
+    padding:6px 12px;font-size:10px;
+    background:rgba(201,168,76,.08);
+  }
+
+  /* Cart badge in topbar → bigger, more visible */
+  .cart-badge{
+    width:28px;height:28px;font-size:12px;font-weight:900;
+    box-shadow:0 2px 8px rgba(201,168,76,.4);
+  }
+
+  /* ── Category tabs strip ───────────────────────────────── */
+  .mobile-cats{ display:flex }
   .sidebar{ display:none }
 
-  /* Full-width menu */
-  .menu-main{ padding:10px 8px }
+  /* ── Layout ────────────────────────────────────────────── */
+  .app-layout{
+    flex-direction:column;
+    padding-top:var(--content-top);
+    height:100vh;
+    overflow:hidden;
+  }
 
-  /* 2 cols with comfortable spacing */
+  /* ── Menu main full width ──────────────────────────────── */
+  .menu-main{
+    flex:1;
+    overflow-y:auto;
+    padding:12px 10px var(--cta-h) 10px;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* ── Cart hidden (desktop panel) ──────────────────────── */
+  .cart-panel{ display:none !important }
+
+  /* ── Product cards — 2-col premium ───────────────────── */
   .items-grid{
-    grid-template-columns: repeat(2, 1fr);
-    gap:8px;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
   }
-
-  /* Taller image on mobile */
-  .item-img, .item-img-ph{ height:120px }
-
-  /* Bigger font for readability */
-  .item-name{ font-size:12px; line-height:1.35 }
-  .item-sub { font-size:10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
-  .item-price{ font-size:14px }
-  .item-body{ padding:8px 8px 10px }
-
-  /* Bigger + button for touch */
-  .btn-add{ width:32px; height:32px; font-size:20px; border-radius:10px }
-
-  /* Sig badge compact */
-  .sig-badge{ font-size:8px; padding:2px 8px }
-
-  /* Cart hidden by default — full screen overlay when toggled */
-  .cart-panel{ display:none }
-  .cart-panel.mobile-open{
-    display:flex; position:fixed; inset:0;
-    top:var(--topbar-h); z-index:300; width:100%;
-    background:var(--dark);
+  .item-card{
+    border-radius:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    transition:.15s;
   }
+  .item-card:active{ transform:scale(.97) }
+  .item-img,.item-img-ph{
+    height:130px;
+    border-radius:14px 14px 0 0;
+  }
+  .item-img{ object-position:center top }
+  .item-body{ padding:10px 10px 12px }
+  .item-name{
+    font-size:12px;font-weight:700;
+    line-height:1.35;margin-bottom:4px;
+    display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden;
+  }
+  .item-sub{
+    font-size:10px;line-height:1.4;margin-bottom:8px;
+    display:-webkit-box;-webkit-line-clamp:2;
+    -webkit-box-orient:vertical;overflow:hidden;
+  }
+  .item-price{ font-size:15px }
+  .btn-add{
+    width:34px;height:34px;font-size:20px;
+    border-radius:10px;
+    box-shadow:0 2px 6px rgba(201,168,76,.3);
+  }
+  .sig-badge{ font-size:8px;padding:2px 8px }
+  .cat-title{ font-size:18px }
 
-  /* Floating cart button */
-  .cart-fab{
-    display:flex; position:fixed; bottom:20px; right:16px;
-    width:56px; height:56px; border-radius:50%;
-    background:linear-gradient(135deg,var(--gold-d),var(--gold));
-    align-items:center; justify-content:center;
-    box-shadow:0 4px 20px rgba(201,168,76,.4);
-    z-index:200; cursor:pointer; transition:.2s;
-  }
-  .cart-fab:hover{ transform:scale(1.08) }
-  .cart-fab-icon{ font-size:22px; color:#000 }
-  .cart-fab-count{
-    position:absolute; top:-4px; right:-4px;
-    background:#E74C3C; color:#fff; font-size:10px; font-weight:900;
-    border-radius:50%; width:20px; height:20px;
-    display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-display);
-  }
+  /* ── COMMANDER sticky CTA ─────────────────────────────── */
+  .mobile-cta{ display:block }
 
-  /* Close cart X button */
-  .cart-close-btn{
-    display:flex; padding:14px 16px;
-    border-bottom:1px solid rgba(201,168,76,.15);
-    justify-content:space-between; align-items:center; flex-shrink:0;
-  }
-  .cart-close-label{ font-family:var(--font-display); color:var(--gold); font-size:13px; letter-spacing:2px }
-  .cart-close-x{
-    background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.2);
-    border-radius:8px; padding:5px 10px; color:var(--gold);
-    font-size:14px; cursor:pointer;
-  }
-
-  /* Topbar hide right side on very small */
-  .topbar-title{ display:none }
-
-  /* Modal full screen on mobile */
-  .modal-box{
-    border-radius:18px 18px 0 0;
-    position:fixed; bottom:0; left:0; right:0;
-    width:100%; max-width:100%;
-    max-height:92vh; margin:0;
-  }
+  /* ── Modal full-height bottom sheet ──────────────────── */
   .modal-overlay{
-    align-items:flex-end; padding:0;
+    align-items:flex-end;
+    padding:0;
   }
+  .modal-box{
+    border-radius:22px 22px 0 0;
+    width:100%;max-width:100%;
+    max-height:88vh;
+    padding:20px 18px 28px;
+    margin:0;
+  }
+  .modal-title{ font-size:16px;margin-bottom:14px }
+  .pay-methods-grid{ grid-template-columns:repeat(2,1fr) }
+
+  /* ── Success banner ───────────────────────────────────── */
+  .success-banner{
+    bottom:var(--cta-h);
+    width:90%;
+    font-size:12px;
+    padding:12px 16px;
+  }
+
+  /* ── Toast above CTA ──────────────────────────────────── */
+  #toast{ bottom:calc(var(--cta-h) + 12px) }
 }
 
+/* Extra small phones */
 @media(max-width:380px){
-  .items-grid{ grid-template-columns:repeat(2, 1fr); gap:6px }
-  .item-img, .item-img-ph{ height:100px }
+  .items-grid{ gap:7px }
+  .item-img,.item-img-ph{ height:110px }
+  .mobile-cat-chip{ font-size:10px;padding:5px 10px }
 }
+
 </style>
 </head>
 <body>
@@ -297,11 +394,14 @@ input,button,select,textarea{font-family:inherit}
   <button class="btn-back" onclick="window.location.href='../index.html'">← Accueil</button>
   <div class="topbar-logo">✦ LUX</div>
   <div class="topbar-title">Commander</div>
-  <div style="display:flex;align-items:center;gap:4px;cursor:pointer" onclick="toggleCart()">
-    <span style="color:rgba(240,232,213,.5);font-size:11px">Panier</span>
+  <div style="display:flex;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent" onclick="openOrderModal()">
+    <span style="color:rgba(240,232,213,.55);font-size:11px;letter-spacing:.5px" class="topbar-panier-lbl">Panier</span>
     <div class="cart-badge" id="cart-count">0</div>
   </div>
 </div>
+
+<!-- Mobile category chips strip -->
+<div class="mobile-cats" id="mobile-cats-strip"></div>
 
 <!-- ═══════════════════════════════════════════════════════════
      MAIN LAYOUT
@@ -1370,21 +1470,53 @@ function buildMenu() {
 
   nav.innerHTML  = navH;
   main.innerHTML = mainH;
+
+  // Build mobile category chips strip
+  var strip = document.getElementById('mobile-cats-strip');
+  if (strip) {
+        var chipsH = '';
+    MENU.forEach(function(cat, i) {
+      var isActive = i === 0 ? ' active' : '';
+      chipsH += '<button class="mobile-cat-chip' + isActive + '" data-cat="' + cat.id + '" onclick="scrollToCatMobile(this.getAttribute(\'data-cat\'),this)">' + cat.icon + ' ' + cat.title + '</button>';
+    });
+    strip.innerHTML = chipsH;
+  }
 }
 
 function scrollToCat(id, btn) {
-  // Update active tab button
   document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-
-  // Show only the selected category section — hide all others
-  document.querySelectorAll('.cat-section').forEach(function(s) {
-    s.style.display = 'none';
+  // Sync mobile chips
+  document.querySelectorAll('.mobile-cat-chip').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-cat') === id);
   });
+  // Show only selected section
+  document.querySelectorAll('.cat-section').forEach(function(s) { s.style.display = 'none'; });
   var el = document.getElementById('cat-' + id);
   if (el) {
     el.style.display = 'block';
-    // Scroll menu-main to top
+    var mc = document.getElementById('menu-content');
+    if (mc) mc.scrollTop = 0;
+  }
+}
+
+function scrollToCatMobile(id, btn) {
+  // Update desktop sidebar buttons
+  document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
+  var sidebar_btn = document.querySelector('.cat-btn[data-cat="' + id + '"]');
+  if (sidebar_btn) sidebar_btn.classList.add('active');
+  // Update chips
+  document.querySelectorAll('.mobile-cat-chip').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) {
+    btn.classList.add('active');
+    // Scroll chip into view
+    btn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }
+  // Show only selected section
+  document.querySelectorAll('.cat-section').forEach(function(s) { s.style.display = 'none'; });
+  var el = document.getElementById('cat-' + id);
+  if (el) {
+    el.style.display = 'block';
     var mc = document.getElementById('menu-content');
     if (mc) mc.scrollTop = 0;
   }
@@ -1577,10 +1709,15 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
-<!-- ─── Mobile cart FAB ─────────────────────────────────── -->
-<div class="cart-fab" id="cart-fab" onclick="toggleCart()" style="display:none">
-  <span class="cart-fab-icon">🛒</span>
-  <div class="cart-fab-count" id="cart-fab-count">0</div>
+<!-- Mobile COMMANDER sticky CTA -->
+<div class="mobile-cta" id="mobile-cta">
+  <button class="mobile-cta-btn" onclick="openOrderModal()">
+    <div class="mobile-cta-left">
+      <span class="mobile-cta-icon">🛒</span>
+      <span class="mobile-cta-text">Commander</span>
+    </div>
+    <div class="mobile-cta-badge" id="mobile-cta-total">0.00 DH</div>
+  </button>
 </div>
 
 </body>
