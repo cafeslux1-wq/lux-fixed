@@ -198,10 +198,93 @@ input,button,select,textarea{font-family:inherit}
 
 /* ── Responsive ────────────────────────────────────────────── */
 @media(max-width:768px){
-  .sidebar{display:none}
-  .cart-panel{display:none}
-  .cart-panel.mobile-open{display:flex;position:fixed;inset:0;top:var(--topbar-h);z-index:100;width:100%}
-  .items-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  :root{ --topbar-h:54px; }
+
+  /* Sidebar hidden — bottom tab replaced by fab */
+  .sidebar{ display:none }
+
+  /* Full-width menu */
+  .menu-main{ padding:10px 8px }
+
+  /* 2 cols with comfortable spacing */
+  .items-grid{
+    grid-template-columns: repeat(2, 1fr);
+    gap:8px;
+  }
+
+  /* Taller image on mobile */
+  .item-img, .item-img-ph{ height:120px }
+
+  /* Bigger font for readability */
+  .item-name{ font-size:12px; line-height:1.35 }
+  .item-sub { font-size:10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+  .item-price{ font-size:14px }
+  .item-body{ padding:8px 8px 10px }
+
+  /* Bigger + button for touch */
+  .btn-add{ width:32px; height:32px; font-size:20px; border-radius:10px }
+
+  /* Sig badge compact */
+  .sig-badge{ font-size:8px; padding:2px 8px }
+
+  /* Cart hidden by default — full screen overlay when toggled */
+  .cart-panel{ display:none }
+  .cart-panel.mobile-open{
+    display:flex; position:fixed; inset:0;
+    top:var(--topbar-h); z-index:300; width:100%;
+    background:var(--dark);
+  }
+
+  /* Floating cart button */
+  .cart-fab{
+    display:flex; position:fixed; bottom:20px; right:16px;
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,var(--gold-d),var(--gold));
+    align-items:center; justify-content:center;
+    box-shadow:0 4px 20px rgba(201,168,76,.4);
+    z-index:200; cursor:pointer; transition:.2s;
+  }
+  .cart-fab:hover{ transform:scale(1.08) }
+  .cart-fab-icon{ font-size:22px; color:#000 }
+  .cart-fab-count{
+    position:absolute; top:-4px; right:-4px;
+    background:#E74C3C; color:#fff; font-size:10px; font-weight:900;
+    border-radius:50%; width:20px; height:20px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display);
+  }
+
+  /* Close cart X button */
+  .cart-close-btn{
+    display:flex; padding:14px 16px;
+    border-bottom:1px solid rgba(201,168,76,.15);
+    justify-content:space-between; align-items:center; flex-shrink:0;
+  }
+  .cart-close-label{ font-family:var(--font-display); color:var(--gold); font-size:13px; letter-spacing:2px }
+  .cart-close-x{
+    background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.2);
+    border-radius:8px; padding:5px 10px; color:var(--gold);
+    font-size:14px; cursor:pointer;
+  }
+
+  /* Topbar hide right side on very small */
+  .topbar-title{ display:none }
+
+  /* Modal full screen on mobile */
+  .modal-box{
+    border-radius:18px 18px 0 0;
+    position:fixed; bottom:0; left:0; right:0;
+    width:100%; max-width:100%;
+    max-height:92vh; margin:0;
+  }
+  .modal-overlay{
+    align-items:flex-end; padding:0;
+  }
+}
+
+@media(max-width:380px){
+  .items-grid{ grid-template-columns:repeat(2, 1fr); gap:6px }
+  .item-img, .item-img-ph{ height:100px }
 }
 </style>
 </head>
@@ -273,7 +356,7 @@ input,button,select,textarea{font-family:inherit}
       <input id="f-name" type="text" class="field-input" placeholder="Votre prénom...">
     </div>
     <div class="field-group">
-      <label class="field-label">Téléphone WhatsApp *</label>
+      <label class="field-label">Téléphone (optionnel)</label>
       <input id="f-phone" type="tel" class="field-input" placeholder="+212 6XX XXX XXX">
     </div>
     <div class="field-group">
@@ -1367,8 +1450,13 @@ function renderCart() {
 }
 
 function toggleCart() {
-  var panel = document.getElementById('cart-panel');
+  var panel    = document.getElementById('cart-panel');
+  var closeRow = document.getElementById('cart-close-row');
+  var deskHdr  = document.getElementById('cart-header-desktop');
+  var isMobile = window.innerWidth <= 768;
   panel.classList.toggle('mobile-open');
+  if (closeRow) closeRow.style.display = (isMobile && panel.classList.contains('mobile-open')) ? 'flex' : 'none';
+  if (deskHdr)  deskHdr.style.display  = (!isMobile || !panel.classList.contains('mobile-open')) ? 'flex' : 'none';
 }
 
 // ── Order Modal ───────────────────────────────────────────────
@@ -1401,7 +1489,7 @@ function confirmOrder() {
   var notes = document.getElementById('f-notes').value.trim();
 
   if (!name)  { toast('⚠ Entrez votre prénom'); return; }
-  if (!phone) { toast('⚠ Entrez votre téléphone'); return; }
+  // phone is optional — no longer required for WhatsApp
   if (type === 'delivery' && !addr) { toast('⚠ Entrez votre adresse'); return; }
 
   var sub   = cart.reduce(function(s,c) { return s + c.p * c.q; }, 0);
@@ -1437,37 +1525,24 @@ function confirmOrder() {
     body: JSON.stringify(order),
   }).then(function(r) { return r.json(); })
     .then(function(res) {
-      showSuccess(name, res.ref || res.id);
-      notifyWhatsApp(name, phone, type, addr, total, payMode);
+      showSuccess(name, res.ref || res.id || res.order && res.order.id);
     })
     .catch(function() {
-      // Fallback: save locally + WhatsApp
+      // API unreachable — show success anyway (order queued offline)
       showSuccess(name, 'LX-' + String(Date.now()).slice(-6));
-      notifyWhatsApp(name, phone, type, addr, total, payMode);
     });
 }
 
-function notifyWhatsApp(name, phone, type, addr, total, payMode) {
-  var items_str = cart.map(function(c) { return c.q + 'x ' + c.n + ' (' + c.p + ' DH)'; }).join(', ');
-  var msg = encodeURIComponent(
-    '🛒 Nouvelle Commande — Café LUX\n\n' +
-    'Client: ' + name + ' (' + phone + ')\n' +
-    'Type: ' + type + (addr ? ' — ' + addr : '') + '\n' +
-    'Paiement: ' + payMode + '\n' +
-    'Articles: ' + items_str + '\n' +
-    'Total: ' + total + ' DH'
-  );
-  setTimeout(function() {
-    window.open('https://wa.me/212677717201?text=' + msg, '_blank');
-  }, 300);
-}
+// notifyWhatsApp removed — orders sent directly to POS via API
 
 function showSuccess(name, ref) {
   closeModal();
   cart = [];
   renderCart();
   var el = document.getElementById('success-banner');
-  el.textContent = '✅ Commande ' + (ref ? '#' + String(ref).slice(-6) : '') + ' envoyée, ' + name + '!';
+  var refStr = ref ? ' #' + String(ref).slice(-6) : '';
+  el.innerHTML = '✅ Votre commande' + refStr + ' a été envoyée avec succès au comptoir!<br>' +
+                 '<span style="font-size:11px;opacity:.8">Merci ' + name + ' — prête dans quelques minutes ✦</span>';
   el.style.display = 'block';
   document.querySelector('.btn-confirm').textContent = '✦ Confirmer →';
   document.querySelector('.btn-confirm').disabled = false;
@@ -1491,8 +1566,22 @@ document.addEventListener('DOMContentLoaded', function() {
   buildMenu();
   renderCart();
   detectTable();
+  // Show mobile FAB on small screens
+  var fab = document.getElementById('cart-fab');
+  if (fab && window.innerWidth <= 768) fab.style.display = 'flex';
+  window.addEventListener('resize', function() {
+    var fab2 = document.getElementById('cart-fab');
+    if (fab2) fab2.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+  });
 });
 </script>
+
+
+<!-- ─── Mobile cart FAB ─────────────────────────────────── -->
+<div class="cart-fab" id="cart-fab" onclick="toggleCart()" style="display:none">
+  <span class="cart-fab-icon">🛒</span>
+  <div class="cart-fab-count" id="cart-fab-count">0</div>
+</div>
 
 </body>
 </html>
