@@ -71,7 +71,8 @@ input,button,select,textarea{font-family:inherit}
   color:rgba(240,232,213,.6);font-size:12px;font-weight:500;cursor:pointer;
   border-radius:8px;transition:.15s;display:flex;align-items:center;gap:8px;
 }
-.cat-btn:hover{background:rgba(201,168,76,.08);color:var(--gold)}
+.cat-btn:hover,.cat-btn:focus{background:rgba(201,168,76,.08);color:var(--gold)}
+.cat-btn.active{background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.06));color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:9px;}
 .cat-btn.active{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));color:var(--gold);font-weight:700;border-left:2px solid var(--gold)}
 
 /* ── Menu Grid ─────────────────────────────────────────────── */
@@ -1250,7 +1251,7 @@ function buildMenu() {
             ' onclick="scrollToCat(\'' + cat.id + '\',this)">' +
             cat.icon + ' ' + cat.title + '</button>';
 
-    mainH += '<div class="cat-section" id="cat-' + cat.id + '">';
+    mainH += '<div class="cat-section" id="cat-' + cat.id + '" style="display:' + (i===0?'block':'none') + '">';
     mainH += '<div class="cat-title">' + cat.icon + ' ' + cat.title + '</div>';
     if (cat.sub) mainH += '<div class="cat-sub">' + cat.sub + '</div>';
     mainH += '<div class="items-grid">';
@@ -1259,8 +1260,15 @@ function buildMenu() {
       var sigCls = item.sig ? ' sig' : '';
       mainH += '<div class="item-card' + sigCls + '" onclick="addToCart(\'' + esc(item.n) + '\',' + item.p + ')">';
       if (item.sig) mainH += '<div class="sig-badge">⭐ SIGNATURE</div>';
-      if (item.img && item.img.indexOf('http') === 0) {
-      mainH += '<img class="item-img" src="' + item.img + '" alt="' + item.n + '" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">';
+      if (item.img) {
+      var imgEl = document.createElement('img');
+      imgEl.className = 'item-img';
+      imgEl.src = item.img.startsWith('http') ? item.img : item.img;
+      imgEl.alt = item.n;
+      imgEl.loading = 'lazy';
+      imgEl.setAttribute('data-fallback', cat.icon);
+      mainH += '<img class="item-img" src="' + item.img + '" alt="' + item.n + '" loading="lazy" ' +
+               'onerror="this.onerror=null;this.style.display=\'none\';var ph=this.nextElementSibling;if(ph)ph.style.display=\'flex\'">';
       mainH += '<div class="item-img-ph" style="display:none">' + cat.icon + '</div>';
     } else {
       mainH += '<div class="item-img-ph">' + cat.icon + '</div>';
@@ -1282,10 +1290,21 @@ function buildMenu() {
 }
 
 function scrollToCat(id, btn) {
+  // Update active tab button
   document.querySelectorAll('.cat-btn').forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
+
+  // Show only the selected category section — hide all others
+  document.querySelectorAll('.cat-section').forEach(function(s) {
+    s.style.display = 'none';
+  });
   var el = document.getElementById('cat-' + id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (el) {
+    el.style.display = 'block';
+    // Scroll menu-main to top
+    var mc = document.getElementById('menu-content');
+    if (mc) mc.scrollTop = 0;
+  }
 }
 
 // ── Cart Logic ────────────────────────────────────────────────
