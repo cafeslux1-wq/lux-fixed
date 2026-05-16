@@ -128,7 +128,31 @@
         @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         
-        [v-cloak] { display: none; }
+        /* ── Loading screen — shown until Vue mounts ── */
+        #lux-loader {
+            position:fixed; inset:0; background:#040914;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            z-index:9999; transition:opacity .4s ease;
+        }
+        #lux-loader.hidden { opacity:0; pointer-events:none; }
+        .loader-logo {
+            font-family:'Cinzel',Georgia,serif; font-size:28px;
+            color:#C9A84C; letter-spacing:6px; margin-bottom:20px;
+        }
+        .loader-spinner {
+            width:36px; height:36px; border:3px solid rgba(201,168,76,.2);
+            border-top-color:#C9A84C; border-radius:50%;
+            animation:spin .7s linear infinite;
+        }
+        .loader-msg {
+            margin-top:14px; font-size:11px; color:#555;
+            letter-spacing:2px; text-transform:uppercase;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* ── v-cloak: fade in instead of hard hide ── */
+        [v-cloak] { opacity: 0; }
         
         @media print {
             .station-section, .qr-controls, .qr-print-btn, .qr-dl-btn, header, .qr-gen-btn, .qr-all-btn { display:none !important; }
@@ -138,6 +162,14 @@
     </style>
 </head>
 <body class="p-6 md:p-12">
+
+<!-- Loading screen — disparaît quand Vue monte -->
+<div id="lux-loader">
+    <div class="loader-logo">✦ LUX</div>
+    <div class="loader-spinner"></div>
+    <div class="loader-msg">Chargement Admin...</div>
+</div>
+
 <div id="app" v-cloak class="max-w-7xl mx-auto">
 
     <!-- HEADER -->
@@ -283,6 +315,22 @@
     
     const API_BASE = 'https://cafeslux-api-production.up.railway.app';
     const GAMING_URL = 'public/gaming.html';
+
+    // ── Auth header helper ────────────────────────────────────
+    // Lit le token stocké par api-client.js (clé: lux_token)
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('lux_token') || '';
+        return {
+            'Content-Type':  'application/json',
+            'Authorization': token ? 'Bearer ' + token : '',
+        };
+    };
+
+    // ── Hide loader util ──────────────────────────────────────
+    const hideLoader = () => {
+        const el = document.getElementById('lux-loader');
+        if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 450); }
+    };
     
     createApp({
         setup() {
@@ -356,7 +404,9 @@
             
             const sync = async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/api/gaming/stations`);
+                    const res = await fetch(`${API_BASE}/api/gaming/stations`, {
+                        headers: getAuthHeaders()
+                    });
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     stations.value = data;
@@ -364,6 +414,8 @@
                 } catch (e) {
                     console.error('[Admin] sync error:', e.message);
                     apiOnline.value = false;
+                } finally {
+                    hideLoader(); // ← toujours masquer le loader, succès ou échec
                 }
             };
             
@@ -371,7 +423,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/confirm`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ action: 'confirm' })
                     });
                     if (res.ok) await sync();
@@ -385,7 +437,7 @@
                     const hourlyRate = station?.hourlyRate || 25;
                     const res = await fetch(`${API_BASE}/api/gaming/activate`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ stationId, hours, paymentMethod: 'cash', hourlyRate })
                     });
                     if (res.ok) await sync();
@@ -398,7 +450,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/deactivate`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: getAuthHeaders()
                     });
                     if (res.ok) await sync();
                     else alert('فشل الإنهاء — ' + res.status);
@@ -418,7 +470,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/rate`, {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ hourlyRate: newRate })
                     });
                     if (res.ok) {
@@ -591,6 +643,8 @@
                 setInterval(() => {
                     stations.value = [...stations.value];
                 }, 1000);
+                // Safety: hide loader after 4s max even if API is slow
+                setTimeout(hideLoader, 4000);
             });
             
             return {
