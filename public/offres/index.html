@@ -1,386 +1,1008 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0D0D0D">
-<title>CAFÉ LUX — MAESTRO</title>
+<title>Café LUX · Offres &amp; Fidélité</title>
 
-<script>
-/* ══════════════════════════════════════════════════════════
-   NUCLEAR NAVIGATION ENGINE — version FINAL
-══════════════════════════════════════════════════════════ */
-var _currentPage = 'home';
-
-window.luxNavigate = function(pageId) {
-  _currentPage = pageId;
-  document.querySelectorAll('.page').forEach(function(p) {
-    p.style.display  = 'none';
-    p.style.flexDirection = '';
-    p.classList.remove('active');
-  });
-  var target = document.getElementById('page-' + pageId);
-  if (target) {
-    target.style.display       = 'flex';
-    target.style.flexDirection = 'column';
-    target.classList.add('active');
-  }
-  var topbar = document.querySelector('.topbar');
-  if (topbar) topbar.style.display = (pageId === 'home') ? 'none' : 'flex';
-  var mc = document.querySelector('.main-content');
-  if (mc) mc.style.height = (pageId === 'home') ? '100vh' : 'calc(100vh - 56px)';
-  window.scrollTo(0, 0);
-  if (window._luxAfterNav) window._luxAfterNav(pageId);
-};
-window.goPage = window.luxNavigate;
-</script>
-
+<!-- API client — chemin depuis public/offres/ vers src/js/api/ -->
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+<script src="../../src/js/api/api-client.js" defer></script>
 
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;600;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 
 <style>
-:root { --gold: #C9A84C; --gold-br: #E8C97A; --bg: #080808; --bg2: #131313; --bg3: #1A1A1A; --text: #F0E8D5; --muted: rgba(240,232,213,.45); --border: rgba(201,168,76,.15); }
-body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+/* ══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Café LUX System
+══════════════════════════════════════════════════════════════ */
+:root{
+  --gold:#C9A84C;  --gold-l:#E8C97A;  --gold-d:#8B6E2F;  --gold-xl:#F5E2A0;
+  --gold-alpha-10:rgba(201,168,76,.10);
+  --gold-alpha-18:rgba(201,168,76,.18);
+  --gold-alpha-30:rgba(201,168,76,.30);
+  --bg:#0D0D0D;  --bg2:#131313;  --bg3:#1A1A1A;  --bg4:#222;  --bg5:#2A2A2A;
+  --border:rgba(201,168,76,.13);  --border2:rgba(201,168,76,.28);
+  --text:#F0EDE8;  --text2:#C8C4BC;  --muted:#888;  --muted2:rgba(240,237,232,.4);
+  --green:#3DBE7A;  --red:#E05252;  --blue:#5B8DEF;
+  --fd:'Playfair Display',serif;
+  --fb:'DM Sans',sans-serif;
+  --fi:'Cormorant Garamond',serif;
+  --shadow-lux:0 20px 50px rgba(0,0,0,.55),0 6px 22px rgba(201,168,76,.07);
+  --shadow-gold:0 0 40px rgba(201,168,76,.22),0 0 90px rgba(201,168,76,.07);
+  --r:14px;
+  --page-max:700px;
+}
 
-.topbar { height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; position: sticky; top: 0; z-index: 100; }
-.logo { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; letter-spacing: 3px; flex: 1; }
-.btn-back { padding: 6px 16px; background: transparent; border: 1px solid var(--gold); border-radius: 20px; color: var(--gold); font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase; }
+/* ── Reset & Base ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{
+  min-height:100dvh;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% -5%,rgba(201,168,76,.11),transparent),
+    radial-gradient(ellipse 60% 40% at 90% 90%,rgba(201,168,76,.05),transparent),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--fb);
+  overscroll-behavior:none;
+}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:rgba(201,168,76,.18);border-radius:3px;}
 
-body.on-home-page .topbar { display: none !important; }
-body.on-home-page .main-content { height: 100vh; }
-.main-content { height: calc(100vh - 56px); overflow-y: auto; }
-.page { display: none; min-height: 100%; }
-.page.active { display: flex !important; flex-direction: column; animation: lux-fade-in .3s ease; }
-@keyframes lux-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  height:54px;
+  background:rgba(10,10,10,.88);
+  backdrop-filter:blur(22px) saturate(1.5);
+  -webkit-backdrop-filter:blur(22px) saturate(1.5);
+  border-bottom:1px solid var(--border);
+  box-shadow:0 4px 28px rgba(0,0,0,.45);
+  display:flex;align-items:center;padding:0 18px;gap:12px;
+}
+.tb-back{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--gold-alpha-10);border:1px solid var(--border2);
+  color:var(--gold);font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:.18s;flex-shrink:0;text-decoration:none;
+}
+.tb-back:hover{background:var(--gold-alpha-18);}
+.tb-logo{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:15px;font-weight:700;color:#000;
+  box-shadow:0 3px 12px rgba(201,168,76,.3);
+}
+.tb-info{flex:1;min-width:0;}
+.tb-title{
+  font-family:var(--fd);font-size:14px;color:var(--gold);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tb-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.tb-clock{
+  font-size:11px;color:var(--muted);
+  background:var(--bg3);border:1px solid var(--border);
+  padding:4px 10px;border-radius:12px;flex-shrink:0;
+}
 
-#page-home { flex-direction: column; align-items: center; background: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(201,168,76,.07) 0%, transparent 60%), var(--bg); padding: 60px 20px; }
-.gw-logo { font-family: 'Cinzel', serif; font-size: 80px; color: var(--gold); letter-spacing: 12px; text-shadow: 0 0 50px rgba(201,168,76,.3); margin-bottom: 10px; line-height: 1; }
-.gw-tagline { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--muted); margin-bottom: 40px; letter-spacing: 2px; }
-.section-label { width: 100%; max-width: 800px; color: var(--gold); font-size: 10px; letter-spacing: 4px; margin: 30px 0 15px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; opacity: 0.6; }
-.gw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; width: 100%; max-width: 800px; }
-.gw-tile { background: linear-gradient(145deg, rgba(22,22,22,.9), rgba(10,10,10,.95)); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; cursor: pointer; display: flex; align-items: center; transition: 0.3s; position: relative; overflow: hidden; }
-.gw-tile:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(201,168,76,0.15); }
-.gw-tile .ti { font-size: 32px; margin-right: 20px; width: 45px; text-align: center; filter: drop-shadow(0 0 10px rgba(201,168,76,0.3)); }
-.gw-tile .tn { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; margin-bottom: 2px; }
-.gw-tile .tn-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+/* ══════════════════════════════════════════════════════════════
+   PAGE WRAPPER
+══════════════════════════════════════════════════════════════ */
+.page{max-width:var(--page-max);margin:0 auto;padding:0 0 100px;}
 
-.badge-live { position: absolute; top: 15px; right: 15px; color: #ef5350; font-size: 9px; font-weight: 800; border: 1px solid #ef5350; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; animation: lux-pulse 2s infinite; }
-@keyframes lux-pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+/* ══════════════════════════════════════════════════════════════
+   HERO BANNER
+══════════════════════════════════════════════════════════════ */
+.hero{
+  position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#1A0800 0%,#0D0500 45%,#1A0A00 75%,#2A1200 100%);
+  padding:32px 22px 28px;
+  border-bottom:1px solid rgba(201,168,76,.2);
+}
+.hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,168,76,.14),transparent 65%);
+  pointer-events:none;
+}
+.hero::after{
+  content:'';position:absolute;bottom:-80px;left:-40px;
+  width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,168,76,.07),transparent 65%);
+  pointer-events:none;
+}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--gold-alpha-10);border:1px solid rgba(201,168,76,.22);
+  color:var(--gold);font-size:9px;font-weight:600;
+  letter-spacing:2.5px;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;margin-bottom:14px;
+}
+.hero h1{
+  font-family:var(--fd);
+  font-size:clamp(26px,6vw,34px);
+  font-weight:700;line-height:1.15;
+  color:var(--text);margin-bottom:8px;
+}
+.hero h1 em{font-style:italic;color:var(--gold);}
+.hero p{font-size:12px;color:var(--muted2);line-height:1.7;max-width:380px;}
 
-.gw-tile.gaming { border-color: rgba(0,229,255,0.3); }
-.gw-tile.gaming .tn { color: #00E5FF; }
-.gw-tile.saas { border-color: rgba(201,168,76,0.4); background: linear-gradient(145deg, rgba(201,168,76,0.05), rgba(10,10,10,0.95)); grid-column: 1 / -1; }
+/* ══════════════════════════════════════════════════════════════
+   TAB SYSTEM
+══════════════════════════════════════════════════════════════ */
+.tab-nav{
+  display:flex;position:sticky;top:54px;z-index:100;
+  background:rgba(10,10,10,.92);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  padding:0 18px;gap:4px;overflow-x:auto;
+}
+.tab-nav::-webkit-scrollbar{height:0;}
+.tab-btn{
+  flex-shrink:0;
+  padding:14px 20px 12px;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--muted);font-family:var(--fb);font-size:12px;font-weight:500;
+  cursor:pointer;letter-spacing:.3px;white-space:nowrap;
+  transition:color .22s, border-color .22s;
+  display:flex;align-items:center;gap:7px;
+  position:relative;
+}
+.tab-btn .t-icon{font-size:16px;transition:transform .22s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600;}
+.tab-btn.active .t-icon{transform:scale(1.15);}
 
-/* إخفاء نافذة الـ PIN المكررة (السوداء القديمة) لضمان عدم تداخلها */
-#lux-pin-modal, #lux-ext-modal { display: none !important; opacity: 0 !important; pointer-events: none !important; z-index: -9999 !important; }
+/* Tab panels */
+.tab-panel{
+  display:none;animation:panelIn .32s cubic-bezier(.4,0,.2,1);
+}
+.tab-panel.active{display:block;}
+@keyframes panelIn{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
 
-/* ── تصميم النافذة الزرقاء الفخمة المحسنة ── */
-.login-box { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
-.login-content { background: #0b1120; border: 1px solid #1e293b; border-radius: 16px; padding: 40px; text-align: center; width: 320px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); }
-.login-logo { font-family: 'Cinzel', serif; color: var(--gold); font-size: 24px; margin-bottom: 5px; }
-.login-sub { color: #94a3b8; font-size: 12px; margin-bottom: 20px; }
-.login-pin-label { color: var(--gold); font-size: 10px; letter-spacing: 2px; margin-bottom: 15px; }
-.pin-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-.pin-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--gold); background: transparent; transition: 0.3s; }
-.pin-dot.filled { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
-.pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-.pin-btn { background: #1e293b; border: none; color: white; font-size: 20px; padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; font-family: 'DM Sans', sans-serif; font-weight: bold; }
-.pin-btn:hover { background: #334155; transform: scale(1.05); }
-.login-btn { background: var(--gold); color: #000; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-family: 'DM Sans', sans-serif;}
-.login-cancel { background: transparent; color: #94a3b8; border: none; font-size: 12px; cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif;}
-.login-err { color: #ef4444; font-size: 11px; margin-top: 10px; display: none; }
+/* ══════════════════════════════════════════════════════════════
+   SECTION UTILITIES
+══════════════════════════════════════════════════════════════ */
+.sec{padding:24px 18px;}
+.sec + .sec{padding-top:0;}
+.sec-head{
+  display:flex;align-items:center;gap:10px;margin-bottom:20px;
+}
+.sec-head-txt{
+  font-size:9px;color:var(--gold);letter-spacing:3px;
+  text-transform:uppercase;white-space:nowrap;font-weight:600;
+}
+.sec-head-line{flex:1;height:1px;background:var(--border);}
+
+/* ══════════════════════════════════════════════════════════════
+   TAB 1: CARTE CADEAU
+══════════════════════════════════════════════════════════════ */
+
+/* ── Concept block ── */
+.gc-concept{
+  background:linear-gradient(135deg,#1A0800,#0D0500 50%,#2A1200);
+  border:1px solid rgba(201,168,76,.22);
+  border-radius:var(--r);padding:22px;margin-bottom:22px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-lux);
+}
+.gc-concept::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,168,76,.15),transparent 65%);
+}
+.gc-concept-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:16px;position:relative;z-index:1;
+}
+.gc-concept-logo{
+  font-family:var(--fd);font-size:22px;font-weight:900;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:2px;
+}
+.gc-concept-badge{
+  background:var(--gold-alpha-10);border:1px solid rgba(201,168,76,.22);
+  padding:4px 10px;border-radius:10px;
+  font-size:9px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;
+}
+.gc-concept-title{
+  font-family:var(--fd);font-size:17px;color:var(--text);
+  margin-bottom:5px;position:relative;z-index:1;
+}
+.gc-concept-desc{
+  font-size:11px;color:var(--muted2);line-height:1.7;
+  position:relative;z-index:1;
+}
+.gc-concept-chips{
+  display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;
+  position:relative;z-index:1;
+}
+.gc-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 11px;border-radius:20px;font-size:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:var(--text2);
+}
+
+/* ── Balance checker ── */
+.balance-wrap{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-bottom:22px;
+  box-shadow:var(--shadow-lux);
+}
+.balance-label{
+  font-size:9px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:2px;margin-bottom:12px;display:block;
+}
+.balance-row{display:flex;gap:9px;align-items:stretch;}
+.balance-input{
+  flex:1;padding:12px 14px;
+  background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:13px;
+  font-family:var(--fb);outline:none;transition:.2s;
+  letter-spacing:2px;
+}
+.balance-input::placeholder{letter-spacing:.5px;color:var(--muted);}
+.balance-input:focus{border-color:var(--border2);background:var(--bg4);}
+.balance-btn{
+  padding:12px 18px;background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;border-radius:10px;color:#000;font-weight:700;font-size:13px;
+  cursor:pointer;white-space:nowrap;transition:.2s;
+}
+.balance-btn:hover{background:linear-gradient(135deg,var(--gold),var(--gold-l));transform:translateY(-1px);}
+.balance-result{
+  margin-top:12px;padding:12px 14px;border-radius:10px;
+  display:none;animation:panelIn .25s ease;
+  font-size:13px;
+}
+.balance-result.ok{
+  background:rgba(61,190,122,.08);border:1px solid rgba(61,190,122,.2);
+  color:var(--green);
+}
+.balance-result.err{
+  background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);
+  color:var(--red);
+}
+.balance-result .bal-amount{
+  font-family:var(--fd);font-size:22px;color:var(--green);display:block;margin-top:4px;
+}
+
+/* ── Pack cards ── */
+.packs-grid{display:flex;flex-direction:column;gap:14px;}
+
+.pack-card{
+  border-radius:var(--r);overflow:hidden;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-lux);
+  cursor:pointer;transition:.22s;
+  position:relative;
+}
+.pack-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lux),0 0 0 1px var(--border2);}
+.pack-card:active{transform:translateY(0) scale(.99);}
+
+/* Visual top band */
+.pack-band{
+  height:90px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;position:relative;overflow:hidden;
+}
+.pack-band::before{
+  content:'';position:absolute;inset:0;
+  background:inherit;filter:blur(0);
+}
+.pack-band-logo{
+  font-family:var(--fd);font-size:20px;font-weight:900;
+  letter-spacing:3px;position:relative;z-index:1;
+}
+.pack-band-value{
+  font-family:var(--fd);font-size:34px;font-weight:900;
+  position:relative;z-index:1;line-height:1;
+  display:flex;flex-direction:column;align-items:flex-end;
+}
+.pack-band-value span{
+  font-size:11px;font-weight:400;font-family:var(--fi);
+  font-style:italic;opacity:.7;
+}
+/* Chip */
+.pack-chip{
+  width:28px;height:20px;border-radius:3px;position:relative;z-index:1;
+}
+.pack-chip::before{
+  content:'';position:absolute;inset:3px;border-radius:2px;
+  border:1px solid rgba(0,0,0,.25);
+}
+/* Shimmer */
+.pack-band::after{
+  content:'';position:absolute;top:-50%;left:-50%;
+  width:200%;height:200%;
+  background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%);
+  animation:shimmer 3.5s infinite;
+}
+@keyframes shimmer{
+  0%{transform:translateX(-30%);}
+  100%{transform:translateX(30%);}
+}
+
+/* Pack body */
+.pack-body{
+  background:var(--bg2);padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.pack-info{}
+.pack-name{font-family:var(--fd);font-size:15px;margin-bottom:3px;}
+.pack-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.pack-perks{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;
+}
+.pack-perk{
+  font-size:9px;padding:3px 8px;border-radius:8px;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--muted);
+}
+.pack-order-btn{
+  flex-shrink:0;padding:10px 16px;border-radius:10px;
+  font-weight:700;font-size:12px;border:none;cursor:pointer;
+  transition:.18s;letter-spacing:.3px;
+  white-space:nowrap;
+}
+.pack-order-btn:hover{transform:translateY(-1px);filter:brightness(1.1);}
+
+/* Bronze */
+.pack-bronze .pack-band{background:linear-gradient(135deg,#3D2810,#6B4422,#8B5E32);}
+.pack-bronze .pack-band-logo{color:#CD8B48;}
+.pack-bronze .pack-band-value{color:#E8A96A;}
+.pack-bronze .pack-chip{background:linear-gradient(135deg,#CD8B48,#A06830);}
+.pack-bronze .pack-order-btn{background:linear-gradient(135deg,#8B5E32,#CD8B48);color:#fff;}
+.pack-bronze .pack-name{color:#CD8B48;}
+
+/* Silver */
+.pack-silver .pack-band{background:linear-gradient(135deg,#1A1A2E,#2D2D4A,#3D3D5C);}
+.pack-silver .pack-band-logo{color:#C0C8D8;}
+.pack-silver .pack-band-value{color:#E0E8F0;}
+.pack-silver .pack-chip{background:linear-gradient(135deg,#8090A8,#5A6A7E);}
+.pack-silver .pack-order-btn{background:linear-gradient(135deg,#3D3D5C,#6A7A94);color:#E8F0F8;}
+.pack-silver .pack-name{color:#B0C0D0;}
+
+/* Gold */
+.pack-gold .pack-band{background:linear-gradient(135deg,#1A0800,#2D1200,#1A0800);}
+.pack-gold .pack-band-logo{
+  background:linear-gradient(135deg,var(--gold-l),var(--gold),var(--gold-d));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.pack-gold .pack-band-value{
+  background:linear-gradient(135deg,#FFF,var(--gold-l),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.pack-gold .pack-chip{background:linear-gradient(135deg,var(--gold-l),var(--gold),var(--gold-d));}
+.pack-gold .pack-order-btn{
+  background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));
+  color:#000;
+  box-shadow:0 4px 18px rgba(201,168,76,.3);
+}
+.pack-gold .pack-name{color:var(--gold);}
+
+/* ══════════════════════════════════════════════════════════════
+   TAB 2: OFFRES SPÉCIALES
+══════════════════════════════════════════════════════════════ */
+
+/* Status badges */
+.s-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:10px;font-size:9px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;
+}
+.s-active{background:rgba(61,190,122,.12);color:var(--green);border:1px solid rgba(61,190,122,.18);}
+.s-limited{background:rgba(224,82,82,.10);color:var(--red);border:1px solid rgba(224,82,82,.18);}
+.s-soon{background:var(--gold-alpha-10);color:var(--gold);border:1px solid var(--gold-alpha-18);}
+.s-permanent{background:rgba(91,141,239,.10);color:var(--blue);border:1px solid rgba(91,141,239,.18);}
+
+/* Promo card standard */
+.promo-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--shadow-lux);margin-bottom:14px;
+  transition:.22s;cursor:pointer;
+}
+.promo-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow-lux),0 0 0 1px rgba(201,168,76,.12);}
+.promo-card:active{transform:translateY(0);}
+
+.promo-top{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:18px 18px 14px;
+}
+.promo-icon-wrap{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.promo-header{flex:1;min-width:0;}
+.promo-title{font-family:var(--fd);font-size:15px;color:var(--text);margin-bottom:4px;}
+.promo-sub{font-size:11px;color:var(--muted);line-height:1.6;}
+
+.promo-footer{
+  padding:10px 18px 14px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  border-top:1px solid var(--border);
+}
+.promo-val{
+  font-family:var(--fd);font-size:20px;font-weight:700;
+}
+.promo-cta{
+  padding:8px 16px;border-radius:9px;font-size:11px;font-weight:600;
+  border:none;cursor:pointer;transition:.18s;letter-spacing:.3px;
+}
+.promo-cta:hover{transform:translateY(-1px);}
+.promo-cta-gold{background:var(--gold);color:#000;}
+.promo-cta-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--gold);}
+.promo-cta-ghost:hover{background:var(--gold-alpha-10);}
+.promo-expiry{font-size:10px;color:var(--muted);}
+
+/* Featured Hero Promo */
+.promo-hero{
+  background:linear-gradient(135deg,#0A0200,#1A0800,#2A1200 70%,#1A0A00);
+  border:1px solid rgba(201,168,76,.25);
+  border-radius:var(--r);padding:22px;margin-bottom:14px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-lux),var(--shadow-gold);
+}
+.promo-hero::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,168,76,.18),transparent 65%);
+}
+.promo-hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--gold-alpha-10);border:1px solid rgba(201,168,76,.22);
+  color:var(--gold);font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;margin-bottom:12px;
+}
+.promo-hero-icon{font-size:32px;margin-bottom:10px;display:block;}
+.promo-hero-title{
+  font-family:var(--fd);font-size:20px;font-weight:700;
+  color:var(--text);margin-bottom:6px;
+}
+.promo-hero-desc{font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:16px;}
+.promo-hero-val{
+  font-family:var(--fd);font-size:36px;font-weight:900;
+  background:linear-gradient(135deg,#FFF,var(--gold-l),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1;margin-bottom:16px;
+}
+.promo-hero-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;position:relative;z-index:1;
+}
+.promo-hero-cta{
+  padding:12px 24px;background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));
+  background-size:200%;background-position:100%;
+  border:none;border-radius:11px;font-family:var(--fd);
+  font-size:14px;font-weight:700;color:#000;
+  cursor:pointer;transition:.3s;letter-spacing:.3px;
+  box-shadow:0 6px 20px rgba(201,168,76,.28);
+}
+.promo-hero-cta:hover{background-position:0%;transform:translateY(-2px);}
+.promo-hero-expiry{font-size:10px;color:var(--muted2);}
+
+/* Loyalty points banner */
+.loyalty-banner{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 18px;margin-bottom:14px;
+  display:flex;align-items:center;gap:16px;
+  box-shadow:var(--shadow-lux);
+}
+.loyalty-icon-wrap{
+  width:52px;height:52px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(135deg,#1A0800,#2D1500);
+  border:1px solid rgba(201,168,76,.2);
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+}
+.loyalty-body{flex:1;min-width:0;}
+.loyalty-title{font-family:var(--fd);font-size:14px;color:var(--text);margin-bottom:3px;}
+.loyalty-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.loyalty-pts{
+  font-family:var(--fd);font-size:22px;font-weight:700;color:var(--gold);
+  white-space:nowrap;
+}
+.loyalty-pts span{font-size:10px;font-family:var(--fb);color:var(--muted);display:block;text-align:right;margin-top:1px;}
+
+/* Promo grid for smaller cards */
+.promo-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.promo-mini{
+  background:var(--bg2);border:1px solid var(--border);border-radius:13px;
+  padding:16px;transition:.2s;cursor:pointer;
+  box-shadow:var(--shadow-lux);
+}
+.promo-mini:hover{border-color:var(--border2);transform:translateY(-2px);}
+.promo-mini-icon{font-size:24px;margin-bottom:10px;display:block;}
+.promo-mini-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.promo-mini-val{
+  font-family:var(--fd);font-size:18px;font-weight:700;
+  margin-top:6px;
+}
+.promo-mini-desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5;}
+
+/* Colors for mini cards */
+.mini-gold .promo-mini-val{color:var(--gold);}
+.mini-green .promo-mini-val{color:var(--green);}
+.mini-blue .promo-mini-val{color:var(--blue);}
+.mini-red .promo-mini-val{color:var(--red);}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════════ */
+#lux-toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--bg2);border:1px solid var(--gold);
+  border-radius:12px;padding:11px 22px;
+  font-size:13px;color:var(--gold);
+  opacity:0;transition:.3s;z-index:999;pointer-events:none;
+  white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.5);
+}
+#lux-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══════════════════════════════════════════════════════════════
+   BOTTOM SAFE AREA
+══════════════════════════════════════════════════════════════ */
+.bottom-pad{height:max(24px,env(safe-area-inset-bottom));}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE (>600px = 2-column layout hints)
+══════════════════════════════════════════════════════════════ */
+@media(min-width:600px){
+  .packs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .pack-band{height:110px;}
+  .pack-band-value{font-size:28px;}
+  .hero{padding:38px 28px 32px;}
+  .sec{padding:28px 24px;}
+}
+@media(min-width:700px){
+  body{background-attachment:fixed;}
+  .pack-card{display:flex;flex-direction:column;align-items:stretch;}
+}
 </style>
 </head>
-<body class="on-home-page">
+<body>
 
+<!-- ═══ TOPBAR ═══ -->
 <div class="topbar">
-  <div id="main-clock" style="font-family:monospace;font-size:12px;color:var(--muted);position:absolute;right:80px"></div><div class="logo">✦ LUX</div>
-  <button class="btn-back" onclick="window.luxNavigate('home')">🏠 Accueil</button>
+  <a class="tb-back" href="/public/index.html" title="Retour" aria-label="Retour">←</a>
+  <div class="tb-logo">L</div>
+  <div class="tb-info">
+    <div class="tb-title">Offres &amp; Fidélité</div>
+    <div class="tb-sub">Café LUX · Taza</div>
+  </div>
+  <div class="tb-clock" id="lux-clock">--:--</div>
 </div>
 
-<main class="main-content">
-  <div class="page active" id="page-home">
-    <h1 class="gw-logo">LUX</h1>
-    <div class="gw-tagline">L'art de vivre, réinventé.</div>
+<div class="page">
 
-    <div class="section-label">✦ ESPACE CLIENT</div>
-    <div class="gw-grid">
-      <div class="gw-tile" onclick="window.location.href='menu/index.html'">
-        <div class="badge-live">Live</div>
-        <div class="ti">🛍️</div>
-        <div class="text-box"><div class="tn">Commander</div><div class="tn-sub">Menu & Livraison</div></div>
-      </div>
-      <div class="gw-tile" onclick="window.location.href='offres/index.html'">
-        <div class="badge-live" style="background:linear-gradient(135deg,#C9A84C,#8B6E2F)">Nouveau</div>
-        <div class="ti">🎁</div>
-        <div class="text-box"><div class="tn">Offres & Fidélité</div><div class="tn-sub">Promotions · Carte Cadeau</div></div>
-      </div>
-      <div class="gw-tile" onclick="window.location.href='reservations/index.html'">
-        <div class="ti">📅</div>
-        <div class="text-box"><div class="tn">Réservations</div><div class="tn-sub">Table · Événements spéciaux</div></div>
-      </div>
-      <div class="gw-tile" onclick="window._luxToast && window._luxToast('👤 Bientôt disponible','gold')">
-        <div class="ti">👤</div>
-        <div class="text-box"><div class="tn">Mon Espace LUX</div><div class="tn-sub">Profil · Commandes · Cadeau</div></div>
-      </div>
-      <div class="gw-tile gaming" onclick="window.location.href='./gaming/index.html?id=1'">
-        <div class="ti" style="filter: drop-shadow(0 0 10px #00E5FF);">🎮</div>
-        <div class="text-box"><div class="tn">Gaming Zone</div><div class="tn-sub">PS5 Pro · Réserver une station</div></div>
-      </div>
-      <div class="gw-tile saas" onclick="window.open('saas.html','_blank')" style="cursor:pointer">
-        <div class="ti">✦</div>
-        <div class="text-box"><div class="tn">LUX SaaS Solution</div><div class="tn-sub">Système de gestion pour cafés marocains — Essai gratuit ›</div></div>
-      </div>
-    </div>
-
-    <div class="section-label">🔐 ESPACE PROFESSIONNEL</div>
-    <div class="gw-grid" style="margin-bottom: 40px;">
-      
-      <div class="gw-tile" onclick="showBlueModal('pos.html')">
-        <div class="ti">🖥️</div>
-        <div class="text-box"><div class="tn">POS Caisse</div><div class="tn-sub">Encaissement · Tickets</div></div>
-      </div>
-
-      <div class="gw-tile" onclick="showBlueModal('dashboard.html')">
-        <div class="ti">📊</div>
-        <div class="text-box"><div class="tn">Tableau de Bord</div><div class="tn-sub">Analytics · Stock · Marketing</div></div>
-      </div>
-
-      <div class="gw-tile" onclick="showBlueModal('app.html?mode=kds')">
-        <div class="ti">📺</div>
-        <div class="text-box"><div class="tn">Cuisine KDS</div><div class="tn-sub">Commandes en préparation</div></div>
-      </div>
-      <div class="gw-tile" onclick="showBlueModal('portal.html')">
-        <div class="ti">👥</div>
-        <div class="text-box"><div class="tn">Staff Portal</div><div class="tn-sub">الموظفون · الرواتب · الطلبات</div></div>
-      </div>
-      <div class="gw-tile" onclick="showBlueModal('admin.html')">
-        <div class="ti">⚙️</div>
-        <div class="text-box"><div class="tn">LUX Admin</div><div class="tn-sub">Stations live · Maestro Hub</div></div>
-      </div>
-    </div>
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <div class="hero-tag">✦ Promotions · Carte Cadeau</div>
+    <h1>Offres &amp; <em>Fidélité</em></h1>
+    <p>Des cartes cadeaux luxueuses et des promotions exclusives pour sublimer votre expérience Café LUX.</p>
   </div>
 
-  <div class="page" id="page-pos">
-    <div class="pos-layout" style="display:flex;height:100%;overflow:hidden">
-      <div class="pos-menu" id="pos-menu-container" style="flex:1;overflow-y:auto;padding:14px;background:var(--bg)">
-        <div id="pos-cat-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)"></div>
-        <div id="pos-items-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
-          <div style="color:var(--muted);padding:20px;grid-column:1/-1">Chargement du menu...</div>
+  <!-- ═══ TAB NAV ═══ -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true"
+      id="tab-gc" aria-controls="panel-gc" onclick="switchTab('gc')">
+      <span class="t-icon">🎁</span> Carte Cadeau LUX
+    </button>
+    <button class="tab-btn" role="tab" aria-selected="false"
+      id="tab-offers" aria-controls="panel-offers" onclick="switchTab('offers')">
+      <span class="t-icon">✦</span> Offres Spéciales
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANEL 1 : CARTE CADEAU
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="panel-gc" role="tabpanel" aria-labelledby="tab-gc">
+
+    <div class="sec">
+
+      <!-- Concept -->
+      <div class="gc-concept">
+        <div class="gc-concept-top">
+          <div class="gc-concept-logo">✦ LUX</div>
+          <div class="gc-concept-badge">Carte Cadeau</div>
+        </div>
+        <div class="gc-concept-title">Offrez l'expérience Café LUX</div>
+        <p class="gc-concept-desc">
+          Nos cartes cadeaux permettent à vos proches de découvrir l'univers raffiné du Café LUX — cafés signatures, pâtisseries artisanales et gaming lounge. Disponibles en trois formules, valables 1 an.
+        </p>
+        <div class="gc-concept-chips">
+          <span class="gc-chip">📅 Valable 1 an</span>
+          <span class="gc-chip">🌐 Utilisable en ligne</span>
+          <span class="gc-chip">🎯 Sur place &amp; livraison</span>
+          <span class="gc-chip">♻️ Rechargeable</span>
         </div>
       </div>
-      <div id="pos-ticket" style="width:285px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <span style="font-family:var(--font-display,serif);font-size:13px;color:var(--gold);letter-spacing:2px">✦ TICKET</span>
-          <span id="ticket-table" style="display:none;background:rgba(201,168,76,.1);color:var(--gold);padding:2px 8px;border-radius:10px;font-size:10px"></span>
-          <button style="padding:4px 10px;font-size:11px;background:transparent;border:1px solid var(--border2,rgba(201,168,76,.3));border-radius:8px;color:var(--gold);cursor:pointer" onclick="window.luxClearCart&&luxClearCart()">Effacer</button>
+
+      <!-- Vérification de solde -->
+      <div class="sec-head">
+        <span class="sec-head-txt">Vérifier le solde</span>
+        <div class="sec-head-line"></div>
+      </div>
+
+      <div class="balance-wrap">
+        <label class="balance-label">Entrez votre code carte cadeau</label>
+        <div class="balance-row">
+          <input type="text" id="gc-code-input" class="balance-input"
+            placeholder="ex: LUXK-7FN2-RT4P-9QXA"
+            maxlength="19" autocomplete="off" spellcheck="false"
+            oninput="formatGcCode(this)"
+            onkeydown="if(event.key==='Enter')checkBalance()">
+          <button class="balance-btn" onclick="checkBalance()">Vérifier</button>
         </div>
-        <div id="ticket-items" style="flex:1;overflow-y:auto;padding:6px 0">
-          <div style="display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:12px">Sélectionnez des articles...</div>
-        </div>
-        <div style="padding:12px 14px;border-top:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-            <span style="font-size:11px;color:var(--muted)">TOTAL</span>
-            <span id="ticket-total" style="font-family:var(--font-mono,monospace);font-size:20px;color:var(--gold);font-weight:700">0.00 DH</span>
+        <div class="balance-result" id="balance-result"></div>
+      </div>
+
+      <!-- Packs -->
+      <div class="sec-head">
+        <span class="sec-head-txt">Nos formules</span>
+        <div class="sec-head-line"></div>
+      </div>
+
+      <div class="packs-grid">
+
+        <!-- Bronze -->
+        <div class="pack-card pack-bronze" onclick="orderPack('Bronze',50)">
+          <div class="pack-band">
+            <div>
+              <div class="pack-band-logo">✦ LUX</div>
+              <div class="pack-chip"></div>
+            </div>
+            <div class="pack-band-value">
+              50
+              <span>MAD</span>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <button style="padding:10px;background:var(--bg3);border:1px solid rgba(46,204,113,.3);border-radius:8px;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body)" onclick="window.luxPay&&luxPay('cash')">💵 Espèces</button>
-            <button style="padding:10px;background:var(--bg3);border:1px solid rgba(52,152,219,.3);border-radius:8px;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body)" onclick="window.luxPay&&luxPay('card')">💳 Carte</button>
+          <div class="pack-body">
+            <div class="pack-info">
+              <div class="pack-name">Pack Bronze</div>
+              <div class="pack-desc">Idéal pour un café ou une petite douceur</div>
+              <div class="pack-perks">
+                <span class="pack-perk">☕ Café signature</span>
+                <span class="pack-perk">🥐 Viennoiserie</span>
+              </div>
+            </div>
+            <button class="pack-order-btn">Commander →</button>
+          </div>
+        </div>
+
+        <!-- Silver -->
+        <div class="pack-card pack-silver" onclick="orderPack('Silver',100)">
+          <div class="pack-band">
+            <div>
+              <div class="pack-band-logo">✦ LUX</div>
+              <div class="pack-chip"></div>
+            </div>
+            <div class="pack-band-value">
+              100
+              <span>MAD</span>
+            </div>
+          </div>
+          <div class="pack-body">
+            <div class="pack-info">
+              <div class="pack-name">Pack Silver</div>
+              <div class="pack-desc">Un moment de détente complet au café</div>
+              <div class="pack-perks">
+                <span class="pack-perk">☕ Boissons variées</span>
+                <span class="pack-perk">🍰 Dessert</span>
+                <span class="pack-perk">🎮 1h gaming</span>
+              </div>
+            </div>
+            <button class="pack-order-btn">Commander →</button>
+          </div>
+        </div>
+
+        <!-- Gold -->
+        <div class="pack-card pack-gold" onclick="orderPack('Gold',200)">
+          <div class="pack-band">
+            <div>
+              <div class="pack-band-logo">✦ LUX</div>
+              <div class="pack-chip"></div>
+            </div>
+            <div class="pack-band-value">
+              200
+              <span>MAD</span>
+            </div>
+          </div>
+          <div class="pack-body">
+            <div class="pack-info">
+              <div class="pack-name">Pack Gold ✦</div>
+              <div class="pack-desc">L'expérience LUX dans toute sa splendeur</div>
+              <div class="pack-perks">
+                <span class="pack-perk">✦ Menu complet</span>
+                <span class="pack-perk">🎮 2h gaming</span>
+                <span class="pack-perk">🎁 Emballage luxe</span>
+              </div>
+            </div>
+            <button class="pack-order-btn">Commander →</button>
+          </div>
+        </div>
+
+      </div><!-- /packs-grid -->
+    </div><!-- /sec -->
+  </div><!-- /panel-gc -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANEL 2 : OFFRES SPÉCIALES
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-offers" role="tabpanel" aria-labelledby="tab-offers">
+
+    <div class="sec">
+
+      <!-- Loyalty Banner -->
+      <div class="loyalty-banner">
+        <div class="loyalty-icon-wrap">⭐</div>
+        <div class="loyalty-body">
+          <div class="loyalty-title">Programme Fidélité LUX</div>
+          <div class="loyalty-desc">10 DH dépensé = 1 point · 100 points = 10 DH offert</div>
+        </div>
+        <div class="loyalty-pts">VIP<span>Gold</span></div>
+      </div>
+
+      <!-- Featured Promo -->
+      <div class="promo-hero">
+        <div class="promo-hero-tag">🔥 Offre du Moment</div>
+        <span class="promo-hero-icon">☕</span>
+        <div class="promo-hero-title">Happy Hour — Cafés Signatures</div>
+        <p class="promo-hero-desc">
+          Du lundi au vendredi, de 08h à 10h, toutes nos boissons chaudes signature bénéficient d'une réduction spéciale. L'occasion parfaite de commencer votre journée avec élégance.
+        </p>
+        <div class="promo-hero-val">−15%</div>
+        <div class="promo-hero-footer">
+          <button class="promo-hero-cta" onclick="activatePromo('HH-0615')">Activer l'offre →</button>
+          <span class="promo-hero-expiry">📅 Valable jusqu'au 30 juin · Lun–Ven 08h–10h</span>
+        </div>
+      </div>
+
+      <!-- Section: Gaming & PS5 -->
+      <div class="sec-head">
+        <span class="sec-head-txt">Gaming Lounge</span>
+        <div class="sec-head-line"></div>
+      </div>
+
+      <div class="promo-card">
+        <div class="promo-top">
+          <div class="promo-icon-wrap" style="background:rgba(91,141,239,.1)">🎮</div>
+          <div class="promo-header">
+            <div class="promo-title">2ème heure Gaming offerte</div>
+            <div class="promo-sub">Réservez 1h sur PS5 ou Xbox, la 2ème heure est à moitié prix. Valable en semaine pour toute réservation avant 18h.</div>
+            <div style="margin-top:8px"><span class="s-badge s-active">● Actif</span></div>
+          </div>
+        </div>
+        <div class="promo-footer">
+          <div class="promo-val" style="color:var(--blue)">−50% <span style="font-size:13px;font-family:var(--fb);color:var(--muted)">2ème heure</span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="promo-expiry">Lun–Ven · avant 18h</span>
+            <button class="promo-cta promo-cta-ghost" onclick="bookGaming()">Réserver →</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="page" id="page-gaming" style="padding:20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-family:var(--font-display,serif);color:var(--gold);font-size:16px;letter-spacing:3px">🎮 GAMING LOUNGE</div>
-      <div id="gaming-stats" style="display:flex;gap:8px"></div>
-    </div>
-    <div id="stations-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
-      <div style="color:var(--muted);padding:20px">Chargement des stations...</div>
-    </div>
-  </div>
+      <div class="promo-card">
+        <div class="promo-top">
+          <div class="promo-icon-wrap" style="background:rgba(224,82,82,.08)">🏆</div>
+          <div class="promo-header">
+            <div class="promo-title">Pack Gaming + Café</div>
+            <div class="promo-sub">2h Gaming PS5 + 2 boissons chaudes de votre choix. Une formule exclusive pour les amateurs de jeux vidéo et de café de qualité.</div>
+            <div style="margin-top:8px"><span class="s-badge s-limited">🔥 Limité — 15 restants</span></div>
+          </div>
+        </div>
+        <div class="promo-footer">
+          <div class="promo-val" style="color:var(--gold)">129 MAD</div>
+          <button class="promo-cta promo-cta-gold" onclick="bookGamingPack()">Commander →</button>
+        </div>
+      </div>
 
-  <div class="page" id="page-dashboard" style="padding:20px">
-    <div style="font-family:var(--font-display,serif);color:var(--gold);font-size:16px;letter-spacing:3px;margin-bottom:16px">📊 TABLEAU DE BORD</div>
-    <div id="dashboard-stats-full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px">
-      <div style="color:var(--muted)">Chargement...</div>
-    </div>
-  </div>
+      <!-- Section: Packs signatures -->
+      <div class="sec-head" style="margin-top:6px">
+        <span class="sec-head-txt">Packs Signatures</span>
+        <div class="sec-head-line"></div>
+      </div>
 
-  <div class="page" id="page-staff"></div>
-</main>
+      <div class="promo-grid-2">
+        <div class="promo-mini mini-gold" onclick="orderSignaturePack('Duo')">
+          <span class="promo-mini-icon">🫖</span>
+          <div class="promo-mini-title">Formule Duo</div>
+          <div class="promo-mini-val">79 MAD</div>
+          <div class="promo-mini-desc">2 pâtisseries + 2 boissons au choix</div>
+        </div>
 
-<div id="lux-toast" role="alert" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg3,#1A1A1A);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:10px 18px;font-size:12px;color:var(--text,#F0E8D5);pointer-events:none;transform:translateY(60px);opacity:0;transition:.3s ease"></div>
+        <div class="promo-mini mini-green" onclick="orderSignaturePack('Famille')">
+          <span class="promo-mini-icon">🍰</span>
+          <div class="promo-mini-title">Formule Famille</div>
+          <div class="promo-mini-val">149 MAD</div>
+          <div class="promo-mini-desc">4 boissons + 4 pâtisseries maison</div>
+        </div>
 
-<div id="booking-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--bg2,#131313);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:28px;width:92%;max-width:440px">
-    <div style="font-family:var(--font-display,serif);color:var(--gold,#C9A84C);font-size:15px;letter-spacing:3px;margin-bottom:20px">⚡ Activer: <span class="modal-station-name"></span></div>
-    <div class="plans-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div><div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nom du joueur</div>
-        <input id="booking-name" type="text" placeholder="Prénom..." style="width:100%;background:var(--bg3,#1A1A1A);border:1px solid rgba(201,168,76,.15);border-radius:8px;color:var(--text,#F0E8D5);padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"></div>
-      <div><div style="font-size:10px;color:var(--muted);margin-bottom:6px">Téléphone</div>
-        <input id="booking-phone" type="tel" placeholder="06..." style="width:100%;background:var(--bg3,#1A1A1A);border:1px solid rgba(201,168,76,.15);border-radius:8px;color:var(--text,#F0E8D5);padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-      <button onclick="window.BookingSystem&&BookingSystem._bookWith('cash')" style="padding:10px;background:var(--bg3);border:1px solid rgba(46,204,113,.3);border-radius:8px;color:var(--green);font-size:11px;font-weight:700;cursor:pointer">💵 Cash</button>
-      <button onclick="window.BookingSystem&&BookingSystem._bookWith('card')" style="padding:10px;background:var(--bg3);border:1px solid rgba(52,152,219,.3);border-radius:8px;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer">💳 Carte</button>
-      <button onclick="window.BookingSystem&&BookingSystem._bookWith('tpe')"  style="padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;font-weight:700;cursor:pointer">📱 TPE</button>
-    </div>
-    <button onclick="document.getElementById('booking-modal').style.display='none'" style="width:100%;padding:9px;background:none;border:1px solid rgba(201,168,76,.2);border-radius:10px;color:var(--muted);cursor:pointer;font-size:11px">Annuler</button>
-  </div>
-</div>
+        <div class="promo-mini mini-blue" onclick="orderSignaturePack('Petit-Déj')">
+          <span class="promo-mini-icon">🥐</span>
+          <div class="promo-mini-title">Petit-Déjeuner LUX</div>
+          <div class="promo-mini-val">55 MAD</div>
+          <div class="promo-mini-desc">Café + jus + viennoiserie + confiture</div>
+        </div>
 
-<div class="login-box" id="blue-modal">
-  <div class="login-content">
-    <div class="login-logo">✦ LUX</div>
-    <div class="login-sub">Maestro Admin — Café LUX Taza</div>
-    <div class="login-pin-label">ENTREZ VOTRE PIN</div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="d0"></div>
-      <div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div>
-      <div class="pin-dot" id="d3"></div>
-      <div class="pin-dot" id="d4"></div>
-      <div class="pin-dot" id="d5"></div>
-    </div>
-    <div class="pin-grid">
-      <button class="pin-btn" onclick="pinPress(1)">1</button>
-      <button class="pin-btn" onclick="pinPress(2)">2</button>
-      <button class="pin-btn" onclick="pinPress(3)">3</button>
-      <button class="pin-btn" onclick="pinPress(4)">4</button>
-      <button class="pin-btn" onclick="pinPress(5)">5</button>
-      <button class="pin-btn" onclick="pinPress(6)">6</button>
-      <button class="pin-btn" onclick="pinPress(7)">7</button>
-      <button class="pin-btn" onclick="pinPress(8)">8</button>
-      <button class="pin-btn" onclick="pinPress(9)">9</button>
-      <button class="pin-btn" onclick="pinClear()" style="color:#ef4444"><i class="fas fa-backspace"></i></button>
-      <button class="pin-btn" onclick="pinPress(0)">0</button>
-      <button class="pin-btn" onclick="pinSubmit()" style="color:var(--gold)"><i class="fas fa-arrow-right"></i></button>
-    </div>
-    <button class="login-btn" onclick="pinSubmit()">CONNEXION</button>
-    <button class="login-cancel" onclick="closeBlueModal()">Annuler</button>
-    <div class="login-err" id="login-err">⚠️ Connexion échouée: PIN incorrect</div>
-  </div>
-</div>
+        <div class="promo-mini mini-red" onclick="orderSignaturePack('Business')">
+          <span class="promo-mini-icon">💼</span>
+          <div class="promo-mini-title">Pack Business</div>
+          <div class="promo-mini-val">99 MAD</div>
+          <div class="promo-mini-desc">2h WiFi privé + boisson + snack</div>
+        </div>
+      </div>
 
-<script src="https://unpkg.com/socket.io-client@4/dist/socket.io.min.js"></script>
-<script src="../src/js/api/api-client.js" defer></script>
-<script src="../src/js/main.js" defer></script>
+      <!-- Section: Offres saisonnières -->
+      <div class="sec-head">
+        <span class="sec-head-txt">Offres Saisonnières</span>
+        <div class="sec-head-line"></div>
+      </div>
+
+      <div class="promo-card">
+        <div class="promo-top">
+          <div class="promo-icon-wrap" style="background:rgba(201,168,76,.08)">🌙</div>
+          <div class="promo-header">
+            <div class="promo-title">Soirées Ramadan LUX</div>
+            <div class="promo-sub">Chaque soir de Ramadan, ftour spécial avec sélection de dattes, lben artisanal, harira et pâtisseries orientales — une expérience culturelle unique.</div>
+            <div style="margin-top:8px"><span class="s-badge s-soon">◌ Ramadan 2026</span></div>
+          </div>
+        </div>
+        <div class="promo-footer">
+          <div class="promo-val" style="color:var(--gold)">Ftour à partir de 85 MAD</div>
+          <button class="promo-cta promo-cta-ghost" onclick="notifyRamadan()">Me notifier →</button>
+        </div>
+      </div>
+
+      <div class="promo-card" style="margin-bottom:0">
+        <div class="promo-top">
+          <div class="promo-icon-wrap" style="background:rgba(61,190,122,.08)">⭐</div>
+          <div class="promo-header">
+            <div class="promo-title">Programme LUX Star</div>
+            <div class="promo-sub">Cumulez des étoiles à chaque commande et débloquez l'accès à des expériences exclusives : dégustation privée, gaming VIP, invitations événements.</div>
+            <div style="margin-top:8px"><span class="s-badge s-permanent">∞ Programme permanent</span></div>
+          </div>
+        </div>
+        <div class="promo-footer">
+          <div class="promo-val" style="color:var(--green)">10 DH → 1 ⭐</div>
+          <button class="promo-cta promo-cta-gold" onclick="joinLoyalty()">Rejoindre →</button>
+        </div>
+      </div>
+
+    </div><!-- /sec -->
+  </div><!-- /panel-offers -->
+
+  <div class="bottom-pad"></div>
+</div><!-- /page -->
+
+<!-- Toast -->
+<div id="lux-toast"></div>
 
 <script>
-/* ── إدارة النافذة الزرقاء الفخمة بـ 6 نقاط و نظام الطوارئ ── */
-var currentPin = "";
-var targetUrl = "";
+'use strict';
 
-function showBlueModal(url) {
-  event.stopImmediatePropagation();
-  targetUrl = url;
-  currentPin = "";
-  updateDots();
-  document.getElementById('login-err').style.display = 'none';
-  document.getElementById('blue-modal').style.display = 'flex';
-}
-
-function closeBlueModal() {
-  document.getElementById('blue-modal').style.display = 'none';
-}
-
-function pinPress(num) {
-  if (currentPin.length < 6) {
-    currentPin += num;
-    updateDots();
+/* ── Clock ── */
+(function(){
+  function tick(){
+    var d=new Date(), h=('0'+d.getHours()).slice(-2), m=('0'+d.getMinutes()).slice(-2);
+    var el=document.getElementById('lux-clock');
+    if(el) el.textContent=h+':'+m;
   }
+  tick(); setInterval(tick,15000);
+})();
+
+/* ── Toast ── */
+function toast(msg,dur){
+  var el=document.getElementById('lux-toast');
+  if(!el)return;
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},dur||3000);
 }
 
-function pinClear() {
-  currentPin = currentPin.slice(0, -1);
-  updateDots();
+/* ── Tab switcher ── */
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.classList.toggle('active',b.id==='tab-'+id);
+    b.setAttribute('aria-selected',b.id==='tab-'+id?'true':'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(p){
+    p.classList.toggle('active',p.id==='panel-'+id);
+  });
+  // Update URL hash without scroll
+  try{history.replaceState(null,'','#'+id);}catch(e){}
 }
 
-function updateDots() {
-  for (let i = 0; i < 6; i++) {
-    var dot = document.getElementById('d' + i);
-    if (dot) {
-      if (i < currentPin.length) dot.classList.add('filled');
-      else dot.classList.remove('filled');
-    }
+/* Auto-open tab from hash */
+(function(){
+  var h=location.hash.replace('#','');
+  if(h==='offers'||h==='gc') switchTab(h);
+})();
+
+/* ── Format gift card code input ── */
+function formatGcCode(inp){
+  var raw=inp.value.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,16);
+  var segs=[]; for(var i=0;i<raw.length;i+=4) segs.push(raw.slice(i,i+4));
+  inp.value=segs.join('-');
+}
+
+/* ── Check balance ── */
+function checkBalance(){
+  var code=document.getElementById('gc-code-input').value.trim();
+  var res=document.getElementById('balance-result');
+  if(!code||code.replace(/-/g,'').length<8){
+    res.className='balance-result err';res.style.display='block';
+    res.textContent='⚠ Entrez un code valide (ex: LUXK-7FN2-RT4P-9QXA)';return;
   }
-}
-
-function handlePinError() {
-  document.getElementById('login-err').style.display = 'block';
-  currentPin = "";
-  updateDots();
-}
-
-function fallbackLogin() {
-  // نظام التخطي الآمن (Bypass) في حال تعطل السيرفر 
-  // يراقب الكود 9999 أو الكود السداسي 281397 ويدخلك مباشرة
-  if (currentPin === '9999' || currentPin === '281397') {
-    localStorage.setItem('lux_token', 'maestro_session_bypass');
-    localStorage.setItem('admin_token', 'maestro_session_bypass');
-    window.location.href = targetUrl;
-  } else {
-    handlePinError();
-  }
-}
-
-function pinSubmit() {
-  if (currentPin.length === 0) return;
-  
-  var api = window.LuxAPI;
-  if (api && typeof api.loginPin === 'function') {
-    api.loginPin(currentPin).then(function(data) {
-      if (data && data.token) {
-        localStorage.setItem('lux_token', data.token);
-        localStorage.setItem('admin_token', data.token);
-        window.location.href = targetUrl;
+  res.className='balance-result';res.style.display='block';
+  res.textContent='⏳ Vérification en cours...';
+  var API=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+  fetch(API+'/api/gift-cards/'+encodeURIComponent(code.toUpperCase()))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.balance!=null){
+        res.className='balance-result ok';
+        res.innerHTML='✅ Carte valide · Solde disponible<span class="bal-amount">'+d.balance+' MAD</span>';
+      } else if(d&&d.error){
+        res.className='balance-result err';res.textContent='❌ '+d.error;
       } else {
-        fallbackLogin();
+        // Fallback demo
+        res.className='balance-result err';
+        res.textContent='❌ Code introuvable. Vérifiez votre carte ou contactez le café.';
       }
-    }).catch(function() {
-      fallbackLogin();
+    })
+    .catch(function(){
+      res.className='balance-result err';
+      res.textContent='❌ Impossible de vérifier — vérifiez votre connexion.';
     });
-  } else {
-    fallbackLogin();
-  }
 }
 
-/* ── تهيئة البيانات والتنقل ── */
-window.addEventListener('load', function() {
-  window.luxNavigate('home');
-  setInterval(function() {
-    var el = document.getElementById('main-clock');
-    if (el) el.textContent = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-  }, 1000);
-  
-  window._luxDataInit = function(pageId) {
-    try {
-      if (pageId === 'home'      && typeof initHome      === 'function') initHome();
-      if (pageId === 'pos'       && typeof initPOS       === 'function') initPOS();
-      if (pageId === 'gaming'    && typeof initGaming    === 'function') initGaming();
-      if (pageId === 'dashboard' && typeof initDashboard === 'function') initDashboard();
-    } catch(e) {}
-  };
-  window._luxDataInit('home');
-});
+/* ── Order Pack ── */
+function orderPack(name,amount){
+  var msg=encodeURIComponent(
+    '🎁 Demande Carte Cadeau LUX\n\n'
+    +'Formule: Pack '+name+' ('+amount+' MAD)\n'
+    +'Site: cafeslux.com\n\n'
+    +'✦ CAFÉ LUX · TAZA\nBonjour, je souhaite commander une carte cadeau Pack '+name+'. Merci!'
+  );
+  window.open('https://wa.me/212677717201?text='+msg,'_blank');
+  toast('🎁 Redirection WhatsApp — Pack '+name+' '+amount+' MAD');
+}
 
-window._luxToast = function(msg, type) {
-  var el = document.getElementById('lux-toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.cssText += ';transform:none;opacity:1';
-  el.className   = 'show' + (type ? ' toast-' + type : '');
-  clearTimeout(el._t);
-  el._t = setTimeout(function(){ el.style.transform='translateY(60px)'; el.style.opacity='0'; el.className=''; }, 3200);
-};
-window.luxToast = window._luxToast;
+/* ── Promo actions ── */
+function activatePromo(code){
+  try{navigator.clipboard.writeText(code);}catch(e){}
+  toast('✅ Code copié: '+code+' — utilisez-le à la commande');
+}
+function bookGaming(){
+  window.location.href='/public/index.html?mode=site&view=booking';
+}
+function bookGamingPack(){
+  var msg=encodeURIComponent('🎮 Pack Gaming + Café LUX (129 MAD)\nBonjour, je souhaite réserver le Pack Gaming + Café. Merci!');
+  window.open('https://wa.me/212677717201?text='+msg,'_blank');
+}
+function orderSignaturePack(name){
+  var msg=encodeURIComponent('☕ Formule '+name+' LUX\nBonjour, je voudrais commander la Formule '+name+'. Merci!');
+  window.open('https://wa.me/212677717201?text='+msg,'_blank');
+  toast('☕ Formule '+name+' — redirection WhatsApp');
+}
+function notifyRamadan(){
+  toast('🌙 Vous serez notifié dès l\'ouverture des réservations Ramadan!');
+}
+function joinLoyalty(){
+  window.location.href='/public/index.html?mode=site&view=account';
+}
 </script>
 </body>
 </html>
