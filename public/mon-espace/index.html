@@ -573,6 +573,11 @@ input, button, select, textarea { font-family:inherit; }
       <button class="btn-primary" onclick="doLogin()">
         <span id="login-btn-txt">Se connecter →</span>
       </button>
+      <div class="auth-divider">diagnostic</div>
+      <button class="btn-primary" onclick="testConnection()"
+        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
+        🔌 Tester la connexion au serveur
+      </button>
     </div>
 
     <!-- Register -->
@@ -998,30 +1003,47 @@ async function safeFetch(url, options = {}) {
   try {
     res = await fetch(url, options);
   } catch(e) {
-    throw new Error('Serveur injoignable — vérifiez votre connexion');
+    throw new Error('Serveur injoignable — vérifiez votre connexion internet');
   }
 
+  // Lire le corps en texte (safe pour tout type de réponse)
   const text = await res.text().catch(() => '');
-  let data = {};
 
+  // Essayer de parser en JSON
+  let data = {};
+  let isJson = false;
   if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch(_) {
-      // Le serveur a retourné du HTML (page 404 Railway, Nginx, etc.)
-      if (res.status === 404) {
-        throw new Error(
-          `Route "${url.replace(/.*\/api\//,'/api/')}" introuvable — ` +
-          `déployez le server.js mis à jour sur Railway`
-        );
-      }
-      if (res.status === 401) data = { error: 'Session expirée — reconnectez-vous' };
-      else if (res.status >= 500) throw new Error(`Erreur interne du serveur (${res.status}) — vérifiez les logs Railway`);
-      else throw new Error(`Réponse invalide du serveur (HTTP ${res.status})`);
-    }
+    try { data = JSON.parse(text); isJson = true; } catch(_) {}
   }
 
-  return { res, data };
+  // Si la réponse est OK → retourner directement
+  if (res.ok) return { res, data };
+
+  // Si erreur avec JSON valide → le caller gère le message
+  if (isJson && data.error) return { res, data };
+
+  // Si erreur avec corps non-JSON → construire message clair avec status réel
+  const statusLabel = {
+    400: 'Requête invalide',
+    401: 'Non authentifié',
+    403: 'Accès refusé',
+    404: 'Route inexistante',
+    405: 'Méthode non autorisée',
+    429: 'Trop de requêtes — attendez quelques secondes',
+    500: 'Erreur interne du serveur',
+    502: 'Service temporairement indisponible',
+    503: 'Serveur hors ligne',
+  };
+
+  const label = statusLabel[res.status] || `Erreur HTTP ${res.status}`;
+  const short = text.slice(0,80).replace(/<[^>]+>/g,'').trim(); // enlève HTML
+
+  // Message de diagnostic complet
+  throw new Error(
+    `[HTTP ${res.status}] ${label}` +
+    (short ? ` — Réponse: "${short}"` : '') +
+    (res.status === 404 ? ` — Vérifiez que server.js est déployé et visitez /api/ping` : '')
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1039,6 +1061,28 @@ function authTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((b, i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('form-login').style.display    = tab==='login'    ? 'flex' : 'none';
   document.getElementById('form-register').style.display = tab==='register' ? 'flex' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DIAGNOSTIC — tester la connexion et les routes
+══════════════════════════════════════════════════════════════ */
+async function testConnection() {
+  toast('⏳ Test de connexion en cours...');
+  try {
+    const r1 = await fetch(`${API}/health`);
+    const h  = await r1.json().catch(() => ({}));
+    if (!r1.ok) { toast(`❌ Serveur DOWN (${r1.status})`); return; }
+
+    const r2 = await fetch(`${API}/api/ping`);
+    if (r2.ok) {
+      const p = await r2.json();
+      toast(`✅ Serveur OK · Routes actives: ${p.routes?.length || 0}`, 5000);
+    } else {
+      toast(`⚠ Serveur actif (health OK) mais /api/ping manquant (${r2.status}) — déployez le nouveau server.js`);
+    }
+  } catch(e) {
+    toast(`❌ Connexion impossible: ${e.message}`);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
