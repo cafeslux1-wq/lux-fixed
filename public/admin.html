@@ -296,8 +296,47 @@
 (function() {
     const { createApp, ref, computed, onMounted } = Vue;
     
-    const API_BASE = 'https://cafeslux-api-production.up.railway.app';
+    const API_BASE   = 'https://cafeslux-api-production.up.railway.app';
     const GAMING_URL = 'gaming/index.html';
+
+    // ══════════════════════════════════════════════════════════
+    //  AUTH — جلب الـ Token من localStorage (يُخزّنه api-client.js)
+    //  المفتاح: 'lux_token'  |  يُضبط بعد تسجيل الدخول بالـ PIN
+    // ══════════════════════════════════════════════════════════
+    const getToken = () => {
+        try { return localStorage.getItem('lux_token') || null; }
+        catch(e) { return null; }
+    };
+
+    const getAuthHeaders = () => {
+        const token = getToken();
+        // Validation: إذا لا يوجد token → تحذير واضح
+        if (!token) {
+            console.warn('[Admin] ⚠️ لا يوجد token — يجب تسجيل الدخول أولاً');
+        }
+        return {
+            'Content-Type':  'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+        };
+    };
+
+    // التحقق من وجود token قبل أي عملية حساسة
+    const requireAuth = () => {
+        const token = getToken();
+        if (!token) {
+            alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+            // إعادة التوجيه لصفحة تسجيل الدخول إذا وُجدت
+            // window.location.href = '/public/login.html';
+            return false;
+        }
+        return true;
+    };
+
+    // ── Hide loader util ──────────────────────────────────────
+    const hideLoader = () => {
+        const el = document.getElementById('lux-loader');
+        if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 450); }
+    };
     
     createApp({
         setup() {
@@ -383,21 +422,28 @@
             };
             
             const approve = async (stationId) => {
+                if (!requireAuth()) return;
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/confirm`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ action: 'confirm' })
                     });
-                    if (res.ok) await sync();
-                    else alert('فشل التأكيد — ' + res.status);
-                } catch (e) { console.error(e); }
+                    if (res.ok) {
+                        await sync();
+                    } else if (res.status === 401) {
+                        alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+                        localStorage.removeItem('lux_token');
+                    } else {
+                        alert('فشل التأكيد — ' + res.status);
+                    }
+                } catch (e) { console.error('[approve]', e); }
             };
             
             const manual = async (stationId, hours, fixedPrice) => {
+                if (!requireAuth()) return;
                 try {
-                    const station = stations.value.find(s => s.id === stationId);
-                    // السعر الثابت يأخذ الأولوية على سعر الساعة
+                    const station   = stations.value.find(s => s.id === stationId);
                     const totalPrice = fixedPrice || (hours * (station?.hourlyRate || 25));
                     const hourlyRate = parseFloat((totalPrice / hours).toFixed(2));
                     const res = await fetch(`${API_BASE}/api/gaming/activate`, {
@@ -405,21 +451,35 @@
                         headers: getAuthHeaders(),
                         body: JSON.stringify({ stationId, hours, paymentMethod: 'cash', hourlyRate, totalPrice })
                     });
-                    if (res.ok) await sync();
-                    else { const err = await res.json().catch(() => ({})); alert('فشل التفعيل: ' + (err.error || res.status)); }
-                } catch (e) { console.error(e); }
+                    if (res.ok) {
+                        await sync();
+                    } else if (res.status === 401) {
+                        alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+                        localStorage.removeItem('lux_token');
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        alert('فشل التفعيل: ' + (err.error || res.status));
+                    }
+                } catch (e) { console.error('[manual]', e); }
             };
             
             const stop = async (stationId) => {
+                if (!requireAuth()) return;
                 if (!confirm('هل أنت متأكد من إنهاء هذه الجلسة؟')) return;
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/deactivate`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: getAuthHeaders()
                     });
-                    if (res.ok) await sync();
-                    else alert('فشل الإنهاء — ' + res.status);
-                } catch (e) { console.error(e); }
+                    if (res.ok) {
+                        await sync();
+                    } else if (res.status === 401) {
+                        alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+                        localStorage.removeItem('lux_token');
+                    } else {
+                        alert('فشل الإنهاء — ' + res.status);
+                    }
+                } catch (e) { console.error('[stop]', e); }
             };
             
             const openPriceModal = (station) => {
@@ -429,25 +489,31 @@
             };
             
             const updateHourlyRate = async () => {
+                if (!requireAuth()) return;
                 if (!priceModal.value.station) return;
                 const stationId = priceModal.value.station.id;
-                const newRate = priceModal.value.newRate;
+                const newRate   = priceModal.value.newRate;
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/rate`, {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getAuthHeaders(),
                         body: JSON.stringify({ hourlyRate: newRate })
                     });
                     if (res.ok) {
                         priceModal.value.show = false;
                         await sync();
+                    } else if (res.status === 401) {
+                        alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+                        localStorage.removeItem('lux_token');
+                        priceModal.value.show = false;
                     } else {
+                        // Optimistic update locally even if server fails
                         const idx = stations.value.findIndex(s => s.id === stationId);
                         if (idx !== -1) stations.value[idx].hourlyRate = newRate;
                         priceModal.value.show = false;
                     }
                 } catch (e) {
-                    console.error(e);
+                    console.error('[updateHourlyRate]', e);
                     priceModal.value.show = false;
                 }
             };
