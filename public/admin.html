@@ -128,31 +128,7 @@
         @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         
-        /* ── Loading screen — shown until Vue mounts ── */
-        #lux-loader {
-            position:fixed; inset:0; background:#040914;
-            display:flex; flex-direction:column;
-            align-items:center; justify-content:center;
-            z-index:9999; transition:opacity .4s ease;
-        }
-        #lux-loader.hidden { opacity:0; pointer-events:none; }
-        .loader-logo {
-            font-family:'Cinzel',Georgia,serif; font-size:28px;
-            color:#C9A84C; letter-spacing:6px; margin-bottom:20px;
-        }
-        .loader-spinner {
-            width:36px; height:36px; border:3px solid rgba(201,168,76,.2);
-            border-top-color:#C9A84C; border-radius:50%;
-            animation:spin .7s linear infinite;
-        }
-        .loader-msg {
-            margin-top:14px; font-size:11px; color:#555;
-            letter-spacing:2px; text-transform:uppercase;
-        }
-        @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* ── v-cloak: fade in instead of hard hide ── */
-        [v-cloak] { opacity: 0; }
+        [v-cloak] { display: none; }
         
         @media print {
             .station-section, .qr-controls, .qr-print-btn, .qr-dl-btn, header, .qr-gen-btn, .qr-all-btn { display:none !important; }
@@ -162,14 +138,6 @@
     </style>
 </head>
 <body class="p-6 md:p-12">
-
-<!-- Loading screen — disparaît quand Vue monte -->
-<div id="lux-loader">
-    <div class="loader-logo">✦ LUX</div>
-    <div class="loader-spinner"></div>
-    <div class="loader-msg">Chargement Admin...</div>
-</div>
-
 <div id="app" v-cloak class="max-w-7xl mx-auto">
 
     <!-- HEADER -->
@@ -224,11 +192,26 @@
                 </div>
                 <div class="flex flex-col gap-2 mt-2">
                     <button v-if="station.status === 'awaiting_activation' || station.status === 'pending'" @click="approve(station.id)" class="btn btn-approve">✅ تأكيد الدفع وتفعيل الوقت</button>
-                    <div v-if="station.status === 'available'" class="grid grid-cols-2 gap-2">
-                        <button @click="manual(station.id, 0.5)" class="btn btn-manual text-xs">½ ساعة</button>
-                        <button @click="manual(station.id, 1)" class="btn btn-manual text-xs">1 ساعة</button>
-                        <button @click="manual(station.id, 1.5)" class="btn btn-manual text-xs">1.5 ساعة</button>
-                        <button @click="manual(station.id, 2)" class="btn btn-manual text-xs">2 ساعة</button>
+                    <div v-if="station.status === 'available'" class="flex flex-col gap-2 mt-2">
+                        <div class="text-xs text-gray-500 mb-1" style="letter-spacing:.5px">⏱ تحديد مدة الجلسة</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="manual(station.id, 0.25, 5)"  class="btn btn-manual text-xs">
+                                <span style="font-weight:700">15 دقيقة</span>
+                                <span style="color:var(--gold);margin-right:4px">5 DH</span>
+                            </button>
+                            <button @click="manual(station.id, 0.5, 10)"  class="btn btn-manual text-xs">
+                                <span style="font-weight:700">30 دقيقة</span>
+                                <span style="color:var(--gold);margin-right:4px">10 DH</span>
+                            </button>
+                            <button @click="manual(station.id, 1, 20)"    class="btn btn-manual text-xs">
+                                <span style="font-weight:700">1 ساعة</span>
+                                <span style="color:var(--gold);margin-right:4px">20 DH</span>
+                            </button>
+                            <button @click="manual(station.id, 2, 55)"    class="btn btn-manual text-xs">
+                                <span style="font-weight:700">2 ساعة</span>
+                                <span style="color:var(--gold);margin-right:4px">55 DH</span>
+                            </button>
+                        </div>
                     </div>
                     <button v-if="station.status === 'active'" @click="stop(station.id)" class="btn btn-stop">⏹ إنهاء الجلسة</button>
                 </div>
@@ -314,23 +297,7 @@
     const { createApp, ref, computed, onMounted } = Vue;
     
     const API_BASE = 'https://cafeslux-api-production.up.railway.app';
-    const GAMING_URL = 'public/gaming.html';
-
-    // ── Auth header helper ────────────────────────────────────
-    // Lit le token stocké par api-client.js (clé: lux_token)
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('lux_token') || '';
-        return {
-            'Content-Type':  'application/json',
-            'Authorization': token ? 'Bearer ' + token : '',
-        };
-    };
-
-    // ── Hide loader util ──────────────────────────────────────
-    const hideLoader = () => {
-        const el = document.getElementById('lux-loader');
-        if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 450); }
-    };
+    const GAMING_URL = 'gaming/index.html';
     
     createApp({
         setup() {
@@ -404,9 +371,7 @@
             
             const sync = async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/api/gaming/stations`, {
-                        headers: getAuthHeaders()
-                    });
+                    const res = await fetch(`${API_BASE}/api/gaming/stations`);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     stations.value = data;
@@ -414,8 +379,6 @@
                 } catch (e) {
                     console.error('[Admin] sync error:', e.message);
                     apiOnline.value = false;
-                } finally {
-                    hideLoader(); // ← toujours masquer le loader, succès ou échec
                 }
             };
             
@@ -423,7 +386,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/confirm`, {
                         method: 'POST',
-                        headers: getAuthHeaders(),
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'confirm' })
                     });
                     if (res.ok) await sync();
@@ -431,14 +394,16 @@
                 } catch (e) { console.error(e); }
             };
             
-            const manual = async (stationId, hours) => {
+            const manual = async (stationId, hours, fixedPrice) => {
                 try {
                     const station = stations.value.find(s => s.id === stationId);
-                    const hourlyRate = station?.hourlyRate || 25;
+                    // السعر الثابت يأخذ الأولوية على سعر الساعة
+                    const totalPrice = fixedPrice || (hours * (station?.hourlyRate || 25));
+                    const hourlyRate = parseFloat((totalPrice / hours).toFixed(2));
                     const res = await fetch(`${API_BASE}/api/gaming/activate`, {
                         method: 'POST',
                         headers: getAuthHeaders(),
-                        body: JSON.stringify({ stationId, hours, paymentMethod: 'cash', hourlyRate })
+                        body: JSON.stringify({ stationId, hours, paymentMethod: 'cash', hourlyRate, totalPrice })
                     });
                     if (res.ok) await sync();
                     else { const err = await res.json().catch(() => ({})); alert('فشل التفعيل: ' + (err.error || res.status)); }
@@ -450,7 +415,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/deactivate`, {
                         method: 'POST',
-                        headers: getAuthHeaders()
+                        headers: { 'Content-Type': 'application/json' }
                     });
                     if (res.ok) await sync();
                     else alert('فشل الإنهاء — ' + res.status);
@@ -470,7 +435,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/rate`, {
                         method: 'PATCH',
-                        headers: getAuthHeaders(),
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ hourlyRate: newRate })
                     });
                     if (res.ok) {
@@ -643,8 +608,6 @@
                 setInterval(() => {
                     stations.value = [...stations.value];
                 }, 1000);
-                // Safety: hide loader after 4s max even if API is slow
-                setTimeout(hideLoader, 4000);
             });
             
             return {
