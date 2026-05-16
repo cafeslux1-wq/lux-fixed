@@ -283,7 +283,7 @@
                      class="opt-card" 
                      :class="{selected: selectedPlan && selectedPlan.id === p.id}"
                      @click="selectPlan(p)">
-                    <b>{{ p.hours }} ساعة</b>
+                    <b>{{ p.label }}</b>
                     <span>{{ p.price }} DH</span>
                 </div>
             </div>
@@ -342,9 +342,10 @@ createApp({
             toastMessage: '',
             currentStationId: null,
             plans: [
-                { id: 1, hours: 1, price: 30 },
-                { id: 2, hours: 2, price: 55 },
-                { id: 3, hours: 3, price: 80 }
+                { id: 1, hours: 0.25, label: '15 دقيقة', price: 5  },
+                { id: 2, hours: 0.5,  label: '30 دقيقة', price: 10 },
+                { id: 3, hours: 1,    label: '1 ساعة',   price: 20 },
+                { id: 4, hours: 2,    label: '2 ساعة',   price: 55 }
             ]
         }
     },
@@ -354,15 +355,16 @@ createApp({
             setTimeout(() => { this.toastMessage = ''; }, 3000);
         },
         
-        // ✅ تحديث الأسعار في خطط الدفع بناءً على السعر الجديد
+        // الأسعار ثابتة — Socket يُحدّث فقط إذا كان السعر مختلفاً جداً
         updatePlansWithNewRate(hourlyRate) {
-            console.log(`💰 تحديث خطط الدفع بالسعر الجديد: ${hourlyRate} DH/ساعة`);
+            console.log(`💰 السعر الجديد من السيرفر: ${hourlyRate} DH/ساعة — الأسعار الثابتة محفوظة`);
+            // الأسعار الثابتة لا تتغير بالساعة — يمكن تعديلها يدوياً هنا فقط
             this.plans = [
-                { id: 1, hours: 1, price: Math.round(hourlyRate * 1) },
-                { id: 2, hours: 2, price: Math.round(hourlyRate * 2 * 0.95) }, // خصم 5% للساعتين
-                { id: 3, hours: 3, price: Math.round(hourlyRate * 3 * 0.9) }    // خصم 10% للثلاث ساعات
+                { id: 1, hours: 0.25, label: '15 دقيقة', price: 5  },
+                { id: 2, hours: 0.5,  label: '30 دقيقة', price: 10 },
+                { id: 3, hours: 1,    label: '1 ساعة',   price: 20 },
+                { id: 4, hours: 2,    label: '2 ساعة',   price: 55 }
             ];
-            this.showToast(`✨ تم تحديث الأسعار: ${hourlyRate} درهم/ساعة`);
         },
         
         // ✅ الاتصال بـ Socket.io واستقبال تحديثات الأسعار
