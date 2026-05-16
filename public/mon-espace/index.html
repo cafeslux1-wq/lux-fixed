@@ -573,10 +573,6 @@ input, button, select, textarea { font-family:inherit; }
       <button class="btn-primary" onclick="doLogin()">
         <span id="login-btn-txt">Se connecter →</span>
       </button>
-      <div class="auth-divider">ou</div>
-      <button class="btn-primary" style="background:linear-gradient(135deg,#3c3c3c,#555);box-shadow:none;" onclick="demoLogin()">
-        🎭 Demo — Connexion rapide
-      </button>
     </div>
 
     <!-- Register -->
@@ -896,44 +892,59 @@ input, button, select, textarea { font-family:inherit; }
 'use strict';
 
 /* ══════════════════════════════════════════════════════════════
-   CONFIGURATION
+   CONFIG — Routes API Production
+   Schema Prisma: Customer { name, phone, email, passwordHash,
+                             loyaltyPoints, level, createdAt }
+                  GiftCard { code, balance, phone, expires, status }
 ══════════════════════════════════════════════════════════════ */
 const API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-// Niveaux de fidélité
+// Routes exactes du backend
+const ROUTES = {
+  REGISTER:      `${API}/api/auth/customer/register`,
+  LOGIN:         `${API}/api/auth/customer/login`,
+  ME:            `${API}/api/auth/customer/me`,
+  PROFILE_PATCH: `${API}/api/customers/me`,
+  ORDERS:        `${API}/api/customers/me/orders`,
+  GC_CHECK:      (code) => `${API}/api/gift-cards/check/${encodeURIComponent(code)}`,
+  GC_REDEEM:     (code) => `${API}/api/gift-cards/${encodeURIComponent(code)}/redeem`,
+  GC_MY:         `${API}/api/gift-cards/my`,
+  LOYALTY_ADD:   `${API}/api/customers/me/loyalty`,
+};
+
+// Niveaux de fidélité (synchronisés avec le backend)
 const TIERS = [
-  { name:'Bronze',   min:0,    max:199,  discount:0,   color:'#CD8B48' },
-  { name:'Silver',   min:200,  max:499,  discount:5,   color:'#B0C0D0' },
-  { name:'Gold',     min:500,  max:999,  discount:10,  color:'#C9A84C' },
-  { name:'Platinum', min:1000, max:Infinity, discount:15, color:'#E8F0F8' },
+  { name:'Bronze',   key:'bronze',   min:0,    max:199,  discount:0,   color:'#CD8B48' },
+  { name:'Silver',   key:'silver',   min:200,  max:499,  discount:5,   color:'#B0C0D0' },
+  { name:'Gold',     key:'gold',     min:500,  max:999,  discount:10,  color:'#C9A84C' },
+  { name:'Platinum', key:'platinum', min:1000, max:Infinity, discount:15, color:'#E8F0F8' },
 ];
 
-// Récompenses disponibles
 const REWARDS = [
-  { id:1, icon:'☕', name:'Café Signature',   pts:50,  desc:'Americano ou Latte' },
-  { id:2, icon:'🥐', name:'Viennoiserie',     pts:30,  desc:'Au choix du jour' },
-  { id:3, icon:'🍰', name:'Pâtisserie LUX',  pts:80,  desc:'Millefeuille ou Tarte' },
-  { id:4, icon:'🎮', name:'30 min Gaming',   pts:60,  desc:'PS5 ou Xbox' },
-  { id:5, icon:'🎁', name:'Carte 50 DH',     pts:150, desc:'Carte cadeau 50 MAD' },
-  { id:6, icon:'✦',  name:'Pack Signature',  pts:250, desc:'Café + Pâtisserie + Gaming' },
+  { id:1, icon:'☕', name:'Café Signature',  pts:50,  desc:'Americano ou Latte' },
+  { id:2, icon:'🥐', name:'Viennoiserie',    pts:30,  desc:'Au choix du jour' },
+  { id:3, icon:'🍰', name:'Pâtisserie LUX', pts:80,  desc:'Millefeuille ou Tarte' },
+  { id:4, icon:'🎮', name:'30 min Gaming',  pts:60,  desc:'PS5 ou Xbox' },
+  { id:5, icon:'🎁', name:'Carte 50 DH',    pts:150, desc:'Carte cadeau 50 MAD' },
+  { id:6, icon:'✦',  name:'Pack Signature', pts:250, desc:'Café + Pâtisserie + Gaming' },
 ];
 
 /* ══════════════════════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════════════════════ */
 let STATE = {
-  isAuth:     false,
-  user:       null,       // { id, fname, lname, email, phone, loyaltyPoints, totalSpent, savings, memberSince }
-  giftCard:   null,       // { code, balance, expiresAt }
-  orders:     [],
-  payMode:    'gc',
-  discount:   0,          // % discount based on tier
+  isAuth:   false,
+  user:     null,      // Customer from API
+  giftCard: null,      // GiftCard active
+  orders:   [],
+  payMode:  'gc',
+  discount: 0,
 };
 
 /* ══════════════════════════════════════════════════════════════
    UTILS
 ══════════════════════════════════════════════════════════════ */
-function toast(msg, dur=3000) {
+function toast(msg, dur = 3200) {
   const el = document.getElementById('lux-toast');
   el.textContent = msg;
   el.classList.add('show');
@@ -941,23 +952,17 @@ function toast(msg, dur=3000) {
   el._t = setTimeout(() => el.classList.remove('show'), dur);
 }
 
-function getToken() {
-  try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; }
-}
-function setToken(t) {
-  try { localStorage.setItem('lux_token', t); } catch(e) {}
-}
-function clearToken() {
-  try { localStorage.removeItem('lux_token'); } catch(e) {}
-}
+function getToken()   { try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; } }
+function setToken(t)  { try { localStorage.setItem('lux_token', t); } catch(e) {} }
+function clearToken() { try { localStorage.removeItem('lux_token'); } catch(e) {} }
 
 function authHeaders() {
   const tok = getToken();
-  return { 'Content-Type':'application/json', ...(tok ? {'Authorization':'Bearer '+tok} : {}) };
+  return { 'Content-Type': 'application/json', ...(tok ? { 'Authorization': 'Bearer ' + tok } : {}) };
 }
 
 function getTier(pts) {
-  return TIERS.slice().reverse().find(t => pts >= t.min) || TIERS[0];
+  return [...TIERS].reverse().find(t => pts >= t.min) || TIERS[0];
 }
 
 function formatDate(iso) {
@@ -965,16 +970,20 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-MA', { day:'2-digit', month:'short', year:'numeric' });
 }
 
+// Le schema Customer a 'name' (pas fname/lname) — on sépare pour l'UI
+function parseName(fullName = '') {
+  const parts = fullName.trim().split(/\s+/);
+  return { fname: parts[0] || '', lname: parts.slice(1).join(' ') || '' };
+}
+
 /* ══════════════════════════════════════════════════════════════
-   CLOCK
+   HORLOGE
 ══════════════════════════════════════════════════════════════ */
 (function clock() {
   const tick = () => {
     const d = new Date();
-    const h = String(d.getHours()).padStart(2,'0');
-    const m = String(d.getMinutes()).padStart(2,'0');
     const el = document.getElementById('lux-clock');
-    if (el) el.textContent = `${h}:${m}`;
+    if (el) el.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   };
   tick(); setInterval(tick, 15000);
 })();
@@ -988,71 +997,59 @@ function hideLoader() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AUTH
+   AUTH TABS
 ══════════════════════════════════════════════════════════════ */
 function authTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.querySelectorAll('.auth-tab').forEach((b, i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('form-login').style.display    = tab==='login'    ? 'flex' : 'none';
   document.getElementById('form-register').style.display = tab==='register' ? 'flex' : 'none';
 }
 
+/* ══════════════════════════════════════════════════════════════
+   CONNEXION — POST /api/auth/customer/login
+══════════════════════════════════════════════════════════════ */
 async function doLogin() {
-  const id = document.getElementById('login-id').value.trim();
-  const pw = document.getElementById('login-pw').value.trim();
-  if (!id || !pw) { toast('⚠ Remplissez tous les champs'); return; }
+  const identifier = document.getElementById('login-id').value.trim();
+  const password   = document.getElementById('login-pw').value.trim();
+
+  if (!identifier) { toast('⚠ Entrez votre téléphone ou email'); return; }
+  if (!password)   { toast('⚠ Entrez votre mot de passe'); return; }
 
   const btn = document.getElementById('login-btn-txt');
   btn.textContent = '⏳ Connexion...';
+  btn.parentElement.disabled = true;
 
   try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ identifier: id, password: pw })
+    const res  = await fetch(ROUTES.LOGIN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password })
     });
     const data = await res.json();
+
     if (res.ok && data.token) {
       setToken(data.token);
-      await loadUserData(data.user || data);
+      loadUserData(data.customer);
       showApp();
+      await loadOrders();
+      await loadMyGiftCards();
     } else {
-      toast('❌ ' + (data.error || 'Identifiants incorrects'));
+      // Erreur réelle de l'API — pas de fallback demo
+      toast('❌ ' + (data.error || `Erreur ${res.status}`));
     }
   } catch(e) {
-    toast('❌ Erreur de connexion — Mode demo activé');
-    demoLogin();
+    // Erreur réseau (Railway down, timeout…)
+    toast('❌ Impossible de joindre le serveur — vérifiez votre connexion');
+    console.error('[LOGIN] Network error:', e.message);
   } finally {
     btn.textContent = 'Se connecter →';
+    btn.parentElement.disabled = false;
   }
 }
 
-function demoLogin() {
-  // Données démo pour présentation
-  const demoUser = {
-    id: 1, fname:'Mohammed', lname:'Alami',
-    email:'mohammed.alami@cafeslux.com', phone:'0677717201',
-    loyaltyPoints: 520, totalSpent: 3240, savings: 324,
-    memberSince: '2024-01-15T00:00:00Z'
-  };
-  const demoOrders = [
-    { id:'LX-2024-089', date:'2025-05-10T14:30:00Z', total:145, discount:14.5, status:'delivered',
-      items:[{name:'Café Latte',qty:2,price:28},{name:'Millefeuille',qty:1,price:45},{name:'1h Gaming PS5',qty:1,price:44}], pts_earned:14 },
-    { id:'LX-2024-067', date:'2025-04-22T11:15:00Z', total:89,  discount:0,    status:'delivered',
-      items:[{name:'Americano',qty:1,price:22},{name:'Croissant',qty:2,price:34},{name:'Jus orange',qty:1,price:33}], pts_earned:8 },
-    { id:'LX-2024-041', date:'2025-03-18T16:45:00Z', total:200, discount:20,   status:'delivered',
-      items:[{name:'Pack Gaming 2h',qty:1,price:55},{name:'Plateau pâtisseries',qty:1,price:120},{name:'Café signature x3',qty:3,price:25}], pts_earned:20 },
-  ];
-  const demoGC = { code:'LUXK-7FN2-RT4P-9QXA', balance:150, expiresAt:'2026-01-15T00:00:00Z' };
-
-  setToken('demo_token_cafeslux');
-  loadUserData(demoUser);
-  STATE.orders   = demoOrders;
-  STATE.giftCard = demoGC;
-  showApp();
-  renderOrders();
-  renderGiftCard();
-}
-
+/* ══════════════════════════════════════════════════════════════
+   INSCRIPTION — POST /api/auth/customer/register
+══════════════════════════════════════════════════════════════ */
 async function doRegister() {
   const fname = document.getElementById('reg-fname').value.trim();
   const lname  = document.getElementById('reg-lname').value.trim();
@@ -1060,125 +1057,147 @@ async function doRegister() {
   const phone  = document.getElementById('reg-phone').value.trim();
   const pw     = document.getElementById('reg-pw').value.trim();
 
-  if (!fname || !email || !phone || !pw) { toast('⚠ Remplissez tous les champs obligatoires'); return; }
+  // Validations frontend
+  if (!fname)        { toast('⚠ Le prénom est requis'); return; }
+  if (!phone)        { toast('⚠ Le téléphone est requis'); return; }
+  if (!pw)           { toast('⚠ Le mot de passe est requis'); return; }
   if (pw.length < 8) { toast('⚠ Mot de passe: minimum 8 caractères'); return; }
 
+  // Le schema Customer a un seul champ 'name'
+  const name = `${fname} ${lname}`.trim();
+
+  const btn = document.querySelector('#form-register .btn-primary');
+  btn.disabled = true;
+  btn.textContent = '⏳ Création...';
+
   try {
-    const res = await fetch(`${API}/api/auth/register`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ fname, lname, email, phone, password:pw })
+    const res  = await fetch(ROUTES.REGISTER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, email: email || undefined, password: pw })
     });
     const data = await res.json();
+
     if (res.ok && data.token) {
       setToken(data.token);
-      await loadUserData(data.user || data);
+      loadUserData(data.customer);
       showApp();
-      toast('🎉 Bienvenue chez Café LUX !');
+      toast('🎉 Bienvenue chez Café LUX, ' + (data.customer.name || fname) + ' !', 4000);
     } else {
-      toast('❌ ' + (data.error || 'Erreur lors de la création du compte'));
+      toast('❌ ' + (data.error || `Erreur ${res.status}`));
     }
   } catch(e) {
-    toast('❌ Erreur — Essayez en mode demo');
+    toast('❌ Impossible de joindre le serveur — vérifiez votre connexion');
+    console.error('[REGISTER] Network error:', e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer mon compte →';
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   DÉCONNEXION
+══════════════════════════════════════════════════════════════ */
 function doLogout() {
   clearToken();
   STATE = { isAuth:false, user:null, giftCard:null, orders:[], payMode:'gc', discount:0 };
-  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-app').style.display  = 'none';
   document.getElementById('screen-auth').style.display = 'block';
   document.getElementById('tb-tier-badge').style.display = 'none';
+  // Vider les champs
+  ['login-id','login-pw'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   toast('👋 Déconnexion réussie');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LOAD USER DATA
+   CHARGER LES DONNÉES UTILISATEUR
+   → Mappe le schema Prisma: { name, phone, loyaltyPoints, level, createdAt }
 ══════════════════════════════════════════════════════════════ */
 function loadUserData(user) {
+  if (!user) return;
   STATE.user    = user;
   STATE.isAuth  = true;
-  const tier    = getTier(user.loyaltyPoints || 0);
-  STATE.discount = tier.discount;
 
-  // Avatar & name
-  const initial = (user.fname || 'U')[0].toUpperCase();
+  const tier      = getTier(user.loyaltyPoints || 0);
+  STATE.discount  = tier.discount;
+
+  // Séparer name en fname/lname pour l'UI
+  const { fname, lname } = parseName(user.name || '');
+  const initial = (fname || user.name || 'C')[0].toUpperCase();
+
+  // Topbar & hero
   document.getElementById('avatar-initials').textContent = initial;
-  document.getElementById('client-name').textContent = `${user.fname || ''} ${user.lname || ''}`.trim();
-  document.getElementById('client-since').textContent = `Membre depuis ${formatDate(user.memberSince)}`;
+  document.getElementById('client-name').textContent     = user.name || `${fname} ${lname}`.trim();
+  document.getElementById('client-since').textContent    = `Membre depuis ${formatDate(user.memberSince || user.createdAt)}`;
 
-  // Tier badge
-  document.getElementById('tier-badge').innerHTML  = `⭐ ${tier.name}`;
-  document.getElementById('tier-badge').style.borderColor = tier.color + '44';
+  // Tier badges
+  document.getElementById('tier-badge').innerHTML         = `⭐ ${tier.name}`;
   document.getElementById('tier-badge').style.color       = tier.color;
+  document.getElementById('tier-badge').style.borderColor = tier.color + '44';
   document.getElementById('tb-tier-badge').textContent    = tier.name;
   document.getElementById('tb-tier-badge').style.display  = 'block';
 
-  // Points bar
+  // Barre de points
   const pts   = user.loyaltyPoints || 0;
-  const nextT = TIERS.find(t => t.min > pts) || TIERS[TIERS.length-1];
-  const prevT = getTier(pts);
-  const pct   = nextT.min > prevT.min
+  const nextT = TIERS.find(t => t.min > pts) || TIERS[TIERS.length - 1];
+  const prevT = tier;
+  const pct   = (nextT.min > prevT.min && nextT.min !== Infinity)
     ? Math.min(100, ((pts - prevT.min) / (nextT.min - prevT.min)) * 100)
     : 100;
 
   setTimeout(() => {
     document.getElementById('pts-display').textContent = pts.toLocaleString();
-    document.getElementById('pts-bar').style.width = pct + '%';
-    document.getElementById('pts-next').textContent = nextT.min === Infinity
+    document.getElementById('pts-bar').style.width     = pct + '%';
+    document.getElementById('pts-next').textContent    = nextT.min === Infinity
       ? '✦ Niveau maximum atteint'
-      : `${(nextT.min - pts)} pts → ${nextT.name}`;
+      : `${nextT.min - pts} pts → ${nextT.name}`;
   }, 300);
 
-  // Stats
-  document.getElementById('stat-orders').textContent = (user.ordersCount || STATE.orders.length || 0);
-  document.getElementById('stat-spent').textContent  = `${(user.totalSpent || 0).toLocaleString()} DH`;
-  document.getElementById('stat-savings').textContent= `${(user.savings || 0).toLocaleString()} DH`;
+  // Stats (ordersCount vient du backend)
+  document.getElementById('stat-orders').textContent  = user.ordersCount || STATE.orders.length || 0;
+  document.getElementById('stat-spent').textContent   = `${(user.totalSpent || 0).toLocaleString()} DH`;
+  document.getElementById('stat-savings').textContent = `${(user.savings || 0).toLocaleString()} DH`;
 
-  // Discount banner
+  // Remise VIP
   if (tier.discount > 0) {
-    document.getElementById('discount-pct').textContent = `−${tier.discount}%`;
-    document.getElementById('discount-banner').style.display = 'flex';
+    document.getElementById('discount-pct').textContent        = `−${tier.discount}%`;
+    document.getElementById('discount-banner').style.display   = 'flex';
   } else {
-    document.getElementById('discount-banner').style.display = 'none';
+    document.getElementById('discount-banner').style.display   = 'none';
   }
 
-  // Profile fields
-  document.getElementById('pf-fname').value = user.fname || '';
-  document.getElementById('pf-lname').value = user.lname || '';
+  // Champs profil (fname/lname séparés)
+  document.getElementById('pf-fname').value = fname;
+  document.getElementById('pf-lname').value = lname;
   document.getElementById('pf-email').value = user.email || '';
   document.getElementById('pf-phone').value = user.phone || '';
 
-  // Tier list
+  // Tier list & rewards
   renderTierList(pts, tier);
-
-  // Rewards
   renderRewards();
 }
 
 function renderTierList(pts, currentTier) {
-  const html = TIERS.map(t => {
-    const active = t.name === currentTier.name;
+  document.getElementById('tier-list').innerHTML = TIERS.map(t => {
+    const active = t.key === currentTier.key;
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:8px;height:8px;border-radius:50%;background:${t.color};${!active?'opacity:.3':''}"></div>
         <span style="font-size:12px;color:${active?t.color:'var(--muted)'};font-weight:${active?700:400}">${t.name}</span>
       </div>
-      <div style="font-size:10px;color:var(--muted)">${t.min === 0 ? '0' : t.min}${t.max===Infinity?'+' : '–'+t.max} pts</div>
-      <div style="font-size:11px;color:${active?'var(--green)':'var(--muted)'};font-weight:${active?700:400}">${t.discount > 0 ? '−'+t.discount+'%' : '—'}</div>
+      <span style="font-size:10px;color:var(--muted)">${t.min}${t.max===Infinity?'+ pts':'–'+t.max+' pts'}</span>
+      <span style="font-size:11px;color:${active?'var(--green)':'var(--muted)'};font-weight:${active?700:400}">${t.discount>0?'−'+t.discount+'%':'—'}</span>
     </div>`;
   }).join('');
-  document.getElementById('tier-list').innerHTML = html;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SHOW APP
+   AFFICHER L'APP
 ══════════════════════════════════════════════════════════════ */
 function showApp() {
   document.getElementById('screen-auth').style.display = 'none';
   document.getElementById('screen-app').style.display  = 'block';
   switchTab('profil');
-  loadOrders();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1187,93 +1206,89 @@ function showApp() {
 function switchTab(tab) {
   document.querySelectorAll('.tn-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tn-'+tab).classList.add('active');
-  document.getElementById('panel-'+tab).classList.add('active');
+  document.getElementById('tn-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PROFILE SAVE
+   PROFIL — PATCH /api/customers/me
 ══════════════════════════════════════════════════════════════ */
 async function saveProfile() {
-  const body = {
-    fname: document.getElementById('pf-fname').value.trim(),
-    lname: document.getElementById('pf-lname').value.trim(),
-    email: document.getElementById('pf-email').value.trim(),
-    phone: document.getElementById('pf-phone').value.trim(),
-  };
+  const fname = document.getElementById('pf-fname').value.trim();
+  const lname  = document.getElementById('pf-lname').value.trim();
+  const email  = document.getElementById('pf-email').value.trim();
+  const name   = `${fname} ${lname}`.trim();
+
+  if (!name) { toast('⚠ Le nom est requis'); return; }
+
   try {
-    const res = await fetch(`${API}/api/customers/me`, {
-      method:'PATCH', headers:authHeaders(), body:JSON.stringify(body)
+    const res  = await fetch(ROUTES.PROFILE_PATCH, {
+      method: 'PATCH', headers: authHeaders(),
+      body: JSON.stringify({ name, email: email || undefined })
     });
-    if (res.ok || res.status === 404) {
-      // Update locally
-      Object.assign(STATE.user, body);
-      document.getElementById('client-name').textContent = `${body.fname} ${body.lname}`.trim();
-      document.getElementById('avatar-initials').textContent = (body.fname[0] || 'U').toUpperCase();
+    const data = await res.json();
+
+    if (res.ok) {
+      Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
+      document.getElementById('client-name').textContent      = STATE.user.name;
+      document.getElementById('avatar-initials').textContent  = STATE.user.name[0].toUpperCase();
       toast('✅ Profil mis à jour');
     } else {
-      toast('❌ Erreur lors de la sauvegarde');
+      toast('❌ ' + (data.error || 'Erreur lors de la sauvegarde'));
     }
   } catch(e) {
-    // Update locally anyway
-    Object.assign(STATE.user || {}, body);
-    toast('✅ Profil mis à jour (local)');
+    toast('❌ Impossible de joindre le serveur');
+    console.error('[SAVE_PROFILE]', e.message);
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ORDERS
+   COMMANDES — GET /api/customers/me/orders
 ══════════════════════════════════════════════════════════════ */
 async function loadOrders() {
+  document.getElementById('orders-list').innerHTML = `
+    <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
   try {
-    const res = await fetch(`${API}/api/transactions/web?phone=${STATE.user?.phone || ''}`, {
-      headers: authHeaders()
-    });
+    const res = await fetch(ROUTES.ORDERS, { headers: authHeaders() });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        STATE.orders = data.map(tx => ({
-          id:    tx.externalId || tx.id,
-          date:  tx.createdAt || tx.date,
-          total: tx.total,
-          discount: 0,
-          status: 'delivered',
-          items: JSON.parse(tx.items || '[]').map(i => ({
-            name: i.name || i.n, qty: i.qty || i.q || 1, price: i.price || i.p
-          })),
-          pts_earned: Math.floor(tx.total / 10),
-        }));
-      }
+      // Mapper les transactions Prisma vers le format UI
+      STATE.orders = (Array.isArray(data) ? data : []).map(tx => ({
+        id:         tx.externalId || tx.id,
+        date:       tx.createdAt  || tx.date,
+        total:      tx.total,
+        status:     'delivered',
+        items:      (() => { try { return JSON.parse(tx.items || '[]').map(i => ({ name:i.name||i.n, qty:i.qty||i.q||1, price:i.price||i.p||0 })); } catch(e){ return []; } })(),
+        pts_earned: Math.floor((tx.total || 0) / 10),
+      }));
+    } else if (res.status === 401) {
+      clearToken(); doLogout();
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[LOAD_ORDERS]', e.message);
+  }
   renderOrders();
+  document.getElementById('stat-orders').textContent = STATE.orders.length;
 }
 
 function renderOrders() {
   const list = document.getElementById('orders-list');
-  if (!STATE.orders || STATE.orders.length === 0) {
-    list.innerHTML = `<div class="empty-state">
-      <span class="empty-icon">📋</span>
-      Aucune commande pour l'instant
-    </div>`;
+  if (!STATE.orders.length) {
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande pour l'instant</div>`;
     return;
   }
-
   const statusMap = {
-    delivered: { lbl:'Livrée',    bg:'rgba(61,190,122,.1)',  color:'var(--green)' },
-    pending:   { lbl:'En cours',  bg:'rgba(201,168,76,.1)',  color:'var(--gold)'  },
-    cancelled: { lbl:'Annulée',   bg:'rgba(224,82,82,.1)',   color:'var(--red)'   },
+    delivered: { lbl:'Livrée',   bg:'rgba(61,190,122,.1)', color:'var(--green)' },
+    pending:   { lbl:'En cours', bg:'rgba(201,168,76,.1)', color:'var(--gold)'  },
+    cancelled: { lbl:'Annulée',  bg:'rgba(224,82,82,.1)',  color:'var(--red)'   },
   };
-
   list.innerHTML = STATE.orders.map((o, idx) => {
     const s = statusMap[o.status] || statusMap.delivered;
-    const disc = STATE.discount > 0 ? `<span style="font-size:10px;color:var(--green)">−${STATE.discount}% remise</span>` : '';
     return `<div class="order-card">
       <div class="oc-head" onclick="toggleOrder(${idx})">
         <div>
           <div class="oc-ref">${o.id}</div>
           <div class="oc-date">${formatDate(o.date)}</div>
-          ${disc}
         </div>
         <div style="text-align:right">
           <div class="oc-total">${o.total} DH</div>
@@ -1282,68 +1297,80 @@ function renderOrders() {
       </div>
       <div class="oc-body" id="order-body-${idx}">
         <div class="oc-items">
-          ${(o.items||[]).map(i => `
-            <div class="oc-item">
-              <span class="oc-item-name">${i.qty}× ${i.name}</span>
-              <span class="oc-item-price">${(i.qty * i.price)} DH</span>
-            </div>`).join('')}
+          ${o.items.map(i => `<div class="oc-item"><span class="oc-item-name">${i.qty}× ${i.name}</span><span class="oc-item-price">${(i.qty*i.price)} DH</span></div>`).join('')}
         </div>
-        <div class="oc-pts-earned">⭐ +${o.pts_earned || Math.floor(o.total/10)} LUX Points gagnés</div>
+        <div class="oc-pts-earned">⭐ +${o.pts_earned} LUX Points gagnés</div>
       </div>
     </div>`;
   }).join('');
-
-  document.getElementById('stat-orders').textContent = STATE.orders.length;
 }
 
 function toggleOrder(idx) {
-  const body = document.getElementById('order-body-'+idx);
-  body.classList.toggle('open');
+  document.getElementById('order-body-' + idx).classList.toggle('open');
 }
 
 /* ══════════════════════════════════════════════════════════════
-   GIFT CARD
+   CARTES CADEAUX
+   GiftCard schema: { code, balance, phone, expires, status }
+   Note: 'expires' (pas 'expiresAt'), lié par 'phone'
 ══════════════════════════════════════════════════════════════ */
 function formatCode(inp) {
-  const raw = inp.value.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,16);
+  const raw  = inp.value.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,16);
   const segs = [];
   for (let i=0; i<raw.length; i+=4) segs.push(raw.slice(i,i+4));
   inp.value = segs.join('-');
 }
 
-async function linkCard() {
-  const code = document.getElementById('gc-link-input').value.trim();
-  if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide'); return; }
-
+// Charger les cartes liées au compte (par phone)
+async function loadMyGiftCards() {
   try {
-    const res = await fetch(`${API}/api/gift-cards/check/${encodeURIComponent(code)}`, {
-      headers: authHeaders()
-    });
-    const data = await res.json();
-    if (res.ok && data.balance != null) {
-      STATE.giftCard = { code, balance:data.balance, expiresAt:data.expiresAt };
-      renderGiftCard();
-      toast('✅ Carte liée avec succès');
-    } else {
-      toast('❌ ' + (data.error || 'Carte introuvable'));
+    const res  = await fetch(ROUTES.GC_MY, { headers: authHeaders() });
+    if (res.ok) {
+      const cards = await res.json();
+      // Prendre la première carte active avec solde > 0
+      const active = cards.find(c => c.balance > 0 && c.status === 'active');
+      if (active) {
+        STATE.giftCard = { code: active.code, balance: active.balance, expiresAt: active.expires };
+        renderGiftCard();
+      }
     }
   } catch(e) {
-    // Demo fallback
-    STATE.giftCard = { code: code || 'LUXK-DEMO-1234-5678', balance:200, expiresAt:'2026-12-31' };
-    renderGiftCard();
-    toast('✅ Carte liée (mode demo)');
+    console.error('[LOAD_GC]', e.message);
+  }
+}
+
+// Lier une carte manuellement via code
+async function linkCard() {
+  const code = document.getElementById('gc-link-input').value.trim();
+  if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide (format: XXXX-XXXX-XXXX-XXXX)'); return; }
+
+  try {
+    const res  = await fetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
+    const data = await res.json();
+
+    if (res.ok && data.balance != null) {
+      // Le schema GiftCard utilise 'expires' (pas 'expiresAt')
+      STATE.giftCard = { code, balance: data.balance, expiresAt: data.expires || data.expiresAt };
+      renderGiftCard();
+      toast('✅ Carte liée — Solde: ' + data.balance + ' DH');
+    } else {
+      toast('❌ ' + (data.error || 'Carte introuvable ou expirée'));
+    }
+  } catch(e) {
+    toast('❌ Impossible de vérifier la carte — vérifiez votre connexion');
+    console.error('[LINK_CARD]', e.message);
   }
 }
 
 function renderGiftCard() {
-  const gc = STATE.giftCard;
+  const gc      = STATE.giftCard;
   const isEmpty = !gc;
 
   document.getElementById('gc-empty-state').style.display  = isEmpty ? 'block' : 'none';
   document.getElementById('gc-linked-state').style.display = isEmpty ? 'none'  : 'block';
-  document.getElementById('gc-bal-display').innerHTML = isEmpty ? '-- <small>MAD</small>' : `${gc.balance} <small>MAD</small>`;
-  document.getElementById('gc-code-display').textContent  = isEmpty ? '— — — — — — —' : gc.code;
-  document.getElementById('gc-exp-display').textContent   = isEmpty ? '—' : formatDate(gc.expiresAt);
+  document.getElementById('gc-bal-display').innerHTML      = isEmpty ? '-- <small>MAD</small>' : `${gc.balance} <small>MAD</small>`;
+  document.getElementById('gc-code-display').textContent   = isEmpty ? '— — — — — — —' : gc.code;
+  document.getElementById('gc-exp-display').textContent    = isEmpty ? '—' : formatDate(gc.expiresAt);
 
   if (!isEmpty) {
     document.getElementById('gc-bal-stat').textContent = `${gc.balance} DH`;
@@ -1359,67 +1386,68 @@ function unlinkCard() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PAYMENT SIMULATOR
+   SIMULATEUR DE PAIEMENT
+   Appel réel: POST /api/gift-cards/:code/redeem
+               POST /api/customers/me/loyalty
 ══════════════════════════════════════════════════════════════ */
 function selectPayMode(mode) {
   STATE.payMode = mode;
   document.querySelectorAll('.pm-opt').forEach(el => el.classList.remove('sel'));
-  document.getElementById('pm-'+mode).classList.add('sel');
-  document.getElementById('mixed-breakdown').classList.toggle('show', mode==='mixed');
+  document.getElementById('pm-' + mode).classList.add('sel');
+  document.getElementById('mixed-breakdown').classList.toggle('show', mode === 'mixed');
   updatePaymentSim();
 }
 
 function updatePaymentSim() {
-  const raw     = parseFloat(document.getElementById('ps-amount').value) || 0;
-  const disc    = STATE.discount / 100;
-  const amount  = parseFloat((raw * (1 - disc)).toFixed(2));
-  const discAmt = parseFloat((raw * disc).toFixed(2));
+  const raw    = parseFloat(document.getElementById('ps-amount').value) || 0;
+  const disc   = STATE.discount / 100;
+  const amount = parseFloat((raw * (1 - disc)).toFixed(2));
+  const saved  = parseFloat((raw * disc).toFixed(2));
 
-  // Discount preview
+  // Aperçu remise
   const dp = document.getElementById('ps-discount-preview');
   if (STATE.discount > 0 && raw > 0) {
     dp.style.display = 'block';
-    dp.innerHTML = `🏷️ Remise ${STATE.discount}% appliquée : <strong>−${discAmt} DH</strong> → Total : <strong>${amount} DH</strong>`;
+    dp.innerHTML = `🏷️ Remise ${STATE.discount}% : <strong>−${saved} DH</strong> → Total : <strong>${amount} DH</strong>`;
   } else {
     dp.style.display = 'none';
   }
 
-  // Update pay button
   const btn = document.getElementById('pay-btn-txt');
-  if (STATE.payMode === 'gc')    btn.textContent = `Payer ${amount} DH via Carte Cadeau →`;
-  if (STATE.payMode === 'card')  btn.textContent = `Payer ${amount} DH par carte →`;
-  if (STATE.payMode === 'mixed') {
-    btn.textContent = `Confirmer le paiement mixte →`;
-    updateMixedSplit();
-  }
+  if (STATE.payMode === 'gc')    btn.textContent = amount ? `Payer ${amount} DH via Carte Cadeau →` : 'Payer →';
+  if (STATE.payMode === 'card')  btn.textContent = amount ? `Payer ${amount} DH par carte →` : 'Payer →';
+  if (STATE.payMode === 'mixed') { btn.textContent = 'Confirmer le paiement mixte →'; updateMixedSplit(); }
 }
 
 function updateMixedSplit() {
   const raw    = parseFloat(document.getElementById('ps-amount').value) || 0;
-  const disc   = STATE.discount / 100;
-  const amount = parseFloat((raw * (1 - disc)).toFixed(2));
+  const amount = parseFloat((raw * (1 - STATE.discount/100)).toFixed(2));
   const pct    = parseInt(document.getElementById('gc-split-slider').value);
-  const gcPart = Math.min(parseFloat((amount * pct / 100).toFixed(2)), STATE.giftCard?.balance || 0);
-  const cardPt = parseFloat((amount - gcPart).toFixed(2));
+  const gcMax  = STATE.giftCard?.balance || 0;
+  const gcPart = Math.min(parseFloat((amount * pct / 100).toFixed(2)), gcMax);
+  const cPart  = parseFloat((amount - gcPart).toFixed(2));
 
-  document.getElementById('mb-gc-part').textContent   = `${gcPart} DH`;
-  document.getElementById('mb-card-part').textContent  = `${cardPt} DH`;
-  document.getElementById('mb-total').textContent      = `${amount} DH`;
+  document.getElementById('mb-gc-part').textContent  = `${gcPart} DH`;
+  document.getElementById('mb-card-part').textContent = `${cPart} DH`;
+  document.getElementById('mb-total').textContent     = `${amount} DH`;
 }
 
 async function simulatePay() {
-  const raw    = parseFloat(document.getElementById('ps-amount').value);
-  if (!raw || raw <= 0) { toast('⚠ Entrez un montant'); return; }
+  const raw = parseFloat(document.getElementById('ps-amount').value);
+  if (!raw || raw <= 0) { toast('⚠ Entrez un montant valide'); return; }
+
   if (!STATE.giftCard && (STATE.payMode === 'gc' || STATE.payMode === 'mixed')) {
     toast('⚠ Aucune carte cadeau liée'); return;
   }
 
-  const disc   = STATE.discount / 100;
-  const amount = parseFloat((raw * (1 - disc)).toFixed(2));
+  const amount  = parseFloat((raw * (1 - STATE.discount/100)).toFixed(2));
+  let gcDeduct  = 0;
 
-  let gcDeduct = 0;
   if (STATE.payMode === 'gc') {
-    if (STATE.giftCard.balance < amount) { toast(`⚠ Solde insuffisant (${STATE.giftCard.balance} DH disponibles)`); return; }
+    if (STATE.giftCard.balance < amount) {
+      toast(`⚠ Solde insuffisant (${STATE.giftCard.balance} DH disponibles — besoin: ${amount} DH)`);
+      return;
+    }
     gcDeduct = amount;
   } else if (STATE.payMode === 'mixed') {
     const pct = parseInt(document.getElementById('gc-split-slider').value);
@@ -1428,49 +1456,72 @@ async function simulatePay() {
 
   const btn = document.getElementById('pay-btn-txt');
   btn.textContent = '⏳ Traitement...';
+  btn.parentElement.disabled = true;
+
+  let success = true;
+  const errors = [];
 
   try {
+    // 1. Déduire de la carte cadeau (appel API réel)
     if (gcDeduct > 0 && STATE.giftCard) {
-      await fetch(`${API}/api/gift-cards/${STATE.giftCard.code}/redeem`, {
-        method:'POST', headers:authHeaders(),
-        body:JSON.stringify({ amount: gcDeduct })
+      const gcRes = await fetch(ROUTES.GC_REDEEM(STATE.giftCard.code), {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ amount: gcDeduct })
       });
+      const gcData = await gcRes.json();
+      if (!gcRes.ok) {
+        errors.push(gcData.error || 'Erreur carte cadeau');
+        success = false;
+      } else {
+        STATE.giftCard.balance = gcData.balance ?? (STATE.giftCard.balance - gcDeduct);
+      }
     }
-    // Points earned
+
+    // 2. Ajouter les points de fidélité (appel API réel)
     const ptsEarned = Math.floor(amount / 10);
-
-    // Update local state
-    if (STATE.giftCard) STATE.giftCard.balance -= gcDeduct;
-    if (STATE.user) {
-      STATE.user.loyaltyPoints = (STATE.user.loyaltyPoints || 0) + ptsEarned;
-      STATE.user.totalSpent    = (STATE.user.totalSpent || 0) + amount;
-      STATE.user.savings       = (STATE.user.savings || 0) + (raw - amount);
+    if (ptsEarned > 0 && success) {
+      const lyRes = await fetch(ROUTES.LOYALTY_ADD, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ points: ptsEarned })
+      });
+      if (lyRes.ok) {
+        const lyData = await lyRes.json();
+        if (STATE.user) {
+          STATE.user.loyaltyPoints = lyData.loyaltyPoints;
+          STATE.user.level         = lyData.level;
+        }
+      }
     }
 
-    // Re-render
-    renderGiftCard();
-    loadUserData(STATE.user);
-    document.getElementById('ps-amount').value = '';
-    document.getElementById('ps-discount-preview').style.display = 'none';
+    if (success) {
+      if (STATE.user) {
+        STATE.user.totalSpent = (STATE.user.totalSpent || 0) + amount;
+        STATE.user.savings    = (STATE.user.savings || 0) + (raw - amount);
+      }
+      renderGiftCard();
+      loadUserData(STATE.user);
+      document.getElementById('ps-amount').value            = '';
+      document.getElementById('ps-discount-preview').style.display = 'none';
+      toast(`✅ Paiement de ${amount} DH confirmé · +${Math.floor(amount/10)} LUX Points !`, 4500);
+    } else {
+      toast('❌ ' + errors.join(' — '));
+    }
 
-    toast(`✅ Paiement de ${amount} DH confirmé · +${ptsEarned} LUX Points !`, 4000);
   } catch(e) {
-    // Simulate locally
-    if (STATE.giftCard) STATE.giftCard.balance -= gcDeduct;
-    if (STATE.user) STATE.user.loyaltyPoints = (STATE.user.loyaltyPoints || 0) + Math.floor(amount/10);
-    renderGiftCard();
-    toast(`✅ Paiement simulé (${amount} DH) · Mode demo`, 4000);
+    toast('❌ Erreur réseau lors du paiement — réessayez');
+    console.error('[SIMULATE_PAY]', e.message);
   } finally {
+    btn.parentElement.disabled = false;
     updatePaymentSim();
     btn.textContent = 'Payer →';
   }
 }
 
 /* ══════════════════════════════════════════════════════════════
-   REWARDS
+   RÉCOMPENSES
 ══════════════════════════════════════════════════════════════ */
 function renderRewards() {
-  const pts = STATE.user?.loyaltyPoints || 0;
+  const pts  = STATE.user?.loyaltyPoints || 0;
   const grid = document.getElementById('rewards-grid');
   grid.innerHTML = REWARDS.map(r => {
     const canRedeem = pts >= r.pts;
@@ -1491,40 +1542,57 @@ async function redeemReward(id, pts, name) {
   if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
 
   try {
-    await fetch(`${API}/api/loyalty/redeem`, {
-      method:'POST', headers:authHeaders(),
-      body:JSON.stringify({ rewardId:id, points:pts })
+    // Déduire les points via API
+    const res = await fetch(ROUTES.LOYALTY_ADD, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ points: -pts })   // valeur négative = déduction
     });
-  } catch(e) {}
+    if (res.ok) {
+      const data = await res.json();
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints; STATE.user.level = data.level; }
+    } else {
+      // Déduction locale si l'API ne supporte pas les valeurs négatives
+      if (STATE.user) STATE.user.loyaltyPoints -= pts;
+    }
+  } catch(e) {
+    if (STATE.user) STATE.user.loyaltyPoints -= pts;
+    console.error('[REDEEM]', e.message);
+  }
 
-  STATE.user.loyaltyPoints -= pts;
   loadUserData(STATE.user);
   renderRewards();
-  toast(`🎁 "${name}" échangé avec succès !`, 4000);
+  toast(`🎁 "${name}" échangé — votre récompense sera prête en café !`, 4000);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   INIT — vérifier session existante
+   INIT — Vérifier session existante
+   GET /api/auth/customer/me (avec Bearer token)
 ══════════════════════════════════════════════════════════════ */
 (async function init() {
   const tok = getToken();
   if (tok) {
     try {
-      const res = await fetch(`${API}/api/auth/me`, { headers:authHeaders() });
+      const res = await fetch(ROUTES.ME, { headers: authHeaders() });
       if (res.ok) {
         const user = await res.json();
         loadUserData(user);
         showApp();
-        loadOrders();
+        // Charger commandes et cartes en parallèle
+        await Promise.all([loadOrders(), loadMyGiftCards()]);
       } else if (res.status === 401) {
+        // Token expiré → nettoyer
         clearToken();
+      } else {
+        console.error('[INIT] API error:', res.status);
       }
     } catch(e) {
-      // Token exists but API unreachable → demo mode
-      if (tok === 'demo_token_cafeslux') demoLogin();
+      // API injoignable — ne pas auto-connecter, afficher auth screen
+      console.error('[INIT] Network error:', e.message);
+      toast('⚠ Serveur indisponible — veuillez réessayer');
     }
   }
-  setTimeout(hideLoader, 600);
+  // Toujours cacher le loader après 800ms max
+  setTimeout(hideLoader, 800);
 })();
 </script>
 </body>
