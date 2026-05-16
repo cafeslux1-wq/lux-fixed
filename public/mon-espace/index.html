@@ -989,6 +989,42 @@ function parseName(fullName = '') {
 })();
 
 /* ══════════════════════════════════════════════════════════════
+   safeFetch — Protection contre les réponses HTML (Railway 404)
+   Résout: "JSON.parse: unexpected character at line 1 column 1"
+   Cause: Route inexistante → Railway retourne HTML, pas JSON
+══════════════════════════════════════════════════════════════ */
+async function safeFetch(url, options = {}) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch(e) {
+    throw new Error('Serveur injoignable — vérifiez votre connexion');
+  }
+
+  const text = await res.text().catch(() => '');
+  let data = {};
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch(_) {
+      // Le serveur a retourné du HTML (page 404 Railway, Nginx, etc.)
+      if (res.status === 404) {
+        throw new Error(
+          `Route "${url.replace(/.*\/api\//,'/api/')}" introuvable — ` +
+          `déployez le server.js mis à jour sur Railway`
+        );
+      }
+      if (res.status === 401) data = { error: 'Session expirée — reconnectez-vous' };
+      else if (res.status >= 500) throw new Error(`Erreur interne du serveur (${res.status}) — vérifiez les logs Railway`);
+      else throw new Error(`Réponse invalide du serveur (HTTP ${res.status})`);
+    }
+  }
+
+  return { res, data };
+}
+
+/* ══════════════════════════════════════════════════════════════
    LOADER
 ══════════════════════════════════════════════════════════════ */
 function hideLoader() {
@@ -1020,12 +1056,11 @@ async function doLogin() {
   btn.parentElement.disabled = true;
 
   try {
-    const res  = await fetch(ROUTES.LOGIN, {
+    const { res, data }  = await safeFetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier, password })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1071,12 +1106,11 @@ async function doRegister() {
   btn.textContent = '⏳ Création...';
 
   try {
-    const res  = await fetch(ROUTES.REGISTER, {
+    const { res, data }  = await safeFetch(ROUTES.REGISTER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, email: email || undefined, password: pw })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1222,11 +1256,10 @@ async function saveProfile() {
   if (!name) { toast('⚠ Le nom est requis'); return; }
 
   try {
-    const res  = await fetch(ROUTES.PROFILE_PATCH, {
+    const { res, data }  = await safeFetch(ROUTES.PROFILE_PATCH, {
       method: 'PATCH', headers: authHeaders(),
       body: JSON.stringify({ name, email: email || undefined })
     });
-    const data = await res.json();
 
     if (res.ok) {
       Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
@@ -1249,9 +1282,8 @@ async function loadOrders() {
   document.getElementById('orders-list').innerHTML = `
     <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
   try {
-    const res = await fetch(ROUTES.ORDERS, { headers: authHeaders() });
+    const { res, data } = await safeFetch(ROUTES.ORDERS, { headers: authHeaders() });
     if (res.ok) {
-      const data = await res.json();
       // Mapper les transactions Prisma vers le format UI
       STATE.orders = (Array.isArray(data) ? data : []).map(tx => ({
         id:         tx.externalId || tx.id,
@@ -1324,9 +1356,9 @@ function formatCode(inp) {
 // Charger les cartes liées au compte (par phone)
 async function loadMyGiftCards() {
   try {
-    const res  = await fetch(ROUTES.GC_MY, { headers: authHeaders() });
-    if (res.ok) {
-      const cards = await res.json();
+    const { res: gcRes, data: gcData } = await safeFetch(ROUTES.GC_MY, { headers: authHeaders() });
+    const cards = Array.isArray(gcData) ? gcData : [];
+    if (gcRes.ok) {
       // Prendre la première carte active avec solde > 0
       const active = cards.find(c => c.balance > 0 && c.status === 'active');
       if (active) {
@@ -1345,8 +1377,7 @@ async function linkCard() {
   if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide (format: XXXX-XXXX-XXXX-XXXX)'); return; }
 
   try {
-    const res  = await fetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
-    const data = await res.json();
+    const { res, data }  = await safeFetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
 
     if (res.ok && data.balance != null) {
       // Le schema GiftCard utilise 'expires' (pas 'expiresAt')
@@ -1548,8 +1579,7 @@ async function redeemReward(id, pts, name) {
       body: JSON.stringify({ points: -pts })   // valeur négative = déduction
     });
     if (res.ok) {
-      const data = await res.json();
-      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints; STATE.user.level = data.level; }
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
     } else {
       // Déduction locale si l'API ne supporte pas les valeurs négatives
       if (STATE.user) STATE.user.loyaltyPoints -= pts;
@@ -1572,14 +1602,14 @@ async function redeemReward(id, pts, name) {
   const tok = getToken();
   if (tok) {
     try {
-      const res = await fetch(ROUTES.ME, { headers: authHeaders() });
-      if (res.ok) {
-        const user = await res.json();
+      const { res: meRes, data: meData } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+      if (meRes.ok) {
+        const user = meData;
         loadUserData(user);
         showApp();
         // Charger commandes et cartes en parallèle
         await Promise.all([loadOrders(), loadMyGiftCards()]);
-      } else if (res.status === 401) {
+      } else if (meRes.status === 401) {
         // Token expiré → nettoyer
         clearToken();
       } else {
