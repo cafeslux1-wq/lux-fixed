@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#C9A84C">
+<title>CAFÉ LUX — Offres & Fidélité</title>
+
+<script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+<script src="../src/js/api/api-client.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════════════════
+   CAFÉ LUX — Offres & Fidélité
+   Aesthetic: Art Deco Noir · Precious Metal · Ritual
+   ══════════════════════════════════════════════════════════ */
+:root {
+  --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#8B6E2F; --gold-xs:rgba(201,168,76,.06);
+  --dark:#050505; --dark2:#0C0C0C; --dark3:#141414; --dark4:#1C1C1C;
+  --border:rgba(201,168,76,.14); --border2:rgba(201,168,76,.35); --border3:rgba(201,168,76,.6);
+  --text:#F0E8D5; --muted:rgba(240,232,213,.45); --muted2:rgba(240,232,213,.65);
+  --green:#2ECC71; --red:#E74C3C; --blue:#5B9BD5;
+  --fd:'Playfair Display',serif;
+  --fi:'Cormorant Garamond',serif;
+  --fb:'DM Sans',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --h:58px;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0 }
+html { -webkit-font-smoothing:antialiased; scroll-behavior:smooth }
+body {
+  background:var(--dark);
+  color:var(--text);
+  font-family:var(--fb);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Ambient background ─────────────────────────────────── */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(201,168,76,.055) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 85% 75%, rgba(201,168,76,.04) 0%, transparent 60%);
+}
+
+::-webkit-scrollbar { width:3px }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px }
+
+/* ── Topbar ─────────────────────────────────────────────── */
+.topbar {
+  height:var(--h);
+  background:rgba(5,5,5,.92); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; padding:0 18px; gap:12px;
+}
+.btn-back {
+  padding:7px 14px; background:transparent;
+  border:1px solid var(--border2); border-radius:20px;
+  color:var(--gold); font-size:11px; font-weight:600;
+  cursor:pointer; letter-spacing:.5px; transition:.2s;
+  flex-shrink:0;
+}
+.btn-back:hover { background:rgba(201,168,76,.08) }
+.topbar-logo {
+  font-family:var(--fd); color:var(--gold);
+  font-size:16px; letter-spacing:3px; flex:1; text-align:center;
+}
+.topbar-right { width:72px; display:flex; justify-content:flex-end }
+
+/* ── Page layout ────────────────────────────────────────── */
+.page {
+  position:relative; z-index:1;
+  max-width:680px; margin:0 auto;
+  padding:calc(var(--h) + 32px) 16px 60px;
+}
+
+/* ── Section headers ────────────────────────────────────── */
+.sec-label {
+  font-size:9px; letter-spacing:5px; color:var(--gold);
+  text-transform:uppercase; opacity:.6; margin-bottom:8px;
+  display:flex; align-items:center; gap:10px;
+}
+.sec-label::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(to right, var(--border2), transparent);
+}
+.sec-title {
+  font-family:var(--fd); font-size:clamp(22px,5vw,32px);
+  color:var(--gold); letter-spacing:2px;
+  margin-bottom:6px; line-height:1.15;
+}
+.sec-sub {
+  font-family:var(--fi); font-style:italic; font-size:15px;
+  color:var(--muted2); margin-bottom:28px; line-height:1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HERO LOYALTY CARD
+   ══════════════════════════════════════════════════════════ */
+.loyalty-hero {
+  background:linear-gradient(135deg,#0D0B07 0%,#1A140A 40%,#0F0E0B 100%);
+  border:1px solid var(--border2); border-radius:22px;
+  padding:28px 26px; margin-bottom:32px; position:relative;
+  overflow:hidden;
+}
+.loyalty-hero::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 80% -10%, rgba(201,168,76,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 10% 110%, rgba(201,168,76,.07) 0%, transparent 50%);
+  pointer-events:none;
+}
+.loyalty-hero-top {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  margin-bottom:20px; position:relative; z-index:1;
+}
+.loyalty-brand { font-family:var(--fd); font-size:18px; color:var(--gold); letter-spacing:3px }
+.loyalty-tier {
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  color:#000; font-size:10px; font-weight:900; letter-spacing:1.5px;
+  padding:5px 12px; border-radius:20px; text-transform:uppercase;
+}
+.loyalty-phone-row {
+  font-family:var(--fm); font-size:12px; color:var(--muted);
+  margin-bottom:22px; letter-spacing:1px; position:relative; z-index:1;
+}
+.loyalty-pts-row {
+  display:flex; align-items:flex-end; gap:10px;
+  position:relative; z-index:1;
+}
+.loyalty-pts-num {
+  font-family:var(--fd); font-size:48px; color:var(--gold);
+  line-height:1; font-weight:700; letter-spacing:-1px;
+}
+.loyalty-pts-label {
+  font-size:11px; color:var(--muted); letter-spacing:2px;
+  text-transform:uppercase; padding-bottom:8px;
+}
+.loyalty-progress-row {
+  margin-top:16px; position:relative; z-index:1;
+}
+.loyalty-progress-labels {
+  display:flex; justify-content:space-between;
+  font-size:10px; color:var(--muted); margin-bottom:6px;
+  letter-spacing:.5px;
+}
+.loyalty-bar {
+  height:5px; background:rgba(201,168,76,.12); border-radius:5px; overflow:hidden;
+}
+.loyalty-bar-fill {
+  height:100%;
+  background:linear-gradient(to right, var(--gold-d), var(--gold), var(--gold-l));
+  border-radius:5px; transition:width 1.2s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.loyalty-bar-fill::after {
+  content:''; position:absolute; right:0; top:50%; transform:translateY(-50%);
+  width:10px; height:10px; border-radius:50%;
+  background:var(--gold-l); box-shadow:0 0 8px var(--gold);
+}
+.loyalty-next-label {
+  font-size:10px; color:var(--gold); margin-top:6px; text-align:right;
+  letter-spacing:.5px;
+}
+
+/* Phone check form */
+.phone-check-card {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:18px; padding:24px; margin-bottom:32px;
+  text-align:center;
+}
+.phone-check-title {
+  font-family:var(--fd); font-size:16px; color:var(--gold);
+  letter-spacing:2px; margin-bottom:6px;
+}
+.phone-check-sub {
+  font-size:12px; color:var(--muted); margin-bottom:18px; line-height:1.5;
+}
+.phone-input-row {
+  display:flex; gap:8px;
+}
+.phone-input {
+  flex:1; background:var(--dark3); border:1.5px solid var(--border);
+  border-radius:10px; color:var(--text); padding:11px 14px;
+  font-size:14px; outline:none; transition:.2s; font-family:var(--fm);
+}
+.phone-input:focus { border-color:var(--gold) }
+.btn-check {
+  padding:11px 18px; background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none; border-radius:10px; color:#000; font-weight:800;
+  font-size:12px; cursor:pointer; letter-spacing:.5px; transition:.2s;
+  white-space:nowrap;
+}
+.btn-check:hover { background:linear-gradient(135deg,var(--gold),var(--gold-l)) }
+
+/* ═══════════════════════════════════════════════════════════
+   CURRENT PROMOTIONS
+   ══════════════════════════════════════════════════════════ */
+.promos-grid {
+  display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:32px;
+}
+.promo-card {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:16px; padding:18px 20px;
+  display:flex; align-items:center; gap:16px;
+  transition:.2s; cursor:default; position:relative; overflow:hidden;
+}
+.promo-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(to bottom, var(--gold-d), var(--gold));
+}
+.promo-card.hot::before { background:linear-gradient(to bottom,#E74C3C,#C0392B) }
+.promo-card.green::before { background:linear-gradient(to bottom,#27AE60,var(--green)) }
+.promo-icon-wrap {
+  width:48px; height:48px; border-radius:14px;
+  background:rgba(201,168,76,.08); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; flex-shrink:0;
+}
+.promo-card.hot .promo-icon-wrap { background:rgba(231,76,60,.08); border-color:rgba(231,76,60,.2) }
+.promo-card.green .promo-icon-wrap { background:rgba(46,204,113,.08); border-color:rgba(46,204,113,.2) }
+.promo-body { flex:1 }
+.promo-name {
+  font-family:var(--fd); font-size:14px; color:var(--text);
+  margin-bottom:3px; letter-spacing:.5px;
+}
+.promo-desc { font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:6px }
+.promo-validity {
+  font-size:10px; color:var(--muted); font-family:var(--fm);
+  letter-spacing:.3px;
+}
+.promo-badge {
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  color:#000; font-size:11px; font-weight:900; padding:5px 10px;
+  border-radius:8px; flex-shrink:0; font-family:var(--fd);
+  white-space:nowrap; letter-spacing:.5px;
+}
+.promo-badge.red { background:linear-gradient(135deg,#C0392B,#E74C3C); color:#fff }
+.promo-badge.green { background:linear-gradient(135deg,#1E8449,var(--green)); color:#fff }
+
+/* ═══════════════════════════════════════════════════════════
+   COUPON SECTION
+   ══════════════════════════════════════════════════════════ */
+.coupon-box {
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:18px; padding:22px; margin-bottom:32px;
+}
+.coupon-title {
+  font-family:var(--fd); font-size:15px; color:var(--gold);
+  letter-spacing:1.5px; margin-bottom:4px;
+}
+.coupon-sub { font-size:11px; color:var(--muted); margin-bottom:16px; line-height:1.5 }
+.coupon-input-row { display:flex; gap:8px; margin-bottom:10px }
+.coupon-input {
+  flex:1; background:var(--dark3); border:1.5px solid var(--border);
+  border-radius:10px; color:var(--gold); padding:11px 14px;
+  font-size:14px; font-family:var(--fm); font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; outline:none; transition:.2s;
+}
+.coupon-input::placeholder { color:rgba(201,168,76,.25); font-size:11px; letter-spacing:1px; font-weight:400 }
+.coupon-input:focus { border-color:var(--gold) }
+.btn-coupon {
+  padding:11px 16px; background:var(--dark3);
+  border:1.5px solid var(--border2); border-radius:10px;
+  color:var(--gold); font-size:12px; font-weight:700;
+  cursor:pointer; transition:.2s; white-space:nowrap; letter-spacing:.5px;
+}
+.btn-coupon:hover { background:rgba(201,168,76,.1); border-color:var(--gold) }
+.coupon-result {
+  display:none; padding:12px 14px;
+  background:rgba(46,204,113,.07); border:1px solid rgba(46,204,113,.25);
+  border-radius:10px; font-size:12px; color:var(--green);
+  font-weight:600; letter-spacing:.3px;
+}
+.coupon-result.error {
+  background:rgba(231,76,60,.07); border-color:rgba(231,76,60,.25); color:#ff7675;
+}
+.coupon-result.show { display:block; animation:fade-in .3s ease }
+@keyframes fade-in { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════════════════════════
+   CARTE CADEAU
+   ══════════════════════════════════════════════════════════ */
+.gift-section { margin-bottom:32px }
+.gift-cards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
+.gift-card-item {
+  background:linear-gradient(135deg,var(--dark3),var(--dark2));
+  border:1px solid var(--border); border-radius:14px;
+  padding:16px 12px; text-align:center; cursor:pointer; transition:.2s;
+  position:relative; overflow:hidden;
+}
+.gift-card-item::after {
+  content:''; position:absolute; top:-30%; right:-30%;
+  width:80%; height:80%; border-radius:50%;
+  background:radial-gradient(circle, rgba(201,168,76,.08), transparent 70%);
+  pointer-events:none;
+}
+.gift-card-item:hover {
+  border-color:var(--border2); transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(201,168,76,.1);
+}
+.gift-card-item.selected {
+  border-color:var(--gold); background:rgba(201,168,76,.06);
+  box-shadow:0 0 0 3px rgba(201,168,76,.12);
+}
+.gift-amount {
+  font-family:var(--fd); font-size:20px; color:var(--gold);
+  font-weight:700; margin-bottom:3px;
+}
+.gift-currency { font-size:10px; color:var(--muted); letter-spacing:1px }
+.gift-buy-row { margin-top:14px }
+.btn-gift-buy {
+  width:100%; padding:12px; border:none; border-radius:12px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  color:#000; font-weight:900; font-size:13px; cursor:pointer;
+  letter-spacing:.5px; transition:.2s; font-family:var(--fd);
+}
+.btn-gift-buy:hover { background:linear-gradient(135deg,var(--gold),var(--gold-l)); transform:translateY(-1px) }
+.btn-gift-buy:disabled { opacity:.4; cursor:not-allowed; transform:none }
+
+/* Gift buyer form */
+.gift-form {
+  display:none; margin-top:16px;
+  background:var(--dark3); border:1px solid var(--border);
+  border-radius:14px; padding:18px;
+  animation:slide-down .25s ease;
+}
+@keyframes slide-down { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+.gift-form.show { display:block }
+.gift-form-title {
+  font-family:var(--fd); font-size:13px; color:var(--gold);
+  letter-spacing:1.5px; margin-bottom:14px; text-align:center;
+}
+.gift-field { margin-bottom:10px }
+.gift-field label { font-size:10px; color:var(--muted); letter-spacing:1px; display:block; margin-bottom:4px; text-transform:uppercase }
+.gift-field input, .gift-field textarea {
+  width:100%; background:var(--dark4); border:1px solid var(--border);
+  border-radius:8px; color:var(--text); padding:9px 12px;
+  font-size:12px; outline:none; transition:.2s; font-family:var(--fb);
+}
+.gift-field input:focus, .gift-field textarea:focus { border-color:var(--border2) }
+.gift-field textarea { resize:none; height:54px; font-size:11px }
+.gift-fields-row { display:grid; grid-template-columns:1fr 1fr; gap:8px }
+.btn-gift-confirm {
+  width:100%; padding:12px; margin-top:8px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none; border-radius:10px; color:#000; font-weight:800;
+  font-size:13px; cursor:pointer; letter-spacing:.5px; transition:.2s;
+}
+.btn-gift-confirm:hover { background:linear-gradient(135deg,var(--gold),var(--gold-l)) }
+
+/* ═══════════════════════════════════════════════════════════
+   TIER ROADMAP
+   ══════════════════════════════════════════════════════════ */
+.tiers-section { margin-bottom:32px }
+.tiers-list { display:flex; flex-direction:column; gap:8px }
+.tier-row {
+  display:flex; align-items:center; gap:14px;
+  background:var(--dark2); border:1px solid var(--border);
+  border-radius:14px; padding:14px 16px; transition:.15s;
+}
+.tier-row.current {
+  border-color:var(--border2);
+  background:linear-gradient(135deg,rgba(201,168,76,.08),var(--dark2));
+}
+.tier-gem { font-size:22px; width:36px; text-align:center; flex-shrink:0 }
+.tier-info { flex:1 }
+.tier-name {
+  font-family:var(--fd); font-size:13px; color:var(--text);
+  margin-bottom:2px; letter-spacing:.5px;
+}
+.tier-req { font-size:10px; color:var(--muted); letter-spacing:.5px }
+.tier-perks { font-size:10px; color:var(--muted2); margin-top:3px; line-height:1.4 }
+.tier-current-badge {
+  font-size:9px; font-weight:800; letter-spacing:1px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  color:#000; padding:4px 10px; border-radius:10px;
+  text-transform:uppercase; flex-shrink:0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════ */
+#toast {
+  position:fixed; bottom:24px; left:50%;
+  transform:translateX(-50%) translateY(50px);
+  background:var(--dark2); border:1px solid var(--border2);
+  border-radius:12px; padding:10px 20px;
+  font-size:12px; color:var(--text); z-index:9000;
+  opacity:0; transition:.3s ease; pointer-events:none;
+  white-space:nowrap; max-width:90vw; text-align:center;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0) }
+#toast.gold { border-color:var(--gold); color:var(--gold) }
+#toast.green { border-color:rgba(46,204,113,.5); color:var(--green) }
+#toast.err   { border-color:rgba(231,76,60,.5); color:#ff7675 }
+
+/* ═══════════════════════════════════════════════════════════
+   SUCCESS MODAL (Gift Card)
+   ══════════════════════════════════════════════════════════ */
+.modal-ov {
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-ov.open { display:flex; animation:fade-in .2s ease }
+.modal-box {
+  background:var(--dark2); border:1px solid var(--border2);
+  border-radius:20px; padding:30px 24px;
+  max-width:360px; width:100%; text-align:center;
+}
+.modal-icon { font-size:48px; margin-bottom:12px }
+.modal-title { font-family:var(--fd); font-size:18px; color:var(--gold); margin-bottom:6px; letter-spacing:2px }
+.modal-sub { font-size:12px; color:var(--muted2); margin-bottom:8px; line-height:1.6 }
+.modal-code {
+  font-family:var(--fm); font-size:18px; color:var(--gold); font-weight:700;
+  background:rgba(201,168,76,.08); border:1px solid var(--border2);
+  border-radius:10px; padding:10px 16px; margin:14px 0;
+  letter-spacing:3px; display:inline-block;
+}
+.btn-modal-close {
+  width:100%; padding:12px; margin-top:8px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none; border-radius:10px; color:#000; font-weight:800;
+  font-size:13px; cursor:pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+@media(max-width:600px){
+  .page { padding-top:calc(var(--h) + 20px); padding-left:12px; padding-right:12px }
+  .loyalty-pts-num { font-size:38px }
+  .gift-cards-grid { grid-template-columns:repeat(3,1fr); gap:7px }
+  .gift-amount { font-size:16px }
+  .gift-card-item { padding:12px 8px }
+  .tier-perks { display:none }
+  .phone-input-row { flex-direction:column }
+  .gift-fields-row { grid-template-columns:1fr }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Topbar ─────────────────────────────────────────────── -->
+<div class="topbar">
+  <button class="btn-back" onclick="window.location.href='../index.html'">← Accueil</button>
+  <div class="topbar-logo">✦ LUX</div>
+  <div class="topbar-right"></div>
+</div>
+
+<!-- ── Page ───────────────────────────────────────────────── -->
+<div class="page">
+
+  <!-- ══ HERO — Carte Fidélité ══════════════════════════════ -->
+  <div id="section-loyalty"></div><!-- anchor -->
+
+  <!-- State A: not logged in -->
+  <div id="phone-check-wrap">
+    <div class="sec-label">Programme de Fidélité</div>
+    <h1 class="sec-title">Vos Points LUX</h1>
+    <p class="sec-sub">Entrez votre numéro pour consulter votre solde de points et votre niveau.</p>
+    <div class="phone-check-card">
+      <div class="phone-check-title">✦ Accéder à mon compte</div>
+      <div class="phone-check-sub">Chaque dépense vous rapporte des points.<br>Accumulez pour passer au niveau supérieur.</div>
+      <div class="phone-input-row">
+        <input type="tel" id="loyalty-phone" class="phone-input"
+               placeholder="+212 6XX XXX XXX" maxlength="15"
+               onkeydown="if(event.key==='Enter')checkLoyalty()">
+        <button class="btn-check" onclick="checkLoyalty()">Vérifier →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State B: loyalty card shown after lookup -->
+  <div id="loyalty-card-wrap" style="display:none">
+    <div class="sec-label">Programme de Fidélité</div>
+    <div class="loyalty-hero" id="loyalty-card">
+      <div class="loyalty-hero-top">
+        <div class="loyalty-brand">✦ LUX CARD</div>
+        <div class="loyalty-tier" id="lc-tier">BRONZE</div>
+      </div>
+      <div class="loyalty-phone-row" id="lc-phone">+212 ●●● ●●● ●●●</div>
+      <div class="loyalty-pts-row">
+        <div class="loyalty-pts-num" id="lc-pts">0</div>
+        <div class="loyalty-pts-label">points</div>
+      </div>
+      <div class="loyalty-progress-row">
+        <div class="loyalty-progress-labels">
+          <span id="lc-tier-name">Bronze</span>
+          <span id="lc-next-tier">→ Silver (500 pts)</span>
+        </div>
+        <div class="loyalty-bar">
+          <div class="loyalty-bar-fill" id="lc-bar" style="width:0%"></div>
+        </div>
+        <div class="loyalty-next-label" id="lc-pts-left"></div>
+      </div>
+    </div>
+    <button class="btn-back" style="margin-bottom:28px;display:inline-block" onclick="resetLoyalty()">← Changer de numéro</button>
+  </div>
+
+  <!-- ══ CURRENT PROMOTIONS ══════════════════════════════════ -->
+  <div class="sec-label">Offres en Cours</div>
+  <h2 class="sec-title">Promotions</h2>
+  <p class="sec-sub">Offres valables jusqu'à épuisement. Non cumulables.</p>
+  <div class="promos-grid" id="promos-grid">
+    <!-- Populated by JS below -->
+  </div>
+
+  <!-- ══ COUPON ══════════════════════════════════════════════ -->
+  <div class="sec-label">Réductions</div>
+  <div class="coupon-box">
+    <div class="coupon-title">🏷️ Code promo</div>
+    <div class="coupon-sub">Vous avez reçu un code de réduction ? Entrez-le ici pour vérifier sa validité avant votre commande.</div>
+    <div class="coupon-input-row">
+      <input type="text" id="coupon-input" class="coupon-input"
+             placeholder="LUXVIP · SUMMER25 · BIENVENUE"
+             maxlength="20" autocomplete="off"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter')checkCoupon()">
+      <button class="btn-coupon" onclick="checkCoupon()">Valider</button>
+    </div>
+    <div class="coupon-result" id="coupon-result"></div>
+  </div>
+
+  <!-- ══ CARTES CADEAUX ══════════════════════════════════════ -->
+  <div class="gift-section">
+    <div class="sec-label">Cadeaux</div>
+    <h2 class="sec-title">Cartes Cadeaux</h2>
+    <p class="sec-sub">Offrez une expérience LUX. Utilisable en café, gaming & réservations.</p>
+    <div class="gift-cards-grid" id="gift-grid">
+      <!-- Populated by JS -->
+    </div>
+    <div class="gift-buy-row">
+      <button class="btn-gift-buy" id="btn-buy-gift" onclick="openGiftForm()" disabled>
+        Sélectionnez un montant
+      </button>
+    </div>
+    <div class="gift-form" id="gift-form">
+      <div class="gift-form-title">✦ Détails de la carte cadeau</div>
+      <div class="gift-fields-row">
+        <div class="gift-field">
+          <label>Expéditeur (vous) *</label>
+          <input type="text" id="gf-sender" placeholder="Votre prénom">
+        </div>
+        <div class="gift-field">
+          <label>Destinataire *</label>
+          <input type="text" id="gf-recipient" placeholder="Prénom du bénéficiaire">
+        </div>
+      </div>
+      <div class="gift-field">
+        <label>Téléphone du destinataire *</label>
+        <input type="tel" id="gf-phone" placeholder="+212 6XX XXX XXX">
+      </div>
+      <div class="gift-field">
+        <label>Message personnel</label>
+        <textarea id="gf-msg" placeholder="Joyeux anniversaire ! Profite d'un moment LUX ✦"></textarea>
+      </div>
+      <button class="btn-gift-confirm" onclick="buyGiftCard()">✦ Commander cette carte — <span id="gf-amount-lbl">0</span> DH</button>
+    </div>
+  </div>
+
+  <!-- ══ TIERS ══════════════════════════════════════════════ -->
+  <div class="tiers-section">
+    <div class="sec-label">Niveaux</div>
+    <h2 class="sec-title">Programme Fidélité</h2>
+    <p class="sec-sub">Plus vous commandez, plus vous montez. Chaque niveau débloque des avantages exclusifs.</p>
+    <div class="tiers-list" id="tiers-list"></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ── Gift Card success modal ──────────────────────────── -->
+<div class="modal-ov" id="gift-success-modal" onclick="if(event.target===this)closeGiftModal()">
+  <div class="modal-box">
+    <div class="modal-icon">🎁</div>
+    <div class="modal-title">Carte Envoyée !</div>
+    <div class="modal-sub" id="gm-sub">Votre carte cadeau a été créée avec succès.</div>
+    <div class="modal-code" id="gm-code">LUX-XXXX-XXXX</div>
+    <div class="modal-sub" style="font-size:11px">Partagez ce code avec le destinataire.<br>Il peut l'utiliser lors de sa prochaine commande.</div>
+    <button class="btn-modal-close" onclick="closeGiftModal()">✦ Parfait</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── JAVASCRIPT ─────────────────────────────────────────── -->
+<script>
+'use strict';
+
+var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+
+// ── Toast ────────────────────────────────────────────────────
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show' + (type ? ' ' + type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = ''; }, 3200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROMOTIONS DATA
+// ═══════════════════════════════════════════════════════════
+var PROMOS = [
+  {
+    icon: '☕', type: 'gold',
+    name: 'Café Offert — 2ème visite',
+    desc: 'Revenez nous voir et votre 2ème café vous est offert. Sur présentation de votre numéro.',
+    badge: 'OFFERT',
+    validity: 'Valable tous les jours · Midi & Soir',
+    badgeType: 'gold',
+  },
+  {
+    icon: '🎮', type: 'gold',
+    name: 'Gaming Découverte',
+    desc: '30 minutes offertes pour toute 1ère session PS5 — nouveaux clients uniquement.',
+    badge: '-30 MIN',
+    validity: 'Valable sur présentation de la carte',
+    badgeType: 'gold',
+  },
+  {
+    icon: '🍳', type: 'green',
+    name: 'Breakfast à -15%',
+    desc: 'Sur tous les menus Breakfast de 8h à 11h en semaine. Hors Signature LUX.',
+    badge: '-15%',
+    validity: 'Lun → Ven · 08:00 → 11:00',
+    badgeType: 'green',
+  },
+  {
+    icon: '👥', type: 'hot',
+    name: 'Menu pour 2 — Spécial Duo',
+    desc: '2 plats principaux + 2 boissons chaudes à prix réduit. Sur réservation uniquement.',
+    badge: 'DUO',
+    validity: 'Sur réservation · Weekend',
+    badgeType: 'red',
+  },
+  {
+    icon: '🌟', type: 'gold',
+    name: '5× Points sur Signature LUX',
+    desc: 'Cette semaine : chaque commande de la carte Signature vous rapporte 5× les points habituels.',
+    badge: '5× PTS',
+    validity: 'Cette semaine uniquement',
+    badgeType: 'gold',
+  },
+];
+
+function buildPromos() {
+  var grid = document.getElementById('promos-grid');
+  grid.innerHTML = PROMOS.map(function(p) {
+    var cardCls = p.type === 'hot' ? 'promo-card hot' : p.type === 'green' ? 'promo-card green' : 'promo-card';
+    var badgeCls = p.badgeType === 'red' ? 'promo-badge red' : p.badgeType === 'green' ? 'promo-badge green' : 'promo-badge';
+    return '<div class="' + cardCls + '">' +
+           '<div class="promo-icon-wrap">' + p.icon + '</div>' +
+           '<div class="promo-body">' +
+           '<div class="promo-name">' + p.name + '</div>' +
+           '<div class="promo-desc">' + p.desc + '</div>' +
+           '<div class="promo-validity">⏱ ' + p.validity + '</div>' +
+           '</div>' +
+           '<div class="' + badgeCls + '">' + p.badge + '</div>' +
+           '</div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COUPON VALIDATOR
+// ═══════════════════════════════════════════════════════════
+var KNOWN_COUPONS = {
+  'BIENVENUE': { label: 'Bienvenue LUX', type: 'pct',   value: 10, min: 0   },
+  'LUXVIP':    { label: 'VIP LUX',       type: 'fixed', value: 20, min: 100 },
+  'GAMING10':  { label: 'Gaming -10%',   type: 'pct',   value: 10, min: 30  },
+  'SUMMER25':  { label: 'Summer Vibes',  type: 'pct',   value: 25, min: 50  },
+  'DELIVERY0': { label: 'Livraison',     type: 'delivery', value: 0, min: 0 },
+};
+
+function checkCoupon() {
+  var code   = document.getElementById('coupon-input').value.trim().toUpperCase();
+  var result = document.getElementById('coupon-result');
+  if (!code) { toast('⚠ Entrez un code promo', 'err'); return; }
+
+  // Try API first, then local fallback
+  fetch(API + '/api/coupons/check?code=' + code)
+    .then(function(r) { return r.json(); })
+    .then(function(data) { showCouponResult(data, result, code); })
+    .catch(function() {
+      // Offline fallback
+      var local = KNOWN_COUPONS[code];
+      if (local) {
+        showCouponResult({
+          valid: true,
+          label: local.label,
+          type:  local.type,
+          value: local.value,
+          minOrder: local.min,
+        }, result, code);
+      } else {
+        showCouponResult({ valid: false }, result, code);
+      }
+    });
+}
+
+function showCouponResult(data, el, code) {
+  el.classList.remove('error');
+  if (data && data.valid) {
+    var valueStr = data.type === 'pct'      ? '-' + data.value + '%'
+                 : data.type === 'fixed'    ? '-' + data.value + ' DH'
+                 : data.type === 'delivery' ? 'Livraison offerte'
+                 : '-' + data.value;
+    el.textContent = '✅ Code valide — ' + (data.label || code) + ' · ' + valueStr +
+                     (data.minOrder > 0 ? ' (min. ' + data.minOrder + ' DH)' : '');
+    el.classList.add('show');
+    toast('✦ Code accepté !', 'green');
+  } else {
+    el.textContent = '❌ Code invalide ou expiré. Vérifiez la saisie.';
+    el.classList.add('error', 'show');
+    toast('Code invalide', 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOYALTY CHECK
+// ═══════════════════════════════════════════════════════════
+var TIERS = [
+  { name:'Bronze',   gem:'🥉', pts:0,    next:500,  perks:'Café offert à la 2ème visite · 1 pt / 10 DH' },
+  { name:'Silver',   gem:'🥈', pts:500,  next:1500, perks:'5% sur toutes commandes · 2 pts / 10 DH' },
+  { name:'Gold',     gem:'🥇', pts:1500, next:3000, perks:'10% · Réservation prioritaire · 3 pts / 10 DH', current:false },
+  { name:'Platinum', gem:'💎', pts:3000, next:6000, perks:'15% · Gaming 10 min offerts · Accès VIP' },
+  { name:'Diamond',  gem:'💠', pts:6000, next:null, perks:'20% + Expériences exclusives · Concierge LUX' },
+];
+
+function getTier(pts) {
+  var t = TIERS[0];
+  TIERS.forEach(function(tier) { if (pts >= tier.pts) t = tier; });
+  return t;
+}
+
+function checkLoyalty() {
+  var phone = document.getElementById('loyalty-phone').value.trim();
+  if (!phone) { toast('⚠ Entrez votre téléphone', 'err'); return; }
+
+  // Normalize phone
+  var cleaned = phone.replace(/\s+/g, '').replace(/^00/, '+');
+
+  fetch(API + '/api/customers?phone=' + encodeURIComponent(cleaned))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var customers = Array.isArray(data) ? data : (data.data || []);
+      var customer  = customers[0];
+      if (!customer) throw new Error('not found');
+      renderLoyaltyCard(customer, phone);
+    })
+    .catch(function() {
+      // Friendly fallback — new customer
+      renderLoyaltyCard({ name: 'Nouveau client', loyaltyPoints: 0, level: 'bronze' }, phone);
+      toast('Nouveau membre LUX — bienvenue !', 'gold');
+    });
+}
+
+function renderLoyaltyCard(customer, phone) {
+  var pts  = customer.loyaltyPoints || 0;
+  var tier = getTier(pts);
+  var next = tier.next;
+  var pct  = next ? Math.min(100, Math.round((pts - tier.pts) / (next - tier.pts) * 100)) : 100;
+  var left = next ? (next - pts) + ' pts pour ' : '';
+  var nextTier = next ? TIERS.find(function(t){ return t.pts === next; }) : null;
+
+  document.getElementById('lc-pts').textContent   = pts.toLocaleString('fr-FR');
+  document.getElementById('lc-tier').textContent  = tier.name.toUpperCase();
+  document.getElementById('lc-phone').textContent = phone;
+  document.getElementById('lc-tier-name').textContent = tier.name;
+  document.getElementById('lc-next-tier').textContent = nextTier ? ('→ ' + nextTier.name + ' (' + next + ' pts)') : '✦ Niveau maximum atteint';
+  document.getElementById('lc-pts-left').textContent  = left + (nextTier ? nextTier.name : '');
+
+  // Animate bar
+  setTimeout(function(){
+    document.getElementById('lc-bar').style.width = pct + '%';
+  }, 100);
+
+  document.getElementById('phone-check-wrap').style.display   = 'none';
+  document.getElementById('loyalty-card-wrap').style.display  = 'block';
+}
+
+function resetLoyalty() {
+  document.getElementById('phone-check-wrap').style.display  = 'block';
+  document.getElementById('loyalty-card-wrap').style.display = 'none';
+  document.getElementById('loyalty-phone').value = '';
+  document.getElementById('lc-bar').style.width  = '0%';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TIERS DISPLAY
+// ═══════════════════════════════════════════════════════════
+function buildTiers() {
+  var list = document.getElementById('tiers-list');
+  list.innerHTML = TIERS.map(function(t) {
+    return '<div class="tier-row">' +
+           '<div class="tier-gem">' + t.gem + '</div>' +
+           '<div class="tier-info">' +
+           '<div class="tier-name">' + t.name + (t.pts === 0 ? '' : ' — ' + t.pts.toLocaleString('fr-FR') + ' pts') + '</div>' +
+           '<div class="tier-req">' + (t.next ? 'Jusqu\'à ' + t.next.toLocaleString('fr-FR') + ' pts' : 'Niveau ultime ✦') + '</div>' +
+           '<div class="tier-perks">' + t.perks + '</div>' +
+           '</div></div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GIFT CARDS
+// ═══════════════════════════════════════════════════════════
+var GIFT_AMOUNTS = [50, 100, 200, 300, 500, 1000];
+var selectedGift = null;
+
+function buildGiftGrid() {
+  var grid = document.getElementById('gift-grid');
+  grid.innerHTML = GIFT_AMOUNTS.map(function(amt) {
+    return '<div class="gift-card-item" data-amt="' + amt + '" onclick="selectGift(' + amt + ',this)">' +
+           '<div class="gift-amount">' + amt + '</div>' +
+           '<div class="gift-currency">DH</div>' +
+           '</div>';
+  }).join('');
+}
+
+function selectGift(amt, el) {
+  document.querySelectorAll('.gift-card-item').forEach(function(b) { b.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedGift = amt;
+  var btn = document.getElementById('btn-buy-gift');
+  btn.disabled = false;
+  btn.textContent = '🎁 Offrir ' + amt + ' DH →';
+  document.getElementById('gf-amount-lbl').textContent = amt;
+}
+
+function openGiftForm() {
+  if (!selectedGift) { toast('Sélectionnez un montant', 'err'); return; }
+  document.getElementById('gift-form').classList.add('show');
+  setTimeout(function(){
+    document.getElementById('gf-sender').focus();
+  }, 200);
+}
+
+function buyGiftCard() {
+  var sender    = document.getElementById('gf-sender').value.trim();
+  var recipient = document.getElementById('gf-recipient').value.trim();
+  var phone     = document.getElementById('gf-phone').value.trim();
+  var msg       = document.getElementById('gf-msg').value.trim();
+
+  if (!sender)    { toast('⚠ Entrez votre prénom',            'err'); return; }
+  if (!recipient) { toast('⚠ Entrez le prénom du destinataire','err'); return; }
+  if (!phone)     { toast('⚠ Entrez le téléphone',            'err'); return; }
+
+  var btn = document.querySelector('.btn-gift-confirm');
+  btn.textContent = 'Envoi en cours...';
+  btn.disabled    = true;
+
+  var expires = new Date();
+  expires.setFullYear(expires.getFullYear() + 1);
+
+  var payload = {
+    sender:    sender,
+    recipient: recipient,
+    amount:    selectedGift,
+    balance:   selectedGift,
+    phone:     phone,
+    message:   msg || ('✦ Profite d\'un moment LUX avec cette carte de ' + selectedGift + ' DH !'),
+    expires:   expires.toISOString(),
+  };
+
+  fetch(API + '/api/gift-cards', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var code = data.code || generateGiftCode();
+    showGiftSuccess(recipient, code, selectedGift);
+  })
+  .catch(function() {
+    // Offline fallback
+    var code = generateGiftCode();
+    showGiftSuccess(recipient, code, selectedGift);
+    toast('Mode hors-ligne — code généré localement', 'gold');
+  })
+  .finally(function() {
+    btn.textContent = '✦ Commander cette carte — ' + selectedGift + ' DH';
+    btn.disabled    = false;
+  });
+}
+
+function generateGiftCode() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var parts = [];
+  for (var p = 0; p < 3; p++) {
+    var part = '';
+    for (var i = 0; i < 4; i++) part += chars[Math.floor(Math.random() * chars.length)];
+    parts.push(part);
+  }
+  return 'LUX-' + parts.join('-');
+}
+
+function showGiftSuccess(recipient, code, amount) {
+  document.getElementById('gm-sub').textContent =
+    'Carte de ' + amount + ' DH créée pour ' + recipient + '. Partagez le code ci-dessous.';
+  document.getElementById('gm-code').textContent = code;
+  document.getElementById('gift-success-modal').classList.add('open');
+  // Reset form
+  document.getElementById('gift-form').classList.remove('show');
+  document.querySelectorAll('.gift-card-item').forEach(function(b){ b.classList.remove('selected'); });
+  selectedGift = null;
+  document.getElementById('btn-buy-gift').disabled = true;
+  document.getElementById('btn-buy-gift').textContent = 'Sélectionnez un montant';
+  ['gf-sender','gf-recipient','gf-phone','gf-msg'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+function closeGiftModal() {
+  document.getElementById('gift-success-modal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  buildPromos();
+  buildGiftGrid();
+  buildTiers();
+
+  // URL param: ?phone=212XXXXXXXXX
+  var params = new URLSearchParams(window.location.search);
+  var prePhone = params.get('phone');
+  if (prePhone) {
+    document.getElementById('loyalty-phone').value = prePhone;
+    checkLoyalty();
+  }
+});
+</script>
+</body>
+</html>
