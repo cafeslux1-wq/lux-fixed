@@ -573,6 +573,11 @@ input, button, select, textarea { font-family:inherit; }
       <button class="btn-primary" onclick="doLogin()">
         <span id="login-btn-txt">Se connecter →</span>
       </button>
+      <div class="auth-divider">diagnostic</div>
+      <button class="btn-primary" onclick="testConnection()"
+        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
+        🔌 Tester la connexion au serveur
+      </button>
     </div>
 
     <!-- Register -->
@@ -715,31 +720,57 @@ input, button, select, textarea { font-family:inherit; }
     <div class="sec-head"><span class="sh-txt">Statut de fidélité</span><div class="sh-line"></div></div>
     <div class="profile-card">
       <div class="pc-title">Comment gagner des points</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🛒</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en ligne</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">☕</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en café</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎮</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Gaming</div>
-          <div style="font-size:10px;color:var(--muted)">5 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎁</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Parrainage</div>
-          <div style="font-size:10px;color:var(--muted)">50 Points offerts</div>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+
+        <!-- 🛍️ Commander — LIEN DIRECT -->
+        <a href="https://cafeslux.com/public/menu/index.html"
+           style="background:var(--bg3);border:2px solid rgba(61,190,122,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(61,190,122,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(61,190,122,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🛍️</div>
+          <div style="font-size:12px;font-weight:700;color:#3DBE7A;margin-bottom:3px">Commander</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(61,190,122,.1);border:1px solid rgba(61,190,122,.35);border-radius:8px;font-size:9px;font-weight:700;color:#3DBE7A;letter-spacing:.5px">Menu &amp; Livraison →</div>
+        </a>
+
+        <!-- ☕ Achat en café — WhatsApp -->
+        <a href="https://wa.me/212677717201?text=☕%20Je%20veux%20commander%20au%20Café%20LUX%20Taza%20svp"
+           target="_blank"
+           style="background:var(--bg3);border:2px solid rgba(201,168,76,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(201,168,76,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(201,168,76,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">☕</div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:3px">Achat en café</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:var(--gold-a10);border:1px solid var(--border2);border-radius:8px;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px">Commander ici →</div>
+        </a>
+
+        <!-- 🎮 Gaming LUX — LIEN DIRECT -->
+        <a href="https://cafeslux.com/public/gaming/index.html"
+           style="background:var(--bg3);border:2px solid rgba(91,141,239,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(91,141,239,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(91,141,239,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎮</div>
+          <div style="font-size:12px;font-weight:700;color:#5B8DEF;margin-bottom:3px">Gaming LUX</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">5 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.3);border-radius:8px;font-size:9px;font-weight:700;color:#5B8DEF;letter-spacing:.5px">Réserver →</div>
+        </a>
+
+        <!-- 🎁 Parrainage — Page Offres & Carte Cadeau -->
+        <a href="https://cafeslux.com/public/offres/index.html#gc"
+           style="background:var(--bg3);border:2px solid rgba(224,82,82,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(224,82,82,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(224,82,82,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎁</div>
+          <div style="font-size:12px;font-weight:700;color:#E05252;margin-bottom:3px">Parrainage</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">50 Points offerts</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;font-size:9px;font-weight:700;color:#E05252;letter-spacing:.5px">Carte Cadeau →</div>
+        </a>
+
       </div>
 
       <div style="margin-top:14px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux de fidélité</div>
         <div id="tier-list"></div>
       </div>
     </div>
@@ -989,6 +1020,59 @@ function parseName(fullName = '') {
 })();
 
 /* ══════════════════════════════════════════════════════════════
+   safeFetch — Protection contre les réponses HTML (Railway 404)
+   Résout: "JSON.parse: unexpected character at line 1 column 1"
+   Cause: Route inexistante → Railway retourne HTML, pas JSON
+══════════════════════════════════════════════════════════════ */
+async function safeFetch(url, options = {}) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch(e) {
+    throw new Error('Serveur injoignable — vérifiez votre connexion internet');
+  }
+
+  // Lire le corps en texte (safe pour tout type de réponse)
+  const text = await res.text().catch(() => '');
+
+  // Essayer de parser en JSON
+  let data = {};
+  let isJson = false;
+  if (text) {
+    try { data = JSON.parse(text); isJson = true; } catch(_) {}
+  }
+
+  // Si la réponse est OK → retourner directement
+  if (res.ok) return { res, data };
+
+  // Si erreur avec JSON valide → le caller gère le message
+  if (isJson && data.error) return { res, data };
+
+  // Si erreur avec corps non-JSON → construire message clair avec status réel
+  const statusLabel = {
+    400: 'Requête invalide',
+    401: 'Non authentifié',
+    403: 'Accès refusé',
+    404: 'Route inexistante',
+    405: 'Méthode non autorisée',
+    429: 'Trop de requêtes — attendez quelques secondes',
+    500: 'Erreur interne du serveur',
+    502: 'Service temporairement indisponible',
+    503: 'Serveur hors ligne',
+  };
+
+  const label = statusLabel[res.status] || `Erreur HTTP ${res.status}`;
+  const short = text.slice(0,80).replace(/<[^>]+>/g,'').trim(); // enlève HTML
+
+  // Message de diagnostic complet
+  throw new Error(
+    `[HTTP ${res.status}] ${label}` +
+    (short ? ` — Réponse: "${short}"` : '') +
+    (res.status === 404 ? ` — Vérifiez que server.js est déployé et visitez /api/ping` : '')
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    LOADER
 ══════════════════════════════════════════════════════════════ */
 function hideLoader() {
@@ -1006,6 +1090,28 @@ function authTab(tab) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   DIAGNOSTIC — tester la connexion et les routes
+══════════════════════════════════════════════════════════════ */
+async function testConnection() {
+  toast('⏳ Test de connexion en cours...');
+  try {
+    const r1 = await fetch(`${API}/health`);
+    const h  = await r1.json().catch(() => ({}));
+    if (!r1.ok) { toast(`❌ Serveur DOWN (${r1.status})`); return; }
+
+    const r2 = await fetch(`${API}/api/ping`);
+    if (r2.ok) {
+      const p = await r2.json();
+      toast(`✅ Serveur OK · Routes actives: ${p.routes?.length || 0}`, 5000);
+    } else {
+      toast(`⚠ Serveur actif (health OK) mais /api/ping manquant (${r2.status}) — déployez le nouveau server.js`);
+    }
+  } catch(e) {
+    toast(`❌ Connexion impossible: ${e.message}`);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    CONNEXION — POST /api/auth/customer/login
 ══════════════════════════════════════════════════════════════ */
 async function doLogin() {
@@ -1020,12 +1126,11 @@ async function doLogin() {
   btn.parentElement.disabled = true;
 
   try {
-    const res  = await fetch(ROUTES.LOGIN, {
+    const { res, data }  = await safeFetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier, password })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1071,12 +1176,11 @@ async function doRegister() {
   btn.textContent = '⏳ Création...';
 
   try {
-    const res  = await fetch(ROUTES.REGISTER, {
+    const { res, data }  = await safeFetch(ROUTES.REGISTER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, email: email || undefined, password: pw })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1222,11 +1326,10 @@ async function saveProfile() {
   if (!name) { toast('⚠ Le nom est requis'); return; }
 
   try {
-    const res  = await fetch(ROUTES.PROFILE_PATCH, {
+    const { res, data }  = await safeFetch(ROUTES.PROFILE_PATCH, {
       method: 'PATCH', headers: authHeaders(),
       body: JSON.stringify({ name, email: email || undefined })
     });
-    const data = await res.json();
 
     if (res.ok) {
       Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
@@ -1249,9 +1352,8 @@ async function loadOrders() {
   document.getElementById('orders-list').innerHTML = `
     <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
   try {
-    const res = await fetch(ROUTES.ORDERS, { headers: authHeaders() });
+    const { res, data } = await safeFetch(ROUTES.ORDERS, { headers: authHeaders() });
     if (res.ok) {
-      const data = await res.json();
       // Mapper les transactions Prisma vers le format UI
       STATE.orders = (Array.isArray(data) ? data : []).map(tx => ({
         id:         tx.externalId || tx.id,
@@ -1324,9 +1426,9 @@ function formatCode(inp) {
 // Charger les cartes liées au compte (par phone)
 async function loadMyGiftCards() {
   try {
-    const res  = await fetch(ROUTES.GC_MY, { headers: authHeaders() });
-    if (res.ok) {
-      const cards = await res.json();
+    const { res: gcRes, data: gcData } = await safeFetch(ROUTES.GC_MY, { headers: authHeaders() });
+    const cards = Array.isArray(gcData) ? gcData : [];
+    if (gcRes.ok) {
       // Prendre la première carte active avec solde > 0
       const active = cards.find(c => c.balance > 0 && c.status === 'active');
       if (active) {
@@ -1345,8 +1447,7 @@ async function linkCard() {
   if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide (format: XXXX-XXXX-XXXX-XXXX)'); return; }
 
   try {
-    const res  = await fetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
-    const data = await res.json();
+    const { res, data }  = await safeFetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
 
     if (res.ok && data.balance != null) {
       // Le schema GiftCard utilise 'expires' (pas 'expiresAt')
@@ -1548,8 +1649,7 @@ async function redeemReward(id, pts, name) {
       body: JSON.stringify({ points: -pts })   // valeur négative = déduction
     });
     if (res.ok) {
-      const data = await res.json();
-      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints; STATE.user.level = data.level; }
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
     } else {
       // Déduction locale si l'API ne supporte pas les valeurs négatives
       if (STATE.user) STATE.user.loyaltyPoints -= pts;
@@ -1572,14 +1672,14 @@ async function redeemReward(id, pts, name) {
   const tok = getToken();
   if (tok) {
     try {
-      const res = await fetch(ROUTES.ME, { headers: authHeaders() });
-      if (res.ok) {
-        const user = await res.json();
+      const { res: meRes, data: meData } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+      if (meRes.ok) {
+        const user = meData;
         loadUserData(user);
         showApp();
         // Charger commandes et cartes en parallèle
         await Promise.all([loadOrders(), loadMyGiftCards()]);
-      } else if (res.status === 401) {
+      } else if (meRes.status === 401) {
         // Token expiré → nettoyer
         clearToken();
       } else {
@@ -1593,6 +1693,124 @@ async function redeemReward(id, pts, name) {
   }
   // Toujours cacher le loader après 800ms max
   setTimeout(hideLoader, 800);
+})();
+</script>
+
+<!-- ── FAB: WhatsApp + AI (Mon Espace LUX) ── -->
+<style>
+#me-fab-group{position:fixed;right:16px;bottom:24px;z-index:900;display:flex;flex-direction:column;align-items:center;gap:12px}
+#me-fab-wa{width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;border:2px solid rgba(255,255,255,.2);box-shadow:0 8px 24px rgba(37,211,102,.35);transition:transform .2s}
+#me-fab-wa:hover{transform:scale(1.1) translateY(-2px)}
+#me-fab-ai{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#E8C97A);border:none;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(201,168,76,.7);animation:mePulse 2s infinite;transition:transform .2s}
+@keyframes mePulse{0%{box-shadow:0 0 0 0 rgba(201,168,76,.7)}70%{box-shadow:0 0 0 18px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
+#me-fab-ai:hover{transform:scale(1.1)}
+#me-fab-ai img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* Chat window mon-espace — z au-dessus du topbar (z:200) */
+#me-ai-chat{display:none;position:fixed;right:12px;bottom:106px;width:min(360px,calc(100vw - 24px));height:min(480px,calc(100dvh - 160px));background:linear-gradient(180deg,#1A1A1A,#0C0C0C);border:1px solid #C9A84C;border-radius:20px;z-index:9990;box-shadow:0 16px 64px rgba(0,0,0,.8);overflow:hidden;flex-direction:column;animation:chatIn .3s cubic-bezier(.4,0,.2,1)}
+#me-ai-chat.open{display:flex!important}
+.me-ch{background:linear-gradient(135deg,#1A0A00,#2D1500);padding:13px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(201,168,76,.2);flex-shrink:0}
+.me-av{width:42px;height:42px;border-radius:50%;border:2px solid #C9A84C;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#C9A84C,#E8C97A);display:flex;align-items:center;justify-content:center}
+.me-av img{width:100%;height:100%;object-fit:cover}
+.me-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+.me-chip{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:#D7D2C8;padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all .25s;font-family:inherit}
+.me-chip:hover{background:#C9A84C;color:#000}
+.me-inp-row{padding:11px 13px;background:rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
+.me-inp{flex:1;padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:11px;color:#fff;outline:none;font-size:12px;font-family:inherit}
+.me-inp::placeholder{color:rgba(255,255,255,.3)}
+.me-snd{padding:10px 13px;background:rgba(201,168,76,.1);border:1px solid #C9A84C;border-radius:10px;font-weight:700;cursor:pointer;color:#C9A84C;font-size:12px}
+</style>
+
+<div id="me-fab-group">
+  <a id="me-fab-wa" href="https://wa.me/212677717201?text=Bonjour%20Café%20LUX%20je%20souhaite%20des%20informations..." target="_blank" title="WhatsApp">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.628 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+  <button id="me-fab-ai" type="button" onclick="meLaiToggle()" title="Assistant LUX IA">
+    <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
+         onerror="this.outerHTML='<span style=\'font-size:24px;font-weight:900;font-family:serif;color:#000\'>✦</span>'">
+  </button>
+</div>
+
+<div id="me-ai-chat">
+  <div class="me-ch">
+    <div class="me-av">
+      <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
+           onerror="this.outerHTML='<span style=\'font-size:18px;font-weight:900;font-family:serif;color:#000\'>✦</span>'">
+    </div>
+    <div style="flex:1">
+      <div style="font-family:'Cinzel',Georgia,serif;color:#C9A84C;font-size:14px;letter-spacing:1px;font-weight:700">LUX AI</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.45)">Assistant · Mon Espace LUX</div>
+    </div>
+    <button type="button" onclick="meLaiToggle()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer">✕</button>
+  </div>
+  <div class="me-msgs" id="me-msgs">
+    <div style="background:rgba(215,210,200,.05);border:1px solid rgba(201,168,76,.1);border-radius:14px 14px 14px 4px;padding:14px;font-size:12px;color:#D7D2C8;line-height:1.65">
+      <strong style="color:#C9A84C;display:block;margin-bottom:6px">مرحباً ✦</strong>
+      <p style="margin:0 0 12px;opacity:.9">كيف يمكنني مساعدتك في Mon Espace LUX؟</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button type="button" class="me-chip" onclick="meLaiSug('Mes points de fidélité ?')">⭐ Points</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Comment échanger mes points ?')">🎁 Échange</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Carte cadeau ?')">💳 Carte cadeau</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Horaires Café LUX ?')">🕐 Horaires</button>
+      </div>
+    </div>
+  </div>
+  <div class="me-inp-row">
+    <input type="text" class="me-inp" id="me-inp" placeholder="Votre question..."
+           onkeydown="if(event.key==='Enter')meLaiSend()">
+    <button type="button" class="me-snd" onclick="meLaiSend()">إرسال</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var _AAPI=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+  var _open=false,_mid=0;
+  var _FB={'horaire':'🕐 Café LUX: 8h–23h, tous les jours ✦','menu':'📖 Menu: cafeslux.com/public/menu','gaming':'🎮 Gaming: 15min=5DH · 1h=20DH','wifi':'📶 WiFi gratuit ✦','اين':'📍 Taza, Maroc ✦'};
+
+  window.meLaiToggle=function(){
+    _open=!_open;
+    var c=document.getElementById('me-ai-chat');
+    if(c)c.classList.toggle('open',_open);
+    if(_open){setTimeout(function(){var i=document.getElementById('me-inp');if(i)i.focus();},200);}
+  };
+  window.meLaiSug=function(t){var i=document.getElementById('me-inp');if(i){i.value=t;meLaiSend();}};
+  function _a(type,txt){
+    var id='mem'+(++_mid),el=document.createElement('div');el.id=id;
+    if(type==='usr')el.style.cssText='background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;border-radius:12px 12px 4px 12px;padding:9px 12px;font-size:12px;max-width:80%;align-self:flex-end;font-weight:500;word-break:break-word';
+    else if(type==='bot')el.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%;word-break:break-word';
+    else el.style.cssText='color:rgba(201,168,76,.6);font-size:11px;font-style:italic;padding:3px 0';
+    el.textContent=txt;
+    var c=document.getElementById('me-msgs');c.appendChild(el);c.scrollTop=c.scrollHeight;return id;
+  }
+  function _r(id){var e=document.getElementById(id);if(e)e.remove();}
+
+  window.meLaiSend=async function(){
+    var inp=document.getElementById('me-inp'),msgs=document.getElementById('me-msgs');
+    if(!inp||!msgs)return;
+    var q=inp.value.trim();if(!q)return;
+    inp.value='';
+    _a('usr',q);var tid=_a('typ','✦ LUX AI réfléchit...');
+    var lo=q.toLowerCase();
+    try{
+      var r=await fetch(_AAPI+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({prompt:q,message:q,lang:'fr-ar',context:'mon_espace_lux'})});
+      var d=await r.json();_r(tid);
+      var pay=d.html||d.reply||d.message||d.response||d.text||'';
+      var div=document.createElement('div');
+      div.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%;word-break:break-word';
+      if(/<[a-z]/i.test(pay))div.innerHTML=pay;
+      else if(pay)div.textContent=pay;
+      else{var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}div.textContent=rep||'✦ Contactez-nous: WhatsApp +212 677 717 201';}
+      var c=document.getElementById('me-msgs');c.appendChild(div);c.scrollTop=c.scrollHeight;
+    }catch(e){
+      _r(tid);var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}
+      var div2=document.createElement('div');
+      div2.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%';
+      if(rep)div2.textContent=rep;
+      else div2.innerHTML='⚠ IA indisponible — <a href="https://wa.me/212677717201" target="_blank" style="color:#C9A84C;font-weight:600">📲 WhatsApp</a>';
+      var c2=document.getElementById('me-msgs');c2.appendChild(div2);c2.scrollTop=c2.scrollHeight;
+    }
+  };
 })();
 </script>
 </body>
