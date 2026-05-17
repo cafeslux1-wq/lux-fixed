@@ -524,6 +524,88 @@ input, button, select, textarea { font-family:inherit; }
 @media(min-width:520px) {
   .tab-panel { padding:24px 24px 100px; }
 }
+/* ══ Loyalty Action Cards ══════════════════════════════════ */
+.loyalty-action-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;
+}
+.lac {
+  background:var(--bg3); border:1.5px solid var(--border);
+  border-radius:12px; padding:14px 10px 12px;
+  text-align:center; cursor:pointer;
+  transition:border-color .2s, transform .18s, box-shadow .2s;
+  text-decoration:none; display:block;
+  position:relative; overflow:hidden;
+}
+.lac::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(201,168,76,.06),transparent);
+  opacity:0; transition:opacity .2s;
+}
+.lac:hover { border-color:var(--border2); transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.3); }
+.lac:hover::before { opacity:1; }
+.lac:active { transform:translateY(0) scale(.98); }
+.lac-icon {
+  font-size:26px; margin-bottom:8px; display:block; line-height:1;
+  /* Éviter l'emoji bleu Windows — utiliser text + couleur */
+}
+.lac-icon-svg {
+  width:32px; height:32px; margin:0 auto 8px;
+  background:var(--gold-a10); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; line-height:1;
+}
+.lac-title { font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.lac-sub   { font-size:10px; color:var(--muted); margin-bottom:6px; }
+.lac-badge {
+  display:inline-block; padding:2px 8px; border-radius:8px;
+  font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+  background:var(--gold-a10); border:1px solid var(--border2); color:var(--gold);
+}
+
+/* Referral code box */
+.referral-box {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  display:flex; align-items:center; gap:10px; margin-top:10px; display:none;
+}
+.referral-code {
+  flex:1; font-family:monospace; font-size:14px;
+  color:var(--gold-l); letter-spacing:3px; font-weight:700;
+}
+.referral-copy {
+  padding:5px 12px; background:var(--gold-a10); border:1px solid var(--border2);
+  border-radius:8px; color:var(--gold); font-size:11px; font-weight:600;
+  cursor:pointer; transition:.18s;
+}
+.referral-copy:hover { background:var(--gold-a18); }
+
+/* Quick order panel */
+.quick-order-panel {
+  background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02));
+  border:1.5px solid var(--border2); border-radius:14px;
+  padding:16px; margin-top:14px; display:none;
+  animation:fadeUp .3s ease;
+}
+.quick-order-panel.show { display:block; }
+.qop-title { font-family:var(--fd); font-size:14px; color:var(--gold); margin-bottom:12px; font-weight:700; }
+.qop-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.qop-item {
+  padding:10px; background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; cursor:pointer; transition:.18s;
+  display:flex; align-items:center; gap:8px;
+}
+.qop-item:hover { border-color:var(--border2); }
+.qop-item-icon { font-size:18px; flex-shrink:0; }
+.qop-item-name { font-size:11px; color:var(--text); font-weight:600; }
+.qop-item-price { font-size:10px; color:var(--gold); margin-top:1px; }
+.qop-btn {
+  width:100%; margin-top:12px; padding:12px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none; border-radius:10px; color:#000;
+  font-family:var(--fd); font-size:14px; font-weight:700;
+  cursor:pointer; transition:.2s;
+}
+.qop-btn:hover { filter:brightness(1.1); transform:translateY(-1px); }
 </style>
 </head>
 <body>
@@ -720,31 +802,67 @@ input, button, select, textarea { font-family:inherit; }
     <div class="sec-head"><span class="sh-txt">Statut de fidélité</span><div class="sh-line"></div></div>
     <div class="profile-card">
       <div class="pc-title">Comment gagner des points</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🛒</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en ligne</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">☕</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en café</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎮</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Gaming</div>
-          <div style="font-size:10px;color:var(--muted)">5 DH = 1 Point</div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎁</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Parrainage</div>
-          <div style="font-size:10px;color:var(--muted)">50 Points offerts</div>
-        </div>
+
+      <div class="loyalty-action-grid">
+
+        <!-- Achat en ligne → Commander -->
+        <a class="lac" onclick="goCommander(event)" href="javascript:void(0)" title="Commander en ligne">
+          <div class="lac-icon-svg" style="background:rgba(61,190,122,.1)">🛒</div>
+          <div class="lac-title">Achat en ligne</div>
+          <div class="lac-sub">10 DH = 1 Point</div>
+          <div class="lac-badge">Commander →</div>
+        </a>
+
+        <!-- Achat en café → Quick order panel -->
+        <a class="lac" onclick="toggleQuickOrder(event)" href="javascript:void(0)" title="Commander au café">
+          <div class="lac-icon-svg" style="background:rgba(201,168,76,.1)">☕</div>
+          <div class="lac-title">Achat en café</div>
+          <div class="lac-sub">10 DH = 1 Point</div>
+          <div class="lac-badge">Commander ici →</div>
+        </a>
+
+        <!-- Gaming → Gaming page -->
+        <a class="lac" onclick="goGaming(event)" href="javascript:void(0)" title="Réserver Gaming">
+          <div class="lac-icon-svg" style="background:rgba(91,141,239,.1)">🎮</div>
+          <div class="lac-title">Gaming LUX</div>
+          <div class="lac-sub">5 DH = 1 Point</div>
+          <div class="lac-badge">Réserver →</div>
+        </a>
+
+        <!-- Parrainage → Code de parrainage -->
+        <a class="lac" onclick="showReferral(event)" href="javascript:void(0)" title="Parrainer un ami">
+          <div class="lac-icon-svg" style="background:rgba(224,82,82,.1)">🎁</div>
+          <div class="lac-title">Parrainage</div>
+          <div class="lac-sub">50 Points offerts</div>
+          <div class="lac-badge">Mon code →</div>
+        </a>
+
       </div>
 
+      <!-- Code de parrainage (affiché au clic) -->
+      <div class="referral-box" id="referral-box">
+        <div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">Votre code de parrainage</div>
+          <div class="referral-code" id="referral-code">LUX-XXXXX</div>
+        </div>
+        <button class="referral-copy" onclick="copyReferral()">📋 Copier</button>
+      </div>
+
+      <!-- Quick order panel (☕ Café) -->
+      <div class="quick-order-panel" id="quick-order-panel">
+        <div class="qop-title">☕ Commander au café — Café LUX · Taza</div>
+        <div class="qop-grid" id="qop-items-grid">
+          <!-- Chargé dynamiquement via loadQuickOrderItems() -->
+          <div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:12px">
+            ⏳ Chargement du menu...
+          </div>
+        </div>
+        <button class="qop-btn" onclick="submitQuickOrder()">🛒 Passer la commande</button>
+      </div>
+
+      <!-- Niveaux -->
       <div style="margin-top:14px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux de fidélité</div>
         <div id="tier-list"></div>
       </div>
     </div>
@@ -957,34 +1075,9 @@ function toast(msg, dur = 3200) {
   el._t = setTimeout(() => el.classList.remove('show'), dur);
 }
 
-/* ══ SESSION GLOBALE PARTAGÉE — Clés standardisées MPA ══════════
-   lux_customer_token → JWT client (cross-page)
-   lux_customer_user  → Objet {id,name,phone,loyaltyPoints,level}
-   lux_token          → Rétrocompatibilité api-client.js
-══════════════════════════════════════════════════════════════ */
-function getToken() {
-  try { return localStorage.getItem('lux_customer_token') || localStorage.getItem('lux_token') || null; }
-  catch(e) { return null; }
-}
-function setToken(t) {
-  try {
-    localStorage.setItem('lux_customer_token', t); // Cross-page (Commander, Offres…)
-    localStorage.setItem('lux_token', t);           // Rétrocompatibilité api-client.js
-  } catch(e) {}
-}
-function setUser(u) {
-  try { localStorage.setItem('lux_customer_user', JSON.stringify(u)); } catch(e) {}
-}
-function getStoredUser() {
-  try { return JSON.parse(localStorage.getItem('lux_customer_user') || 'null'); } catch(e) { return null; }
-}
-function clearToken() {
-  try {
-    localStorage.removeItem('lux_customer_token');
-    localStorage.removeItem('lux_customer_user');
-    localStorage.removeItem('lux_token');
-  } catch(e) {}
-}
+function getToken()   { try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; } }
+function setToken(t)  { try { localStorage.setItem('lux_token', t); } catch(e) {} }
+function clearToken() { try { localStorage.removeItem('lux_token'); } catch(e) {} }
 
 function authHeaders() {
   const tok = getToken();
@@ -1133,7 +1226,6 @@ async function doLogin() {
 
     if (res.ok && data.token) {
       setToken(data.token);
-      setUser(data.customer);          // ← Partage cross-page (Commander, etc.)
       loadUserData(data.customer);
       showApp();
       await loadOrders();
@@ -1184,7 +1276,6 @@ async function doRegister() {
 
     if (res.ok && data.token) {
       setToken(data.token);
-      setUser(data.customer);          // ← Partage cross-page
       loadUserData(data.customer);
       showApp();
       toast('🎉 Bienvenue chez Café LUX, ' + (data.customer.name || fname) + ' !', 4000);
@@ -1297,7 +1388,187 @@ function renderTierList(pts, currentTier) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   AFFICHER L'APP
+   LOYALTY ACTION CARDS — Fonctions des 4 boutons
+══════════════════════════════════════════════════════════════ */
+
+// 🛒 Achat en ligne → Ouvrir le commander
+function goCommander(e) {
+  if(e) e.preventDefault();
+  // Sauvegarder le contexte client pour le pré-remplissage
+  if (STATE.user) setUser(STATE.user);
+  window.location.href = '/public/menu/index.html';
+}
+
+// 🎮 Gaming → Réservation gaming
+function goGaming(e) {
+  if(e) e.preventDefault();
+  if (STATE.user) setUser(STATE.user);
+  window.location.href = '/public/gaming/index.html';
+}
+
+// 🎁 Parrainage → Afficher le code de parrainage
+function showReferral(e) {
+  if(e) e.preventDefault();
+  const box  = document.getElementById('referral-box');
+  const code = document.getElementById('referral-code');
+  // Fermer si déjà ouvert
+  if (box.style.display === 'flex') { box.style.display = 'none'; return; }
+  // Générer un code basé sur le téléphone/id du client
+  const user = STATE.user;
+  if (!user) { toast('⚠ Connectez-vous pour voir votre code'); return; }
+  const base = (user.phone || user.id || '').toString().replace(/\D/g,'').slice(-4);
+  const suffix = base ? base : Math.random().toString(36).slice(-4).toUpperCase();
+  const referralCode = 'LUX-' + suffix.toUpperCase().padStart(4,'0');
+  code.textContent = referralCode;
+  box.style.display = 'flex';
+  box.style.animation = 'fadeUp .25s ease';
+}
+
+function copyReferral() {
+  const code = document.getElementById('referral-code')?.textContent || '';
+  const msg  = 'Rejoins Café LUX à Taza! Utilise mon code ' + code + ' pour 50 Points offerts → cafeslux.com';
+  if (navigator.share) {
+    navigator.share({ title:'Code parrainage LUX', text: msg }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(() => toast('📋 Code copié! Partagez-le avec vos amis'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = msg; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('📋 Code copié!');
+  }
+}
+
+// ☕ Achat en café → Panneau de commande rapide
+var _qopCart = []; // Panier mini du quick order
+
+function toggleQuickOrder(e) {
+  if(e) e.preventDefault();
+  const panel = document.getElementById('quick-order-panel');
+  const isOpen = panel.classList.contains('show');
+  if (isOpen) { panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+  loadQuickOrderItems();
+  // Fermer referral si ouvert
+  const ref = document.getElementById('referral-box');
+  if (ref) ref.style.display = 'none';
+}
+
+async function loadQuickOrderItems() {
+  const grid = document.getElementById('qop-items-grid');
+  // Produits populaires hardcodés (fallback si API indisponible)
+  const defaults = [
+    { name:'Espresso',       price:7,  icon:'☕' },
+    { name:'Cappuccino',     price:12, icon:'☕' },
+    { name:'Café Crème',     price:10, icon:'☕' },
+    { name:'Thé Marocain',   price:9,  icon:'🍵' },
+    { name:'Croissant',      price:8,  icon:'🥐' },
+    { name:'Millefeuille',   price:18, icon:'🍰' },
+    { name:'Lux Matcha',     price:20, icon:'🌿' },
+    { name:"Queen's Coffee", price:30, icon:'👑' },
+  ];
+
+  let products = defaults;
+  try {
+    const { res, data } = await safeFetch(`${API}/api/products?active=true`, { headers: authHeaders() });
+    if (res.ok && Array.isArray(data) && data.length > 0) {
+      products = data.slice(0,8).map(p => ({ name:p.name, price:p.price, icon:p.icon||'☕' }));
+    }
+  } catch(e) { /* fallback to defaults */ }
+
+  _qopCart = [];
+  grid.innerHTML = products.map((p, i) =>
+    `<div class="qop-item" onclick="qopToggleItem(${i},'${p.name.replace(/'/g,"\\'")}',${p.price},'${p.icon}')" id="qop-item-${i}">
+      <div class="qop-item-icon">${p.icon}</div>
+      <div>
+        <div class="qop-item-name">${p.name}</div>
+        <div class="qop-item-price">${p.price} DH</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function qopToggleItem(idx, name, price, icon) {
+  const el    = document.getElementById('qop-item-' + idx);
+  const pos   = _qopCart.findIndex(i => i.name === name);
+  if (pos >= 0) {
+    _qopCart.splice(pos, 1);
+    el.style.borderColor = 'var(--border)';
+    el.style.background  = 'var(--bg3)';
+  } else {
+    _qopCart.push({ name, price, qty:1, icon });
+    el.style.borderColor = 'var(--gold)';
+    el.style.background  = 'rgba(201,168,76,.08)';
+  }
+  // Mettre à jour le bouton
+  const total = _qopCart.reduce((s,i) => s + i.price, 0);
+  const btn   = document.querySelector('.qop-btn');
+  if (btn) {
+    btn.textContent = _qopCart.length
+      ? `🛒 Commander ${_qopCart.length} article(s) · ${total} DH`
+      : '🛒 Sélectionnez des articles';
+  }
+}
+
+async function submitQuickOrder() {
+  if (!_qopCart.length) { toast('⚠ Sélectionnez au moins un article'); return; }
+  if (!STATE.user)      { toast('⚠ Connectez-vous pour commander');     return; }
+
+  const total = _qopCart.reduce((s,i) => s + i.price, 0);
+  const tva   = parseFloat((total * 0.1).toFixed(2));
+  const btn   = document.querySelector('.qop-btn');
+  btn.textContent = '⏳ Envoi en cours...';
+  btn.disabled = true;
+
+  const payload = {
+    source:    'web',
+    type:      'cafe',
+    payMethod: 'cash',
+    subtotal:  total,
+    total:     total,
+    tva:       tva,
+    items:     _qopCart.map(i => ({ name:i.name, price:i.price, qty:i.qty||1 })),
+    customer:  { name: STATE.user.name, phone: STATE.user.phone },
+    phone:     STATE.user.phone,
+    staffName: STATE.user.name,
+    notes:     '☕ Commande depuis Mon Espace LUX · ' + STATE.user.name,
+  };
+
+  try {
+    const { res, data } = await safeFetch(`${API}/api/transactions/web`, {
+      method:  'POST',
+      headers: authHeaders(),
+      body:    JSON.stringify(payload),
+    });
+
+    if (res.ok || data.success) {
+      // Ajouter les points localement
+      const ptsEarned = Math.floor(total / 10);
+      STATE.user.loyaltyPoints = (STATE.user.loyaltyPoints || 0) + ptsEarned;
+      setUser(STATE.user);
+      loadUserData(STATE.user);
+
+      // Réinitialiser le panel
+      _qopCart = [];
+      document.getElementById('quick-order-panel').classList.remove('show');
+
+      // Recharger les commandes
+      await loadOrders();
+      switchTab('commandes');
+
+      toast('✅ Commande envoyée! +' + ptsEarned + ' LUX Points · Réf: ' + (data.ref || data.id || '—'), 5000);
+    } else {
+      toast('❌ ' + (data.error || 'Erreur lors de la commande'));
+    }
+  } catch(e) {
+    toast('❌ ' + e.message);
+  } finally {
+    btn.textContent = '🛒 Passer la commande';
+    btn.disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
 ══════════════════════════════════════════════════════════════ */
 function showApp() {
   document.getElementById('screen-auth').style.display = 'none';
@@ -1625,80 +1896,45 @@ async function simulatePay() {
 function renderRewards() {
   const pts  = STATE.user?.loyaltyPoints || 0;
   const grid = document.getElementById('rewards-grid');
-  if (!grid) return;
-
   grid.innerHTML = REWARDS.map(r => {
     const canRedeem = pts >= r.pts;
-    const progress  = Math.min(100, Math.round((pts / r.pts) * 100));
-    const shortfall = r.pts - pts;
-
-    return `<div class="reward-card" style="${canRedeem ? 'border-color:rgba(201,168,76,.35);cursor:pointer' : 'opacity:.65'}">
+    return `<div class="reward-card">
       <span class="rc-icon">${r.icon}</span>
-      <div class="rc-name" style="color:${canRedeem ? 'var(--text)' : 'var(--muted)'}">${r.name}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">${r.desc}</div>
-      <div class="rc-pts" style="color:${canRedeem ? 'var(--gold)' : 'var(--muted)'}">
-        ${r.pts} <span>pts</span>
-      </div>
-      <!-- Barre de progression vers la récompense -->
-      <div style="height:3px;background:rgba(255,255,255,.06);border-radius:3px;margin:8px 0 10px;overflow:hidden">
-        <div style="height:100%;width:${progress}%;background:${canRedeem ? 'linear-gradient(90deg,var(--gold-d),var(--gold))' : 'rgba(255,255,255,.12)'};border-radius:3px;transition:width .8s ease"></div>
-      </div>
-      <button class="rc-redeem"
-        ${canRedeem ? '' : 'disabled'}
-        style="${canRedeem ? 'background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#000;cursor:pointer;border-color:transparent;font-weight:700' : 'cursor:not-allowed'}"
-        onclick="${canRedeem ? `redeemReward(${r.id},${r.pts},'${r.name}')` : ''}">
-        ${canRedeem
-          ? `🎁 Échanger ${r.pts} pts →`
-          : `⏳ ${shortfall} pts manquants`
-        }
+      <div class="rc-name">${r.name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${r.desc}</div>
+      <div class="rc-pts">${r.pts} <span>pts</span></div>
+      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="redeemReward(${r.id},${r.pts},'${r.name}')">
+        ${canRedeem ? 'Échanger →' : `${r.pts - pts} pts manquants`}
       </button>
     </div>`;
   }).join('');
 }
 
 async function redeemReward(id, pts, name) {
-  if (!STATE.user || STATE.user.loyaltyPoints < pts) {
-    toast('⚠ Points insuffisants pour "' + name + '" — il vous faut ' + pts + ' pts');
-    return;
-  }
-  if (!confirm('Confirmer l\'échange de ' + pts + ' LUX Points contre "' + name + '" ?')) return;
-
-  // Déduction optimiste locale immédiate (UX)
-  STATE.user.loyaltyPoints -= pts;
-  loadUserData(STATE.user);
-  renderRewards();
-  setUser(STATE.user); // ← Partage cross-page via localStorage
+  if (!STATE.user || STATE.user.loyaltyPoints < pts) { toast('⚠ Points insuffisants'); return; }
+  if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
 
   try {
-    // Appel API pour déduction réelle côté serveur
-    const { res, data } = await safeFetch(ROUTES.LOYALTY_ADD, {
+    // Déduire les points via API
+    const res = await fetch(ROUTES.LOYALTY_ADD, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ points: -pts, rewardId: id, rewardName: name })
+      body: JSON.stringify({ points: -pts })   // valeur négative = déduction
     });
-    if (res.ok && data.loyaltyPoints != null) {
-      STATE.user.loyaltyPoints = data.loyaltyPoints;
-      STATE.user.level         = data.level || STATE.user.level;
-      loadUserData(STATE.user);
-      renderRewards();
-      setUser(STATE.user);
+    if (res.ok) {
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
+    } else {
+      // Déduction locale si l'API ne supporte pas les valeurs négatives
+      if (STATE.user) STATE.user.loyaltyPoints -= pts;
     }
   } catch(e) {
-    console.warn('[REDEEM] API non disponible — déduction locale confirmée:', e.message);
+    if (STATE.user) STATE.user.loyaltyPoints -= pts;
+    console.error('[REDEEM]', e.message);
   }
 
-  // Toast avec code de retrait
-  const redeemMsgs = {
-    1: '☕ Café Signature réservé — présentez-vous au comptoir',
-    2: '🥐 Viennoiserie réservée — récupérez-la aujourd\'hui',
-    3: '🍰 Pâtisserie LUX réservée — venez la chercher',
-    4: '🎮 30 min Gaming réservés — mentionnez votre nom à la réception',
-    5: '🎁 Carte cadeau 50 DH — disponible dans l\'onglet Cadeau',
-    6: '✦ Pack Signature réservé — présentez ce message en caisse',
-  };
-  const code = 'LUX-' + Date.now().toString(36).toUpperCase().slice(-6);
-  toast((redeemMsgs[id] || '🎁 "' + name + '" échangé!') + ' · Code: ' + code, 5000);
+  loadUserData(STATE.user);
+  renderRewards();
+  toast(`🎁 "${name}" échangé — votre récompense sera prête en café !`, 4000);
 }
-
 
 /* ══════════════════════════════════════════════════════════════
    INIT — Vérifier session existante
