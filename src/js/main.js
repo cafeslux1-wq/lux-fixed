@@ -214,16 +214,77 @@ window.__MAESTRO_IS_RUNNING = true;
     if (!_cart.length) return;
     var total = _cart.reduce(function (s, i) { return s + i.price * i.qty; }, 0);
     var api   = window.LuxAPI;
-    if (!api) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px">⏳ Connexion...</div>'; return; }
-    api.post('/api/orders', {
-      source: 'pos', type: 'table', payMethod: method,
-      subtotal: total, total: total,
-      items: _cart.map(function (i) { return { name: i.name, price: i.price, qty: i.qty }; }),
-    }).then(function (r) {
-      toast('✅ Commande #' + r.ref + ' · ' + total.toFixed(2) + ' DH', 'success');
+    if (!api) { toast('⏳ Connexion en cours...', 'info'); return; }
+
+    // ── Lecture session client (partagée depuis Mon Espace LUX) ──────────
+    var customerToken = null;
+    var customerUser  = null;
+    try {
+      customerToken = localStorage.getItem('lux_customer_token') || null;
+      var raw = localStorage.getItem('lux_customer_user');
+      if (raw) customerUser = JSON.parse(raw);
+    } catch(e) {}
+
+    var orderPayload = {
+      source:   customerToken ? 'web' : 'pos',
+      type:     'table',
+      payMethod: method,
+      subtotal: total,
+      total:    total,
+      tva:      parseFloat((total * 0.1).toFixed(2)),
+      items:    _cart.map(function (i) { return { name: i.name, price: i.price, qty: i.qty }; }),
+    };
+
+    // ── Si client connecté → injecter ses infos pour liaison fidélité ──
+    if (customerUser) {
+      orderPayload.customer  = { name: customerUser.name, phone: customerUser.phone };
+      orderPayload.staffName = customerUser.name;
+      orderPayload.phone     = customerUser.phone;
+      orderPayload.notes     = '🌐 Commande web · ' + customerUser.name + ' (' + customerUser.phone + ')';
+    }
+
+    var API_BASE = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+
+    // ── Envoi de la commande ──────────────────────────────────────────────
+    var fetchOpts = {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(orderPayload),
+    };
+
+    // Ajouter le Bearer token client si disponible
+    if (customerToken) {
+      fetchOpts.headers['Authorization'] = 'Bearer ' + customerToken;
+    }
+
+    // Route selon le contexte: client web → /api/transactions/web (avec fidélité)
+    //                          staff POS  → /api/orders (normal)
+    var endpoint = customerToken
+      ? (API_BASE + '/api/transactions/web')
+      : null;
+
+    var promise = endpoint
+      ? fetch(endpoint, fetchOpts).then(function(r){ return r.json(); })
+      : api.post('/api/orders', orderPayload);
+
+    promise.then(function (r) {
+      var ref = r.ref || r.id || r.externalId || '—';
+      toast('✅ Commande #' + ref + ' · ' + total.toFixed(2) + ' DH', 'success');
       window.luxClearCart();
+
+      // ── Mise à jour locale des points si client connecté ──────────────
+      if (customerUser) {
+        var ptsEarned = Math.floor(total / 10);
+        customerUser.loyaltyPoints = (customerUser.loyaltyPoints || 0) + ptsEarned;
+        try { localStorage.setItem('lux_customer_user', JSON.stringify(customerUser)); } catch(e) {}
+        if (ptsEarned > 0) {
+          setTimeout(function() {
+            toast('⭐ +' + ptsEarned + ' LUX Points ajoutés à votre compte!', 'success');
+          }, 1500);
+        }
+      }
     }).catch(function (e) {
-      toast('❌ ' + e.message, 'error');
+      toast('❌ ' + (e.message || 'Erreur de commande'), 'error');
     });
   };
 
