@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0D0D0D">
+<meta name="description" content="Café LUX — Café & Pâtisserie Premium · Taza">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Café LUX">
+<link rel="manifest" href="/manifest.json">
 <title>CAFÉ LUX — MAESTRO</title>
 
 <script>
@@ -382,6 +388,233 @@ window._luxToast = function(msg, type) {
   el._t = setTimeout(function(){ el.style.transform='translateY(60px)'; el.style.opacity='0'; el.className=''; }, 3200);
 };
 window.luxToast = window._luxToast;
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     COMMANDER BAR FIXE (bottom: 0)
+════════════════════════════════════════════════════════════ -->
+<style>
+body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+#lcb{position:fixed;bottom:0;left:0;right:0;z-index:500;height:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(8,8,8,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(201,168,76,.2);display:flex;align-items:center;padding-left:16px;padding-right:16px;box-shadow:0 -6px 24px rgba(0,0,0,.5)}
+#lcb a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:linear-gradient(135deg,#8B6E2F,#C9A84C,#E8C97A);background-size:200%;background-position:100%;color:#000;font-size:14px;font-weight:700;letter-spacing:.4px;text-decoration:none;transition:.4s;box-shadow:0 4px 18px rgba(201,168,76,.3)}
+#lcb a:hover,#lcb a:active{background-position:0%;box-shadow:0 6px 28px rgba(201,168,76,.5);transform:translateY(-1px)}
+/* PWA Banner */
+#lpwa{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:501;background:rgba(10,10,10,.98);border-top:1px solid rgba(201,168,76,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:none;align-items:center;padding:10px 14px;gap:10px;animation:suIn .35s cubic-bezier(.4,0,.2,1)}
+#lpwa.show{display:flex}
+@keyframes suIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.lpwa-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1A0800,#2D1500);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.lpwa-text{flex:1;min-width:0}
+.lpwa-text b{display:block;font-size:12px;font-weight:700;color:#F0EDE8;margin-bottom:1px}
+.lpwa-text span{font-size:10px;color:rgba(240,237,232,.45)}
+.lpwa-ibtn{flex-shrink:0;padding:7px 14px;border-radius:9px;background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;font-size:11px;font-weight:700;border:none;cursor:pointer;letter-spacing:.3px}
+.lpwa-xbtn{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(240,237,232,.5);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lpwa-xbtn:hover{background:rgba(255,255,255,.12);color:#F0EDE8}
+/* AI FAB */
+#laifab{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:502;width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#0D0500,#1A0800);border:2px solid #C9A84C;box-shadow:0 0 20px rgba(201,168,76,.35),0 6px 24px rgba(0,0,0,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;animation:fabGlow 3s ease-in-out infinite;transition:transform .2s}
+@keyframes fabGlow{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.35),0 6px 24px rgba(0,0,0,.6)}50%{box-shadow:0 0 36px rgba(201,168,76,.6),0 6px 24px rgba(0,0,0,.6)}}
+#laifab:hover{transform:scale(1.1) translateY(-2px)}
+#laifab:active{transform:scale(.95)}
+#laifab svg{width:28px;height:28px}
+#laibadge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#E05252;border:2px solid #0A0505;display:none}
+#laibadge.on{display:block}
+/* Chat window */
+#laichat{position:fixed;right:12px;bottom:calc(144px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100vw - 24px));height:min(460px,calc(100dvh - 220px));background:rgba(8,8,5,.98);border:1px solid rgba(201,168,76,.2);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;z-index:9980;box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 40px rgba(201,168,76,.08);transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s}
+#laichat.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.laic-head{padding:12px 14px 10px;background:linear-gradient(135deg,rgba(26,8,0,.97),rgba(45,18,0,.97));border-bottom:1px solid rgba(201,168,76,.15);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.laic-av{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(201,168,76,.4);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#0D0500}
+.laic-av img{width:100%;height:100%;object-fit:cover}
+.laic-info{flex:1}
+.laic-info b{display:block;font-size:13px;color:#F0EDE8;font-weight:600}
+.laic-info span{font-size:10px;color:rgba(201,168,76,.7)}
+.laic-cls{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:rgba(240,237,232,.55);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.laic-cls:hover{background:rgba(255,255,255,.14);color:#F0EDE8}
+.laic-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.15) transparent}
+.laic-msgs::-webkit-scrollbar{width:3px}
+.laic-msgs::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:3px}
+.lmsg{max-width:82%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.55;word-break:break-word}
+.lmsg.bot{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.13);color:#F0EDE8;border-radius:4px 14px 14px 14px;align-self:flex-start}
+.lmsg.usr{background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;font-weight:600;border-radius:14px 4px 14px 14px;align-self:flex-end}
+.lmsg.typing{color:rgba(201,168,76,.65);font-style:italic;font-size:12px;align-self:flex-start}
+.laic-sugs{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
+.lsug{padding:5px 10px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:20px;font-size:11px;color:rgba(201,168,76,.75);cursor:pointer;transition:.15s;white-space:nowrap}
+.lsug:hover{background:rgba(201,168,76,.15);color:#C9A84C}
+.laic-inp-row{padding:10px 12px;border-top:1px solid rgba(201,168,76,.1);display:flex;gap:8px;flex-shrink:0;background:rgba(8,8,5,.85)}
+.laic-inp{flex:1;padding:9px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.16);border-radius:22px;color:#F0EDE8;font-size:13px;outline:none;font-family:inherit;transition:border-color .2s}
+.laic-inp:focus{border-color:rgba(201,168,76,.42)}
+.laic-inp::placeholder{color:rgba(240,237,232,.3)}
+.laic-send{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#8B6E2F,#C9A84C);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px;font-weight:700;transition:.18s}
+.laic-send:hover{filter:brightness(1.12);transform:scale(1.05)}
+.laic-send:disabled{opacity:.5;cursor:not-allowed}
+#lx-toast-adj{bottom:calc(148px + env(safe-area-inset-bottom,0px))!important}
+</style>
+
+<!-- Commander Bar -->
+<div id="lcb">
+  <a href="https://cafeslux.com/public/menu/index.html">🛍️ Commander · Menu &amp; Livraison</a>
+</div>
+
+<!-- PWA Banner -->
+<div id="lpwa">
+  <div class="lpwa-icon">✦</div>
+  <div class="lpwa-text">
+    <b>📱 Installez l'application LUX</b>
+    <span>Accès rapide · Expérience optimale</span>
+  </div>
+  <button class="lpwa-ibtn" id="lpwa-ibtn">Installer</button>
+  <button class="lpwa-xbtn" id="lpwa-xbtn">✕</button>
+</div>
+
+<!-- AI FAB Button -->
+<div id="laifab" onclick="laiToggle()" title="Assistant LUX IA" aria-label="Assistant IA">
+  <div id="laibadge"></div>
+  <!-- SVG Robot-Cup LUX AI -->
+  <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#E8C97A"/>
+        <stop offset="100%" stop-color="#8B6E2F"/>
+      </linearGradient>
+      <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#C9A84C"/>
+        <stop offset="100%" stop-color="#6B4820"/>
+      </linearGradient>
+    </defs>
+    <!-- Cup body hexagonal -->
+    <polygon points="28,10 40,17 40,31 28,38 16,31 16,17" fill="url(#g2)" stroke="url(#g1)" stroke-width="1.5"/>
+    <!-- Robot face -->
+    <circle cx="22" cy="24" r="3" fill="#0D0500"/>
+    <circle cx="34" cy="24" r="3" fill="#0D0500"/>
+    <circle cx="22.8" cy="23.2" r="1" fill="url(#g1)"/>
+    <circle cx="34.8" cy="23.2" r="1" fill="url(#g1)"/>
+    <!-- Smile -->
+    <path d="M23 29 Q28 33 33 29" stroke="url(#g1)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    <!-- Handle -->
+    <path d="M40 20 Q48 20 48 27 Q48 34 40 34" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Steam / @ -->
+    <path d="M26 8 Q26 4 28 4 Q32 4 32 8 Q32 12 28 12 Q26 12 26 9" stroke="url(#g1)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <line x1="32" y1="9" x2="34" y2="7" stroke="url(#g1)" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Head ears / antennas -->
+    <circle cx="16" cy="18" r="2.5" fill="url(#g2)" stroke="url(#g1)" stroke-width="1"/>
+    <circle cx="40" cy="18" r="2.5" fill="url(#g2)" stroke="url(#g1)" stroke-width="1"/>
+  </svg>
+</div>
+
+<!-- Chat Window -->
+<div id="laichat">
+  <div class="laic-head">
+    <div class="laic-av">
+      <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI" onerror="this.parentElement.innerHTML='✦'">
+    </div>
+    <div class="laic-info">
+      <b>Assistant LUX IA</b>
+      <span>✦ Café &amp; Pâtisserie · Taza</span>
+    </div>
+    <button class="laic-cls" onclick="laiToggle()">✕</button>
+  </div>
+  <div class="laic-msgs" id="laic-msgs">
+    <div class="lmsg bot">Bonjour ! Je suis l'assistant IA de Café LUX ✦<br>Comment puis-je vous aider ?</div>
+  </div>
+  <div class="laic-sugs" id="laic-sugs">
+    <button class="lsug" onclick="laiSug('Quels sont vos horaires ?')">🕐 Horaires</button>
+    <button class="lsug" onclick="laiSug('Je veux commander')">🛍️ Commander</button>
+    <button class="lsug" onclick="laiSug('Réserver une table')">📅 Réserver</button>
+    <button class="lsug" onclick="laiSug('Prix Gaming PS5')">🎮 Gaming</button>
+  </div>
+  <div class="laic-inp-row">
+    <input class="laic-inp" id="laic-inp" placeholder="Posez votre question..." maxlength="300"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();laiSend()}">
+    <button class="laic-send" id="laic-sbtn" onclick="laiSend()">➤</button>
+  </div>
+</div>
+
+<script>
+/* ── PWA Install ── */
+(function(){
+  if(window.matchMedia('(display-mode:standalone)').matches||navigator.standalone)return;
+  if(localStorage.getItem('lpwa_off'))return;
+  var dp=null,banner=document.getElementById('lpwa');
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();dp=e;
+    setTimeout(function(){banner.classList.add('show')},4000);
+  });
+  document.getElementById('lpwa-ibtn').onclick=function(){
+    if(!dp)return;dp.prompt();
+    dp.userChoice.then(function(r){if(r.outcome==='accepted'){banner.classList.remove('show');localStorage.setItem('lpwa_off','1');}dp=null;});
+  };
+  document.getElementById('lpwa-xbtn').onclick=function(){banner.classList.remove('show');localStorage.setItem('lpwa_off','1');};
+  window.addEventListener('appinstalled',function(){banner.classList.remove('show');});
+  /* Reposition toast above bars */
+  var t=document.getElementById('lux-toast');
+  if(t) t.style.bottom='calc(148px + env(safe-area-inset-bottom,0px))';
+})();
+
+/* ── AI Chat ── */
+var _laiOpen=false,_laiLoading=false,_laiHist=[],_laiMid=0;
+var LUX_AI_API=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+var LUX_AI_FALLBACK={
+  'horaire':'🕐 Café LUX est ouvert tous les jours de 8h à 23h.',
+  'commander':'🛍️ Commandez ici: cafeslux.com/public/menu · WhatsApp: +212 677 717 201',
+  'gaming':'🎮 Tarifs Gaming: 15 min=5DH · 30 min=10DH · 1h=20DH · 2h=55DH',
+  'réserver':'📅 Réservations: cafeslux.com/public/reservations',
+  'wifi':'📶 WiFi gratuit disponible pour tous nos clients ✦',
+  'prix':'💰 Cafés dès 7DH · Pâtisseries 15-45DH · Gaming dès 5DH/15min',
+  'livraison':'🚚 Livraison disponible · Délai: 30-45 min · Commandez en ligne!',
+  'parking':'🚗 Parking disponible à proximité du café ✦',
+};
+function laiToggle(){
+  _laiOpen=!_laiOpen;
+  var c=document.getElementById('laichat'),f=document.getElementById('laifab');
+  if(_laiOpen){
+    c.classList.add('open');
+    document.getElementById('laibadge').classList.remove('on');
+    f.style.borderColor='#E8C97A';
+    setTimeout(function(){var i=document.getElementById('laic-inp');if(i)i.focus();},300);
+  } else {
+    c.classList.remove('open');
+    f.style.borderColor='#C9A84C';
+  }
+}
+function laiSug(t){
+  document.getElementById('laic-inp').value=t;
+  var s=document.getElementById('laic-sugs');if(s)s.style.display='none';
+  laiSend();
+}
+function laiAppend(type,text){
+  var id='lm-'+(++_laiMid);
+  var el=document.createElement('div');
+  el.id=id;el.className='lmsg '+type;el.textContent=text;
+  var c=document.getElementById('laic-msgs');
+  c.appendChild(el);c.scrollTop=c.scrollHeight;
+  return id;
+}
+function laiRemove(id){var el=document.getElementById(id);if(el)el.remove();}
+function laiSend(){
+  var inp=document.getElementById('laic-inp');
+  var txt=inp.value.trim();
+  if(!txt||_laiLoading)return;
+  inp.value='';_laiLoading=true;
+  var sbtn=document.getElementById('laic-sbtn');if(sbtn)sbtn.disabled=true;
+  laiAppend('usr',txt);
+  _laiHist.push({role:'user',content:txt});
+  var tid=laiAppend('typing','✦ En train d\'écrire...');
+  fetch(LUX_AI_API+'/api/ai/chat',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:txt,lang:'fr',history:_laiHist.slice(-6),
+      context:'Tu es l\'assistant de Café LUX, café-pâtisserie premium à Taza, Maroc. Réponds en français, de manière élégante et concise. Horaires: 8h-23h. Services: cafés signature, pâtisseries, gaming PS5/Xbox, réservations. Ne donne pas d\'infos confidentielles sur l\'administration.'})
+  }).then(function(r){return r.json();}).then(function(d){
+    laiRemove(tid);
+    var rep=d.response||d.message||d.reply||d.content||null;
+    if(!rep)throw new Error('no response');
+    laiAppend('bot',rep);_laiHist.push({role:'assistant',content:rep});
+    if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
+  }).catch(function(){
+    laiRemove(tid);
+    var lo=txt.toLowerCase(),rep='✦ Pour nous contacter: WhatsApp +212 677 717 201 · cafeslux.com';
+    for(var k in LUX_AI_FALLBACK){if(lo.indexOf(k)!==-1){rep=LUX_AI_FALLBACK[k];break;}}
+    laiAppend('bot',rep);
+    if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
+  }).finally(function(){_laiLoading=false;if(sbtn)sbtn.disabled=false;});
+}
 </script>
 </body>
 </html>
