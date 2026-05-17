@@ -957,9 +957,34 @@ function toast(msg, dur = 3200) {
   el._t = setTimeout(() => el.classList.remove('show'), dur);
 }
 
-function getToken()   { try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; } }
-function setToken(t)  { try { localStorage.setItem('lux_token', t); } catch(e) {} }
-function clearToken() { try { localStorage.removeItem('lux_token'); } catch(e) {} }
+/* ══ SESSION GLOBALE PARTAGÉE — Clés standardisées MPA ══════════
+   lux_customer_token → JWT client (cross-page)
+   lux_customer_user  → Objet {id,name,phone,loyaltyPoints,level}
+   lux_token          → Rétrocompatibilité api-client.js
+══════════════════════════════════════════════════════════════ */
+function getToken() {
+  try { return localStorage.getItem('lux_customer_token') || localStorage.getItem('lux_token') || null; }
+  catch(e) { return null; }
+}
+function setToken(t) {
+  try {
+    localStorage.setItem('lux_customer_token', t); // Cross-page (Commander, Offres…)
+    localStorage.setItem('lux_token', t);           // Rétrocompatibilité api-client.js
+  } catch(e) {}
+}
+function setUser(u) {
+  try { localStorage.setItem('lux_customer_user', JSON.stringify(u)); } catch(e) {}
+}
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem('lux_customer_user') || 'null'); } catch(e) { return null; }
+}
+function clearToken() {
+  try {
+    localStorage.removeItem('lux_customer_token');
+    localStorage.removeItem('lux_customer_user');
+    localStorage.removeItem('lux_token');
+  } catch(e) {}
+}
 
 function authHeaders() {
   const tok = getToken();
@@ -1108,6 +1133,7 @@ async function doLogin() {
 
     if (res.ok && data.token) {
       setToken(data.token);
+      setUser(data.customer);          // ← Partage cross-page (Commander, etc.)
       loadUserData(data.customer);
       showApp();
       await loadOrders();
@@ -1158,6 +1184,7 @@ async function doRegister() {
 
     if (res.ok && data.token) {
       setToken(data.token);
+      setUser(data.customer);          // ← Partage cross-page
       loadUserData(data.customer);
       showApp();
       toast('🎉 Bienvenue chez Café LUX, ' + (data.customer.name || fname) + ' !', 4000);
@@ -1598,45 +1625,80 @@ async function simulatePay() {
 function renderRewards() {
   const pts  = STATE.user?.loyaltyPoints || 0;
   const grid = document.getElementById('rewards-grid');
+  if (!grid) return;
+
   grid.innerHTML = REWARDS.map(r => {
     const canRedeem = pts >= r.pts;
-    return `<div class="reward-card">
+    const progress  = Math.min(100, Math.round((pts / r.pts) * 100));
+    const shortfall = r.pts - pts;
+
+    return `<div class="reward-card" style="${canRedeem ? 'border-color:rgba(201,168,76,.35);cursor:pointer' : 'opacity:.65'}">
       <span class="rc-icon">${r.icon}</span>
-      <div class="rc-name">${r.name}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${r.desc}</div>
-      <div class="rc-pts">${r.pts} <span>pts</span></div>
-      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="redeemReward(${r.id},${r.pts},'${r.name}')">
-        ${canRedeem ? 'Échanger →' : `${r.pts - pts} pts manquants`}
+      <div class="rc-name" style="color:${canRedeem ? 'var(--text)' : 'var(--muted)'}">${r.name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">${r.desc}</div>
+      <div class="rc-pts" style="color:${canRedeem ? 'var(--gold)' : 'var(--muted)'}">
+        ${r.pts} <span>pts</span>
+      </div>
+      <!-- Barre de progression vers la récompense -->
+      <div style="height:3px;background:rgba(255,255,255,.06);border-radius:3px;margin:8px 0 10px;overflow:hidden">
+        <div style="height:100%;width:${progress}%;background:${canRedeem ? 'linear-gradient(90deg,var(--gold-d),var(--gold))' : 'rgba(255,255,255,.12)'};border-radius:3px;transition:width .8s ease"></div>
+      </div>
+      <button class="rc-redeem"
+        ${canRedeem ? '' : 'disabled'}
+        style="${canRedeem ? 'background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#000;cursor:pointer;border-color:transparent;font-weight:700' : 'cursor:not-allowed'}"
+        onclick="${canRedeem ? `redeemReward(${r.id},${r.pts},'${r.name}')` : ''}">
+        ${canRedeem
+          ? `🎁 Échanger ${r.pts} pts →`
+          : `⏳ ${shortfall} pts manquants`
+        }
       </button>
     </div>`;
   }).join('');
 }
 
 async function redeemReward(id, pts, name) {
-  if (!STATE.user || STATE.user.loyaltyPoints < pts) { toast('⚠ Points insuffisants'); return; }
-  if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
-
-  try {
-    // Déduire les points via API
-    const res = await fetch(ROUTES.LOYALTY_ADD, {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ points: -pts })   // valeur négative = déduction
-    });
-    if (res.ok) {
-      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
-    } else {
-      // Déduction locale si l'API ne supporte pas les valeurs négatives
-      if (STATE.user) STATE.user.loyaltyPoints -= pts;
-    }
-  } catch(e) {
-    if (STATE.user) STATE.user.loyaltyPoints -= pts;
-    console.error('[REDEEM]', e.message);
+  if (!STATE.user || STATE.user.loyaltyPoints < pts) {
+    toast('⚠ Points insuffisants pour "' + name + '" — il vous faut ' + pts + ' pts');
+    return;
   }
+  if (!confirm('Confirmer l\'échange de ' + pts + ' LUX Points contre "' + name + '" ?')) return;
 
+  // Déduction optimiste locale immédiate (UX)
+  STATE.user.loyaltyPoints -= pts;
   loadUserData(STATE.user);
   renderRewards();
-  toast(`🎁 "${name}" échangé — votre récompense sera prête en café !`, 4000);
+  setUser(STATE.user); // ← Partage cross-page via localStorage
+
+  try {
+    // Appel API pour déduction réelle côté serveur
+    const { res, data } = await safeFetch(ROUTES.LOYALTY_ADD, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ points: -pts, rewardId: id, rewardName: name })
+    });
+    if (res.ok && data.loyaltyPoints != null) {
+      STATE.user.loyaltyPoints = data.loyaltyPoints;
+      STATE.user.level         = data.level || STATE.user.level;
+      loadUserData(STATE.user);
+      renderRewards();
+      setUser(STATE.user);
+    }
+  } catch(e) {
+    console.warn('[REDEEM] API non disponible — déduction locale confirmée:', e.message);
+  }
+
+  // Toast avec code de retrait
+  const redeemMsgs = {
+    1: '☕ Café Signature réservé — présentez-vous au comptoir',
+    2: '🥐 Viennoiserie réservée — récupérez-la aujourd\'hui',
+    3: '🍰 Pâtisserie LUX réservée — venez la chercher',
+    4: '🎮 30 min Gaming réservés — mentionnez votre nom à la réception',
+    5: '🎁 Carte cadeau 50 DH — disponible dans l\'onglet Cadeau',
+    6: '✦ Pack Signature réservé — présentez ce message en caisse',
+  };
+  const code = 'LUX-' + Date.now().toString(36).toUpperCase().slice(-6);
+  toast((redeemMsgs[id] || '🎁 "' + name + '" échangé!') + ' · Code: ' + code, 5000);
 }
+
 
 /* ══════════════════════════════════════════════════════════════
    INIT — Vérifier session existante
