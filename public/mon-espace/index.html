@@ -573,11 +573,6 @@ input, button, select, textarea { font-family:inherit; }
       <button class="btn-primary" onclick="doLogin()">
         <span id="login-btn-txt">Se connecter →</span>
       </button>
-      <div class="auth-divider">diagnostic</div>
-      <button class="btn-primary" onclick="testConnection()"
-        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
-        🔌 Tester la connexion au serveur
-      </button>
     </div>
 
     <!-- Register -->
@@ -720,66 +715,31 @@ input, button, select, textarea { font-family:inherit; }
     <div class="sec-head"><span class="sh-txt">Statut de fidélité</span><div class="sh-line"></div></div>
     <div class="profile-card">
       <div class="pc-title">Comment gagner des points</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-
-        <!-- 🛒 Achat en ligne → Commander directement -->
-        <a href="https://cafeslux.com/public/menu/index.html"
-           style="background:var(--bg3);border:2px solid rgba(61,190,122,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s;cursor:pointer"
-           onmouseover="this.style.borderColor='rgba(61,190,122,.6)';this.style.transform='translateY(-2px)'"
-           onmouseout="this.style.borderColor='rgba(61,190,122,.25)';this.style.transform='none'">
-          <div style="font-size:26px;margin-bottom:7px;line-height:1">🛍️</div>
-          <div style="font-size:12px;font-weight:700;color:#3DBE7A;margin-bottom:3px">Commander</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
-          <div style="display:inline-block;padding:3px 10px;background:rgba(61,190,122,.1);border:1px solid rgba(61,190,122,.3);border-radius:8px;font-size:9px;font-weight:700;color:#3DBE7A;letter-spacing:.5px">
-            Menu &amp; Livraison →
-          </div>
-        </a>
-
-        <!-- ☕ Achat en café → WhatsApp commande directe -->
-        <a href="https://wa.me/212677717201?text=☕%20Je%20veux%20commander%20au%20Café%20LUX%20Taza%20svp"
-           target="_blank"
-           style="background:var(--bg3);border:2px solid rgba(201,168,76,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s;cursor:pointer"
-           onmouseover="this.style.borderColor='rgba(201,168,76,.6)';this.style.transform='translateY(-2px)'"
-           onmouseout="this.style.borderColor='rgba(201,168,76,.25)';this.style.transform='none'">
-          <div style="font-size:26px;margin-bottom:7px;line-height:1">☕</div>
-          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:3px">Achat en café</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
-          <div style="display:inline-block;padding:3px 10px;background:var(--gold-a10);border:1px solid var(--border2);border-radius:8px;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px">
-            Commander ici →
-          </div>
-        </a>
-
-        <!-- 🎮 Gaming → Page gaming -->
-        <a href="https://cafeslux.com/public/gaming/index.html"
-           style="background:var(--bg3);border:2px solid rgba(91,141,239,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s;cursor:pointer"
-           onmouseover="this.style.borderColor='rgba(91,141,239,.6)';this.style.transform='translateY(-2px)'"
-           onmouseout="this.style.borderColor='rgba(91,141,239,.25)';this.style.transform='none'">
-          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎮</div>
-          <div style="font-size:12px;font-weight:700;color:#5B8DEF;margin-bottom:3px">Gaming LUX</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">5 DH = 1 Point</div>
-          <div style="display:inline-block;padding:3px 10px;background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.3);border-radius:8px;font-size:9px;font-weight:700;color:#5B8DEF;letter-spacing:.5px">
-            Réserver →
-          </div>
-        </a>
-
-        <!-- 🎁 Parrainage → Page offres / carte cadeau -->
-        <a href="https://cafeslux.com/public/offres/index.html#gc"
-           style="background:var(--bg3);border:2px solid rgba(224,82,82,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s;cursor:pointer"
-           onmouseover="this.style.borderColor='rgba(224,82,82,.6)';this.style.transform='translateY(-2px)'"
-           onmouseout="this.style.borderColor='rgba(224,82,82,.25)';this.style.transform='none'">
-          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎁</div>
-          <div style="font-size:12px;font-weight:700;color:#E05252;margin-bottom:3px">Parrainage</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">50 Points offerts</div>
-          <div style="display:inline-block;padding:3px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;font-size:9px;font-weight:700;color:#E05252;letter-spacing:.5px">
-            Carte Cadeau →
-          </div>
-        </a>
-
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:22px;margin-bottom:6px">🛒</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en ligne</div>
+          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:22px;margin-bottom:6px">☕</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en café</div>
+          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:22px;margin-bottom:6px">🎮</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Gaming</div>
+          <div style="font-size:10px;color:var(--muted)">5 DH = 1 Point</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:22px;margin-bottom:6px">🎁</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Parrainage</div>
+          <div style="font-size:10px;color:var(--muted)">50 Points offerts</div>
+        </div>
       </div>
 
-      <!-- Niveaux -->
       <div style="margin-top:14px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux de fidélité</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux</div>
         <div id="tier-list"></div>
       </div>
     </div>
@@ -1029,59 +989,6 @@ function parseName(fullName = '') {
 })();
 
 /* ══════════════════════════════════════════════════════════════
-   safeFetch — Protection contre les réponses HTML (Railway 404)
-   Résout: "JSON.parse: unexpected character at line 1 column 1"
-   Cause: Route inexistante → Railway retourne HTML, pas JSON
-══════════════════════════════════════════════════════════════ */
-async function safeFetch(url, options = {}) {
-  let res;
-  try {
-    res = await fetch(url, options);
-  } catch(e) {
-    throw new Error('Serveur injoignable — vérifiez votre connexion internet');
-  }
-
-  // Lire le corps en texte (safe pour tout type de réponse)
-  const text = await res.text().catch(() => '');
-
-  // Essayer de parser en JSON
-  let data = {};
-  let isJson = false;
-  if (text) {
-    try { data = JSON.parse(text); isJson = true; } catch(_) {}
-  }
-
-  // Si la réponse est OK → retourner directement
-  if (res.ok) return { res, data };
-
-  // Si erreur avec JSON valide → le caller gère le message
-  if (isJson && data.error) return { res, data };
-
-  // Si erreur avec corps non-JSON → construire message clair avec status réel
-  const statusLabel = {
-    400: 'Requête invalide',
-    401: 'Non authentifié',
-    403: 'Accès refusé',
-    404: 'Route inexistante',
-    405: 'Méthode non autorisée',
-    429: 'Trop de requêtes — attendez quelques secondes',
-    500: 'Erreur interne du serveur',
-    502: 'Service temporairement indisponible',
-    503: 'Serveur hors ligne',
-  };
-
-  const label = statusLabel[res.status] || `Erreur HTTP ${res.status}`;
-  const short = text.slice(0,80).replace(/<[^>]+>/g,'').trim(); // enlève HTML
-
-  // Message de diagnostic complet
-  throw new Error(
-    `[HTTP ${res.status}] ${label}` +
-    (short ? ` — Réponse: "${short}"` : '') +
-    (res.status === 404 ? ` — Vérifiez que server.js est déployé et visitez /api/ping` : '')
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════
    LOADER
 ══════════════════════════════════════════════════════════════ */
 function hideLoader() {
@@ -1099,28 +1006,6 @@ function authTab(tab) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   DIAGNOSTIC — tester la connexion et les routes
-══════════════════════════════════════════════════════════════ */
-async function testConnection() {
-  toast('⏳ Test de connexion en cours...');
-  try {
-    const r1 = await fetch(`${API}/health`);
-    const h  = await r1.json().catch(() => ({}));
-    if (!r1.ok) { toast(`❌ Serveur DOWN (${r1.status})`); return; }
-
-    const r2 = await fetch(`${API}/api/ping`);
-    if (r2.ok) {
-      const p = await r2.json();
-      toast(`✅ Serveur OK · Routes actives: ${p.routes?.length || 0}`, 5000);
-    } else {
-      toast(`⚠ Serveur actif (health OK) mais /api/ping manquant (${r2.status}) — déployez le nouveau server.js`);
-    }
-  } catch(e) {
-    toast(`❌ Connexion impossible: ${e.message}`);
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════
    CONNEXION — POST /api/auth/customer/login
 ══════════════════════════════════════════════════════════════ */
 async function doLogin() {
@@ -1135,11 +1020,12 @@ async function doLogin() {
   btn.parentElement.disabled = true;
 
   try {
-    const { res, data }  = await safeFetch(ROUTES.LOGIN, {
+    const res  = await fetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier, password })
     });
+    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1185,11 +1071,12 @@ async function doRegister() {
   btn.textContent = '⏳ Création...';
 
   try {
-    const { res, data }  = await safeFetch(ROUTES.REGISTER, {
+    const res  = await fetch(ROUTES.REGISTER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, email: email || undefined, password: pw })
     });
+    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1335,10 +1222,11 @@ async function saveProfile() {
   if (!name) { toast('⚠ Le nom est requis'); return; }
 
   try {
-    const { res, data }  = await safeFetch(ROUTES.PROFILE_PATCH, {
+    const res  = await fetch(ROUTES.PROFILE_PATCH, {
       method: 'PATCH', headers: authHeaders(),
       body: JSON.stringify({ name, email: email || undefined })
     });
+    const data = await res.json();
 
     if (res.ok) {
       Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
@@ -1361,8 +1249,9 @@ async function loadOrders() {
   document.getElementById('orders-list').innerHTML = `
     <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
   try {
-    const { res, data } = await safeFetch(ROUTES.ORDERS, { headers: authHeaders() });
+    const res = await fetch(ROUTES.ORDERS, { headers: authHeaders() });
     if (res.ok) {
+      const data = await res.json();
       // Mapper les transactions Prisma vers le format UI
       STATE.orders = (Array.isArray(data) ? data : []).map(tx => ({
         id:         tx.externalId || tx.id,
@@ -1435,9 +1324,9 @@ function formatCode(inp) {
 // Charger les cartes liées au compte (par phone)
 async function loadMyGiftCards() {
   try {
-    const { res: gcRes, data: gcData } = await safeFetch(ROUTES.GC_MY, { headers: authHeaders() });
-    const cards = Array.isArray(gcData) ? gcData : [];
-    if (gcRes.ok) {
+    const res  = await fetch(ROUTES.GC_MY, { headers: authHeaders() });
+    if (res.ok) {
+      const cards = await res.json();
       // Prendre la première carte active avec solde > 0
       const active = cards.find(c => c.balance > 0 && c.status === 'active');
       if (active) {
@@ -1456,7 +1345,8 @@ async function linkCard() {
   if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide (format: XXXX-XXXX-XXXX-XXXX)'); return; }
 
   try {
-    const { res, data }  = await safeFetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
+    const res  = await fetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
+    const data = await res.json();
 
     if (res.ok && data.balance != null) {
       // Le schema GiftCard utilise 'expires' (pas 'expiresAt')
@@ -1633,68 +1523,41 @@ async function simulatePay() {
 function renderRewards() {
   const pts  = STATE.user?.loyaltyPoints || 0;
   const grid = document.getElementById('rewards-grid');
-  if (!grid) return;
-
-  // WhatsApp messages par récompense
-  const waMsg = {
-    1: '☕ Je voudrais échanger 50 LUX Points contre un Café Signature. Merci!',
-    2: '🥐 Je voudrais échanger 30 LUX Points contre une Viennoiserie. Merci!',
-    3: '🍰 Je voudrais échanger 80 LUX Points contre une Pâtisserie LUX. Merci!',
-    4: '🎮 Je voudrais échanger 60 LUX Points contre 30 min Gaming. Merci!',
-    5: '🎁 Je voudrais échanger 150 LUX Points contre une Carte Cadeau 50 DH. Merci!',
-    6: '✦ Je voudrais échanger 250 LUX Points contre le Pack Signature. Merci!',
-  };
-
   grid.innerHTML = REWARDS.map(r => {
     const canRedeem = pts >= r.pts;
-    const shortfall = r.pts - pts;
-    const pct       = Math.min(100, Math.round((pts / r.pts) * 100));
-    const wa        = 'https://wa.me/212677717201?text=' + encodeURIComponent(waMsg[r.id] || ('Rachat ' + r.pts + ' pts: ' + r.name));
-
-    return `<div class="reward-card" style="${canRedeem ? 'border-color:rgba(201,168,76,.35)' : 'opacity:.7'}">
+    return `<div class="reward-card">
       <span class="rc-icon">${r.icon}</span>
       <div class="rc-name">${r.name}</div>
       <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${r.desc}</div>
-      <div class="rc-pts" style="color:${canRedeem ? 'var(--gold)' : 'var(--muted)'}">
-        ${r.pts} <span>pts</span>
-      </div>
-      <!-- Barre de progression -->
-      <div style="height:3px;background:rgba(255,255,255,.07);border-radius:3px;margin:8px 0 10px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${canRedeem ? 'linear-gradient(90deg,var(--gold-d),var(--gold))' : 'rgba(255,255,255,.15)'};border-radius:3px"></div>
-      </div>
-      ${canRedeem
-        ? `<a href="${wa}" target="_blank"
-             style="display:block;padding:8px;background:linear-gradient(135deg,var(--gold-d),var(--gold));border-radius:9px;color:#000;font-size:11px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;transition:.18s"
-             onmouseover="this.style.filter='brightness(1.1)'"
-             onmouseout="this.style.filter='none'"
-             onclick="localRedeemPoints(${r.id},${r.pts},'${r.name.replace(/'/g,"\\'")}')">
-             🎁 Échanger ${r.pts} pts
-           </a>`
-        : `<div style="padding:7px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--muted);font-size:10px;text-align:center">
-             ⏳ ${shortfall} pts manquants
-           </div>`
-      }
+      <div class="rc-pts">${r.pts} <span>pts</span></div>
+      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="redeemReward(${r.id},${r.pts},'${r.name}')">
+        ${canRedeem ? 'Échanger →' : `${r.pts - pts} pts manquants`}
+      </button>
     </div>`;
   }).join('');
 }
 
-// Déduction locale optimiste (pas d'API requise)
-function localRedeemPoints(id, pts, name) {
-  if (!STATE.user || STATE.user.loyaltyPoints < pts) return;
-  // Déduire localement
-  STATE.user.loyaltyPoints -= pts;
-  setUser(STATE.user);
-  // Re-render
-  setTimeout(function() {
-    loadUserData(STATE.user);
-    renderRewards();
-    toast('✅ ' + pts + ' pts échangés pour "' + name + '" — message WhatsApp envoyé', 4000);
-  }, 800); // Délai pour que WA s'ouvre d'abord
-}
-
 async function redeemReward(id, pts, name) {
-  localRedeemPoints(id, pts, name);
-}
+  if (!STATE.user || STATE.user.loyaltyPoints < pts) { toast('⚠ Points insuffisants'); return; }
+  if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
+
+  try {
+    // Déduire les points via API
+    const res = await fetch(ROUTES.LOYALTY_ADD, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ points: -pts })   // valeur négative = déduction
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints; STATE.user.level = data.level; }
+    } else {
+      // Déduction locale si l'API ne supporte pas les valeurs négatives
+      if (STATE.user) STATE.user.loyaltyPoints -= pts;
+    }
+  } catch(e) {
+    if (STATE.user) STATE.user.loyaltyPoints -= pts;
+    console.error('[REDEEM]', e.message);
+  }
 
   loadUserData(STATE.user);
   renderRewards();
@@ -1709,14 +1572,14 @@ async function redeemReward(id, pts, name) {
   const tok = getToken();
   if (tok) {
     try {
-      const { res: meRes, data: meData } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
-      if (meRes.ok) {
-        const user = meData;
+      const res = await fetch(ROUTES.ME, { headers: authHeaders() });
+      if (res.ok) {
+        const user = await res.json();
         loadUserData(user);
         showApp();
         // Charger commandes et cartes en parallèle
         await Promise.all([loadOrders(), loadMyGiftCards()]);
-      } else if (meRes.status === 401) {
+      } else if (res.status === 401) {
         // Token expiré → nettoyer
         clearToken();
       } else {
