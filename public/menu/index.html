@@ -1751,18 +1751,25 @@ function luxSwitchUser() {
  * Notify other LUX tabs (especially Mon Espace) that an order
  * was just placed. The receiving page auto-refreshes its order
  * history and loyalty counter — no manual reload needed.
+ * @param {string} ref    Order reference (e.g. WEB-1716567890123)
+ * @param {number} total  Order total in DH
+ * @param {number} points Loyalty points earned (Math.floor(total/10))
  */
-function luxNotifyOrderPlaced(ref, total) {
+function luxNotifyOrderPlaced(ref, total, points) {
+  var payload = {
+    ref:    ref,
+    total:  total,
+    points: typeof points === 'number' ? points : Math.floor((total || 0) / 10),
+    at:     Date.now(),
+  };
   try {
     // Cross-tab via localStorage 'storage' event
-    localStorage.setItem('lux_order_placed', JSON.stringify({
-      ref: ref, total: total, at: Date.now(),
-    }));
+    localStorage.setItem('lux_order_placed', JSON.stringify(payload));
   } catch (e) {}
   try {
     // Cross-tab via BroadcastChannel (modern browsers)
     var bc = new BroadcastChannel('lux-session');
-    bc.postMessage({ type: 'order-placed', ref: ref, total: total });
+    bc.postMessage({ type: 'order-placed', ref: ref, total: total, points: payload.points });
     setTimeout(function() { try { bc.close(); } catch(e){} }, 1000);
   } catch (e) {}
 }
@@ -1791,7 +1798,7 @@ function confirmOrder() {
   var notes = document.getElementById('f-notes').value.trim();
 
   if (!name)  { toast('⚠ Entrez votre prénom'); return; }
-  // phone is optional — no longer required for WhatsApp
+  // phone is optional for anonymous WhatsApp-style orders, but REQUIRED to credit loyalty
   if (type === 'delivery' && !addr) { toast('⚠ Entrez votre adresse'); return; }
 
   var sub   = cart.reduce(function(s,c) { return s + c.p * c.q; }, 0);
@@ -1802,6 +1809,13 @@ function confirmOrder() {
     return { name: c.n, price: c.p, qty: c.q };
   });
 
+  // ⚡ Task 1 — Single shared reference for both endpoints, so POS order and
+  // customer transaction can be correlated by external ID.
+  var sharedRef = 'WEB-' + Date.now();
+  var nowDate   = new Date().toISOString().slice(0, 10);
+  var nowTime   = new Date().toTimeString().slice(0, 5);
+
+  // ── Payload 1: /api/orders (POS / Kitchen Display) ──────────────
   var order = {
     source:     'web',
     type:       type,
@@ -1812,7 +1826,29 @@ function confirmOrder() {
     items:      apiItems,
     subtotal:   sub,
     total:      total,
+    ref:        sharedRef,
     customer:   { name: name, phone: phone },
+  };
+
+  // ── Payload 2: /api/transactions/web (Customer History + Loyalty)
+  // CRITICAL: server.js:433-461 reads `phone` at TOP-LEVEL (not customer.phone)
+  // to credit loyaltyPoints (+1 per 10 DH). It also stores the phone in
+  // `notes` so /api/customers/me/orders can find this transaction.
+  var txPayload = {
+    ref:       sharedRef,
+    id:        Date.now(),
+    date:      nowDate,
+    time:      nowTime,
+    type:      type === 'table' ? 'dine-in' : (type === 'takeaway' ? 'takeaway' : 'delivery'),
+    table:     null,
+    items:     apiItems,
+    subtotal:  sub,
+    total:     total,
+    tva:       tva,
+    mode:      payMode || 'cash',
+    notes:     [notes || '', addr ? 'Adresse: ' + addr : ''].filter(Boolean).join(' · '),
+    customer:  name,
+    phone:     phone || (__luxSession ? __luxSession.phone : ''),  // ← top-level for loyalty
   };
 
   var confirmBtn = document.querySelector('.btn-confirm');
@@ -1822,52 +1858,96 @@ function confirmOrder() {
   // ── Save to API ──────────────────────────────────────────
   var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-  // ⚡ Task 1: Build headers — include Bearer token if a Mon Espace session is active
+  // Build headers — include Bearer token if a Mon Espace session is active
   var headers = { 'Content-Type': 'application/json' };
   var luxTok = luxGetToken();
   if (luxTok) { headers['Authorization'] = 'Bearer ' + luxTok; }
 
-  // ⚡ Task 1: Stamp the order with session metadata so the server knows it's a logged-in customer
+  // Stamp the order with session metadata so the server knows it's a logged-in customer
   if (__luxSession) {
     order.customer.email   = __luxSession.email || undefined;
     order._luxSession      = true;
     order._luxSource       = 'mon-espace';
     order._luxLevel        = __luxSession.level || 'Bronze';
+    // Guarantee phone is set even if user cleared it manually — needed for loyalty
+    if (!txPayload.phone && __luxSession.phone) txPayload.phone = __luxSession.phone;
   }
 
-  fetch(API + '/api/orders', {
+  // ⚡ Task 1 — DUAL POST IN PARALLEL
+  //  1. /api/orders            → POS / Kitchen Display (existing behavior)
+  //  2. /api/transactions/web  → customer history + auto-loyalty (NEW)
+  // Both POSTs use the SAME ref so they can be correlated server-side.
+  // If /api/transactions/web fails but /api/orders succeeds, the order is
+  // still cooked but won't appear in customer history — acceptable.
+  var orderPromise = fetch(API + '/api/orders', {
     method: 'POST',
     headers: headers,
     body: JSON.stringify(order),
-  }).then(function(r) { return r.json(); })
-    .then(function(res) {
-      var ref = res.ref || res.id || (res.order && res.order.id) || 'LX-' + String(Date.now()).slice(-6);
-      // ⚡ Task 1: Notify Mon Espace (and any other open LUX tab) — auto-refresh history + points
-      luxNotifyOrderPlaced(ref, total);
-      showSuccess(name, ref);
-    })
-    .catch(function() {
-      // API unreachable — show success anyway (order queued offline)
-      var ref = 'LX-' + String(Date.now()).slice(-6);
-      luxNotifyOrderPlaced(ref, total);
-      showSuccess(name, ref);
-    });
+  })
+  .then(function(r) { return r.json().catch(function(){ return {}; }); })
+  .catch(function(e) {
+    console.warn('[LUX] /api/orders failed:', e);
+    return { _failed: true };
+  });
+
+  // Only POST to /api/transactions/web if we have a phone — server requires it
+  // for loyalty calculation. Without phone the transaction is wasted compute.
+  var txPromise = txPayload.phone
+    ? fetch(API + '/api/transactions/web', {
+        method:  'POST',
+        headers: headers,
+        body:    JSON.stringify(txPayload),
+      })
+      .then(function(r) { return r.json().catch(function(){ return {}; }); })
+      .catch(function(e) {
+        console.warn('[LUX] /api/transactions/web failed:', e);
+        return { _failed: true };
+      })
+    : Promise.resolve({ _skipped: true, reason: 'no_phone' });
+
+  Promise.all([orderPromise, txPromise]).then(function(results) {
+    var orderRes = results[0];
+    var txRes    = results[1];
+
+    // Prefer the ref returned by either endpoint, fall back to our generated one
+    var ref = (orderRes && (orderRes.ref || orderRes.id || (orderRes.order && orderRes.order.id))) ||
+              (txRes && txRes.ref) ||
+              sharedRef;
+
+    var loyaltyEarned = Math.floor(total / 10);
+
+    console.log('[LUX] order results · /api/orders:', orderRes,
+                '· /api/transactions/web:', txRes,
+                '· loyalty +' + loyaltyEarned + 'pts (if phone matched a customer)');
+
+    // ⚡ Notify Mon Espace (and any other open LUX tab) — auto-refresh history + points
+    // The notification includes ref + total + earned points so the listener can show
+    // a precise toast: "Commande #WEB-1234 enregistrée · +24 LUX Points"
+    luxNotifyOrderPlaced(ref, total, loyaltyEarned);
+
+    showSuccess(name, ref, loyaltyEarned);
+  });
 }
 
 // notifyWhatsApp removed — orders sent directly to POS via API
 
-function showSuccess(name, ref) {
+function showSuccess(name, ref, points) {
   closeModal();
   cart = [];
   renderCart();
   var el = document.getElementById('success-banner');
   var refStr = ref ? ' #' + String(ref).slice(-6) : '';
+  // ⚡ Show loyalty points earned (only when user is authenticated AND points > 0)
+  var ptsLine = '';
+  if (typeof points === 'number' && points > 0 && __luxSession) {
+    ptsLine = '<br><span style="font-size:11px;color:#E8C97A;font-weight:600">⭐ +' + points + ' LUX Points crédités sur votre compte</span>';
+  }
   el.innerHTML = '✅ Votre commande' + refStr + ' a été envoyée avec succès au comptoir!<br>' +
-                 '<span style="font-size:11px;opacity:.8">Merci ' + name + ' — prête dans quelques minutes ✦</span>';
+                 '<span style="font-size:11px;opacity:.8">Merci ' + name + ' — prête dans quelques minutes ✦</span>' + ptsLine;
   el.style.display = 'block';
   document.querySelector('.btn-confirm').textContent = '✦ Confirmer →';
   document.querySelector('.btn-confirm').disabled = false;
-  setTimeout(function() { el.style.display = 'none'; }, 5000);
+  setTimeout(function() { el.style.display = 'none'; }, 6000);
 }
 
 // ── QR Table detection ────────────────────────────────────────
