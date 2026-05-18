@@ -519,378 +519,6 @@ input, button, select, textarea { font-family:inherit; }
 #lux-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
 /* ══════════════════════════════════════════════════════════════
-   LUX MODAL — Custom premium confirm/alert
-══════════════════════════════════════════════════════════════ */
-#lux-modal-overlay {
-  position:fixed; inset:0; z-index:9990;
-  background:radial-gradient(ellipse at center, rgba(0,0,0,.78), rgba(0,0,0,.92));
-  backdrop-filter:blur(8px) saturate(1.2);
-  -webkit-backdrop-filter:blur(8px) saturate(1.2);
-  display:flex; align-items:center; justify-content:center;
-  padding:24px; opacity:0; pointer-events:none;
-  transition:opacity .28s ease;
-}
-#lux-modal-overlay.show { opacity:1; pointer-events:auto; }
-.lux-modal {
-  width:100%; max-width:380px;
-  background:linear-gradient(180deg, var(--bg2) 0%, var(--bg3) 100%);
-  border:1px solid var(--border2);
-  border-radius:20px;
-  padding:28px 24px 22px;
-  box-shadow:var(--shadow), 0 0 80px rgba(201,168,76,.10);
-  transform:scale(.92) translateY(20px);
-  transition:transform .32s cubic-bezier(.34,1.56,.64,1);
-  position:relative; overflow:hidden;
-}
-#lux-modal-overlay.show .lux-modal { transform:scale(1) translateY(0); }
-.lux-modal::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:1px;
-  background:linear-gradient(90deg, transparent, var(--gold), transparent);
-  opacity:.6;
-}
-.lux-modal-icon {
-  width:56px; height:56px; margin:0 auto 14px;
-  border-radius:50%; display:flex; align-items:center; justify-content:center;
-  background:radial-gradient(circle, var(--gold-a18), transparent 70%);
-  border:1px solid var(--gold-a30);
-  font-size:28px;
-}
-.lux-modal-title {
-  font-family:var(--fd); font-size:20px; font-weight:700;
-  color:var(--gold); text-align:center; margin-bottom:8px;
-  letter-spacing:.5px;
-}
-.lux-modal-body {
-  font-size:13px; line-height:1.55; color:var(--text2);
-  text-align:center; margin-bottom:22px;
-}
-.lux-modal-body strong { color:var(--gold-l); font-weight:600; }
-.lux-modal-actions {
-  display:flex; gap:10px;
-}
-.lux-modal-btn {
-  flex:1; padding:13px 16px; border-radius:11px;
-  font-family:var(--fb); font-size:13px; font-weight:600;
-  letter-spacing:.5px; cursor:pointer; border:none;
-  transition:all .22s ease;
-}
-.lux-modal-btn.cancel {
-  background:transparent; border:1px solid var(--border2);
-  color:var(--text2);
-}
-.lux-modal-btn.cancel:hover { background:var(--bg4); color:var(--text); }
-.lux-modal-btn.confirm {
-  background:linear-gradient(135deg, var(--gold-d) 0%, var(--gold) 50%, var(--gold-l) 100%);
-  color:#1a1408; box-shadow:0 6px 24px rgba(201,168,76,.28);
-}
-.lux-modal-btn.confirm:hover { transform:translateY(-1px); box-shadow:0 10px 32px rgba(201,168,76,.42); }
-.lux-modal-btn.danger {
-  background:linear-gradient(135deg, #8B2C2C, #C0392B);
-  color:#fff; box-shadow:0 6px 24px rgba(192,57,43,.28);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   TIER UP CELEBRATION — full-screen
-══════════════════════════════════════════════════════════════ */
-#tier-celebration {
-  position:fixed; inset:0; z-index:9995;
-  background:radial-gradient(ellipse at center, rgba(201,168,76,.20), rgba(0,0,0,.95));
-  display:flex; align-items:center; justify-content:center;
-  flex-direction:column; gap:20px;
-  opacity:0; pointer-events:none;
-  transition:opacity .5s ease;
-}
-#tier-celebration.show { opacity:1; pointer-events:auto; }
-.tc-spark {
-  position:absolute; pointer-events:none;
-  font-family:var(--fd); color:var(--gold);
-  animation:sparkFloat 2.8s ease-out infinite;
-}
-@keyframes sparkFloat {
-  0%   { opacity:0; transform:translateY(40px) scale(.4) rotate(0); }
-  20%  { opacity:1; }
-  100% { opacity:0; transform:translateY(-200px) scale(1.4) rotate(360deg); }
-}
-.tc-ring {
-  width:180px; height:180px; border-radius:50%;
-  border:2px solid var(--gold-a30);
-  display:flex; align-items:center; justify-content:center;
-  position:relative;
-  animation:tcRingPulse 2s ease-in-out infinite;
-}
-@keyframes tcRingPulse {
-  0%,100% { box-shadow:0 0 0 0 var(--gold-a30), inset 0 0 60px var(--gold-a18); }
-  50%     { box-shadow:0 0 0 24px transparent, inset 0 0 80px var(--gold-a30); }
-}
-.tc-ring::before {
-  content:''; position:absolute; inset:-12px;
-  border-radius:50%; border:1px solid var(--gold-a18);
-  animation:tcRingExpand 2s ease-out infinite;
-}
-@keyframes tcRingExpand {
-  0%   { transform:scale(.95); opacity:.8; }
-  100% { transform:scale(1.25); opacity:0; }
-}
-.tc-icon { font-size:64px; filter:drop-shadow(0 0 24px var(--gold)); }
-.tc-label {
-  font-size:11px; letter-spacing:6px; color:var(--gold-l);
-  text-transform:uppercase; font-weight:600;
-  animation:tcFadeIn .6s .2s both;
-}
-.tc-tier-name {
-  font-family:var(--fd); font-size:42px; font-weight:900;
-  color:var(--gold); letter-spacing:3px;
-  text-shadow:0 0 40px var(--gold-a30);
-  animation:tcFadeIn .6s .35s both, tcShine 3s .8s ease-in-out infinite;
-}
-@keyframes tcFadeIn {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-@keyframes tcShine {
-  0%,100% { text-shadow:0 0 40px var(--gold-a30); }
-  50%     { text-shadow:0 0 60px var(--gold-l), 0 0 100px var(--gold); }
-}
-.tc-discount {
-  background:rgba(61,190,122,.10); border:1px solid rgba(61,190,122,.32);
-  color:var(--green); font-weight:700; font-size:14px;
-  padding:8px 18px; border-radius:24px;
-  animation:tcFadeIn .6s .5s both;
-}
-.tc-msg {
-  font-size:13px; color:var(--text2); max-width:280px;
-  text-align:center; line-height:1.55;
-  animation:tcFadeIn .6s .65s both;
-}
-.tc-close {
-  padding:11px 28px; border-radius:12px;
-  background:linear-gradient(135deg, var(--gold-d), var(--gold), var(--gold-l));
-  color:#1a1408; font-weight:700; font-size:12px;
-  letter-spacing:1.5px; border:none; cursor:pointer;
-  animation:tcFadeIn .6s .8s both;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   NEW ORDER HIGHLIGHT
-══════════════════════════════════════════════════════════════ */
-.order-card.new-flash {
-  border-color:var(--gold-l) !important;
-  animation:newOrderFlash 3.5s ease-out;
-}
-@keyframes newOrderFlash {
-  0%   { box-shadow:0 0 0 0 var(--gold-a30), 0 0 40px var(--gold-a30); }
-  20%  { box-shadow:0 0 0 4px var(--gold-a30), 0 0 60px var(--gold-a30); }
-  100% { box-shadow:0 0 0 0 transparent, 0 0 0 transparent; }
-}
-.new-badge {
-  display:inline-block; margin-left:8px;
-  font-size:9px; letter-spacing:1.5px; font-weight:700;
-  padding:2px 7px; border-radius:8px;
-  background:linear-gradient(135deg, var(--gold), var(--gold-l));
-  color:#1a1408; text-transform:uppercase;
-  animation:newBadgePulse 1.6s ease-in-out infinite;
-}
-@keyframes newBadgePulse {
-  0%,100% { transform:scale(1); }
-  50%     { transform:scale(1.08); }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   POINTS COUNTER — flash on update
-══════════════════════════════════════════════════════════════ */
-#pts-display.flash {
-  animation:ptsFlash .9s ease-out;
-}
-@keyframes ptsFlash {
-  0%   { color:var(--gold);   text-shadow:0 0 0 transparent; transform:scale(1); }
-  30%  { color:var(--gold-xl); text-shadow:0 0 24px var(--gold); transform:scale(1.12); }
-  100% { color:var(--gold);   text-shadow:0 0 0 transparent; transform:scale(1); }
-}
-.pb-fill {
-  background:linear-gradient(90deg, var(--gold-d), var(--gold) 50%, var(--gold-l)) !important;
-  transition:width 1.4s cubic-bezier(.22,.61,.36,1) !important;
-  position:relative; overflow:hidden;
-}
-.pb-fill::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
-  animation:barShimmer 2.6s ease-in-out infinite;
-}
-@keyframes barShimmer {
-  0%,100% { transform:translateX(-100%); }
-  50%     { transform:translateX(100%); }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   REFRESH BUTTON
-══════════════════════════════════════════════════════════════ */
-.refresh-btn {
-  display:inline-flex; align-items:center; gap:6px;
-  background:var(--bg3); border:1px solid var(--border);
-  color:var(--text2); font-family:var(--fb); font-size:11px;
-  padding:7px 12px; border-radius:9px; cursor:pointer;
-  margin-left:auto; transition:.2s; letter-spacing:.4px;
-}
-.refresh-btn:hover { background:var(--bg4); border-color:var(--border2); color:var(--gold); }
-.refresh-btn.spinning .ri { animation:spin .8s linear infinite; }
-.refresh-btn .ri { display:inline-block; transition:.2s; }
-.sec-head.with-action { align-items:center; }
-.sec-head.with-action .refresh-btn { margin-left:14px; }
-
-/* ══════════════════════════════════════════════════════════════
-   EDIT PROFILE — toggle mode
-══════════════════════════════════════════════════════════════ */
-.profile-card.locked .af-input {
-  background:transparent !important;
-  border-color:transparent !important;
-  pointer-events:none;
-  color:var(--text);
-  padding-left:0 !important;
-}
-.profile-card.locked .af-label {
-  color:var(--muted);
-}
-.pc-edit-toggle {
-  position:absolute; top:14px; right:14px;
-  background:transparent; border:1px solid var(--border);
-  color:var(--gold); font-size:11px; padding:6px 12px;
-  border-radius:8px; cursor:pointer; transition:.2s;
-  letter-spacing:.5px;
-}
-.pc-edit-toggle:hover { background:var(--gold-a10); border-color:var(--gold-a30); }
-.profile-card { position:relative; }
-.profile-card .pc-save-btn { transition:.3s ease; }
-.profile-card.locked .pc-save-btn {
-  max-height:0; opacity:0; padding-top:0; padding-bottom:0;
-  margin-top:0 !important; overflow:hidden; pointer-events:none;
-}
-.profile-card:not(.locked) .pc-save-btn {
-  max-height:60px; opacity:1;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   REWARD CARDS — premium hover/click
-══════════════════════════════════════════════════════════════ */
-.reward-card { transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease; cursor:pointer; }
-.reward-card:hover { transform:translateY(-3px); border-color:var(--gold-a30); box-shadow:0 12px 32px rgba(201,168,76,.10); }
-.reward-card.affordable { border-color:var(--gold-a30); }
-.reward-card.affordable .rc-icon { filter:drop-shadow(0 0 14px var(--gold-a30)); }
-
-/* ══════════════════════════════════════════════════════════════
-   ORDER DETAILS — sleek expand
-══════════════════════════════════════════════════════════════ */
-.oc-meta {
-  display:flex; gap:10px; flex-wrap:wrap;
-  margin-top:10px; padding-top:10px;
-  border-top:1px dashed var(--border);
-  font-size:10px; color:var(--muted); letter-spacing:.4px;
-}
-.oc-meta-tag {
-  background:var(--bg3); padding:3px 8px; border-radius:6px;
-  color:var(--text2); font-weight:500;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   SKELETON LOADER
-══════════════════════════════════════════════════════════════ */
-.skel {
-  background:linear-gradient(90deg, var(--bg3) 0%, var(--bg4) 50%, var(--bg3) 100%);
-  background-size:200% 100%;
-  animation:skelShimmer 1.4s linear infinite;
-  border-radius:6px;
-}
-@keyframes skelShimmer {
-  0%   { background-position:200% 0; }
-  100% { background-position:-200% 0; }
-}
-.skel-row {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px; background:var(--bg2);
-  border:1px solid var(--border); border-radius:12px; margin-bottom:10px;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   QUICK ORDER ENHANCEMENT — show session badge
-══════════════════════════════════════════════════════════════ */
-.session-badge {
-  display:flex; align-items:center; gap:8px;
-  background:linear-gradient(135deg, rgba(61,190,122,.06), rgba(61,190,122,.02));
-  border:1px solid rgba(61,190,122,.20);
-  border-radius:10px; padding:9px 12px;
-  margin-bottom:12px; font-size:11px; color:var(--green);
-}
-.session-badge .sb-dot {
-  width:8px; height:8px; border-radius:50%;
-  background:var(--green);
-  box-shadow:0 0 12px var(--green);
-  animation:sbPulse 1.6s ease-in-out infinite;
-}
-@keyframes sbPulse {
-  0%,100% { opacity:1; }
-  50%     { opacity:.5; }
-}
-.session-badge strong { color:var(--text); font-weight:600; }
-
-/* ══════════════════════════════════════════════════════════════
-   POINT-ACTION CARDS — clickable shortcuts to cafeslux.com pages
-══════════════════════════════════════════════════════════════ */
-.pa-grid {
-  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;
-}
-.pa-card {
-  position:relative; overflow:hidden;
-  background:linear-gradient(160deg, var(--bg3) 0%, var(--bg2) 100%);
-  border:1px solid var(--border);
-  border-radius:12px; padding:14px 12px 12px;
-  text-align:center; cursor:pointer;
-  transition:transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-.pa-card::before {
-  content:''; position:absolute; inset:-1px;
-  background:linear-gradient(135deg, var(--gold-l), transparent 50%);
-  opacity:0; transition:opacity .25s ease; border-radius:inherit;
-  pointer-events:none; z-index:0;
-}
-.pa-card > * { position:relative; z-index:1; }
-.pa-card::after {
-  content:'→'; position:absolute; top:8px; right:10px;
-  font-family:var(--fd); font-size:14px; color:var(--gold);
-  opacity:.35; transition:transform .25s ease, opacity .25s ease;
-}
-.pa-card:hover {
-  transform:translateY(-3px);
-  border-color:var(--gold-a30);
-  background:linear-gradient(160deg, var(--bg4) 0%, var(--bg3) 100%);
-  box-shadow:0 10px 28px rgba(201,168,76,.10), 0 0 24px rgba(201,168,76,.08);
-}
-.pa-card:hover::before { opacity:.08; }
-.pa-card:hover::after  { transform:translateX(3px); opacity:1; }
-.pa-card:active { transform:translateY(-1px) scale(.98); }
-.pa-icon {
-  font-size:26px; margin-bottom:7px;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));
-  transition:transform .25s ease;
-}
-.pa-card:hover .pa-icon { transform:scale(1.12) rotate(-3deg); }
-.pa-title {
-  font-size:13px; font-weight:600; color:var(--text);
-  margin-bottom:3px; letter-spacing:.2px;
-}
-.pa-card:hover .pa-title { color:var(--gold-l); }
-.pa-sub {
-  font-size:10px; color:var(--muted);
-  letter-spacing:.3px;
-}
-.pa-card .pa-pill {
-  display:inline-block; margin-top:6px;
-  background:var(--gold-a10); color:var(--gold);
-  padding:2px 7px; border-radius:8px;
-  font-size:9px; letter-spacing:1px; font-weight:600;
-  text-transform:uppercase;
-}
-
-/* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
 @media(min-width:520px) {
@@ -944,6 +572,11 @@ input, button, select, textarea { font-family:inherit; }
       </div>
       <button class="btn-primary" onclick="doLogin()">
         <span id="login-btn-txt">Se connecter →</span>
+      </button>
+      <div class="auth-divider">diagnostic</div>
+      <button class="btn-primary" onclick="testConnection()"
+        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
+        🔌 Tester la connexion au serveur
       </button>
     </div>
 
@@ -1058,8 +691,7 @@ input, button, select, textarea { font-family:inherit; }
     <!-- Profil info -->
     <div class="sec-head"><span class="sh-txt">Informations personnelles</span><div class="sh-line"></div></div>
 
-    <div class="profile-card locked" id="profile-card">
-      <button class="pc-edit-toggle" id="profile-edit-btn" onclick="toggleProfileEdit()">✎ Modifier</button>
+    <div class="profile-card">
       <div class="pc-title">Mon profil</div>
       <div class="pc-fields">
         <div class="pf-row">
@@ -1080,9 +712,7 @@ input, button, select, textarea { font-family:inherit; }
           <span class="af-label">Téléphone</span>
           <input type="tel" id="pf-phone" class="af-input" placeholder="06xxxxxxxx">
         </div>
-        <div class="pc-save-btn" style="margin-top:4px">
-          <button class="btn-primary" onclick="saveProfile()" style="width:100%">Sauvegarder le profil</button>
-        </div>
+        <button class="btn-primary" onclick="saveProfile()" style="margin-top:4px">Sauvegarder le profil</button>
       </div>
     </div>
 
@@ -1090,35 +720,57 @@ input, button, select, textarea { font-family:inherit; }
     <div class="sec-head"><span class="sh-txt">Statut de fidélité</span><div class="sh-line"></div></div>
     <div class="profile-card">
       <div class="pc-title">Comment gagner des points</div>
-      <div class="pa-grid">
-        <div class="pa-card" onclick="goToLuxPage('commander')">
-          <div class="pa-icon">🛍️</div>
-          <div class="pa-title">Commander</div>
-          <div class="pa-sub">10 DH = 1 Point</div>
-          <div class="pa-pill">En ligne</div>
-        </div>
-        <div class="pa-card" onclick="goToLuxPage('cafe')">
-          <div class="pa-icon">☕</div>
-          <div class="pa-title">Achat en café</div>
-          <div class="pa-sub">10 DH = 1 Point</div>
-          <div class="pa-pill">WhatsApp</div>
-        </div>
-        <div class="pa-card" onclick="goToLuxPage('gaming')">
-          <div class="pa-icon">🎮</div>
-          <div class="pa-title">Gaming LUX</div>
-          <div class="pa-sub">5 DH = 1 Point</div>
-          <div class="pa-pill">PS5 · Xbox</div>
-        </div>
-        <div class="pa-card" onclick="goToLuxPage('referral')">
-          <div class="pa-icon">🎁</div>
-          <div class="pa-title">Parrainage</div>
-          <div class="pa-sub">50 Points offerts</div>
-          <div class="pa-pill">Partager</div>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+
+        <!-- 🛍️ Commander — LIEN DIRECT -->
+        <a href="https://cafeslux.com/public/menu/index.html"
+           style="background:var(--bg3);border:2px solid rgba(61,190,122,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(61,190,122,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(61,190,122,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🛍️</div>
+          <div style="font-size:12px;font-weight:700;color:#3DBE7A;margin-bottom:3px">Commander</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(61,190,122,.1);border:1px solid rgba(61,190,122,.35);border-radius:8px;font-size:9px;font-weight:700;color:#3DBE7A;letter-spacing:.5px">Menu &amp; Livraison →</div>
+        </a>
+
+        <!-- ☕ Achat en café — WhatsApp -->
+        <a href="https://wa.me/212677717201?text=☕%20Je%20veux%20commander%20au%20Café%20LUX%20Taza%20svp"
+           target="_blank"
+           style="background:var(--bg3);border:2px solid rgba(201,168,76,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(201,168,76,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(201,168,76,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">☕</div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:3px">Achat en café</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">10 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:var(--gold-a10);border:1px solid var(--border2);border-radius:8px;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.5px">Commander ici →</div>
+        </a>
+
+        <!-- 🎮 Gaming LUX — LIEN DIRECT -->
+        <a href="https://cafeslux.com/public/gaming/index.html"
+           style="background:var(--bg3);border:2px solid rgba(91,141,239,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(91,141,239,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(91,141,239,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎮</div>
+          <div style="font-size:12px;font-weight:700;color:#5B8DEF;margin-bottom:3px">Gaming LUX</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">5 DH = 1 Point</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.3);border-radius:8px;font-size:9px;font-weight:700;color:#5B8DEF;letter-spacing:.5px">Réserver →</div>
+        </a>
+
+        <!-- 🎁 Parrainage — Page Offres & Carte Cadeau -->
+        <a href="https://cafeslux.com/public/offres/index.html#gc"
+           style="background:var(--bg3);border:2px solid rgba(224,82,82,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
+           onmouseover="this.style.borderColor='rgba(224,82,82,.7)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='rgba(224,82,82,.25)';this.style.transform='none'">
+          <div style="font-size:26px;margin-bottom:7px;line-height:1">🎁</div>
+          <div style="font-size:12px;font-weight:700;color:#E05252;margin-bottom:3px">Parrainage</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:8px">50 Points offerts</div>
+          <div style="display:inline-block;padding:3px 10px;background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:8px;font-size:9px;font-weight:700;color:#E05252;letter-spacing:.5px">Carte Cadeau →</div>
+        </a>
+
       </div>
 
       <div style="margin-top:14px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px">Niveaux de fidélité</div>
         <div id="tier-list"></div>
       </div>
     </div>
@@ -1130,13 +782,7 @@ input, button, select, textarea { font-family:inherit; }
 
   <!-- ══ PANEL: COMMANDES ══ -->
   <div class="tab-panel" id="panel-commandes">
-    <div class="sec-head with-action">
-      <span class="sh-txt">Historique des commandes</span>
-      <div class="sh-line"></div>
-      <button class="refresh-btn" id="refresh-orders-btn" onclick="refreshOrders()">
-        <span class="ri">↻</span> Actualiser
-      </button>
-    </div>
+    <div class="sec-head"><span class="sh-txt">Historique des commandes</span><div class="sh-line"></div></div>
     <div id="orders-list">
       <div class="empty-state">
         <span class="empty-icon">📋</span>
@@ -1202,12 +848,6 @@ input, button, select, textarea { font-family:inherit; }
       <div class="sec-head"><span class="sh-txt">Simulateur de paiement</span><div class="sh-line"></div></div>
       <div class="payment-sim">
         <div class="ps-title">💳 Payer avec ma carte LUX</div>
-
-        <!-- Session badge — seamless connexion -->
-        <div class="session-badge" id="ps-session-badge">
-          <span class="sb-dot"></span>
-          <span>Connecté en tant que <strong id="ps-session-name">—</strong> · paiement instantané sans re-saisie</span>
-        </div>
 
         <div class="ps-amount-row">
           <span class="ps-amount-lbl">Montant</span>
@@ -1275,29 +915,6 @@ input, button, select, textarea { font-family:inherit; }
   </div>
 
 </div><!-- /screen-app -->
-
-<!-- ══════════ LUX CONFIRM MODAL ══════════ -->
-<div id="lux-modal-overlay" onclick="if(event.target===this) _luxModalResolve(false)">
-  <div class="lux-modal">
-    <div class="lux-modal-icon" id="lux-modal-icon">✦</div>
-    <div class="lux-modal-title" id="lux-modal-title">Confirmer</div>
-    <div class="lux-modal-body" id="lux-modal-body">Êtes-vous sûr ?</div>
-    <div class="lux-modal-actions">
-      <button class="lux-modal-btn cancel" id="lux-modal-cancel" onclick="_luxModalResolve(false)">Annuler</button>
-      <button class="lux-modal-btn confirm" id="lux-modal-confirm" onclick="_luxModalResolve(true)">Confirmer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ TIER UP CELEBRATION ══════════ -->
-<div id="tier-celebration" onclick="closeTierCelebration()">
-  <div class="tc-ring"><span class="tc-icon" id="tc-icon">✦</span></div>
-  <div class="tc-label">Niveau de fidélité atteint</div>
-  <div class="tc-tier-name" id="tc-tier-name">GOLD</div>
-  <div class="tc-discount" id="tc-discount">−10%</div>
-  <div class="tc-msg" id="tc-msg">Vos avantages premium sont désormais actifs sur chaque commande.</div>
-  <button class="tc-close" onclick="closeTierCelebration()">SUPERBE ✦</button>
-</div>
 
 <!-- Toast -->
 <div id="lux-toast"></div>
@@ -1368,7 +985,55 @@ function toast(msg, dur = 3200) {
 
 function getToken()   { try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; } }
 function setToken(t)  { try { localStorage.setItem('lux_token', t); } catch(e) {} }
-function clearToken() { try { localStorage.removeItem('lux_token'); } catch(e) {} }
+function clearToken() {
+  try {
+    localStorage.removeItem('lux_token');
+    // ⚡ Mirror clear — sync logout across pages (menu, gaming, offres, etc.)
+    localStorage.removeItem('lux_customer_session');
+    localStorage.removeItem('lux_session_cache');
+  } catch(e) {}
+}
+
+/**
+ * ⚡ SESSION MIRROR — Task 1 (Seamless Session across pages)
+ * Writes the legacy 'lux_customer_session' key that the menu page,
+ * gaming page, and offres page already read. When the user lands on
+ * /public/menu/index.html and opens the "Votre Commande" modal,
+ * the existing checkout logic finds this session and skips the
+ * login/registration step entirely — auto-filling name & phone.
+ * Called from loadUserData() so it stays in sync after every login,
+ * profile patch, and loyalty update.
+ */
+function syncLegacySession(user) {
+  if (!user || !user.phone) return;
+  try {
+    const legacy = {
+      name:    user.name  || '',
+      phone:   user.phone || '',
+      email:   user.email || '',
+      points:  user.loyaltyPoints || 0,
+      level:   user.level  || 'Bronze',
+      created: user.createdAt || new Date().toISOString(),
+      // Extras for richer consumers (e.g. discount-aware checkout):
+      discount:      (getTier(user.loyaltyPoints || 0) || {}).discount || 0,
+      loyaltyPoints: user.loyaltyPoints || 0,
+      // Internal markers — let consuming pages know this came from Mon Espace
+      _source: 'mon-espace',
+      _token:  getToken(),
+      _ts:     Date.now(),
+      _v:      '2.0',
+    };
+    localStorage.setItem('lux_customer_session', JSON.stringify(legacy));
+    // Also store in a registry-style map (some legacy pages walk lux_web_customers)
+    try {
+      const registry = JSON.parse(localStorage.getItem('lux_web_customers') || '{}');
+      registry[user.phone] = legacy;
+      localStorage.setItem('lux_web_customers', JSON.stringify(registry));
+    } catch(e) {}
+  } catch(e) {
+    console.warn('[LUX] syncLegacySession failed:', e.message);
+  }
+}
 
 function authHeaders() {
   const tok = getToken();
@@ -1391,125 +1056,6 @@ function parseName(fullName = '') {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ANIMATION UTILITIES — count-up & easing
-══════════════════════════════════════════════════════════════ */
-function animateCount(el, from, to, duration = 1100, suffix = '') {
-  if (!el) return;
-  if (from === to) { el.textContent = to.toLocaleString() + suffix; return; }
-  el._animFrom = from; el._animTo = to;
-  const start = performance.now();
-  function frame(now) {
-    const t = Math.min(1, (now - start) / duration);
-    // easeOutCubic
-    const eased = 1 - Math.pow(1 - t, 3);
-    const cur = Math.round(from + (to - from) * eased);
-    el.textContent = cur.toLocaleString() + suffix;
-    if (t < 1) requestAnimationFrame(frame);
-    else el.textContent = to.toLocaleString() + suffix;
-  }
-  requestAnimationFrame(frame);
-}
-
-function flashPts() {
-  const el = document.getElementById('pts-display');
-  if (!el) return;
-  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   LUX MODAL — custom confirm (replaces native confirm())
-══════════════════════════════════════════════════════════════ */
-let _luxModalResolve = () => {};
-function luxConfirm(opts = {}) {
-  return new Promise(resolve => {
-    const overlay = document.getElementById('lux-modal-overlay');
-    document.getElementById('lux-modal-icon').textContent  = opts.icon    || '✦';
-    document.getElementById('lux-modal-title').textContent = opts.title   || 'Confirmer';
-    document.getElementById('lux-modal-body').innerHTML    = opts.body    || 'Êtes-vous sûr ?';
-    document.getElementById('lux-modal-confirm').textContent = opts.confirm || 'Confirmer';
-    document.getElementById('lux-modal-cancel').textContent  = opts.cancel  || 'Annuler';
-    const confirmBtn = document.getElementById('lux-modal-confirm');
-    confirmBtn.classList.toggle('danger',  opts.tone === 'danger');
-    confirmBtn.classList.toggle('confirm', opts.tone !== 'danger');
-    // Hide cancel for alert-style modals
-    document.getElementById('lux-modal-cancel').style.display = opts.alert ? 'none' : '';
-    overlay.classList.add('show');
-    _luxModalResolve = (val) => {
-      overlay.classList.remove('show');
-      setTimeout(() => resolve(val), 280);
-    };
-  });
-}
-function luxAlert(opts) { return luxConfirm({ ...opts, alert:true, confirm:opts.confirm || 'Compris' }); }
-
-/* ══════════════════════════════════════════════════════════════
-   TIER UP CELEBRATION
-══════════════════════════════════════════════════════════════ */
-let _celebrationTimer = null;
-function triggerTierCelebration(tier) {
-  const icons = { bronze:'🥉', silver:'🥈', gold:'⭐', platinum:'✦' };
-  document.getElementById('tc-icon').textContent     = icons[tier.key] || '✦';
-  document.getElementById('tc-tier-name').textContent = tier.name.toUpperCase();
-  document.getElementById('tc-discount').textContent  = tier.discount ? `−${tier.discount}% à vie` : 'Niveau débloqué';
-  document.getElementById('tc-msg').textContent       = tier.discount
-    ? `Vos avantages premium sont désormais actifs : remise automatique de ${tier.discount}% sur chaque commande.`
-    : 'Continuez à accumuler des points pour débloquer le niveau supérieur.';
-  // Sparks
-  const el = document.getElementById('tier-celebration');
-  el.querySelectorAll('.tc-spark').forEach(s => s.remove());
-  for (let i = 0; i < 14; i++) {
-    const s = document.createElement('span');
-    s.className = 'tc-spark';
-    s.textContent = ['✦','✧','✨','★'][i % 4];
-    s.style.left   = (5 + Math.random() * 90) + '%';
-    s.style.top    = (40 + Math.random() * 40) + '%';
-    s.style.fontSize = (12 + Math.random() * 16) + 'px';
-    s.style.animationDelay = (Math.random() * 1.4) + 's';
-    el.appendChild(s);
-  }
-  el.classList.add('show');
-  clearTimeout(_celebrationTimer);
-  _celebrationTimer = setTimeout(closeTierCelebration, 7000);
-}
-function closeTierCelebration() {
-  document.getElementById('tier-celebration').classList.remove('show');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   SESSION EXPOSURE — for other LUX pages (commander, gaming...)
-   Other pages read window.LUX_SESSION to inherit the logged-in
-   customer's profile + Bearer token, skipping re-auth.
-══════════════════════════════════════════════════════════════ */
-window.LUX_SESSION = {
-  isAuthenticated: () => !!STATE.isAuth,
-  getToken:        () => getToken(),
-  getCustomer:     () => STATE.user ? JSON.parse(JSON.stringify(STATE.user)) : null,
-  getProfile:      () => STATE.user ? {
-    name:    STATE.user.name,
-    phone:   STATE.user.phone,
-    email:   STATE.user.email,
-    token:   getToken(),
-    level:   STATE.user.level,
-    points:  STATE.user.loyaltyPoints || 0,
-    discount: STATE.discount || 0,
-  } : null,
-  /**
-   * Place an order on behalf of the authenticated customer.
-   * Other pages call: window.LUX_SESSION.placeOrder({ items, total })
-   * Returns the saved order; profile + auth are auto-attached.
-   */
-  placeOrder: (order) => placeOrderFromSession(order),
-  onChange: (cb) => {
-    window.addEventListener('lux:session-update', e => cb(e.detail));
-  },
-};
-function _emitSession() {
-  try {
-    window.dispatchEvent(new CustomEvent('lux:session-update', { detail: window.LUX_SESSION.getProfile() }));
-  } catch(e) {}
-}
-
-/* ══════════════════════════════════════════════════════════════
    HORLOGE
 ══════════════════════════════════════════════════════════════ */
 (function clock() {
@@ -1520,6 +1066,59 @@ function _emitSession() {
   };
   tick(); setInterval(tick, 15000);
 })();
+
+/* ══════════════════════════════════════════════════════════════
+   safeFetch — Protection contre les réponses HTML (Railway 404)
+   Résout: "JSON.parse: unexpected character at line 1 column 1"
+   Cause: Route inexistante → Railway retourne HTML, pas JSON
+══════════════════════════════════════════════════════════════ */
+async function safeFetch(url, options = {}) {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch(e) {
+    throw new Error('Serveur injoignable — vérifiez votre connexion internet');
+  }
+
+  // Lire le corps en texte (safe pour tout type de réponse)
+  const text = await res.text().catch(() => '');
+
+  // Essayer de parser en JSON
+  let data = {};
+  let isJson = false;
+  if (text) {
+    try { data = JSON.parse(text); isJson = true; } catch(_) {}
+  }
+
+  // Si la réponse est OK → retourner directement
+  if (res.ok) return { res, data };
+
+  // Si erreur avec JSON valide → le caller gère le message
+  if (isJson && data.error) return { res, data };
+
+  // Si erreur avec corps non-JSON → construire message clair avec status réel
+  const statusLabel = {
+    400: 'Requête invalide',
+    401: 'Non authentifié',
+    403: 'Accès refusé',
+    404: 'Route inexistante',
+    405: 'Méthode non autorisée',
+    429: 'Trop de requêtes — attendez quelques secondes',
+    500: 'Erreur interne du serveur',
+    502: 'Service temporairement indisponible',
+    503: 'Serveur hors ligne',
+  };
+
+  const label = statusLabel[res.status] || `Erreur HTTP ${res.status}`;
+  const short = text.slice(0,80).replace(/<[^>]+>/g,'').trim(); // enlève HTML
+
+  // Message de diagnostic complet
+  throw new Error(
+    `[HTTP ${res.status}] ${label}` +
+    (short ? ` — Réponse: "${short}"` : '') +
+    (res.status === 404 ? ` — Vérifiez que server.js est déployé et visitez /api/ping` : '')
+  );
+}
 
 /* ══════════════════════════════════════════════════════════════
    LOADER
@@ -1539,6 +1138,28 @@ function authTab(tab) {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   DIAGNOSTIC — tester la connexion et les routes
+══════════════════════════════════════════════════════════════ */
+async function testConnection() {
+  toast('⏳ Test de connexion en cours...');
+  try {
+    const r1 = await fetch(`${API}/health`);
+    const h  = await r1.json().catch(() => ({}));
+    if (!r1.ok) { toast(`❌ Serveur DOWN (${r1.status})`); return; }
+
+    const r2 = await fetch(`${API}/api/ping`);
+    if (r2.ok) {
+      const p = await r2.json();
+      toast(`✅ Serveur OK · Routes actives: ${p.routes?.length || 0}`, 5000);
+    } else {
+      toast(`⚠ Serveur actif (health OK) mais /api/ping manquant (${r2.status}) — déployez le nouveau server.js`);
+    }
+  } catch(e) {
+    toast(`❌ Connexion impossible: ${e.message}`);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    CONNEXION — POST /api/auth/customer/login
 ══════════════════════════════════════════════════════════════ */
 async function doLogin() {
@@ -1553,12 +1174,11 @@ async function doLogin() {
   btn.parentElement.disabled = true;
 
   try {
-    const res  = await fetch(ROUTES.LOGIN, {
+    const { res, data }  = await safeFetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier, password })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1604,12 +1224,11 @@ async function doRegister() {
   btn.textContent = '⏳ Création...';
 
   try {
-    const res  = await fetch(ROUTES.REGISTER, {
+    const { res, data }  = await safeFetch(ROUTES.REGISTER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, email: email || undefined, password: pw })
     });
-    const data = await res.json();
 
     if (res.ok && data.token) {
       setToken(data.token);
@@ -1631,46 +1250,28 @@ async function doRegister() {
 /* ══════════════════════════════════════════════════════════════
    DÉCONNEXION
 ══════════════════════════════════════════════════════════════ */
-async function doLogout() {
-  const ok = await luxConfirm({
-    icon: '👋',
-    title: 'Se déconnecter ?',
-    body: 'Vous devrez ressaisir vos identifiants pour revenir.<br>Vos données restent en sécurité sur nos serveurs.',
-    confirm: 'Se déconnecter',
-    tone: 'danger',
-  });
-  if (!ok) return;
+function doLogout() {
   clearToken();
   STATE = { isAuth:false, user:null, giftCard:null, orders:[], payMode:'gc', discount:0 };
   document.getElementById('screen-app').style.display  = 'none';
   document.getElementById('screen-auth').style.display = 'block';
   document.getElementById('tb-tier-badge').style.display = 'none';
-  // Reset animation caches
-  ['pts-display','stat-orders','stat-spent','stat-savings'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el._animTo = 0; el._animFrom = 0; }
-  });
   // Vider les champs
   ['login-id','login-pw'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  _emitSession();
   toast('👋 Déconnexion réussie');
 }
 
 /* ══════════════════════════════════════════════════════════════
    CHARGER LES DONNÉES UTILISATEUR
    → Mappe le schema Prisma: { name, phone, loyaltyPoints, level, createdAt }
-   → Animations: count-up des points, barre de progression douce,
-     célébration tier-up si le client change de niveau.
 ══════════════════════════════════════════════════════════════ */
-function loadUserData(user, opts = {}) {
+function loadUserData(user) {
   if (!user) return;
-
-  // Track previous tier to detect promotion
-  const prevPts  = (STATE.user && STATE.user.loyaltyPoints) || 0;
-  const prevTier = STATE.user ? getTier(prevPts) : null;
-
   STATE.user    = user;
   STATE.isAuth  = true;
+
+  // ⚡ Task 1: Mirror to legacy session key for cross-page seamless checkout
+  syncLegacySession(user);
 
   const tier      = getTier(user.loyaltyPoints || 0);
   STATE.discount  = tier.discount;
@@ -1691,42 +1292,33 @@ function loadUserData(user, opts = {}) {
   document.getElementById('tb-tier-badge').textContent    = tier.name;
   document.getElementById('tb-tier-badge').style.display  = 'block';
 
-  // Barre de points — calcul progression
+  // Barre de points
   const pts   = user.loyaltyPoints || 0;
   const nextT = TIERS.find(t => t.min > pts) || TIERS[TIERS.length - 1];
-  const prevTierForBar = tier;
-  const pct = (nextT.min > prevTierForBar.min && nextT.min !== Infinity)
-    ? Math.min(100, ((pts - prevTierForBar.min) / (nextT.min - prevTierForBar.min)) * 100)
+  const prevT = tier;
+  const pct   = (nextT.min > prevT.min && nextT.min !== Infinity)
+    ? Math.min(100, ((pts - prevT.min) / (nextT.min - prevT.min)) * 100)
     : 100;
 
-  // ── Animation count-up des points
-  const ptsEl = document.getElementById('pts-display');
-  const startFrom = (typeof ptsEl._animTo === 'number') ? ptsEl._animTo : prevPts;
-  animateCount(ptsEl, startFrom, pts, 1100);
-  if (pts !== prevPts) flashPts();
-
-  // ── Animation barre de progression
   setTimeout(() => {
-    document.getElementById('pts-bar').style.width = pct + '%';
-  }, 60);
-  document.getElementById('pts-next').textContent = nextT.min === Infinity
-    ? '✦ Niveau maximum atteint'
-    : `${nextT.min - pts} pts → ${nextT.name}`;
+    document.getElementById('pts-display').textContent = pts.toLocaleString();
+    document.getElementById('pts-bar').style.width     = pct + '%';
+    document.getElementById('pts-next').textContent    = nextT.min === Infinity
+      ? '✦ Niveau maximum atteint'
+      : `${nextT.min - pts} pts → ${nextT.name}`;
+  }, 300);
 
-  // Stats — animés
-  const ordersCount = user.ordersCount || STATE.orders.length || 0;
-  const spent       = user.totalSpent  || 0;
-  const savings     = user.savings     || 0;
-  animateCount(document.getElementById('stat-orders'),  parseInt(document.getElementById('stat-orders').textContent)  || 0, ordersCount, 900);
-  animateCount(document.getElementById('stat-spent'),   parseInt(document.getElementById('stat-spent').textContent.replace(/\D/g,''))   || 0, spent,   900, ' DH');
-  animateCount(document.getElementById('stat-savings'), parseInt(document.getElementById('stat-savings').textContent.replace(/\D/g,'')) || 0, savings, 900, ' DH');
+  // Stats (ordersCount vient du backend)
+  document.getElementById('stat-orders').textContent  = user.ordersCount || STATE.orders.length || 0;
+  document.getElementById('stat-spent').textContent   = `${(user.totalSpent || 0).toLocaleString()} DH`;
+  document.getElementById('stat-savings').textContent = `${(user.savings || 0).toLocaleString()} DH`;
 
   // Remise VIP
   if (tier.discount > 0) {
-    document.getElementById('discount-pct').textContent      = `−${tier.discount}%`;
-    document.getElementById('discount-banner').style.display = 'flex';
+    document.getElementById('discount-pct').textContent        = `−${tier.discount}%`;
+    document.getElementById('discount-banner').style.display   = 'flex';
   } else {
-    document.getElementById('discount-banner').style.display = 'none';
+    document.getElementById('discount-banner').style.display   = 'none';
   }
 
   // Champs profil (fname/lname séparés)
@@ -1735,21 +1327,9 @@ function loadUserData(user, opts = {}) {
   document.getElementById('pf-email').value = user.email || '';
   document.getElementById('pf-phone').value = user.phone || '';
 
-  // Session badge dans simulateur
-  const sbName = document.getElementById('ps-session-name');
-  if (sbName) sbName.textContent = user.name || '—';
-
   // Tier list & rewards
   renderTierList(pts, tier);
   renderRewards();
-
-  // ── TIER UP CELEBRATION
-  if (prevTier && tier.key !== prevTier.key && tier.min > prevTier.min && !opts.silent) {
-    setTimeout(() => triggerTierCelebration(tier), 1300);
-  }
-
-  // ── Propager au session-bus pour les autres pages
-  _emitSession();
 }
 
 function renderTierList(pts, currentTier) {
@@ -1797,22 +1377,15 @@ async function saveProfile() {
   if (!name) { toast('⚠ Le nom est requis'); return; }
 
   try {
-    const res  = await fetch(ROUTES.PROFILE_PATCH, {
+    const { res, data }  = await safeFetch(ROUTES.PROFILE_PATCH, {
       method: 'PATCH', headers: authHeaders(),
       body: JSON.stringify({ name, email: email || undefined })
     });
-    const data = await res.json();
 
     if (res.ok) {
       Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
       document.getElementById('client-name').textContent      = STATE.user.name;
       document.getElementById('avatar-initials').textContent  = STATE.user.name[0].toUpperCase();
-      // Verrouiller à nouveau le formulaire
-      const card = document.getElementById('profile-card');
-      const btn  = document.getElementById('profile-edit-btn');
-      if (card) card.classList.add('locked');
-      if (btn)  btn.textContent = '✎ Modifier';
-      _emitSession();
       toast('✅ Profil mis à jour');
     } else {
       toast('❌ ' + (data.error || 'Erreur lors de la sauvegarde'));
@@ -1830,9 +1403,8 @@ async function loadOrders() {
   document.getElementById('orders-list').innerHTML = `
     <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
   try {
-    const res = await fetch(ROUTES.ORDERS, { headers: authHeaders() });
+    const { res, data } = await safeFetch(ROUTES.ORDERS, { headers: authHeaders() });
     if (res.ok) {
-      const data = await res.json();
       // Mapper les transactions Prisma vers le format UI
       STATE.orders = (Array.isArray(data) ? data : []).map(tx => ({
         id:         tx.externalId || tx.id,
@@ -1855,7 +1427,7 @@ async function loadOrders() {
 function renderOrders() {
   const list = document.getElementById('orders-list');
   if (!STATE.orders.length) {
-    list.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande pour l'instant<div style="margin-top:8px;font-size:11px;color:var(--muted)">Vos prochaines commandes s'afficheront ici en temps réel.</div></div>`;
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande pour l'instant</div>`;
     return;
   }
   const statusMap = {
@@ -1863,20 +1435,12 @@ function renderOrders() {
     pending:   { lbl:'En cours', bg:'rgba(201,168,76,.1)', color:'var(--gold)'  },
     cancelled: { lbl:'Annulée',  bg:'rgba(224,82,82,.1)',  color:'var(--red)'   },
   };
-  const modeMap = {
-    'gift-card': '🎁 Carte cadeau',
-    'mixed':     '⚡ Mixte',
-    'card':      '💳 Carte',
-    'cash':      '💵 Cash',
-  };
   list.innerHTML = STATE.orders.map((o, idx) => {
     const s = statusMap[o.status] || statusMap.delivered;
-    const newBadge = o._isNew ? `<span class="new-badge">Nouveau</span>` : '';
-    const modeTag  = o.mode ? `<span class="oc-meta-tag">${modeMap[o.mode] || o.mode}</span>` : '';
     return `<div class="order-card">
       <div class="oc-head" onclick="toggleOrder(${idx})">
         <div>
-          <div class="oc-ref">${o.id}${newBadge}</div>
+          <div class="oc-ref">${o.id}</div>
           <div class="oc-date">${formatDate(o.date)}</div>
         </div>
         <div style="text-align:right">
@@ -1889,11 +1453,6 @@ function renderOrders() {
           ${o.items.map(i => `<div class="oc-item"><span class="oc-item-name">${i.qty}× ${i.name}</span><span class="oc-item-price">${(i.qty*i.price)} DH</span></div>`).join('')}
         </div>
         <div class="oc-pts-earned">⭐ +${o.pts_earned} LUX Points gagnés</div>
-        <div class="oc-meta">
-          <span class="oc-meta-tag">REF · ${o.id}</span>
-          ${modeTag}
-          <span class="oc-meta-tag">${formatDate(o.date)}</span>
-        </div>
       </div>
     </div>`;
   }).join('');
@@ -1901,48 +1460,6 @@ function renderOrders() {
 
 function toggleOrder(idx) {
   document.getElementById('order-body-' + idx).classList.toggle('open');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   REFRESH MANUEL DE L'HISTORIQUE
-══════════════════════════════════════════════════════════════ */
-async function refreshOrders() {
-  const btn = document.getElementById('refresh-orders-btn');
-  if (btn) btn.classList.add('spinning');
-  // Skeleton temporaire
-  document.getElementById('orders-list').innerHTML = `
-    <div class="skel-row"><div class="skel" style="width:40%;height:18px"></div><div class="skel" style="width:25%;height:18px"></div></div>
-    <div class="skel-row"><div class="skel" style="width:50%;height:18px"></div><div class="skel" style="width:25%;height:18px"></div></div>
-    <div class="skel-row"><div class="skel" style="width:35%;height:18px"></div><div class="skel" style="width:25%;height:18px"></div></div>
-  `;
-  await loadOrders();
-  if (btn) btn.classList.remove('spinning');
-  toast('🔄 Historique actualisé');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   PROFIL — toggle edit/lock + save
-══════════════════════════════════════════════════════════════ */
-function toggleProfileEdit() {
-  const card = document.getElementById('profile-card');
-  const btn  = document.getElementById('profile-edit-btn');
-  const locked = card.classList.contains('locked');
-  if (locked) {
-    card.classList.remove('locked');
-    btn.textContent = '✕ Annuler';
-    setTimeout(() => document.getElementById('pf-fname').focus(), 60);
-  } else {
-    // Annuler — restaurer valeurs depuis STATE
-    if (STATE.user) {
-      const { fname, lname } = parseName(STATE.user.name || '');
-      document.getElementById('pf-fname').value = fname;
-      document.getElementById('pf-lname').value = lname;
-      document.getElementById('pf-email').value = STATE.user.email || '';
-      document.getElementById('pf-phone').value = STATE.user.phone || '';
-    }
-    card.classList.add('locked');
-    btn.textContent = '✎ Modifier';
-  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1960,9 +1477,9 @@ function formatCode(inp) {
 // Charger les cartes liées au compte (par phone)
 async function loadMyGiftCards() {
   try {
-    const res  = await fetch(ROUTES.GC_MY, { headers: authHeaders() });
-    if (res.ok) {
-      const cards = await res.json();
+    const { res: gcRes, data: gcData } = await safeFetch(ROUTES.GC_MY, { headers: authHeaders() });
+    const cards = Array.isArray(gcData) ? gcData : [];
+    if (gcRes.ok) {
       // Prendre la première carte active avec solde > 0
       const active = cards.find(c => c.balance > 0 && c.status === 'active');
       if (active) {
@@ -1981,8 +1498,7 @@ async function linkCard() {
   if (!code || code.replace(/-/g,'').length < 8) { toast('⚠ Code invalide (format: XXXX-XXXX-XXXX-XXXX)'); return; }
 
   try {
-    const res  = await fetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
-    const data = await res.json();
+    const { res, data }  = await safeFetch(ROUTES.GC_CHECK(code), { headers: authHeaders() });
 
     if (res.ok && data.balance != null) {
       // Le schema GiftCard utilise 'expires' (pas 'expiresAt')
@@ -2014,15 +1530,7 @@ function renderGiftCard() {
   }
 }
 
-async function unlinkCard() {
-  const ok = await luxConfirm({
-    icon: '🗑',
-    title: 'Délier la carte cadeau ?',
-    body: 'La carte restera valide — vous pourrez la relier à tout moment avec son code.',
-    confirm: 'Délier',
-    tone: 'danger',
-  });
-  if (!ok) return;
+function unlinkCard() {
   STATE.giftCard = null;
   renderGiftCard();
   document.getElementById('gc-link-input').value = '';
@@ -2077,12 +1585,6 @@ function updateMixedSplit() {
 }
 
 async function simulatePay() {
-  // Garde-fou — sans session, on ne peut pas créer de commande
-  if (!STATE.user || !STATE.user.phone) {
-    toast('⚠ Veuillez vous connecter pour passer commande');
-    return;
-  }
-
   const raw = parseFloat(document.getElementById('ps-amount').value);
   if (!raw || raw <= 0) { toast('⚠ Entrez un montant valide'); return; }
 
@@ -2104,23 +1606,12 @@ async function simulatePay() {
     gcDeduct  = Math.min(parseFloat((amount * pct / 100).toFixed(2)), STATE.giftCard.balance);
   }
 
-  // ── Confirmation premium avant débit
-  const confirmed = await luxConfirm({
-    icon: '💳',
-    title: 'Confirmer le paiement',
-    body: `Vous allez payer <strong>${amount} DH</strong> via <strong>${STATE.payMode === 'gc' ? 'Carte Cadeau' : STATE.payMode === 'card' ? 'Carte bancaire' : 'Paiement mixte'}</strong>.<br><br>Vous gagnerez <strong>+${Math.floor(amount/10)} LUX Points</strong>.`,
-    confirm: 'Payer ' + amount + ' DH →',
-  });
-  if (!confirmed) return;
-
   const btn = document.getElementById('pay-btn-txt');
   btn.textContent = '⏳ Traitement...';
   btn.parentElement.disabled = true;
 
   let success = true;
   const errors = [];
-  const orderRef = 'WEB-' + Date.now();
-  const ptsEarned = Math.floor(amount / 10);
 
   try {
     // 1. Déduire de la carte cadeau (appel API réel)
@@ -2138,103 +1629,35 @@ async function simulatePay() {
       }
     }
 
-    if (!success) {
-      toast('❌ ' + errors.join(' — '));
-      return;
-    }
-
-    // 2. ENREGISTRER LA COMMANDE — POST /api/transactions/web
-    //    (Le serveur incrémente automatiquement les points via Math.floor(total/10)
-    //     quand le phone correspond à un Customer existant)
-    const orderPayload = {
-      ref:       orderRef,
-      id:        Date.now(),
-      date:      new Date().toISOString().slice(0,10),
-      time:      new Date().toTimeString().slice(0,5),
-      type:      'delivery',
-      items:     [{ name: 'Commande LUX', qty: 1, price: amount, n: 'Commande LUX', q: 1, p: amount }],
-      subtotal:  amount,
-      total:     amount,
-      tva:       0,
-      mode:      STATE.payMode === 'gc' ? 'gift-card' : STATE.payMode === 'mixed' ? 'mixed' : 'card',
-      notes:     `Mon Espace · Remise ${STATE.discount}% · Original: ${raw} DH`,
-      customer:  STATE.user.name,
-      phone:     STATE.user.phone,
-    };
-
-    const txRes = await fetch(`${API}/api/transactions/web`, {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify(orderPayload),
-    }).catch(e => null);
-
-    let savedTx = null;
-    if (txRes && txRes.ok) {
-      savedTx = await txRes.json().catch(() => null);
-    }
-
-    // 3. Ajouter les points de fidélité (le serveur /transactions/web le fait DÉJÀ
-    //    automatiquement quand phone correspond → on évite la double comptabilisation
-    //    en se contentant de lire la valeur fraîche via ROUTES.ME)
-    let updatedUser = null;
-    try {
-      const meRes = await fetch(ROUTES.ME, { headers: authHeaders() });
-      if (meRes.ok) updatedUser = await meRes.json();
-    } catch(e) {}
-
-    // Fallback : si le serveur n'a pas crédité (ex. phone inconnu), on appelle LOYALTY_ADD
-    if (!updatedUser || (updatedUser.loyaltyPoints || 0) <= (STATE.user.loyaltyPoints || 0)) {
-      if (ptsEarned > 0) {
-        const lyRes = await fetch(ROUTES.LOYALTY_ADD, {
-          method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({ points: ptsEarned })
-        });
-        if (lyRes.ok) {
-          const lyData = await lyRes.json();
-          updatedUser = updatedUser || { ...STATE.user };
-          updatedUser.loyaltyPoints = lyData.loyaltyPoints;
-          updatedUser.level         = lyData.level;
+    // 2. Ajouter les points de fidélité (appel API réel)
+    const ptsEarned = Math.floor(amount / 10);
+    if (ptsEarned > 0 && success) {
+      const lyRes = await fetch(ROUTES.LOYALTY_ADD, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ points: ptsEarned })
+      });
+      if (lyRes.ok) {
+        const lyData = await lyRes.json();
+        if (STATE.user) {
+          STATE.user.loyaltyPoints = lyData.loyaltyPoints;
+          STATE.user.level         = lyData.level;
         }
       }
     }
 
-    // 4. Mettre à jour l'état local
-    const mergedUser = updatedUser ? { ...STATE.user, ...updatedUser } : { ...STATE.user };
-    mergedUser.totalSpent  = (STATE.user.totalSpent || 0) + amount;
-    mergedUser.savings     = (STATE.user.savings    || 0) + (raw - amount);
-    mergedUser.ordersCount = (STATE.user.ordersCount || STATE.orders.length || 0) + 1;
-
-    // 5. Ajouter la nouvelle commande EN TÊTE de l'historique
-    const newOrder = {
-      id:         savedTx?.ref || orderRef,
-      date:       new Date().toISOString(),
-      total:      amount,
-      status:     'delivered',
-      items:      [{ name: 'Commande LUX', qty: 1, price: amount }],
-      pts_earned: ptsEarned,
-      mode:       orderPayload.mode,
-      _isNew:     true,
-    };
-    STATE.orders.unshift(newOrder);
-
-    // 6. Rafraîchir l'UI avec animations
-    renderGiftCard();
-    loadUserData(mergedUser);  // anime points, stats, et détecte tier-up
-    renderOrders();             // re-render avec badge "NOUVEAU"
-
-    // 7. Mise en évidence visuelle de la nouvelle commande
-    requestAnimationFrame(() => {
-      const card = document.querySelector('#orders-list .order-card');
-      if (card) {
-        card.classList.add('new-flash');
-        setTimeout(() => card.classList.remove('new-flash'), 3500);
+    if (success) {
+      if (STATE.user) {
+        STATE.user.totalSpent = (STATE.user.totalSpent || 0) + amount;
+        STATE.user.savings    = (STATE.user.savings || 0) + (raw - amount);
       }
-    });
-
-    // 8. Reset du formulaire
-    document.getElementById('ps-amount').value = '';
-    document.getElementById('ps-discount-preview').style.display = 'none';
-
-    toast(`✅ Commande ${orderRef} confirmée · +${ptsEarned} LUX Points !`, 4500);
+      renderGiftCard();
+      loadUserData(STATE.user);
+      document.getElementById('ps-amount').value            = '';
+      document.getElementById('ps-discount-preview').style.display = 'none';
+      toast(`✅ Paiement de ${amount} DH confirmé · +${Math.floor(amount/10)} LUX Points !`, 4500);
+    } else {
+      toast('❌ ' + errors.join(' — '));
+    }
 
   } catch(e) {
     toast('❌ Erreur réseau lors du paiement — réessayez');
@@ -2247,160 +1670,6 @@ async function simulatePay() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PLACE ORDER FROM SESSION — appelable depuis n'importe quelle
-   page LUX via window.LUX_SESSION.placeOrder({ items, total })
-   Le profil + token sont auto-attachés (zéro re-saisie).
-══════════════════════════════════════════════════════════════ */
-async function placeOrderFromSession({ items = [], total = 0, mode = 'card', notes = '' } = {}) {
-  if (!STATE.isAuth || !STATE.user) {
-    return Promise.reject(new Error('Non authentifié — connectez-vous d\'abord'));
-  }
-  if (!Array.isArray(items) || !items.length || !total) {
-    return Promise.reject(new Error('items + total requis'));
-  }
-
-  const orderRef = 'WEB-' + Date.now();
-  const discountedTotal = parseFloat((total * (1 - STATE.discount/100)).toFixed(2));
-
-  const payload = {
-    ref:      orderRef, id: Date.now(),
-    date:     new Date().toISOString().slice(0,10),
-    time:     new Date().toTimeString().slice(0,5),
-    type:     'delivery',
-    items:    items.map(i => ({ ...i, n:i.name||i.n, q:i.qty||i.q||1, p:i.price||i.p||0 })),
-    subtotal: total, total: discountedTotal, tva: 0,
-    mode,
-    notes:    `Session LUX · ${notes}`,
-    customer: STATE.user.name,
-    phone:    STATE.user.phone,
-  };
-
-  const res = await fetch(`${API}/api/transactions/web`, {
-    method: 'POST', headers: authHeaders(),
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Erreur création commande');
-
-  // Rafraîchir l'utilisateur depuis le backend (loyalty incrémenté côté serveur)
-  try {
-    const meRes = await fetch(ROUTES.ME, { headers: authHeaders() });
-    if (meRes.ok) {
-      const fresh = await meRes.json();
-      const merged = { ...STATE.user, ...fresh };
-      merged.totalSpent  = (STATE.user.totalSpent || 0) + discountedTotal;
-      merged.ordersCount = (STATE.user.ordersCount || STATE.orders.length || 0) + 1;
-      // Prepend
-      STATE.orders.unshift({
-        id: orderRef, date: new Date().toISOString(),
-        total: discountedTotal, status: 'delivered',
-        items: payload.items.map(i => ({ name:i.n, qty:i.q, price:i.p })),
-        pts_earned: Math.floor(discountedTotal/10),
-        mode, _isNew: true,
-      });
-      loadUserData(merged);
-      renderOrders();
-    }
-  } catch(e) {}
-
-  return { ref: orderRef, total: discountedTotal, points: Math.floor(discountedTotal/10) };
-}
-
-/* ══════════════════════════════════════════════════════════════
-   GO TO LUX PAGE — navigation seamless vers cafeslux.com
-   Le token est déjà dans localStorage (lux_token) → toutes les
-   autres pages LUX le récupèrent automatiquement via leur init()
-   et ROUTES.ME : aucune re-authentification demandée.
-   Pour WhatsApp, on pré-remplit le message avec le profil connecté.
-══════════════════════════════════════════════════════════════ */
-const LUX_DESTINATIONS = {
-  commander: {
-    url:       'https://cafeslux.com/public/menu/index.html',
-    label:     '🛍️ Menu en ligne',
-    target:    '_self',
-    needsAuth: true,
-  },
-  cafe: {
-    // Construit dynamiquement pour pré-remplir le nom + téléphone du client
-    url:       null,
-    label:     '☕ WhatsApp Café',
-    target:    '_blank',
-    needsAuth: false,
-    build: () => {
-      const name  = STATE.user?.name  || 'Client';
-      const phone = STATE.user?.phone || '';
-      const tier  = STATE.user ? getTier(STATE.user.loyaltyPoints || 0).name : '';
-      const lines = [
-        '☕ Commander au Café LUX',
-        '',
-        `Nom : ${name}`,
-        phone ? `Tél : ${phone}` : null,
-        tier  ? `Niveau : ${tier}${STATE.discount?` (−${STATE.discount}%)`:''}` : null,
-        '',
-        'Ma commande :',
-        '• ',
-      ].filter(Boolean);
-      return 'https://wa.me/212677717201?text=' + encodeURIComponent(lines.join('\n'));
-    },
-  },
-  gaming: {
-    url:       'https://cafeslux.com/public/gaming/index.html',
-    label:     '🎮 Gaming LUX',
-    target:    '_self',
-    needsAuth: true,
-  },
-  referral: {
-    url:       'https://cafeslux.com/public/offres/index.html#gc',
-    label:     '🎁 Parrainage',
-    target:    '_self',
-    needsAuth: true,
-  },
-};
-
-async function goToLuxPage(key) {
-  const dest = LUX_DESTINATIONS[key];
-  if (!dest) { toast('⚠ Destination inconnue'); return; }
-
-  // Garde-fou session — si la page de destination nécessite l'auth
-  // et que le token n'est plus là, on bloque proprement.
-  if (dest.needsAuth && !STATE.isAuth) {
-    toast('⚠ Veuillez vous connecter');
-    return;
-  }
-
-  // Animation de feedback — petite confirmation visuelle
-  toast(`✦ Ouverture ${dest.label}...`, 1400);
-
-  // Pour le cas du parrainage on copie aussi le code de partage avant d'ouvrir
-  if (key === 'referral' && STATE.user?.phone) {
-    try {
-      const referralLink = `https://cafeslux.com/?ref=${encodeURIComponent(STATE.user.phone)}`;
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(referralLink).catch(() => {});
-      }
-    } catch(e) {}
-  }
-
-  // Construire l'URL finale (WhatsApp = dynamique avec pré-remplissage du nom)
-  const targetUrl = typeof dest.build === 'function' ? dest.build() : dest.url;
-
-  // Petit délai pour laisser respirer l'animation, puis navigation
-  setTimeout(() => {
-    if (dest.target === '_blank') {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      // Same-origin navigation : localStorage (token + cache) est conservé
-      window.location.href = targetUrl;
-    }
-  }, 280);
-
-  // Log pour debug — utile pour vérifier que la session est bien transportée
-  console.log('[LUX] Seamless navigation →', key, '|', targetUrl,
-              '| token:', getToken() ? 'OK' : 'NONE',
-              '| user:', STATE.user?.name || '(none)');
-}
-
-/* ══════════════════════════════════════════════════════════════
    RÉCOMPENSES
 ══════════════════════════════════════════════════════════════ */
 function renderRewards() {
@@ -2408,54 +1677,21 @@ function renderRewards() {
   const grid = document.getElementById('rewards-grid');
   grid.innerHTML = REWARDS.map(r => {
     const canRedeem = pts >= r.pts;
-    return `<div class="reward-card ${canRedeem?'affordable':''}" onclick="showRewardDetails(${r.id})">
+    return `<div class="reward-card">
       <span class="rc-icon">${r.icon}</span>
       <div class="rc-name">${r.name}</div>
       <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${r.desc}</div>
       <div class="rc-pts">${r.pts} <span>pts</span></div>
-      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="event.stopPropagation();redeemReward(${r.id},${r.pts},'${r.name.replace(/'/g,"\\'")}')">
+      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="redeemReward(${r.id},${r.pts},'${r.name}')">
         ${canRedeem ? 'Échanger →' : `${r.pts - pts} pts manquants`}
       </button>
     </div>`;
   }).join('');
 }
 
-async function showRewardDetails(id) {
-  const r = REWARDS.find(x => x.id === id);
-  if (!r) return;
-  const pts = STATE.user?.loyaltyPoints || 0;
-  const remaining = Math.max(0, r.pts - pts);
-  const body = `
-    <div style="font-size:38px;margin-bottom:10px">${r.icon}</div>
-    <div style="font-family:var(--fd);font-size:18px;color:var(--gold);margin-bottom:6px;font-weight:700">${r.name}</div>
-    <div style="color:var(--text2);font-size:12px;margin-bottom:12px">${r.desc}</div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:11px;color:var(--muted);text-align:left;line-height:1.7">
-      <div style="display:flex;justify-content:space-between"><span>Coût :</span><strong style="color:var(--gold)">${r.pts} LUX Points</strong></div>
-      <div style="display:flex;justify-content:space-between"><span>Vos points :</span><strong style="color:var(--text)">${pts}</strong></div>
-      <div style="display:flex;justify-content:space-between;border-top:1px dashed var(--border);margin-top:6px;padding-top:6px">
-        <span>${remaining > 0 ? 'Manquant :' : '✓ Disponible'}</span>
-        <strong style="color:${remaining>0?'var(--red)':'var(--green)'}">${remaining > 0 ? remaining + ' pts' : 'Maintenant'}</strong>
-      </div>
-    </div>`;
-  if (remaining > 0) {
-    await luxAlert({ icon: r.icon, title: r.name, body });
-  } else {
-    const ok = await luxConfirm({ icon: r.icon, title: r.name, body, confirm: 'Échanger maintenant →' });
-    if (ok) redeemReward(r.id, r.pts, r.name);
-  }
-}
-
 async function redeemReward(id, pts, name) {
   if (!STATE.user || STATE.user.loyaltyPoints < pts) { toast('⚠ Points insuffisants'); return; }
-
-  // Modale premium au lieu du confirm() natif
-  const ok = await luxConfirm({
-    icon: '🎁',
-    title: 'Échanger contre',
-    body: `<strong>${name}</strong> contre <strong>${pts} LUX Points</strong>.<br><br>Votre récompense sera prête à retirer en café sous présentation de ce compte.`,
-    confirm: 'Échanger →',
-  });
-  if (!ok) return;
+  if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
 
   try {
     // Déduire les points via API
@@ -2464,26 +1700,19 @@ async function redeemReward(id, pts, name) {
       body: JSON.stringify({ points: -pts })   // valeur négative = déduction
     });
     if (res.ok) {
-      const data = await res.json();
-      if (STATE.user) {
-        const updated = { ...STATE.user };
-        updated.loyaltyPoints = data.loyaltyPoints;
-        updated.level         = data.level;
-        loadUserData(updated, { silent: true });  // pas de tier-up sur déduction
-        renderRewards();
-        toast(`🎁 "${name}" échangé — votre récompense vous attend en café !`, 4500);
-        return;
-      }
+      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
+    } else {
+      // Déduction locale si l'API ne supporte pas les valeurs négatives
+      if (STATE.user) STATE.user.loyaltyPoints -= pts;
     }
-    // Fallback local
-    const updated = { ...STATE.user, loyaltyPoints: (STATE.user.loyaltyPoints || 0) - pts };
-    loadUserData(updated, { silent: true });
-    renderRewards();
-    toast(`🎁 "${name}" échangé — votre récompense vous attend en café !`, 4500);
   } catch(e) {
+    if (STATE.user) STATE.user.loyaltyPoints -= pts;
     console.error('[REDEEM]', e.message);
-    toast('❌ Erreur réseau — réessayez');
   }
+
+  loadUserData(STATE.user);
+  renderRewards();
+  toast(`🎁 "${name}" échangé — votre récompense sera prête en café !`, 4000);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2494,14 +1723,14 @@ async function redeemReward(id, pts, name) {
   const tok = getToken();
   if (tok) {
     try {
-      const res = await fetch(ROUTES.ME, { headers: authHeaders() });
-      if (res.ok) {
-        const user = await res.json();
+      const { res: meRes, data: meData } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+      if (meRes.ok) {
+        const user = meData;
         loadUserData(user);
         showApp();
         // Charger commandes et cartes en parallèle
         await Promise.all([loadOrders(), loadMyGiftCards()]);
-      } else if (res.status === 401) {
+      } else if (meRes.status === 401) {
         // Token expiré → nettoyer
         clearToken();
       } else {
@@ -2515,6 +1744,221 @@ async function redeemReward(id, pts, name) {
   }
   // Toujours cacher le loader après 800ms max
   setTimeout(hideLoader, 800);
+})();
+
+/* ══════════════════════════════════════════════════════════════
+   ⚡ TASK 1 — AUTO-SYNC CROSS-PAGE
+   When the user comes back from the menu page (after placing an
+   order there), automatically refresh the orders list and loyalty
+   points — no manual reload required.
+
+   Three triggers, all non-intrusive:
+   1. tab regains focus       → quick refresh
+   2. 'storage' event         → another tab (menu) wrote a flag
+   3. BroadcastChannel msg    → cross-tab event (modern browsers)
+══════════════════════════════════════════════════════════════ */
+let _lastSync = 0;
+async function autoSyncSession(reason) {
+  // Throttle: max one sync per 4 seconds
+  if (Date.now() - _lastSync < 4000) return;
+  _lastSync = Date.now();
+  if (!STATE.isAuth || !getToken()) return;
+  console.log('[LUX] auto-sync triggered:', reason);
+  try {
+    // Refresh user profile (catches points/level changes from server)
+    const { res: meRes, data: user } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+    if (meRes.ok && user) {
+      const prevPts = STATE.user?.loyaltyPoints || 0;
+      loadUserData(user);
+      // Refresh orders list (new order from menu page will appear)
+      await loadOrders();
+      // Toast if loyalty changed (new order detected)
+      const newPts = user.loyaltyPoints || 0;
+      if (newPts > prevPts) {
+        toast(`✨ +${newPts - prevPts} LUX Points · commande synchronisée`, 4000);
+      }
+    } else if (meRes.status === 401) {
+      clearToken();
+      doLogout();
+    }
+  } catch(e) {
+    console.warn('[LUX] auto-sync failed:', e.message);
+  }
+}
+
+// Trigger 1 — page regains focus (most reliable, works everywhere)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && STATE.isAuth) {
+    autoSyncSession('tab-focus');
+  }
+});
+window.addEventListener('focus', () => {
+  if (STATE.isAuth) autoSyncSession('window-focus');
+});
+
+// Trigger 2 — another tab/window wrote a sync flag in localStorage
+// (the menu page can do: localStorage.setItem('lux_order_placed', Date.now()))
+window.addEventListener('storage', (e) => {
+  if (!e.key) return;
+  if (e.key === 'lux_order_placed' || e.key === 'lux_customer_session' || e.key === 'lux_token') {
+    autoSyncSession('storage:' + e.key);
+  }
+});
+
+// Trigger 3 — BroadcastChannel (modern cross-tab event)
+try {
+  const luxBus = new BroadcastChannel('lux-session');
+  luxBus.onmessage = (e) => {
+    if (e.data?.type === 'order-placed' || e.data?.type === 'profile-updated') {
+      autoSyncSession('broadcast:' + e.data.type);
+    }
+  };
+  window.LUX_BUS = luxBus;
+} catch(e) {
+  // BroadcastChannel not supported (older browser) — listeners 1+2 still work
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ⚡ TASK 1 — EXPOSE LUX_SESSION GLOBALLY
+   Lets the menu page checkout read the authenticated profile and
+   place orders without showing the "Votre Commande" auth modal.
+   Same shape as lux-session-bridge.js for consistency.
+══════════════════════════════════════════════════════════════ */
+window.LUX_SESSION = {
+  isAuthenticated: () => !!STATE.isAuth,
+  getToken:        () => getToken(),
+  getProfile:      () => STATE.user ? {
+    name:    STATE.user.name,
+    phone:   STATE.user.phone,
+    email:   STATE.user.email || '',
+    token:   getToken(),
+    level:   STATE.user.level || 'Bronze',
+    points:  STATE.user.loyaltyPoints || 0,
+    discount: STATE.discount || 0,
+  } : null,
+  refresh:    () => autoSyncSession('manual'),
+  notifyOrderPlaced: () => {
+    try { localStorage.setItem('lux_order_placed', String(Date.now())); } catch(e) {}
+    try { window.LUX_BUS && window.LUX_BUS.postMessage({ type: 'order-placed' }); } catch(e) {}
+  },
+};
+</script>
+
+<!-- ── FAB: WhatsApp + AI (Mon Espace LUX) ── -->
+<style>
+#me-fab-group{position:fixed;right:16px;bottom:24px;z-index:900;display:flex;flex-direction:column;align-items:center;gap:12px}
+#me-fab-wa{width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;border:2px solid rgba(255,255,255,.2);box-shadow:0 8px 24px rgba(37,211,102,.35);transition:transform .2s}
+#me-fab-wa:hover{transform:scale(1.1) translateY(-2px)}
+#me-fab-ai{width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#E8C97A);border:none;cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(201,168,76,.7);animation:mePulse 2s infinite;transition:transform .2s}
+@keyframes mePulse{0%{box-shadow:0 0 0 0 rgba(201,168,76,.7)}70%{box-shadow:0 0 0 18px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
+#me-fab-ai:hover{transform:scale(1.1)}
+#me-fab-ai img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* Chat window mon-espace — z au-dessus du topbar (z:200) */
+#me-ai-chat{display:none;position:fixed;right:12px;bottom:106px;width:min(360px,calc(100vw - 24px));height:min(480px,calc(100dvh - 160px));background:linear-gradient(180deg,#1A1A1A,#0C0C0C);border:1px solid #C9A84C;border-radius:20px;z-index:9990;box-shadow:0 16px 64px rgba(0,0,0,.8);overflow:hidden;flex-direction:column;animation:chatIn .3s cubic-bezier(.4,0,.2,1)}
+#me-ai-chat.open{display:flex!important}
+.me-ch{background:linear-gradient(135deg,#1A0A00,#2D1500);padding:13px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(201,168,76,.2);flex-shrink:0}
+.me-av{width:42px;height:42px;border-radius:50%;border:2px solid #C9A84C;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#C9A84C,#E8C97A);display:flex;align-items:center;justify-content:center}
+.me-av img{width:100%;height:100%;object-fit:cover}
+.me-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin}
+.me-chip{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:#D7D2C8;padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all .25s;font-family:inherit}
+.me-chip:hover{background:#C9A84C;color:#000}
+.me-inp-row{padding:11px 13px;background:rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
+.me-inp{flex:1;padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:11px;color:#fff;outline:none;font-size:12px;font-family:inherit}
+.me-inp::placeholder{color:rgba(255,255,255,.3)}
+.me-snd{padding:10px 13px;background:rgba(201,168,76,.1);border:1px solid #C9A84C;border-radius:10px;font-weight:700;cursor:pointer;color:#C9A84C;font-size:12px}
+</style>
+
+<div id="me-fab-group">
+  <a id="me-fab-wa" href="https://wa.me/212677717201?text=Bonjour%20Café%20LUX%20je%20souhaite%20des%20informations..." target="_blank" title="WhatsApp">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.628 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+  <button id="me-fab-ai" type="button" onclick="meLaiToggle()" title="Assistant LUX IA">
+    <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
+         onerror="this.outerHTML='<span style=\'font-size:24px;font-weight:900;font-family:serif;color:#000\'>✦</span>'">
+  </button>
+</div>
+
+<div id="me-ai-chat">
+  <div class="me-ch">
+    <div class="me-av">
+      <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
+           onerror="this.outerHTML='<span style=\'font-size:18px;font-weight:900;font-family:serif;color:#000\'>✦</span>'">
+    </div>
+    <div style="flex:1">
+      <div style="font-family:'Cinzel',Georgia,serif;color:#C9A84C;font-size:14px;letter-spacing:1px;font-weight:700">LUX AI</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.45)">Assistant · Mon Espace LUX</div>
+    </div>
+    <button type="button" onclick="meLaiToggle()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer">✕</button>
+  </div>
+  <div class="me-msgs" id="me-msgs">
+    <div style="background:rgba(215,210,200,.05);border:1px solid rgba(201,168,76,.1);border-radius:14px 14px 14px 4px;padding:14px;font-size:12px;color:#D7D2C8;line-height:1.65">
+      <strong style="color:#C9A84C;display:block;margin-bottom:6px">مرحباً ✦</strong>
+      <p style="margin:0 0 12px;opacity:.9">كيف يمكنني مساعدتك في Mon Espace LUX؟</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button type="button" class="me-chip" onclick="meLaiSug('Mes points de fidélité ?')">⭐ Points</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Comment échanger mes points ?')">🎁 Échange</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Carte cadeau ?')">💳 Carte cadeau</button>
+        <button type="button" class="me-chip" onclick="meLaiSug('Horaires Café LUX ?')">🕐 Horaires</button>
+      </div>
+    </div>
+  </div>
+  <div class="me-inp-row">
+    <input type="text" class="me-inp" id="me-inp" placeholder="Votre question..."
+           onkeydown="if(event.key==='Enter')meLaiSend()">
+    <button type="button" class="me-snd" onclick="meLaiSend()">إرسال</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var _AAPI=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+  var _open=false,_mid=0;
+  var _FB={'horaire':'🕐 Café LUX: 8h–23h, tous les jours ✦','menu':'📖 Menu: cafeslux.com/public/menu','gaming':'🎮 Gaming: 15min=5DH · 1h=20DH','wifi':'📶 WiFi gratuit ✦','اين':'📍 Taza, Maroc ✦'};
+
+  window.meLaiToggle=function(){
+    _open=!_open;
+    var c=document.getElementById('me-ai-chat');
+    if(c)c.classList.toggle('open',_open);
+    if(_open){setTimeout(function(){var i=document.getElementById('me-inp');if(i)i.focus();},200);}
+  };
+  window.meLaiSug=function(t){var i=document.getElementById('me-inp');if(i){i.value=t;meLaiSend();}};
+  function _a(type,txt){
+    var id='mem'+(++_mid),el=document.createElement('div');el.id=id;
+    if(type==='usr')el.style.cssText='background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;border-radius:12px 12px 4px 12px;padding:9px 12px;font-size:12px;max-width:80%;align-self:flex-end;font-weight:500;word-break:break-word';
+    else if(type==='bot')el.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%;word-break:break-word';
+    else el.style.cssText='color:rgba(201,168,76,.6);font-size:11px;font-style:italic;padding:3px 0';
+    el.textContent=txt;
+    var c=document.getElementById('me-msgs');c.appendChild(el);c.scrollTop=c.scrollHeight;return id;
+  }
+  function _r(id){var e=document.getElementById(id);if(e)e.remove();}
+
+  window.meLaiSend=async function(){
+    var inp=document.getElementById('me-inp'),msgs=document.getElementById('me-msgs');
+    if(!inp||!msgs)return;
+    var q=inp.value.trim();if(!q)return;
+    inp.value='';
+    _a('usr',q);var tid=_a('typ','✦ LUX AI réfléchit...');
+    var lo=q.toLowerCase();
+    try{
+      var r=await fetch(_AAPI+'/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({prompt:q,message:q,lang:'fr-ar',context:'mon_espace_lux'})});
+      var d=await r.json();_r(tid);
+      var pay=d.html||d.reply||d.message||d.response||d.text||'';
+      var div=document.createElement('div');
+      div.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%;word-break:break-word';
+      if(/<[a-z]/i.test(pay))div.innerHTML=pay;
+      else if(pay)div.textContent=pay;
+      else{var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}div.textContent=rep||'✦ Contactez-nous: WhatsApp +212 677 717 201';}
+      var c=document.getElementById('me-msgs');c.appendChild(div);c.scrollTop=c.scrollHeight;
+    }catch(e){
+      _r(tid);var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}
+      var div2=document.createElement('div');
+      div2.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:11px 13px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%';
+      if(rep)div2.textContent=rep;
+      else div2.innerHTML='⚠ IA indisponible — <a href="https://wa.me/212677717201" target="_blank" style="color:#C9A84C;font-weight:600">📲 WhatsApp</a>';
+      var c2=document.getElementById('me-msgs');c2.appendChild(div2);c2.scrollTop=c2.scrollHeight;
+    }
+  };
 })();
 </script>
 </body>
