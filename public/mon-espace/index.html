@@ -1758,12 +1758,20 @@ async function redeemReward(id, pts, name) {
    3. BroadcastChannel msg    → cross-tab event (modern browsers)
 ══════════════════════════════════════════════════════════════ */
 let _lastSync = 0;
-async function autoSyncSession(reason) {
+async function autoSyncSession(reason, detail) {
   // Throttle: max one sync per 4 seconds
   if (Date.now() - _lastSync < 4000) return;
   _lastSync = Date.now();
   if (!STATE.isAuth || !getToken()) return;
-  console.log('[LUX] auto-sync triggered:', reason);
+  console.log('[LUX] auto-sync triggered:', reason, detail || '');
+
+  // ⚡ If the event carries an order payload, show the toast IMMEDIATELY
+  // (before the network roundtrip) — gives the user instant feedback.
+  if (detail && detail.ref && detail.points) {
+    const refShort = String(detail.ref).slice(-6);
+    toast(`✨ Commande #${refShort} reçue · +${detail.points} LUX Points`, 5000);
+  }
+
   try {
     // Refresh user profile (catches points/level changes from server)
     const { res: meRes, data: user } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
@@ -1772,9 +1780,13 @@ async function autoSyncSession(reason) {
       loadUserData(user);
       // Refresh orders list (new order from menu page will appear)
       await loadOrders();
-      // Toast if loyalty changed (new order detected)
+      // Switch to "Commandes" tab automatically so the user sees the new order
+      if (detail && detail.ref) {
+        try { switchTab('commandes'); } catch(e) {}
+      }
+      // Toast if loyalty changed AND we didn't already show one from the event payload
       const newPts = user.loyaltyPoints || 0;
-      if (newPts > prevPts) {
+      if (newPts > prevPts && !(detail && detail.points)) {
         toast(`✨ +${newPts - prevPts} LUX Points · commande synchronisée`, 4000);
       }
     } else if (meRes.status === 401) {
@@ -1797,10 +1809,17 @@ window.addEventListener('focus', () => {
 });
 
 // Trigger 2 — another tab/window wrote a sync flag in localStorage
-// (the menu page can do: localStorage.setItem('lux_order_placed', Date.now()))
+// (the menu page writes: localStorage.setItem('lux_order_placed', JSON.stringify({ref,total,points,at}))
 window.addEventListener('storage', (e) => {
   if (!e.key) return;
-  if (e.key === 'lux_order_placed' || e.key === 'lux_customer_session' || e.key === 'lux_token') {
+  if (e.key === 'lux_order_placed') {
+    // Parse the rich payload sent by the menu page checkout
+    let detail = null;
+    try { detail = JSON.parse(e.newValue || '{}'); } catch(_) {}
+    autoSyncSession('storage:order-placed', detail);
+    return;
+  }
+  if (e.key === 'lux_customer_session' || e.key === 'lux_token') {
     autoSyncSession('storage:' + e.key);
   }
 });
@@ -1809,8 +1828,11 @@ window.addEventListener('storage', (e) => {
 try {
   const luxBus = new BroadcastChannel('lux-session');
   luxBus.onmessage = (e) => {
-    if (e.data?.type === 'order-placed' || e.data?.type === 'profile-updated') {
-      autoSyncSession('broadcast:' + e.data.type);
+    if (e.data?.type === 'order-placed') {
+      // Pass the full event payload so the toast can show precise ref + points
+      autoSyncSession('broadcast:order-placed', e.data);
+    } else if (e.data?.type === 'profile-updated') {
+      autoSyncSession('broadcast:profile-updated');
     }
   };
   window.LUX_BUS = luxBus;
