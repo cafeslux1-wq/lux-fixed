@@ -832,6 +832,65 @@ input, button, select, textarea { font-family:inherit; }
 .session-badge strong { color:var(--text); font-weight:600; }
 
 /* ══════════════════════════════════════════════════════════════
+   POINT-ACTION CARDS — clickable shortcuts to cafeslux.com pages
+══════════════════════════════════════════════════════════════ */
+.pa-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;
+}
+.pa-card {
+  position:relative; overflow:hidden;
+  background:linear-gradient(160deg, var(--bg3) 0%, var(--bg2) 100%);
+  border:1px solid var(--border);
+  border-radius:12px; padding:14px 12px 12px;
+  text-align:center; cursor:pointer;
+  transition:transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.pa-card::before {
+  content:''; position:absolute; inset:-1px;
+  background:linear-gradient(135deg, var(--gold-l), transparent 50%);
+  opacity:0; transition:opacity .25s ease; border-radius:inherit;
+  pointer-events:none; z-index:0;
+}
+.pa-card > * { position:relative; z-index:1; }
+.pa-card::after {
+  content:'→'; position:absolute; top:8px; right:10px;
+  font-family:var(--fd); font-size:14px; color:var(--gold);
+  opacity:.35; transition:transform .25s ease, opacity .25s ease;
+}
+.pa-card:hover {
+  transform:translateY(-3px);
+  border-color:var(--gold-a30);
+  background:linear-gradient(160deg, var(--bg4) 0%, var(--bg3) 100%);
+  box-shadow:0 10px 28px rgba(201,168,76,.10), 0 0 24px rgba(201,168,76,.08);
+}
+.pa-card:hover::before { opacity:.08; }
+.pa-card:hover::after  { transform:translateX(3px); opacity:1; }
+.pa-card:active { transform:translateY(-1px) scale(.98); }
+.pa-icon {
+  font-size:26px; margin-bottom:7px;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  transition:transform .25s ease;
+}
+.pa-card:hover .pa-icon { transform:scale(1.12) rotate(-3deg); }
+.pa-title {
+  font-size:13px; font-weight:600; color:var(--text);
+  margin-bottom:3px; letter-spacing:.2px;
+}
+.pa-card:hover .pa-title { color:var(--gold-l); }
+.pa-sub {
+  font-size:10px; color:var(--muted);
+  letter-spacing:.3px;
+}
+.pa-card .pa-pill {
+  display:inline-block; margin-top:6px;
+  background:var(--gold-a10); color:var(--gold);
+  padding:2px 7px; border-radius:8px;
+  font-size:9px; letter-spacing:1px; font-weight:600;
+  text-transform:uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
 @media(min-width:520px) {
@@ -1031,26 +1090,30 @@ input, button, select, textarea { font-family:inherit; }
     <div class="sec-head"><span class="sh-txt">Statut de fidélité</span><div class="sh-line"></div></div>
     <div class="profile-card">
       <div class="pc-title">Comment gagner des points</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🛒</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en ligne</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
+      <div class="pa-grid">
+        <div class="pa-card" onclick="goToLuxPage('commander')">
+          <div class="pa-icon">🛍️</div>
+          <div class="pa-title">Commander</div>
+          <div class="pa-sub">10 DH = 1 Point</div>
+          <div class="pa-pill">En ligne</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">☕</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Achat en café</div>
-          <div style="font-size:10px;color:var(--muted)">10 DH = 1 Point</div>
+        <div class="pa-card" onclick="goToLuxPage('cafe')">
+          <div class="pa-icon">☕</div>
+          <div class="pa-title">Achat en café</div>
+          <div class="pa-sub">10 DH = 1 Point</div>
+          <div class="pa-pill">WhatsApp</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎮</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Gaming</div>
-          <div style="font-size:10px;color:var(--muted)">5 DH = 1 Point</div>
+        <div class="pa-card" onclick="goToLuxPage('gaming')">
+          <div class="pa-icon">🎮</div>
+          <div class="pa-title">Gaming LUX</div>
+          <div class="pa-sub">5 DH = 1 Point</div>
+          <div class="pa-pill">PS5 · Xbox</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:22px;margin-bottom:6px">🎁</div>
-          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">Parrainage</div>
-          <div style="font-size:10px;color:var(--muted)">50 Points offerts</div>
+        <div class="pa-card" onclick="goToLuxPage('referral')">
+          <div class="pa-icon">🎁</div>
+          <div class="pa-title">Parrainage</div>
+          <div class="pa-sub">50 Points offerts</div>
+          <div class="pa-pill">Partager</div>
         </div>
       </div>
 
@@ -2241,6 +2304,100 @@ async function placeOrderFromSession({ items = [], total = 0, mode = 'card', not
   } catch(e) {}
 
   return { ref: orderRef, total: discountedTotal, points: Math.floor(discountedTotal/10) };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GO TO LUX PAGE — navigation seamless vers cafeslux.com
+   Le token est déjà dans localStorage (lux_token) → toutes les
+   autres pages LUX le récupèrent automatiquement via leur init()
+   et ROUTES.ME : aucune re-authentification demandée.
+   Pour WhatsApp, on pré-remplit le message avec le profil connecté.
+══════════════════════════════════════════════════════════════ */
+const LUX_DESTINATIONS = {
+  commander: {
+    url:       'https://cafeslux.com/public/menu/index.html',
+    label:     '🛍️ Menu en ligne',
+    target:    '_self',
+    needsAuth: true,
+  },
+  cafe: {
+    // Construit dynamiquement pour pré-remplir le nom + téléphone du client
+    url:       null,
+    label:     '☕ WhatsApp Café',
+    target:    '_blank',
+    needsAuth: false,
+    build: () => {
+      const name  = STATE.user?.name  || 'Client';
+      const phone = STATE.user?.phone || '';
+      const tier  = STATE.user ? getTier(STATE.user.loyaltyPoints || 0).name : '';
+      const lines = [
+        '☕ Commander au Café LUX',
+        '',
+        `Nom : ${name}`,
+        phone ? `Tél : ${phone}` : null,
+        tier  ? `Niveau : ${tier}${STATE.discount?` (−${STATE.discount}%)`:''}` : null,
+        '',
+        'Ma commande :',
+        '• ',
+      ].filter(Boolean);
+      return 'https://wa.me/212677717201?text=' + encodeURIComponent(lines.join('\n'));
+    },
+  },
+  gaming: {
+    url:       'https://cafeslux.com/public/gaming/index.html',
+    label:     '🎮 Gaming LUX',
+    target:    '_self',
+    needsAuth: true,
+  },
+  referral: {
+    url:       'https://cafeslux.com/public/offres/index.html#gc',
+    label:     '🎁 Parrainage',
+    target:    '_self',
+    needsAuth: true,
+  },
+};
+
+async function goToLuxPage(key) {
+  const dest = LUX_DESTINATIONS[key];
+  if (!dest) { toast('⚠ Destination inconnue'); return; }
+
+  // Garde-fou session — si la page de destination nécessite l'auth
+  // et que le token n'est plus là, on bloque proprement.
+  if (dest.needsAuth && !STATE.isAuth) {
+    toast('⚠ Veuillez vous connecter');
+    return;
+  }
+
+  // Animation de feedback — petite confirmation visuelle
+  toast(`✦ Ouverture ${dest.label}...`, 1400);
+
+  // Pour le cas du parrainage on copie aussi le code de partage avant d'ouvrir
+  if (key === 'referral' && STATE.user?.phone) {
+    try {
+      const referralLink = `https://cafeslux.com/?ref=${encodeURIComponent(STATE.user.phone)}`;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(referralLink).catch(() => {});
+      }
+    } catch(e) {}
+  }
+
+  // Construire l'URL finale (WhatsApp = dynamique avec pré-remplissage du nom)
+  const targetUrl = typeof dest.build === 'function' ? dest.build() : dest.url;
+
+  // Petit délai pour laisser respirer l'animation, puis navigation
+  setTimeout(() => {
+    if (dest.target === '_blank') {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      // Same-origin navigation : localStorage (token + cache) est conservé
+      window.location.href = targetUrl;
+    }
+  }, 280);
+
+  // Log pour debug — utile pour vérifier que la session est bien transportée
+  console.log('[LUX] Seamless navigation →', key, '|', targetUrl,
+              '| token:', getToken() ? 'OK' : 'NONE',
+              '| user:', STATE.user?.name || '(none)');
 }
 
 /* ══════════════════════════════════════════════════════════════
