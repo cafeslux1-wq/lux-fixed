@@ -49,7 +49,14 @@ window.goPage = window.luxNavigate;
 
 <style>
 :root { --gold: #C9A84C; --gold-br: #E8C97A; --bg: #080808; --bg2: #131313; --bg3: #1A1A1A; --text: #F0E8D5; --muted: rgba(240,232,213,.45); --border: rgba(201,168,76,.15); }
-body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+/* ⚡ FIX TASK 2 — Single scroll context
+   Avant : <body> et .main-content avaient tous les deux un scrollbar
+   visible sur le bord droit (deux barres superposées). On verrouille
+   ici html + body à 100vh avec overflow:hidden — seul .main-content
+   garde son overflow-y:auto, donc UNE seule scrollbar visible. */
+html { height: 100%; overflow: hidden; }
+body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100vh; overflow: hidden; }
 
 .topbar { height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; position: sticky; top: 0; z-index: 100; }
 .logo { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; letter-spacing: 3px; flex: 1; }
@@ -57,7 +64,14 @@ body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-fa
 
 body.on-home-page .topbar { display: none !important; }
 body.on-home-page .main-content { height: 100vh; }
-.main-content { height: calc(100vh - 56px); overflow-y: auto; }
+.main-content { height: calc(100vh - 56px); overflow-y: auto; overflow-x: hidden; }
+
+/* ⚡ Premium Dark & Gold scrollbar — only one visible now */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: transparent; }
+.main-content::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(201,168,76,.4), rgba(201,168,76,.15)); border-radius: 3px; }
+.main-content::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(201,168,76,.6), rgba(201,168,76,.3)); }
+.main-content { scrollbar-width: thin; scrollbar-color: rgba(201,168,76,.3) transparent; }
 .page { display: none; min-height: 100%; }
 .page.active { display: flex !important; flex-direction: column; animation: lux-fade-in .3s ease; }
 @keyframes lux-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
