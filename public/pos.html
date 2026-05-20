@@ -2,312 +2,544 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0D0D0D">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>CAFÉ LUX — POS Caisse</title>
-
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
-<script src="../src/js/api/api-client.js" defer></script>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ── Tokens ──────────────────────────────────────────────── */
 :root{
-  --gold:#C9A84C;--gold-l:#E8C97A;--gold-d:#8B6E2F;
-  --bg:#080808;--bg2:#0F0F0F;--bg3:#1A1A1A;--bg4:#222;
-  --text:#F0E8D5;--muted:rgba(240,232,213,.45);--text2:rgba(240,232,213,.7);
-  --border:rgba(201,168,76,.15);--border2:rgba(201,168,76,.35);
-  --green:#2ECC71;--red:#E74C3C;--blue:#3498DB;--orange:#F39C12;
-  --font-d:'Playfair Display',serif;
-  --font-b:'DM Sans',sans-serif;
-  --font-m:'JetBrains Mono',monospace;
-  --topbar:48px;
-  --tables-w:160px;
-  --ticket-w:280px;
+  --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#8B6E2F; --gold-xl:#F5E2A8;
+  --bg:#080808; --bg2:#0F0F0F; --bg3:#1A1A1A; --bg4:#242424;
+  --text:#F0E8D5; --text2:#B8B0A0; --muted:rgba(240,232,213,.42);
+  --border:rgba(201,168,76,.16); --border2:rgba(201,168,76,.32);
+  --green:#3DBE7A; --red:#E0524F; --blue:#4A9FE0; --orange:#E89B3D;
+  --gold-a08:rgba(201,168,76,.08); --gold-a14:rgba(201,168,76,.14); --gold-a25:rgba(201,168,76,.25);
+  --topbar:54px;
+  --font-d:'Cinzel',serif; --font-s:'Cormorant Garamond',serif;
+  --font-b:'DM Sans',sans-serif; --font-m:'JetBrains Mono',monospace;
+  --shadow:0 16px 48px rgba(0,0,0,.55);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
-body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:13px}
-button,input,select{font-family:var(--font-b);font-size:12px}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:13px;
+  background-image:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,.05), transparent 70%);}
+button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gold-a25),rgba(201,168,76,.1));border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold-a25)}
 
-/* ── Topbar ─────────────────────────────────────────────── */
-.topbar{
-  height:var(--topbar);background:var(--bg2);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 12px;gap:8px;
-  position:fixed;top:0;left:0;right:0;z-index:100;
+/* ═══════════════════════════════════════════════════════════════
+   LOCK SCREEN — Dallas Key / Staff Login
+═══════════════════════════════════════════════════════════════ */
+#lock-screen{
+  position:fixed;inset:0;z-index:9000;
+  background:radial-gradient(ellipse at center, #14100A 0%, #060606 75%);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  transition:opacity .4s ease;
 }
-.topbar-logo{font-family:var(--font-d);color:var(--gold);font-size:14px;letter-spacing:2px}
-.topbar-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
-.topbar-title{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:1px}
-#clock{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-left:auto}
-.btn-sm{padding:4px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;font-size:11px;transition:.15s}
-.btn-sm:hover{border-color:var(--border2);color:var(--gold)}
-#pos-kpi-bar{display:flex;gap:12px;margin-left:12px}
-.pos-kpi{font-size:10px;color:var(--muted)}
-.pos-kpi span{color:var(--gold);font-family:var(--font-m);font-weight:700}
+#lock-screen.hidden{opacity:0;pointer-events:none}
+.lock-wrap{width:100%;max-width:880px;display:grid;grid-template-columns:1fr 1fr;gap:0;
+  background:linear-gradient(160deg,var(--bg2),var(--bg));border:1px solid var(--border2);
+  border-radius:24px;overflow:hidden;box-shadow:var(--shadow),0 0 90px rgba(201,168,76,.08)}
+.lock-left{padding:48px 40px;display:flex;flex-direction:column;justify-content:center;
+  background:linear-gradient(165deg,rgba(201,168,76,.06),transparent);
+  border-right:1px solid var(--border);position:relative;overflow:hidden}
+.lock-left::before{content:'';position:absolute;top:-40%;right:-30%;width:300px;height:300px;
+  background:radial-gradient(circle,var(--gold-a14),transparent 65%);pointer-events:none}
+.lock-logo{font-family:var(--font-d);font-size:40px;font-weight:700;color:var(--gold);
+  letter-spacing:8px;line-height:1;margin-bottom:6px;text-shadow:0 0 40px rgba(201,168,76,.3)}
+.lock-logo small{display:block;font-size:13px;letter-spacing:5px;color:var(--gold-l);margin-top:8px;opacity:.7}
+.lock-tagline{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--muted);
+  margin-top:18px;letter-spacing:1px;line-height:1.5}
+.lock-dallas{margin-top:32px;display:flex;align-items:center;gap:14px;
+  background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.dallas-key{width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 35% 30%, #4A4A4A, #1A1A1A 70%);
+  border:2px solid var(--gold-d);position:relative;cursor:pointer;
+  box-shadow:inset 0 2px 4px rgba(255,255,255,.1), 0 4px 12px rgba(0,0,0,.5);
+  transition:.2s;display:flex;align-items:center;justify-content:center}
+.dallas-key::after{content:'';width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--gold-l), var(--gold-d));
+  box-shadow:0 0 8px rgba(201,168,76,.5)}
+.dallas-key:hover{transform:scale(1.06);border-color:var(--gold)}
+.dallas-key.scanning{animation:dallasScan 1s ease-in-out infinite}
+@keyframes dallasScan{0%,100%{box-shadow:inset 0 2px 4px rgba(255,255,255,.1),0 0 0 0 rgba(201,168,76,.5)}
+  50%{box-shadow:inset 0 2px 4px rgba(255,255,255,.1),0 0 0 10px rgba(201,168,76,0)}}
+.lock-dallas-txt{font-size:11px;color:var(--text2);line-height:1.5}
+.lock-dallas-txt b{color:var(--gold-l);font-weight:600;display:block;font-size:12px;margin-bottom:2px}
+.lock-right{padding:40px 36px;display:flex;flex-direction:column}
+.lock-right h2{font-family:var(--font-d);font-size:17px;color:var(--text);font-weight:600;
+  letter-spacing:1px;margin-bottom:4px}
+.lock-right .sub{font-size:11px;color:var(--muted);margin-bottom:18px}
+/* Employee chips */
+.emp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.emp-chip{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:11px;
+  background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:.2s;font-size:11px}
+.emp-chip:hover{border-color:var(--border2);background:var(--bg4)}
+.emp-chip.active{border-color:var(--gold);background:var(--gold-a14)}
+.emp-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:11px;color:#1A1408;flex-shrink:0}
+.emp-chip .emp-name{color:var(--text);font-weight:600}
+.emp-chip .emp-role{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+/* PIN display */
+.pin-dots{display:flex;justify-content:center;gap:12px;margin:10px 0 18px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--gold-d);transition:.2s}
+.pin-dot.on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 12px rgba(201,168,76,.5)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:auto}
+.pin-k{padding:16px;border-radius:13px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-size:20px;font-weight:600;cursor:pointer;transition:.12s;font-family:var(--font-m)}
+.pin-k:hover{background:var(--bg4);border-color:var(--border2)}
+.pin-k:active{transform:scale(.94);background:var(--gold-a14)}
+.pin-k.act{background:var(--gold-a08);color:var(--gold)}
+.pin-err{color:var(--red);font-size:11px;text-align:center;min-height:16px;margin-top:8px;
+  transition:.2s;opacity:0}
+.pin-err.show{opacity:1}
+.lock-shake{animation:lockShake .4s}
+@keyframes lockShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
-/* ── Layout ─────────────────────────────────────────────── */
-.pos-layout{
-  display:flex;height:100vh;padding-top:var(--topbar);overflow:hidden;
-}
+/* ═══════════════════════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════════════════════ */
+.topbar{height:var(--topbar);background:linear-gradient(180deg,var(--bg2),var(--bg));
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 14px;gap:12px;position:relative;z-index:100}
+.topbar-logo{font-family:var(--font-d);color:var(--gold);font-size:15px;letter-spacing:3px;font-weight:700}
+.topbar-sep{width:1px;height:24px;background:var(--border)}
+.topbar-title{color:var(--gold-l);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+#pos-kpi-bar{display:flex;gap:8px;margin-left:8px}
+.pos-kpi{background:var(--bg3);border:1px solid var(--border);border-radius:9px;
+  padding:5px 12px;font-size:10px;color:var(--text2);letter-spacing:.3px}
+.pos-kpi span{color:var(--gold);font-weight:700;font-family:var(--font-m)}
+#clock{font-family:var(--font-m);font-size:12px;color:var(--text2);margin-left:auto;letter-spacing:.5px}
+/* Active employee badge */
+.emp-badge{display:flex;align-items:center;gap:8px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:11px;padding:4px 10px 4px 4px;cursor:pointer;transition:.2s}
+.emp-badge:hover{border-color:var(--gold)}
+.emp-badge .eb-name{font-size:11px;color:var(--text);font-weight:600;line-height:1.1}
+.emp-badge .eb-role{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+/* Online orders bell */
+.bell-btn{position:relative;width:38px;height:38px;border-radius:10px;background:var(--bg3);
+  border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:17px;transition:.2s}
+.bell-btn:hover{border-color:var(--gold);background:var(--gold-a08)}
+.bell-btn.ring{animation:bellRing 1s ease-in-out infinite}
+@keyframes bellRing{0%,100%{transform:rotate(0)}15%{transform:rotate(12deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-4deg)}}
+.bell-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;
+  border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  display:none;align-items:center;justify-content:center;font-family:var(--font-m)}
+.bell-count.show{display:flex}
+.btn-sm{padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  color:var(--text2);cursor:pointer;font-size:11px;transition:.15s;white-space:nowrap}
+.btn-sm:hover{border-color:var(--border2);color:var(--gold);background:var(--gold-a08)}
 
-/* ═══ TABLES PANEL ══════════════════════════════════════════ */
-.pos-tables{
-  width:var(--tables-w);flex-shrink:0;background:var(--bg2);
-  border-right:1px solid var(--border);overflow-y:auto;padding:10px 8px;
-  display:flex;flex-direction:column;gap:6px;
-}
-.sec-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:6px 4px 3px;opacity:.7}
-.tbl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.tbl-btn{
-  padding:8px 4px;background:var(--bg3);border:1.5px solid var(--border);
-  border-radius:8px;text-align:center;cursor:pointer;transition:.15s;
-}
-.tbl-btn:hover{border-color:var(--border2)}
-.tbl-btn.sel{background:rgba(201,168,76,.12);border-color:var(--gold)}
-.tbl-btn.occ{border-color:rgba(231,76,60,.3);background:rgba(231,76,60,.05)}
-.tbl-btn.ea{border-color:rgba(52,152,219,.3);background:rgba(52,152,219,.05)}
-.tbl-num{font-family:var(--font-d);font-size:16px;color:var(--text);line-height:1}
-.tbl-status{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:.5px}
-.tbl-btn.sel .tbl-num{color:var(--gold)}
-.tbl-btn.sel .tbl-status{color:var(--gold-d)}
-.tbl-btn.occ .tbl-num{color:var(--red)}
-.tbl-btn.ea  .tbl-num{color:var(--blue)}
-.takeaway-row{display:flex;flex-wrap:wrap;gap:4px}
-.ea-chip{padding:4px 10px;background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.3);border-radius:12px;font-size:10px;color:var(--blue);cursor:pointer;transition:.15s}
-.ea-chip:hover,.ea-chip.sel{background:rgba(52,152,219,.2);border-color:var(--blue)}
-#rfid-badge{font-size:10px;color:var(--muted);padding:6px 4px;line-height:1.4}
-#rfid-badge.active{color:var(--green)}
+/* ═══════════════════════════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════════════════════════ */
+.pos-layout{display:grid;grid-template-columns:188px 1fr 320px;
+  height:calc(100vh - var(--topbar));overflow:hidden}
+.sec-label{font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;
+  font-weight:700;opacity:.7;margin-bottom:8px}
 
-/* ═══ MENU PANEL ════════════════════════════════════════════ */
-.pos-menu{
-  flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
-}
-.menu-tabs{
-  display:flex;gap:0;overflow-x:auto;flex-shrink:0;
-  border-bottom:1px solid var(--border);scrollbar-width:none;
-}
+/* LEFT — tables / takeaway / client */
+.pos-tables{background:var(--bg2);border-right:1px solid var(--border);padding:14px 12px;
+  overflow-y:auto;display:flex;flex-direction:column}
+.tbl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tbl{aspect-ratio:1;border-radius:11px;background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;
+  color:var(--text2);cursor:pointer;transition:.15s;position:relative;font-family:var(--font-m)}
+.tbl:hover{border-color:var(--border2);color:var(--gold)}
+.tbl.busy{background:var(--gold-a14);border-color:var(--gold);color:var(--gold-l)}
+.tbl.busy::after{content:'';position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.tbl.active{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#1A1408;border-color:var(--gold-l)}
+.takeaway-row{display:flex;flex-direction:column;gap:6px}
+.ta-item{padding:8px 10px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);
+  cursor:pointer;font-size:11px;color:var(--text2);transition:.15s;display:flex;justify-content:space-between;align-items:center}
+.ta-item:hover{border-color:var(--border2);color:var(--gold)}
+.ta-item.active{background:var(--gold-a14);border-color:var(--gold);color:var(--gold-l)}
+#client-badge{font-size:10px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);
+  border-radius:9px;padding:8px 10px;line-height:1.4}
+#client-badge b{color:var(--gold-l);display:block;font-size:11px}
+
+/* CENTER — menu */
+.pos-menu{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.menu-tabs{display:flex;gap:6px;padding:12px 14px 8px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid var(--border);scrollbar-width:none}
 .menu-tabs::-webkit-scrollbar{display:none}
-.m-tab{
-  padding:10px 14px;background:transparent;border:none;border-bottom:2px solid transparent;
-  color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.15s;
-}
-.m-tab:hover{color:var(--text2);background:rgba(201,168,76,.04)}
-.m-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.04)}
-.menu-items{flex:1;overflow-y:auto;padding:10px 12px}
-.m-sec{display:none}
-.m-sec.active{display:block}
-.m-cat-lbl{
-  font-family:var(--font-d);font-size:13px;color:var(--gold);
-  margin:4px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);
-}
-.m-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;margin-bottom:14px}
-.m-card{
-  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
-  padding:9px 8px;cursor:pointer;transition:.15s;text-align:center;
-  user-select:none;-webkit-tap-highlight-color:transparent;
-}
-.m-card:hover{border-color:var(--border2);background:var(--bg3);transform:translateY(-1px)}
-.m-card:active{transform:scale(.96)}
-.m-card.sig{border-color:rgba(201,168,76,.4)}
-.m-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.3}
-.m-price{font-family:var(--font-d);font-size:13px;color:var(--gold);font-weight:700}
-.m-card.sig .m-price::before{content:'⭐ ';font-size:9px}
+.cat-btn{padding:8px 14px;border-radius:11px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;transition:.15s;
+  display:flex;align-items:center;gap:6px}
+.cat-btn:hover{border-color:var(--border2);color:var(--gold)}
+.cat-btn.active{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#1A1408;border-color:var(--gold-l)}
+.cat-btn .ci{font-size:14px}
+.menu-items{flex:1;overflow-y:auto;padding:14px;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:11px;align-content:start}
+.prod{background:linear-gradient(165deg,var(--bg3),var(--bg2));border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;cursor:pointer;transition:.18s;display:flex;flex-direction:column;
+  position:relative}
+.prod:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.4),0 0 20px rgba(201,168,76,.06)}
+.prod:active{transform:translateY(-1px) scale(.98)}
+.prod-img{height:84px;background:linear-gradient(135deg,var(--bg4),var(--bg3));
+  display:flex;align-items:center;justify-content:center;font-size:34px;position:relative;overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-img .ph-icon{filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+.prod-sig{position:absolute;top:6px;right:6px;background:linear-gradient(135deg,var(--gold),var(--gold-l));
+  color:#1A1408;font-size:8px;font-weight:800;padding:2px 6px;border-radius:6px;letter-spacing:.5px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.prod-body{padding:9px 10px 10px;display:flex;flex-direction:column;flex:1}
+.prod-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.25;margin-bottom:3px}
+.prod-desc{font-size:9px;color:var(--muted);line-height:1.3;margin-bottom:6px;flex:1}
+.prod-price{font-family:var(--font-m);font-size:13px;font-weight:700;color:var(--gold);margin-top:auto}
+.prod-price small{font-size:9px;color:var(--muted);font-weight:400}
 
-/* ═══ TICKET PANEL ══════════════════════════════════════════ */
-.pos-ticket{
-  width:var(--ticket-w);flex-shrink:0;background:var(--bg2);
-  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
-}
-.ticket-header{
-  padding:10px 12px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.ticket-title{font-family:var(--font-d);font-size:13px;color:var(--gold);letter-spacing:1.5px}
-#pos-table-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px}
-.ticket-items{flex:1;overflow-y:auto;padding:4px 0}
-.t-item{display:flex;align-items:center;padding:5px 10px;border-bottom:1px solid rgba(201,168,76,.04);gap:5px}
-.t-qty{
-  width:22px;height:22px;background:rgba(201,168,76,.08);border:1px solid var(--border2);
-  border-radius:6px;display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:900;color:var(--gold);flex-shrink:0;
-}
-.t-name{flex:1;font-size:11px;color:var(--text2);line-height:1.3}
-.t-line-price{font-family:var(--font-m);font-size:11px;color:var(--gold);flex-shrink:0}
-.t-rm{
-  width:18px;height:18px;background:transparent;border:none;cursor:pointer;
-  color:var(--muted);font-size:14px;line-height:1;flex-shrink:0;transition:.15s;
-}
-.t-rm:hover{color:var(--red)}
-.ticket-empty{display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:11px}
-/* Totals */
-.ticket-footer{padding:10px 12px;flex-shrink:0}
-.t-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px}
-.t-total-row{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)}
-.t-total-label{font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
-.t-total-amount{font-family:var(--font-m);font-size:21px;color:var(--gold);font-weight:700}
-/* Pay grid */
-.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px}
-.pay-btn{
-  padding:9px 4px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:8px;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;
-  transition:.15s;text-align:center;
-}
-.pay-btn:hover{border-color:var(--border2);color:var(--text)}
-.pay-btn.cb{border-color:rgba(52,152,219,.3);color:var(--blue)}
-.pay-btn.esp{border-color:rgba(46,204,113,.3);color:var(--green)}
-.pay-btn.main{
-  grid-column:1/-1;padding:12px;
-  background:linear-gradient(135deg,var(--gold-d),var(--gold));
-  border:none;color:#000;font-size:13px;font-weight:900;border-radius:10px;
-  letter-spacing:.5px;
-}
-.pay-btn.main:hover{background:linear-gradient(135deg,var(--gold),var(--gold-l));transform:translateY(-1px)}
-.pay-btn.main:active{transform:scale(.98)}
+/* RIGHT — ticket */
+.pos-ticket{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.ticket-header{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ticket-title{font-family:var(--font-d);font-size:13px;color:var(--gold);letter-spacing:2px;font-weight:700}
+#pos-table-label{font-size:11px;color:var(--text2);margin-left:4px}
+.ticket-items{flex:1;overflow-y:auto;padding:10px 12px}
+.ticket-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;
+  color:var(--muted);font-size:12px;gap:8px;text-align:center}
+.ticket-empty .te-icon{font-size:36px;opacity:.4}
+.tk-item{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.tk-info{flex:1;min-width:0}
+.tk-name{font-size:12px;color:var(--text);font-weight:500;line-height:1.2}
+.tk-unit{font-size:9px;color:var(--muted);font-family:var(--font-m)}
+.tk-qty{display:flex;align-items:center;gap:6px}
+.qbtn{width:24px;height:24px;border-radius:7px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--gold);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;font-weight:700}
+.qbtn:hover{background:var(--gold-a14);border-color:var(--gold)}
+.qbtn:active{transform:scale(.9)}
+.tk-q{font-family:var(--font-m);font-size:12px;color:var(--text);min-width:18px;text-align:center;font-weight:600}
+.tk-price{font-family:var(--font-m);font-size:12px;color:var(--gold-l);font-weight:600;min-width:54px;text-align:right}
+.ticket-footer{border-top:1px solid var(--border);padding:12px 14px;background:var(--bg)}
+.t-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px}
+.t-row span:last-child{font-family:var(--font-m);color:var(--text)}
+.t-discount{color:var(--green)!important}
+.t-discount span:last-child{color:var(--green)!important}
+.t-total-row{display:flex;justify-content:space-between;align-items:center;margin:10px 0;
+  padding-top:10px;border-top:1px dashed var(--border2)}
+.t-total-label{font-family:var(--font-d);font-size:13px;color:var(--gold);letter-spacing:1px}
+.t-total-amount{font-family:var(--font-m);font-size:22px;font-weight:700;color:var(--gold-l)}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:6px}
+.pay-btn{padding:11px 8px;border-radius:11px;border:1px solid var(--border);background:var(--bg3);
+  color:var(--text);font-size:11px;font-weight:600;cursor:pointer;transition:.15s;display:flex;
+  align-items:center;justify-content:center;gap:5px}
+.pay-btn:hover{border-color:var(--border2);background:var(--bg4)}
+.pay-btn.gift{border-color:rgba(74,159,224,.3)}
+.pay-btn.gift:hover{background:rgba(74,159,224,.1);border-color:var(--blue)}
+.pay-btn.pts{border-color:rgba(201,168,76,.35)}
+.pay-btn.pts:hover{background:var(--gold-a14);border-color:var(--gold)}
+.pay-btn.main{grid-column:1/-1;background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));
+  color:#1A1408;font-weight:700;font-size:13px;letter-spacing:.5px;box-shadow:0 6px 20px rgba(201,168,76,.25)}
+.pay-btn.main:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(201,168,76,.4)}
+.pay-btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* ═══ PIN MODAL ════════════════════════════════════════════ */
-#pin-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);
-  z-index:9000;display:flex;align-items:center;justify-content:center;
-}
-.pin-box{
-  background:var(--bg2);border:1px solid var(--border2);border-radius:22px;
-  padding:36px 28px;width:92%;max-width:320px;text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,.8);
-}
-.pin-logo{font-family:var(--font-d);font-size:24px;color:var(--gold);letter-spacing:4px;margin-bottom:4px}
-.pin-sub{font-size:11px;color:var(--muted);margin-bottom:22px}
-#pin-input{
-  width:100%;text-align:center;background:var(--bg3);
-  border:1.5px solid var(--border2);border-radius:12px;
-  color:var(--text);padding:14px;font-size:26px;letter-spacing:12px;
-  outline:none;transition:.2s;display:block;margin-bottom:14px;
-}
-#pin-input:focus{border-color:var(--gold)}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.pin-key{
-  padding:14px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:12px;color:var(--text);font-size:16px;font-weight:700;cursor:pointer;
-  transition:.15s;
-}
-.pin-key:hover{background:var(--bg4);border-color:var(--border2)}
-.pin-key:active{transform:scale(.93)}
-.pin-key.del{color:var(--red)}
-.pin-key.ok{background:linear-gradient(135deg,var(--gold-d),var(--gold));border-color:transparent;color:#000;font-size:14px}
-#pin-error{font-size:11px;color:var(--red);min-height:16px;margin-bottom:8px}
-.pin-bypass{font-size:10px;color:rgba(201,168,76,.3);cursor:pointer;margin-top:8px}
-.pin-bypass:hover{color:rgba(201,168,76,.5)}
+/* ═══════════════════════════════════════════════════════════════
+   ONLINE ORDERS DRAWER
+═══════════════════════════════════════════════════════════════ */
+#orders-drawer{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:90vw;z-index:800;
+  background:linear-gradient(180deg,var(--bg2),var(--bg));border-left:1px solid var(--border2);
+  box-shadow:-16px 0 48px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column}
+#orders-drawer.open{transform:translateX(0)}
+.od-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.od-title{font-family:var(--font-d);font-size:14px;color:var(--gold);letter-spacing:1.5px;font-weight:700;flex:1}
+.od-close{width:32px;height:32px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);cursor:pointer;font-size:15px}
+.od-close:hover{color:var(--gold);border-color:var(--border2)}
+.od-filters{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.od-filter{flex:1;padding:7px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);font-size:10px;font-weight:600;cursor:pointer;transition:.15s;text-align:center}
+.od-filter.active{background:var(--gold-a14);border-color:var(--gold);color:var(--gold-l)}
+.od-list{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.od-empty{text-align:center;color:var(--muted);font-size:12px;padding:40px 20px;line-height:1.6}
+.oc{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:13px;transition:.2s;
+  position:relative;overflow:hidden}
+.oc.new{border-color:var(--orange);box-shadow:0 0 0 1px rgba(232,155,61,.2)}
+.oc.new::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--orange)}
+.oc-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.oc-ref{font-family:var(--font-m);font-size:11px;color:var(--gold);font-weight:600}
+.oc-badge{font-size:8px;font-weight:800;padding:2px 7px;border-radius:7px;letter-spacing:.5px;text-transform:uppercase}
+.oc-badge.new{background:rgba(232,155,61,.15);color:var(--orange)}
+.oc-badge.done{background:rgba(61,190,122,.15);color:var(--green)}
+.oc-time{font-size:10px;color:var(--muted);margin-left:auto;font-family:var(--font-m)}
+.oc-cust{font-size:12px;color:var(--text);font-weight:600;margin-bottom:3px}
+.oc-cust span{font-size:10px;color:var(--muted);font-weight:400;font-family:var(--font-m)}
+.oc-items{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px;
+  background:var(--bg);border-radius:9px;padding:8px 10px}
+.oc-foot{display:flex;align-items:center;gap:8px}
+.oc-total{font-family:var(--font-m);font-size:15px;font-weight:700;color:var(--gold-l)}
+.oc-approve{margin-left:auto;padding:8px 14px;border-radius:9px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--green),#2da866);color:#fff;font-size:11px;font-weight:700;transition:.15s}
+.oc-approve:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.oc-print{padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg);
+  color:var(--text2);font-size:11px;cursor:pointer;transition:.15s}
+.oc-print:hover{color:var(--gold);border-color:var(--border2)}
 
-/* ═══ PRINT OVERLAY ════════════════════════════════════════ */
-#print-overlay{
-  display:none;position:fixed;inset:0;background:#fff;z-index:9999;
-  overflow:auto;padding:20px;
-}
-#print-close{position:fixed;top:16px;right:16px;padding:9px 16px;border:none;border-radius:8px;background:#111;color:#fff;cursor:pointer;font-weight:700;z-index:10000}
-#print-sheet{max-width:320px;margin:0 auto;background:#fff;color:#000;padding:10px}
+/* ═══════════════════════════════════════════════════════════════
+   PAYMENT MODAL
+═══════════════════════════════════════════════════════════════ */
+.modal-ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal-box{width:100%;max-width:420px;background:linear-gradient(180deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border2);border-radius:20px;padding:24px;box-shadow:var(--shadow),0 0 70px rgba(201,168,76,.08);
+  max-height:90vh;overflow-y:auto;position:relative}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
+.modal-title{font-family:var(--font-d);font-size:18px;color:var(--gold);text-align:center;
+  letter-spacing:1.5px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:18px}
+.pm-total{text-align:center;margin-bottom:18px;padding:14px;background:var(--bg);border-radius:13px;border:1px solid var(--border)}
+.pm-total-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.pm-total-amount{font-family:var(--font-m);font-size:30px;font-weight:700;color:var(--gold-l);margin-top:2px}
+.pm-remaining{font-size:11px;color:var(--orange);margin-top:4px;font-family:var(--font-m)}
+.pm-remaining.paid{color:var(--green)}
+.field-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-weight:600;
+  margin-bottom:6px;display:block}
+.field-inp{width:100%;padding:12px 14px;border-radius:11px;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;font-family:var(--font-m);margin-bottom:12px;transition:.2s}
+.field-inp:focus{border-color:var(--gold)}
+.pm-method-tabs{display:flex;gap:6px;margin-bottom:16px}
+.pm-tab{flex:1;padding:9px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text2);font-size:10px;font-weight:600;cursor:pointer;transition:.15s;text-align:center}
+.pm-tab.active{background:var(--gold-a14);border-color:var(--gold);color:var(--gold-l)}
+.pm-panel{display:none}
+.pm-panel.active{display:block}
+.pm-info{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:12px;
+  font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+.pm-info b{color:var(--gold-l)}
+.pm-info .ok{color:var(--green)}
+.pm-info .err{color:var(--red)}
+.btn-row{display:flex;gap:10px;margin-top:6px}
+.btn-mod{flex:1;padding:13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;border:none}
+.btn-mod.cancel{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-mod.cancel:hover{background:var(--bg4);color:var(--text)}
+.btn-mod.go{background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));color:#1A1408;
+  box-shadow:0 6px 20px rgba(201,168,76,.25)}
+.btn-mod.go:hover{transform:translateY(-1px)}
+.btn-mod:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-check{width:100%;padding:11px;border-radius:11px;background:var(--bg4);border:1px solid var(--border2);
+  color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:12px;transition:.15s}
+.btn-check:hover{background:var(--gold-a14)}
 
-/* ═══ TOAST ════════════════════════════════════════════════ */
-#toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(40px);
-  background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
-  padding:8px 18px;font-size:11px;color:var(--text);z-index:8000;
-  opacity:0;transition:.25s ease;pointer-events:none;white-space:nowrap;
+/* ═══════════════════════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════════════════════ */
+#print-overlay{position:fixed;inset:0;z-index:2000;background:#fff;display:none;overflow:auto;padding:30px}
+#print-close{position:fixed;top:16px;right:16px;padding:10px 18px;background:#1A1A1A;color:var(--gold);
+  border:1px solid var(--gold);border-radius:10px;cursor:pointer;font-size:13px;z-index:2001}
+#print-sheet{max-width:300px;margin:0 auto}
+@media print{
+  #print-close{display:none}
+  body *{visibility:hidden}
+  #print-overlay,#print-overlay *{visibility:visible}
+  #print-overlay{position:absolute;inset:0;padding:0}
 }
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);
+  background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:12px 22px;
+  font-size:13px;color:var(--gold);z-index:3000;opacity:0;transition:.3s;box-shadow:var(--shadow);
+  max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-@media print{
-  body>*{display:none}
-  #print-overlay{display:block!important;position:static;background:#fff}
-  #print-close{display:none}
+/* RESPONSIVE — tablet portrait fallback */
+@media(max-width:900px){
+  .pos-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .pos-tables{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .lock-wrap{grid-template-columns:1fr}
+  .lock-left{display:none}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ PIN OVERLAY ══════════════════════════════════════════ -->
-<div id="pin-overlay">
-  <div class="pin-box">
-    <div class="pin-logo">✦ LUX POS</div>
-    <div class="pin-sub">Caisse Professionnelle · Code PIN requis</div>
-    <input id="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="• • • •" readonly>
-    <div class="pin-keypad" id="pin-keypad"></div>
-    <div id="pin-error"></div>
-    <div class="pin-bypass" onclick="bypassPin()">Continuer sans PIN (mode demo)</div>
+<!-- ═══════════ LOCK SCREEN (Dallas Key / Staff Login) ═══════════ -->
+<div id="lock-screen">
+  <div class="lock-wrap lock-shake-target">
+    <div class="lock-left">
+      <div class="lock-logo">✦ LUX<small>POINT DE VENTE</small></div>
+      <div class="lock-tagline">Caisse professionnelle.<br>Accès sécurisé par identifiant employé.</div>
+      <div class="lock-dallas">
+        <div class="dallas-key" id="dallas-key" onclick="simulateDallasKey()" title="Simuler la clé Dallas / badge"></div>
+        <div class="lock-dallas-txt">
+          <b>Clé Dallas / Badge RFID</b>
+          Touchez le bouton doré pour simuler un badge employé, ou saisissez votre PIN.
+        </div>
+      </div>
+    </div>
+    <div class="lock-right">
+      <h2>Identification employé</h2>
+      <div class="sub">Sélectionnez votre profil puis saisissez votre code PIN</div>
+      <div class="emp-chips" id="emp-chips"></div>
+      <div class="pin-dots" id="pin-dots"></div>
+      <div class="pin-err" id="pin-err"></div>
+      <div class="pin-pad" id="pin-pad"></div>
+    </div>
   </div>
 </div>
 
-<!-- ═══ TOPBAR ════════════════════════════════════════════════ -->
+<!-- ═══════════ TOPBAR ═══════════ -->
 <div class="topbar">
   <div class="topbar-logo">✦ LUX</div>
   <div class="topbar-sep"></div>
-  <div class="topbar-title" id="pos-mode-label">POS CAISSE</div>
+  <div class="topbar-title">POS Caisse</div>
   <div id="pos-kpi-bar">
     <div class="pos-kpi">CA <span id="kpi-ca">0</span> DH</div>
     <div class="pos-kpi">Tickets <span id="kpi-orders">0</span></div>
   </div>
   <div id="clock"></div>
-  <div class="topbar-sep"></div>
+  <button class="bell-btn" id="bell-btn" onclick="toggleOrdersDrawer()" title="Commandes en ligne">
+    🔔<span class="bell-count" id="bell-count">0</span>
+  </button>
+  <div class="emp-badge" id="emp-badge" onclick="lockRegister()" title="Verrouiller la caisse">
+    <div class="emp-avatar" id="eb-avatar">?</div>
+    <div>
+      <div class="eb-name" id="eb-name">—</div>
+      <div class="eb-role" id="eb-role">—</div>
+    </div>
+  </div>
   <button class="btn-sm" onclick="window.location.href='index.html'">← Accueil</button>
-  <button class="btn-sm" style="margin-left:4px" onclick="renderHome()">🔄</button>
 </div>
 
-<!-- ═══ LAYOUT ════════════════════════════════════════════════ -->
+<!-- ═══════════ MAIN LAYOUT ═══════════ -->
 <div class="pos-layout">
-
-  <!-- ── Tables Panel ────────────────────────────── -->
+  <!-- LEFT -->
   <div class="pos-tables">
     <div class="sec-label">Tables</div>
     <div class="tbl-grid" id="tbl-grid"></div>
-
-    <div class="sec-label" style="margin-top:10px">
-      À Emporter
+    <div class="sec-label" style="margin-top:14px">À Emporter
       <button class="btn-sm" style="float:right;font-size:9px;padding:2px 8px" onclick="addTakeaway()">+</button>
     </div>
     <div class="takeaway-row" id="takeaway-list"></div>
-
-    <div class="sec-label" style="margin-top:10px">RFID Client</div>
-    <div id="rfid-badge">Aucun client</div>
+    <div class="sec-label" style="margin-top:14px">Client</div>
+    <div id="client-badge">Aucun client lié</div>
+    <button class="btn-sm" style="width:100%;margin-top:6px;font-size:10px" onclick="promptClient()">📱 Lier un client</button>
     <button class="btn-sm" style="width:100%;margin-top:4px;font-size:10px" onclick="clearClient()">Effacer client</button>
   </div>
 
-  <!-- ── Menu Panel ──────────────────────────────── -->
+  <!-- CENTER -->
   <div class="pos-menu">
     <div class="menu-tabs" id="menu-tabs"></div>
     <div class="menu-items" id="menu-items"></div>
   </div>
 
-  <!-- ── Ticket Panel ────────────────────────────── -->
+  <!-- RIGHT -->
   <div class="pos-ticket">
     <div class="ticket-header">
       <span class="ticket-title">✦ TICKET</span>
       <span id="pos-table-label">—</span>
-      <button class="btn-sm" style="font-size:10px;padding:3px 8px" onclick="clearCart()">Vider</button>
+      <button class="btn-sm" style="margin-left:auto;font-size:10px;padding:4px 9px" onclick="clearCart()">Vider</button>
     </div>
     <div class="ticket-items" id="ticket-items">
-      <div class="ticket-empty">Sélectionnez une table</div>
+      <div class="ticket-empty"><span class="te-icon">🪑</span>Sélectionnez une table<br>ou une commande à emporter</div>
     </div>
     <div class="ticket-footer">
       <div class="t-row"><span>Sous-total</span><span id="t-sub">0.00 DH</span></div>
       <div class="t-row"><span>TVA 10%</span><span id="t-tva">0.00 DH</span></div>
+      <div class="t-row t-discount" id="t-disc-row" style="display:none"><span id="t-disc-label">Remise</span><span id="t-disc">0.00 DH</span></div>
       <div class="t-total-row">
         <span class="t-total-label">Total</span>
         <span class="t-total-amount" id="t-total">0.00 DH</span>
       </div>
       <div class="pay-grid">
-        <button class="pay-btn cb"  onclick="pay('CB')">💳 CB</button>
-        <button class="pay-btn esp" onclick="pay('Especes')">💵 Espèces</button>
-        <button class="pay-btn"     onclick="pay('TPE')">📟 TPE</button>
-        <button class="pay-btn main" onclick="pay('Encaissement')">✦ Encaisser</button>
+        <button class="pay-btn" onclick="quickPay('Espèces')">💵 Espèces</button>
+        <button class="pay-btn" onclick="quickPay('Carte')">💳 Carte</button>
+        <button class="pay-btn gift" onclick="openPayModal('gift')">🎁 Carte Cadeau</button>
+        <button class="pay-btn pts" onclick="openPayModal('points')">⭐ LUX Points</button>
+        <button class="pay-btn main" onclick="openPayModal('checkout')">✦ Encaisser</button>
       </div>
     </div>
   </div>
+</div>
 
-</div><!-- /pos-layout -->
+<!-- ═══════════ ONLINE ORDERS DRAWER ═══════════ -->
+<div id="orders-drawer">
+  <div class="od-head">
+    <span class="od-title">Commandes en ligne</span>
+    <button class="od-close" onclick="toggleOrdersDrawer()">✕</button>
+  </div>
+  <div class="od-filters">
+    <div class="od-filter active" data-f="new" onclick="setOrderFilter('new',this)">Nouvelles</div>
+    <div class="od-filter" data-f="done" onclick="setOrderFilter('done',this)">Approuvées</div>
+    <div class="od-filter" data-f="all" onclick="setOrderFilter('all',this)">Toutes</div>
+  </div>
+  <div class="od-list" id="od-list">
+    <div class="od-empty">Aucune commande en ligne pour le moment.<br>Les nouvelles commandes du menu web apparaîtront ici automatiquement.</div>
+  </div>
+</div>
 
-<!-- ═══ PRINT OVERLAY ════════════════════════════════════════ -->
+<!-- ═══════════ PAYMENT MODAL ═══════════ -->
+<div class="modal-ov" id="pay-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="pm-title">✦ Encaisser</div>
+    <div class="modal-sub" id="pm-sub">Sélectionnez le mode de paiement</div>
+    <div class="pm-total">
+      <div class="pm-total-label">Total à payer</div>
+      <div class="pm-total-amount" id="pm-total">0.00 DH</div>
+      <div class="pm-remaining" id="pm-remaining"></div>
+    </div>
+    <div class="pm-method-tabs" id="pm-tabs">
+      <div class="pm-tab active" data-m="cash" onclick="pmTab('cash',this)">💵 Espèces</div>
+      <div class="pm-tab" data-m="card" onclick="pmTab('card',this)">💳 Carte</div>
+      <div class="pm-tab" data-m="gift" onclick="pmTab('gift',this)">🎁 Cadeau</div>
+      <div class="pm-tab" data-m="points" onclick="pmTab('points',this)">⭐ Points</div>
+    </div>
+
+    <!-- CASH -->
+    <div class="pm-panel active" id="pmp-cash">
+      <span class="field-lbl">Montant reçu (optionnel)</span>
+      <input class="field-inp" id="cash-received" type="number" inputmode="decimal" placeholder="0.00" oninput="calcChange()">
+      <div class="pm-info" id="cash-change">Saisissez le montant reçu pour calculer la monnaie à rendre.</div>
+    </div>
+
+    <!-- CARD -->
+    <div class="pm-panel" id="pmp-card">
+      <div class="pm-info">Paiement par carte bancaire / TPE. Cliquez sur « Valider » une fois la transaction TPE confirmée.</div>
+    </div>
+
+    <!-- GIFT CARD -->
+    <div class="pm-panel" id="pmp-gift">
+      <span class="field-lbl">Code de la carte cadeau</span>
+      <input class="field-inp" id="gc-code" placeholder="LUX-XXXX-XXXX" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn-check" onclick="checkGiftCard()">🔍 Vérifier le solde</button>
+      <div class="pm-info" id="gc-info">Saisissez le code puis vérifiez le solde disponible.</div>
+    </div>
+
+    <!-- POINTS -->
+    <div class="pm-panel" id="pmp-points">
+      <span class="field-lbl">Téléphone du client</span>
+      <input class="field-inp" id="pts-phone" type="tel" placeholder="06XXXXXXXX">
+      <button class="btn-check" onclick="checkLoyalty()">🔍 Vérifier les points</button>
+      <div class="pm-info" id="pts-info">1 LUX Point = 1 DH de réduction. Saisissez le téléphone pour vérifier le solde.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-mod cancel" onclick="closePayModal()">Annuler</button>
+      <button class="btn-mod go" id="pm-confirm" onclick="confirmPayment()">Valider →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CLIENT LINK MODAL ═══════════ -->
+<div class="modal-ov" id="client-modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-title">📱 Lier un client</div>
+    <div class="modal-sub">Pour créditer les points de fidélité</div>
+    <span class="field-lbl">Téléphone du client</span>
+    <input class="field-inp" id="client-phone" type="tel" placeholder="06XXXXXXXX">
+    <div class="btn-row">
+      <button class="btn-mod cancel" onclick="closeModal('client-modal')">Annuler</button>
+      <button class="btn-mod go" onclick="linkClient()">Lier →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PRINT OVERLAY ═══════════ -->
 <div id="print-overlay">
   <button id="print-close" onclick="closePrint()">✕ Fermer</button>
   <div id="print-sheet"></div>
@@ -315,510 +547,695 @@ button,input,select{font-family:var(--font-b);font-size:12px}
 
 <div id="toast"></div>
 
+<script src="../src/js/api/api-client.js" defer></script>
 <script>
 'use strict';
 
-// ════════════════════════════════════════════════════════════
-//  MENU DATA (static fallback — also fetched from API)
-// ════════════════════════════════════════════════════════════
-const MENU = [{"id":"pdej","icon":"🍳","title":"Petit-Déjeuner","sub":"Café offert","items":[{"n":"Classic Breakfast","p":22,"s":"Pain, oeuf, olives"},{"n":"Chamali","p":27},{"n":"Omelette au Fromage","p":30},{"n":"Moroccan Breakfast","p":35,"sig":true},{"n":"Morning Lux","p":35,"sig":true}]},{"id":"cafes","icon":"☕","title":"Cafes Classiques","items":[{"n":"Espresso","p":7},{"n":"Espresso Prestige","p":9},{"n":"Double Espresso","p":14},{"n":"Cafe Separe","p":12},{"n":"Capsule","p":10},{"n":"Lait Chocolat","p":12},{"n":"Lait Chaud","p":9},{"n":"Lait Verveine","p":12},{"n":"Lait Aromatise","p":10}]},{"id":"cremeux","icon":"🥛","title":"Les Cremeux","items":[{"n":"Cafe Creme","p":10},{"n":"Cappuccino","p":12},{"n":"Cafe Chocolat","p":14},{"n":"Chocolat Fondu","p":20}]},{"id":"infusions","icon":"🍵","title":"Infusions","items":[{"n":"The Marocain","p":9},{"n":"Golden Tea","p":9},{"n":"The Royal","p":20,"sig":true}]},{"id":"jus","icon":"🥤","title":"Jus Frais","items":[{"n":"Banane","p":15},{"n":"Pomme","p":15},{"n":"Orange","p":16},{"n":"Citron","p":16},{"n":"Mangue","p":19},{"n":"Ananas","p":19},{"n":"Avocat","p":20},{"n":"Avocat Royal","p":25,"sig":true}]},{"id":"sig","icon":"⭐","title":"Signature LUX","items":[{"n":"Lux Matcha Bloom","p":20,"sig":true},{"n":"Queen's Rose Coffee","p":30,"sig":true},{"n":"Mojito","p":25},{"n":"Panache LUX","p":25},{"n":"Cocktail Royal","p":30},{"n":"Zaazaa Lux","p":35,"sig":true}]},{"id":"crepes","icon":"🥞","title":"Crepes","items":[{"n":"Crepe Nutella","p":23},{"n":"Crepe Fruits","p":26},{"n":"Crepe Royale","p":30,"sig":true},{"n":"Crepe Fromage","p":25},{"n":"Crepe Thon Fromage","p":35},{"n":"Pack Crepes","p":35}]},{"id":"resto","icon":"🍽","title":"Restaurant","items":[{"n":"LUX Power Toast","p":25,"sig":true},{"n":"Harira","p":14},{"n":"Meskouta","p":5},{"n":"Cake Prestige","p":10},{"n":"Sables 7pcs","p":13},{"n":"Salade Fruits Royale","p":40},{"n":"Plateau Gateaux","p":100}]},{"id":"soft","icon":"🥫","title":"Soft & Shakes","items":[{"n":"Soda","p":12},{"n":"Red Bull","p":20},{"n":"Milkshake Classic","p":35}]}];
+// ════════════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════════════
+var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-// ════════════════════════════════════════════════════════════
+// ── Employee registry (Dallas Key simulation) ──
+// In production these PINs/tokens would come from /api/employees.
+// Each badge "token" simulates the unique Dallas Key serial.
+var EMPLOYEES = [
+  { id:'E01', name:'Youssef',  role:'Manager',  pin:'1990', token:'DK-7A3F91', color:'#C9A84C' },
+  { id:'E02', name:'Salma',    role:'Caissier', pin:'2024', token:'DK-22B4C8', color:'#4A9FE0' },
+  { id:'E03', name:'Karim',    role:'Serveur',  pin:'1357', token:'DK-9F1E07', color:'#3DBE7A' },
+  { id:'E04', name:'Demo',     role:'Test',     pin:'0000', token:'DK-000000', color:'#E89B3D' },
+];
+
+// ── Static menu fallback (also fetched live from /api/menu) ──
+var MENU = [{"id":"pdej","icon":"🍳","title":"Petit-Déjeuner","sub":"Café offert","items":[{"n":"Classic Breakfast","p":22,"s":"Pain, oeuf, olives"},{"n":"Chamali","p":27},{"n":"Omelette au Fromage","p":30},{"n":"Moroccan Breakfast","p":35,"sig":true},{"n":"Morning Lux","p":35,"sig":true}]},{"id":"cafes","icon":"☕","title":"Cafés Classiques","items":[{"n":"Espresso","p":7},{"n":"Espresso Prestige","p":9},{"n":"Double Espresso","p":14},{"n":"Café Séparé","p":12},{"n":"Capsule","p":10},{"n":"Lait Chocolat","p":12},{"n":"Lait Chaud","p":9},{"n":"Lait Verveine","p":12},{"n":"Lait Aromatisé","p":10}]},{"id":"cremeux","icon":"🥛","title":"Les Crémeux","items":[{"n":"Café Crème","p":10},{"n":"Cappuccino","p":12},{"n":"Café Chocolat","p":14},{"n":"Chocolat Fondu","p":20}]},{"id":"infusions","icon":"🍵","title":"Infusions","items":[{"n":"Thé Marocain","p":9},{"n":"Golden Tea","p":9},{"n":"Thé Royal","p":20,"sig":true}]},{"id":"jus","icon":"🥤","title":"Jus Frais","items":[{"n":"Banane","p":15},{"n":"Pomme","p":15},{"n":"Orange","p":16},{"n":"Citron","p":16},{"n":"Mangue","p":19},{"n":"Ananas","p":19},{"n":"Avocat","p":20},{"n":"Avocat Royal","p":25,"sig":true}]},{"id":"sig","icon":"⭐","title":"Signature LUX","items":[{"n":"Lux Matcha Bloom","p":20,"sig":true},{"n":"Queen's Rose Coffee","p":30,"sig":true},{"n":"Mojito","p":25},{"n":"Panaché LUX","p":25},{"n":"Cocktail Royal","p":30},{"n":"Zaazaa Lux","p":35,"sig":true}]},{"id":"crepes","icon":"🥞","title":"Crêpes","items":[{"n":"Crêpe Nutella","p":23},{"n":"Crêpe Fruits","p":26},{"n":"Crêpe Royale","p":30,"sig":true},{"n":"Crêpe Fromage","p":25},{"n":"Crêpe Thon Fromage","p":35},{"n":"Pack Crêpes","p":35}]},{"id":"resto","icon":"🍽","title":"Restaurant","items":[{"n":"LUX Power Toast","p":25,"sig":true},{"n":"Harira","p":14},{"n":"Meskouta","p":5},{"n":"Cake Prestige","p":10},{"n":"Sablés 7pcs","p":13},{"n":"Salade Fruits Royale","p":40},{"n":"Plateau Gâteaux","p":100}]},{"id":"soft","icon":"🥫","title":"Soft & Shakes","items":[{"n":"Soda","p":12},{"n":"Red Bull","p":20},{"n":"Milkshake Classic","p":35}]}];
+
+// ════════════════════════════════════════════════════════════════
 //  STATE
-// ════════════════════════════════════════════════════════════
-var caisse = {
-  selectedTable: null,
-  cart:          [],
-  tableOrders:   {},
-  takeawayCount: 1,
-  currentClient: null,
+// ════════════════════════════════════════════════════════════════
+var S = {
+  employee:      null,          // active employee (Dallas Key)
+  selectedEmp:   null,          // employee chosen on lock screen
+  pinBuffer:     '',
+  menu:          MENU,
+  activeCat:     null,
+  selectedSlot:  null,          // { type:'table'|'takeaway', id }
+  carts:         {},            // slotKey → [items]
+  client:        null,          // { phone, name, points, level }
   todayCA:       0,
   todayOrders:   0,
+  payMethod:     'cash',
+  payContext:    'checkout',
+  giftCard:      null,          // { code, balance }
+  loyalty:       null,          // { phone, points }
+  onlineOrders:  [],            // fetched web orders
+  approvedRefs:  {},            // ref → true (locally approved)
+  orderFilter:   'new',
 };
 
-// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 //  UTILS
-// ════════════════════════════════════════════════════════════
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
-function getLS(k,d){ try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;} }
-function setLS(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+// ════════════════════════════════════════════════════════════════
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
+function el(id){ return document.getElementById(id); }
+function setTxt(id,v){ var e=el(id); if(e) e.textContent=v; }
+function getLS(k,d){ try{ return JSON.parse(localStorage.getItem(k))||d; }catch(e){ return d; } }
+function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function money(n){ return (Math.round(n*100)/100).toFixed(2)+' DH'; }
 function nowTime(){ return new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}); }
 function todayDate(){ return new Date().toLocaleDateString('fr-MA'); }
-function setEl(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
+function slotKey(){ return S.selectedSlot ? S.selectedSlot.type+':'+S.selectedSlot.id : null; }
+function curCart(){ var k=slotKey(); if(!k) return []; if(!S.carts[k]) S.carts[k]=[]; return S.carts[k]; }
 
-var _toastTimer;
-function toast(msg, col) {
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  if(col) el.style.borderColor = col; else el.style.borderColor = '';
-  el.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+var _toastT;
+function toast(msg,col){
+  var t=el('toast'); t.textContent=msg; t.style.borderColor=col||'var(--border2)';
+  t.style.color=col||'var(--gold)'; t.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ t.classList.remove('show'); },2800);
 }
 
 function updateClock(){
-  setEl('clock', nowTime());
-  setEl('kpi-ca', caisse.todayCA.toFixed(2));
-  setEl('kpi-orders', caisse.todayOrders);
+  var d=new Date();
+  setTxt('clock', d.toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
 }
-setInterval(updateClock, 1000);
+setInterval(updateClock,1000); updateClock();
 
-// ════════════════════════════════════════════════════════════
-//  PIN SYSTEM
-// ════════════════════════════════════════════════════════════
-var _pinValue = '';
-var CORRECT_PIN = '1234'; // Change in production
+// ════════════════════════════════════════════════════════════════
+//  FEATURE 4 — SECURE STAFF LOGIN (Dallas Key)
+// ════════════════════════════════════════════════════════════════
+function buildEmpChips(){
+  el('emp-chips').innerHTML = EMPLOYEES.map(function(e){
+    return '<div class="emp-chip" data-id="'+e.id+'" onclick="selectEmp(\''+e.id+'\')">'+
+      '<div class="emp-avatar" style="background:linear-gradient(135deg,'+e.color+','+e.color+'aa)">'+e.name[0]+'</div>'+
+      '<div><div class="emp-name">'+esc(e.name)+'</div><div class="emp-role">'+esc(e.role)+'</div></div></div>';
+  }).join('');
+}
+function selectEmp(id){
+  S.selectedEmp = EMPLOYEES.find(function(e){ return e.id===id; }) || null;
+  S.pinBuffer='';
+  document.querySelectorAll('.emp-chip').forEach(function(c){ c.classList.toggle('active', c.dataset.id===id); });
+  renderPinDots();
+  el('pin-err').classList.remove('show');
+}
+function buildPinPad(){
+  var keys=['1','2','3','4','5','6','7','8','9','C','0','⌫'];
+  el('pin-pad').innerHTML = keys.map(function(k){
+    return '<div class="pin-k" onclick="pinKey(\''+k+'\')">'+k+'</div>';
+  }).join('');
+}
+function renderPinDots(){
+  var html=''; for(var i=0;i<4;i++){ html+='<div class="pin-dot'+(i<S.pinBuffer.length?' on':'')+'"></div>'; }
+  el('pin-dots').innerHTML=html;
+}
+function pinKey(k){
+  if(!S.selectedEmp){ flashErr('Sélectionnez d\'abord votre profil'); return; }
+  if(k==='C'){ S.pinBuffer=''; renderPinDots(); return; }
+  if(k==='⌫'){ S.pinBuffer=S.pinBuffer.slice(0,-1); renderPinDots(); return; }
+  if(S.pinBuffer.length>=4) return;
+  S.pinBuffer+=k; renderPinDots();
+  if(S.pinBuffer.length===4) setTimeout(verifyPin,180);
+}
+function verifyPin(){
+  if(!S.selectedEmp){ flashErr('Sélectionnez votre profil'); return; }
+  if(S.pinBuffer===S.selectedEmp.pin){
+    unlockRegister(S.selectedEmp, 'PIN');
+  } else {
+    flashErr('Code PIN incorrect');
+    S.pinBuffer=''; renderPinDots();
+    var w=document.querySelector('.lock-wrap'); w.classList.add('lock-shake');
+    setTimeout(function(){ w.classList.remove('lock-shake'); },400);
+  }
+}
+function flashErr(m){ var e=el('pin-err'); e.textContent=m; e.classList.add('show'); }
 
-function buildPinKeypad() {
-  var pad = document.getElementById('pin-keypad');
-  var keys = ['1','2','3','4','5','6','7','8','9','←','0','✓'];
-  pad.innerHTML = keys.map(function(k) {
-    var cls = k==='←' ? 'pin-key del' : k==='✓' ? 'pin-key ok' : 'pin-key';
-    return '<button class="'+cls+'" onclick="pinKey(\''+k+'\')">'+k+'</button>';
+// Dallas Key simulation — instant badge tap unlocks if a profile is selected,
+// otherwise picks a random demo badge to demonstrate the flow.
+function simulateDallasKey(){
+  var key=el('dallas-key'); key.classList.add('scanning');
+  toast('🔑 Lecture du badge Dallas...','var(--gold)');
+  setTimeout(function(){
+    key.classList.remove('scanning');
+    var emp = S.selectedEmp || EMPLOYEES.find(function(e){ return e.id==='E02'; });
+    unlockRegister(emp, 'Dallas Key '+emp.token);
+  },1000);
+}
+
+function unlockRegister(emp, method){
+  S.employee = emp;
+  S.pinBuffer='';
+  // Log the session start (accountability)
+  var sessions = getLS('lux_pos_sessions',[]);
+  sessions.push({ emp:emp.id, name:emp.name, method:method, at:new Date().toISOString() });
+  setLS('lux_pos_sessions', sessions.slice(-50));
+  setLS('lux_pos_active_emp', { id:emp.id, name:emp.name, role:emp.role, at:Date.now() });
+  // Update topbar badge
+  el('eb-avatar').textContent = emp.name[0];
+  el('eb-avatar').style.background = 'linear-gradient(135deg,'+emp.color+','+emp.color+'aa)';
+  setTxt('eb-name', emp.name);
+  setTxt('eb-role', emp.role);
+  // Hide lock
+  el('lock-screen').classList.add('hidden');
+  toast('✦ Bienvenue '+emp.name+' · '+method, 'var(--green)');
+  // Boot the POS (once)
+  if(!S._booted){ S._booted=true; bootPOS(); }
+}
+
+function lockRegister(){
+  S.employee=null; S.selectedEmp=null; S.pinBuffer='';
+  setLS('lux_pos_active_emp', null);
+  el('lock-screen').classList.remove('hidden');
+  document.querySelectorAll('.emp-chip').forEach(function(c){ c.classList.remove('active'); });
+  renderPinDots(); el('pin-err').classList.remove('show');
+  toast('🔒 Caisse verrouillée','var(--gold)');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════════════
+function bootPOS(){
+  buildTables();
+  buildTakeaway();
+  loadMenu();
+  loadDailyStats();
+  startOrdersPolling();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FEATURE 3 — UNIFIED MENU (with images)
+// ════════════════════════════════════════════════════════════════
+function loadMenu(){
+  fetch(API+'/api/menu',{headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if(data && (Array.isArray(data)?data.length:(data.menu||data.categories))){
+        S.menu = normalizeMenu(data);
+      }
+      renderMenuTabs(); renderMenu();
+    })
+    .catch(function(){ renderMenuTabs(); renderMenu(); });
+}
+// Normalize various possible API shapes into [{id,icon,title,items:[{n,p,s,img,sig}]}]
+function normalizeMenu(data){
+  var cats = Array.isArray(data) ? data : (data.menu || data.categories || []);
+  if(!cats.length) return MENU;
+  return cats.map(function(c,i){
+    var items = (c.items || c.products || []).map(function(p){
+      return {
+        n:   p.name || p.n || p.title || 'Produit',
+        p:   parseFloat(p.price!=null?p.price:(p.p!=null?p.p:0)) || 0,
+        s:   p.description || p.desc || p.s || '',
+        img: p.image || p.imageUrl || p.img || p.photo || '',
+        sig: !!(p.signature || p.sig || p.featured),
+      };
+    });
+    return {
+      id:    c.id || c.slug || ('cat'+i),
+      icon:  c.icon || c.emoji || '🍽',
+      title: c.name || c.title || ('Catégorie '+(i+1)),
+      sub:   c.subtitle || c.sub || '',
+      items: items,
+    };
+  });
+}
+function renderMenuTabs(){
+  if(!S.activeCat && S.menu.length) S.activeCat = S.menu[0].id;
+  el('menu-tabs').innerHTML = S.menu.map(function(c){
+    return '<div class="cat-btn'+(c.id===S.activeCat?' active':'')+'" onclick="switchCat(\''+c.id+'\')">'+
+      '<span class="ci">'+(c.icon||'🍽')+'</span>'+esc(c.title)+'</div>';
+  }).join('');
+}
+function switchCat(id){ S.activeCat=id; renderMenuTabs(); renderMenu(); }
+function renderMenu(){
+  var cat = S.menu.find(function(c){ return c.id===S.activeCat; }) || S.menu[0];
+  if(!cat){ el('menu-items').innerHTML='<div class="ticket-empty">Menu indisponible</div>'; return; }
+  el('menu-items').innerHTML = cat.items.map(function(it){
+    var img = it.img
+      ? '<img src="'+esc(it.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span class=&quot;ph-icon&quot;>'+(cat.icon||'🍽')+'</span>\'">'
+      : '<span class="ph-icon">'+(cat.icon||'🍽')+'</span>';
+    var sig = it.sig ? '<span class="prod-sig">★ SIG</span>' : '';
+    var desc = it.s ? '<div class="prod-desc">'+esc(it.s)+'</div>' : '';
+    return '<div class="prod" onclick="addToCart('+JSON.stringify(it.n).replace(/"/g,'&quot;')+','+it.p+')">'+
+      '<div class="prod-img">'+img+sig+'</div>'+
+      '<div class="prod-body"><div class="prod-name">'+esc(it.n)+'</div>'+desc+
+      '<div class="prod-price">'+it.p+' <small>DH</small></div></div></div>';
   }).join('');
 }
 
-function pinKey(k) {
-  if (k === '←') {
-    _pinValue = _pinValue.slice(0,-1);
-  } else if (k === '✓') {
-    checkPin();
-    return;
-  } else if (_pinValue.length < 6) {
-    _pinValue += k;
+// ════════════════════════════════════════════════════════════════
+//  TABLES / TAKEAWAY / CART
+// ════════════════════════════════════════════════════════════════
+function buildTables(){
+  var html=''; for(var i=1;i<=12;i++){
+    html+='<div class="tbl" id="tbl-'+i+'" onclick="selectSlot(\'table\','+i+')">'+i+'</div>';
   }
-  document.getElementById('pin-input').value = '•'.repeat(_pinValue.length);
+  el('tbl-grid').innerHTML=html;
+  refreshTableStates();
 }
-
-function checkPin() {
-  var api = window.LuxAPI;
-  var errEl = document.getElementById('pin-error');
-
-  // Try local PIN first (instant)
-  if (_pinValue === CORRECT_PIN) {
-    openPOS();
-    return;
+function buildTakeaway(){
+  var keys=Object.keys(S.carts).filter(function(k){ return k.indexOf('takeaway:')===0; });
+  if(!keys.length){ el('takeaway-list').innerHTML='<div style="font-size:10px;color:var(--muted);padding:4px">Aucune commande à emporter</div>'; return; }
+  el('takeaway-list').innerHTML = keys.map(function(k){
+    var id=k.split(':')[1]; var n=S.carts[k].length;
+    return '<div class="ta-item" id="ta-'+id+'" onclick="selectSlot(\'takeaway\',\''+id+'\')">'+
+      '<span>📦 Emporter #'+id+'</span><span>'+n+' art.</span></div>';
+  }).join('');
+  refreshTableStates();
+}
+function addTakeaway(){
+  var id = (S.takeawaySeq = (S.takeawaySeq||0)+1);
+  S.carts['takeaway:'+id]=[];
+  buildTakeaway();
+  selectSlot('takeaway', String(id));
+}
+function selectSlot(type,id){
+  S.selectedSlot={type:type,id:String(id)};
+  refreshTableStates();
+  setTxt('pos-table-label', type==='table'?('Table '+id):('Emporter #'+id));
+  renderTicket();
+}
+function refreshTableStates(){
+  for(var i=1;i<=12;i++){
+    var t=el('tbl-'+i); if(!t) continue;
+    var k='table:'+i; var busy=S.carts[k]&&S.carts[k].length;
+    t.className='tbl'+(busy?' busy':'')+(S.selectedSlot&&S.selectedSlot.type==='table'&&S.selectedSlot.id===String(i)?' active':'');
   }
-
-  // Try API PIN
-  if (api) {
-    errEl.textContent = 'Vérification...';
-    api.loginPin(_pinValue).then(function(data) {
-      if (data && data.token) {
-        openPOS();
-      } else {
-        pinFail();
-      }
-    }).catch(function() {
-      // API down — accept local PIN fallback
-      pinFail();
-    });
-  } else {
-    pinFail();
-  }
-}
-
-function pinFail() {
-  _pinValue = '';
-  document.getElementById('pin-input').value = '';
-  document.getElementById('pin-error').textContent = '⚠ Code incorrect';
-  var inp = document.getElementById('pin-input');
-  inp.style.borderColor = 'var(--red)';
-  setTimeout(function(){ inp.style.borderColor = ''; document.getElementById('pin-error').textContent = ''; }, 1500);
-}
-
-function openPOS() {
-  document.getElementById('pin-overlay').style.display = 'none';
-  toast('✅ Accès autorisé · Bienvenue', 'rgba(46,204,113,.5)');
-  loadDailyStats();
-}
-
-function bypassPin() {
-  document.getElementById('pin-overlay').style.display = 'none';
-  toast('Mode démo activé');
-}
-
-// ════════════════════════════════════════════════════════════
-//  TABLES
-// ════════════════════════════════════════════════════════════
-function buildTables() {
-  var grid = document.getElementById('tbl-grid');
-  var h = '';
-  for (var i = 1; i <= 12; i++) {
-    var isSel  = caisse.selectedTable === i;
-    var isOcc  = caisse.tableOrders[i] && caisse.tableOrders[i].length > 0;
-    var cls = 'tbl-btn' + (isSel ? ' sel' : (isOcc ? ' occ' : ''));
-    var st  = isSel ? 'Sélec' : (isOcc ? 'En cours' : 'Libre');
-    h += '<div class="' + cls + '" onclick="selectTable(' + i + ')">';
-    h += '<div class="tbl-num">' + i + '</div>';
-    h += '<div class="tbl-status">' + st + '</div>';
-    h += '</div>';
-  }
-  grid.innerHTML = h;
-  buildTakeawayList();
-}
-
-function buildTakeawayList() {
-  var list = document.getElementById('takeaway-list');
-  var h = '';
-  Object.keys(caisse.tableOrders).forEach(function(k) {
-    if (String(k).charAt(0) === 'E') {
-      var isSel = caisse.selectedTable === k;
-      h += '<div class="ea-chip' + (isSel ? ' sel' : '') + '" onclick="selectTable(\'' + k + '\')">' + k + '</div>';
-    }
+  document.querySelectorAll('.ta-item').forEach(function(e){
+    var id=e.id.replace('ta-',''); e.classList.toggle('active', S.selectedSlot&&S.selectedSlot.type==='takeaway'&&S.selectedSlot.id===id);
   });
-  list.innerHTML = h || '<div style="font-size:10px;color:var(--muted)">Aucun</div>';
 }
-
-function selectTable(n) {
-  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = caisse.cart.slice();
-  caisse.selectedTable = n;
-  caisse.cart = (caisse.tableOrders[n] || []).slice();
-  buildTables();
-  var label = String(n).charAt(0) === 'E' ? n : 'Table ' + n;
-  setEl('pos-table-label', label);
-  setEl('pos-mode-label', label.toUpperCase());
-  renderTicket();
+function addToCart(name,price){
+  if(!S.selectedSlot){ toast('⚠ Sélectionnez une table d\'abord','var(--orange)'); return; }
+  var cart=curCart();
+  var ex=cart.find(function(c){ return c.n===name; });
+  if(ex) ex.q++; else cart.push({n:name,p:price,q:1});
+  renderTicket(); refreshTableStates(); buildTakeaway();
 }
-
-function addTakeaway() {
-  var id = 'E' + caisse.takeawayCount++;
-  caisse.tableOrders[id] = [];
-  selectTable(id);
-  toast('Nouveau ticket: ' + id);
+function changeQty(name,delta){
+  var cart=curCart(); var it=cart.find(function(c){ return c.n===name; });
+  if(!it) return; it.q+=delta;
+  if(it.q<=0){ S.carts[slotKey()]=cart.filter(function(c){ return c.n!==name; }); }
+  renderTicket(); refreshTableStates();
 }
-
-// ════════════════════════════════════════════════════════════
-//  CART
-// ════════════════════════════════════════════════════════════
-function addToCart(name, price) {
-  if (!caisse.selectedTable) { toast('⚠ Sélectionnez une table'); return; }
-  var ex = caisse.cart.find(function(c){ return c.n === name; });
-  if (ex) { ex.q++; }
-  else { caisse.cart.push({ n: name, p: price, q: 1 }); }
-  renderTicket();
-  toast('+ ' + name, 'rgba(201,168,76,.4)');
+function clearCart(){
+  if(!S.selectedSlot) return;
+  S.carts[slotKey()]=[]; renderTicket(); refreshTableStates(); buildTakeaway();
 }
-
-function rmFromCart(name) {
-  var ex = caisse.cart.find(function(c){ return c.n === name; });
-  if (!ex) return;
-  if (ex.q > 1) ex.q--;
-  else caisse.cart = caisse.cart.filter(function(c){ return c.n !== name; });
-  renderTicket();
+function cartTotals(){
+  var cart=curCart();
+  var sub=cart.reduce(function(s,c){ return s+c.p*c.q; },0);
+  var tva=+(sub*0.1).toFixed(2);
+  var disc=S._discount||0;
+  var total=Math.max(0,+(sub+tva-disc).toFixed(2));
+  return {sub:sub,tva:tva,disc:disc,total:total};
 }
-
-function clearCart() {
-  caisse.cart = [];
-  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = [];
-  renderTicket();
-}
-
-function renderTicket() {
-  var el = document.getElementById('ticket-items');
-  if (!caisse.cart.length) {
-    el.innerHTML = '<div class="ticket-empty">' + (caisse.selectedTable ? 'Panier vide' : 'Sélectionnez une table') + '</div>';
-  } else {
-    var h = '';
-    caisse.cart.forEach(function(c) {
-      h += '<div class="t-item">';
-      h += '<div class="t-qty">' + c.q + '</div>';
-      h += '<div class="t-name">' + c.n + '</div>';
-      h += '<div class="t-line-price">' + (c.p * c.q).toFixed(2) + ' DH</div>';
-      h += '<button class="t-rm" data-n="' + esc(c.n) + '">×</button>';
-      h += '</div>';
-    });
-    el.innerHTML = h;
-    el.querySelectorAll('.t-rm').forEach(function(btn) {
-      btn.addEventListener('click', function() { rmFromCart(this.getAttribute('data-n')); });
-    });
+function renderTicket(){
+  var cart=curCart();
+  var box=el('ticket-items');
+  if(!S.selectedSlot){ box.innerHTML='<div class="ticket-empty"><span class="te-icon">🪑</span>Sélectionnez une table<br>ou une commande à emporter</div>'; }
+  else if(!cart.length){ box.innerHTML='<div class="ticket-empty"><span class="te-icon">🍽</span>Ticket vide<br>Touchez un produit pour l\'ajouter</div>'; }
+  else {
+    box.innerHTML=cart.map(function(c){
+      return '<div class="tk-item"><div class="tk-info"><div class="tk-name">'+esc(c.n)+'</div>'+
+        '<div class="tk-unit">'+c.p+' DH × '+c.q+'</div></div>'+
+        '<div class="tk-qty"><button class="qbtn" onclick="changeQty('+JSON.stringify(c.n).replace(/"/g,'&quot;')+',-1)">−</button>'+
+        '<span class="tk-q">'+c.q+'</span>'+
+        '<button class="qbtn" onclick="changeQty('+JSON.stringify(c.n).replace(/"/g,'&quot;')+',1)">+</button></div>'+
+        '<div class="tk-price">'+money(c.p*c.q)+'</div></div>';
+    }).join('');
   }
-  var sub   = caisse.cart.reduce(function(s,c){ return s + c.p * c.q; }, 0);
-  var tva   = sub * 0.1;
-  var total = sub + tva;
-  setEl('t-sub',   sub.toFixed(2)   + ' DH');
-  setEl('t-tva',   tva.toFixed(2)   + ' DH');
-  setEl('t-total', total.toFixed(2) + ' DH');
-
-  if (caisse.currentClient) {
-    var badge = document.getElementById('rfid-badge');
-    badge.textContent = '👤 ' + caisse.currentClient.name + ' · ' + (caisse.currentClient.points||0) + ' pts';
-    badge.className = 'active';
-  }
+  var t=cartTotals();
+  setTxt('t-sub',money(t.sub)); setTxt('t-tva',money(t.tva)); setTxt('t-total',money(t.total));
+  if(t.disc>0){ el('t-disc-row').style.display='flex'; setTxt('t-disc','−'+money(t.disc)); }
+  else el('t-disc-row').style.display='none';
 }
 
-// ════════════════════════════════════════════════════════════
-//  PAYMENT
-// ════════════════════════════════════════════════════════════
-function pay(mode) {
-  if (!caisse.cart.length) { toast('⚠ Panier vide'); return; }
+// ════════════════════════════════════════════════════════════════
+//  CLIENT LINK (for loyalty crediting)
+// ════════════════════════════════════════════════════════════════
+function promptClient(){ el('client-modal').classList.add('open'); setTimeout(function(){ el('client-phone').focus(); },100); }
+function linkClient(){
+  var phone=el('client-phone').value.trim();
+  if(!phone){ toast('⚠ Entrez un téléphone','var(--orange)'); return; }
+  S.client={phone:phone,name:'Client '+phone.slice(-4)};
+  el('client-badge').innerHTML='<b>'+esc(S.client.name)+'</b>'+esc(phone);
+  closeModal('client-modal');
+  toast('📱 Client lié — points crédités à l\'encaissement','var(--green)');
+}
+function clearClient(){ S.client=null; el('client-badge').textContent='Aucun client lié'; }
 
-  var sub   = caisse.cart.reduce(function(s,c){ return s + c.p * c.q; }, 0);
-  var tva   = +(sub * 0.1).toFixed(2);
-  var total = +(sub + tva).toFixed(2);
-  var table = caisse.selectedTable || '-';
-  var type  = String(table).charAt(0) === 'E' ? 'takeaway' : 'table';
+// ════════════════════════════════════════════════════════════════
+//  FEATURE 2 — PAYMENT (cash/card/gift/points)
+// ════════════════════════════════════════════════════════════════
+function quickPay(mode){
+  if(!ensureCart()) return;
+  finalizeSale(mode, {});
+}
+function ensureCart(){
+  if(!S.selectedSlot){ toast('⚠ Sélectionnez une table','var(--orange)'); return false; }
+  if(!curCart().length){ toast('⚠ Ticket vide','var(--orange)'); return false; }
+  return true;
+}
+function openPayModal(context){
+  if(!ensureCart()) return;
+  S.payContext = context;
+  S.giftCard=null; S.loyalty=null; S._discount=0; renderTicket();
+  var t=cartTotals();
+  setTxt('pm-total', money(t.total));
+  el('pm-remaining').textContent='';
+  // Default tab based on context
+  var startTab = context==='gift'?'gift':(context==='points'?'points':'cash');
+  pmTab(startTab, document.querySelector('.pm-tab[data-m="'+startTab+'"]'));
+  // Reset fields
+  el('cash-received').value=''; el('gc-code').value=''; el('pts-phone').value='';
+  el('cash-change').textContent='Saisissez le montant reçu pour calculer la monnaie à rendre.';
+  el('gc-info').innerHTML='Saisissez le code puis vérifiez le solde disponible.';
+  el('pts-info').innerHTML='1 LUX Point = 1 DH de réduction. Saisissez le téléphone pour vérifier le solde.';
+  if(S.client && !el('pts-phone').value) el('pts-phone').value=S.client.phone;
+  el('pay-modal').classList.add('open');
+}
+function closePayModal(){ el('pay-modal').classList.remove('open'); S._discount=0; renderTicket(); }
+function closeModal(id){ el(id).classList.remove('open'); }
+function pmTab(m,btn){
+  S.payMethod=m;
+  document.querySelectorAll('.pm-tab').forEach(function(t){ t.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.pm-panel').forEach(function(p){ p.classList.remove('active'); });
+  el('pmp-'+m).classList.add('active');
+}
+function calcChange(){
+  var t=cartTotals(); var recv=parseFloat(el('cash-received').value)||0;
+  if(recv<=0){ el('cash-change').textContent='Saisissez le montant reçu pour calculer la monnaie à rendre.'; return; }
+  var change=recv-t.total;
+  el('cash-change').innerHTML = change>=0
+    ? 'Monnaie à rendre : <b class="ok">'+money(change)+'</b>'
+    : 'Manque : <b class="err">'+money(-change)+'</b>';
+}
+// — GIFT CARD —
+function checkGiftCard(){
+  var code=el('gc-code').value.trim().toUpperCase();
+  if(!code){ toast('⚠ Entrez un code','var(--orange)'); return; }
+  el('gc-info').textContent='🔍 Vérification...';
+  fetch(API+'/api/gift-cards/check/'+encodeURIComponent(code))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.error){ el('gc-info').innerHTML='<span class="err">✕ '+esc(d.error)+'</span>'; S.giftCard=null; return; }
+      var bal=parseFloat(d.balance)||0; var t=cartTotals();
+      S.giftCard={code:code,balance:bal};
+      var applied=Math.min(bal,t.total);
+      el('gc-info').innerHTML='Solde : <b>'+money(bal)+'</b><br>Appliqué : <b class="ok">'+money(applied)+'</b>'+
+        (bal<t.total?'<br><span class="err">Reste '+money(t.total-bal)+' à payer autrement</span>':'');
+    })
+    .catch(function(){ el('gc-info').innerHTML='<span class="err">✕ Erreur réseau</span>'; });
+}
+// — LOYALTY POINTS —
+function checkLoyalty(){
+  var phone=el('pts-phone').value.trim();
+  if(!phone){ toast('⚠ Entrez un téléphone','var(--orange)'); return; }
+  el('pts-info').textContent='🔍 Vérification...';
+  // Best-effort: there is no public cashier lookup, so we try the web-tx history
+  // endpoint which echoes the customer; fall back to manual entry.
+  fetch(API+'/api/transactions/web?phone='+encodeURIComponent(phone))
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){
+      // Server may return {points} or a list; we surface whatever is available.
+      var pts = (d && (d.loyaltyPoints!=null?d.loyaltyPoints:(d.points!=null?d.points:null)));
+      if(pts==null){
+        el('pts-info').innerHTML='Client trouvé. Saisissez les points à utiliser :<br>'+
+          '<input class="field-inp" id="pts-manual" type="number" placeholder="Points à utiliser" style="margin-top:8px" oninput="applyPointsManual()">';
+        S.loyalty={phone:phone,points:null};
+      } else {
+        var t=cartTotals(); var usable=Math.min(pts,Math.floor(t.total));
+        S.loyalty={phone:phone,points:pts};
+        el('pts-info').innerHTML='Solde : <b>'+pts+' LUX Points</b><br>Utilisable : <b class="ok">'+usable+' pts = '+money(usable)+'</b>';
+        S._discount=usable; setTxt('pm-total',money(cartTotals().total));
+      }
+    })
+    .catch(function(){
+      el('pts-info').innerHTML='Saisie manuelle des points :<br>'+
+        '<input class="field-inp" id="pts-manual" type="number" placeholder="Points à utiliser" style="margin-top:8px" oninput="applyPointsManual()">';
+      S.loyalty={phone:phone,points:null};
+    });
+}
+function applyPointsManual(){
+  var v=parseInt(el('pts-manual').value)||0;
+  S._discount=v; var t=cartTotals(); setTxt('pm-total',money(t.total));
+  el('pm-remaining').textContent= v>0 ? ('Réduction points : −'+money(v)) : '';
+}
 
-  var tx = {
-    id:       Date.now(),
-    date:     todayDate(),
-    time:     nowTime(),
-    table:    table,
-    type:     type,
-    items:    caisse.cart.slice(),
-    subtotal: sub.toFixed(2),
-    tva:      tva.toFixed(2),
-    total:    total.toFixed(2),
-    mode:     mode,
-    client:   caisse.currentClient ? caisse.currentClient.name : null,
-    source:   'pos',
+function confirmPayment(){
+  var t=cartTotals();
+  if(S.payMethod==='gift'){
+    if(!S.giftCard){ toast('⚠ Vérifiez d\'abord la carte cadeau','var(--orange)'); return; }
+    var applied=Math.min(S.giftCard.balance,t.total);
+    // Redeem on the server
+    el('pm-confirm').disabled=true;
+    fetch(API+'/api/gift-cards/'+encodeURIComponent(S.giftCard.code)+'/redeem',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amount:applied})
+    }).then(function(r){ return r.json(); }).then(function(d){
+      el('pm-confirm').disabled=false;
+      if(d.error){ toast('✕ '+d.error,'var(--red)'); return; }
+      var rest=t.total-applied;
+      finalizeSale('Carte Cadeau'+(rest>0?' + Espèces':''), {giftCode:S.giftCard.code,giftApplied:applied});
+    }).catch(function(){ el('pm-confirm').disabled=false; toast('✕ Erreur réseau','var(--red)'); });
+    return;
+  }
+  if(S.payMethod==='points'){
+    if(!S.loyalty){ toast('⚠ Vérifiez d\'abord les points','var(--orange)'); return; }
+    var used=S._discount||0;
+    finalizeSale('LUX Points'+(t.total>0?' + Espèces':''), {pointsPhone:S.loyalty.phone,pointsUsed:used});
+    return;
+  }
+  // cash / card
+  finalizeSale(S.payMethod==='card'?'Carte':'Espèces', {});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FINALIZE SALE — record transaction (stamped with employee)
+// ════════════════════════════════════════════════════════════════
+function finalizeSale(mode, extra){
+  var cart=curCart(); var t=cartTotals();
+  var ref='POS-'+Date.now();
+  var tx={
+    ref:ref, id:Date.now(),
+    date:todayDate(), time:nowTime(),
+    type:S.selectedSlot.type==='takeaway'?'takeaway':'dine-in',
+    table:S.selectedSlot.id,
+    items:cart.map(function(c){ return {name:c.n,qty:c.q,price:c.p,n:c.n,q:c.q,p:c.p}; }),
+    subtotal:t.sub, tva:t.tva, discount:t.disc, total:t.total,
+    mode:mode,
+    client:S.client?S.client.name:null,
+    phone:S.client?S.client.phone:(extra.pointsPhone||null),
+    // FEATURE 4 — accountability: stamp the employee
+    staffId:S.employee?S.employee.id:null,
+    staffName:S.employee?S.employee.name:'?',
+    notes:'POS · Caissier: '+(S.employee?S.employee.name:'?')+(extra.giftCode?' · Cadeau '+extra.giftCode:'')+(extra.pointsUsed?' · '+extra.pointsUsed+'pts':''),
   };
 
-  // Save locally
-  var txs = getLS('lux_transactions', []);
-  txs.unshift(tx);
-  setLS('lux_transactions', txs.slice(0, 500));
+  // Post to server (credits loyalty if phone matches a customer)
+  var payload=Object.assign({},tx,{customer:tx.client||'Client Caisse'});
+  fetch(API+'/api/transactions/web',{
+    method:'POST',headers:Object.assign({'Content-Type':'application/json'}, _authHeader()),
+    body:JSON.stringify(payload)
+  }).catch(function(){ /* offline — queued by api-client elsewhere */ });
 
-  // Update daily stats
-  var daily = getLS('lux_daily', {});
-  if (daily.date !== todayDate()) { daily.ca = 0; daily.orders = 0; daily.date = todayDate(); }
-  daily.ca     = (parseFloat(daily.ca||0) + total).toFixed(2);
-  daily.orders = (daily.orders||0) + 1;
-  setLS('lux_daily', daily);
-  caisse.todayCA     += total;
-  caisse.todayOrders += 1;
-  updateClock();
+  // Local stats + receipt
+  S.todayCA += t.total; S.todayOrders++;
+  setTxt('kpi-ca', Math.round(S.todayCA)); setTxt('kpi-orders', S.todayOrders);
+  setLS('lux_pos_today', {ca:S.todayCA,orders:S.todayOrders,date:todayDate()});
 
-  // Loyalty points
-  if (caisse.currentClient) {
-    var pts = Math.floor(sub / 10);
-    caisse.currentClient.points = (caisse.currentClient.points||0) + pts;
-    if (pts) toast('⭐ +' + pts + ' pts fidélité — ' + caisse.currentClient.name);
-  }
-
-  // Push to API
-  var api = window.LuxAPI;
-  if (api) {
-    api.createOrder({
-      source:    'pos',
-      type:      type,
-      table:     String(table),
-      payMethod: mode,
-      items:     caisse.cart.map(function(c){ return {name:c.n,price:c.p,qty:c.q}; }),
-      subtotal:  sub,
-      total:     total,
-    }).catch(function() {});
-  }
-
-  // Print
+  closePayModal();
+  S.carts[slotKey()]=[];
   printTicket(tx);
-
-  // Clear
-  caisse.cart = [];
-  if (caisse.selectedTable) caisse.tableOrders[caisse.selectedTable] = [];
-  caisse.currentClient = null;
-  renderTicket();
-  buildTables();
-  toast('✅ ' + total.toFixed(2) + ' DH · ' + mode, 'rgba(46,204,113,.4)');
+  renderTicket(); refreshTableStates(); buildTakeaway();
+  toast('✅ Encaissé '+money(t.total)+' · '+mode,'var(--green)');
+}
+function _authHeader(){
+  try{ var tok=(window.LuxAPI&&LuxAPI.getToken&&LuxAPI.getToken())||localStorage.getItem('lux_token'); return tok?{'Authorization':'Bearer '+tok}:{}; }catch(e){ return {}; }
 }
 
-// ════════════════════════════════════════════════════════════
-//  PRINT TICKET
-// ════════════════════════════════════════════════════════════
-function printTicket(tx) {
-  var rows = tx.items.map(function(c) {
-    return '<tr><td style="padding:2px 0">' + (c.n||c.name) + '</td>' +
-           '<td style="text-align:center;padding:0 8px">' + (c.q||c.qty) + '</td>' +
-           '<td style="text-align:right">' + ((c.p||c.price) * (c.q||c.qty)).toFixed(2) + '</td></tr>';
+// ════════════════════════════════════════════════════════════════
+//  FEATURE 1 — ONLINE ORDERS QUEUE + PRINT
+// ════════════════════════════════════════════════════════════════
+var _ordersTimer;
+function startOrdersPolling(){
+  fetchOnlineOrders();
+  clearInterval(_ordersTimer);
+  _ordersTimer=setInterval(fetchOnlineOrders, 15000);
+}
+function fetchOnlineOrders(){
+  fetch(API+'/api/transactions/web',{headers:{'Accept':'application/json'}})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){
+      var list = Array.isArray(d)?d:(d&&d.orders?d.orders:(d&&d.transactions?d.transactions:[]));
+      if(!Array.isArray(list)) return;
+      // Keep only web-source orders; newest first
+      var prevNew = countNewOrders();
+      S.onlineOrders = list.filter(function(o){
+        var src=(o.source||o._src||'').toLowerCase();
+        return src==='web'||src==='menu'||src==='account'||(o.notes&&/web|menu|session/i.test(o.notes));
+      }).sort(function(a,b){ return (b.id||0)-(a.id||0); });
+      var nowNew=countNewOrders();
+      updateBell(nowNew, nowNew>prevNew);
+      if(el('orders-drawer').classList.contains('open')) renderOrders();
+    })
+    .catch(function(){});
+}
+function orderRef(o){ return o.ref||o.externalId||('TX'+(o.id||'')); }
+function isApproved(o){ return !!S.approvedRefs[orderRef(o)] || o.status==='approved'||o.status==='done'||o.status==='completed'; }
+function countNewOrders(){ return S.onlineOrders.filter(function(o){ return !isApproved(o); }).length; }
+function updateBell(n, ring){
+  var c=el('bell-count'); c.textContent=n; c.classList.toggle('show', n>0);
+  var b=el('bell-btn'); b.classList.toggle('ring', ring && n>0);
+  if(ring && n>0){ toast('🔔 Nouvelle commande en ligne !','var(--orange)'); setTimeout(function(){ b.classList.remove('ring'); },4000); }
+}
+function toggleOrdersDrawer(){
+  var d=el('orders-drawer'); d.classList.toggle('open');
+  if(d.classList.contains('open')){ renderOrders(); el('bell-btn').classList.remove('ring'); }
+}
+function setOrderFilter(f,btn){
+  S.orderFilter=f;
+  document.querySelectorAll('.od-filter').forEach(function(e){ e.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  renderOrders();
+}
+function renderOrders(){
+  var list=S.onlineOrders.filter(function(o){
+    if(S.orderFilter==='new') return !isApproved(o);
+    if(S.orderFilter==='done') return isApproved(o);
+    return true;
+  });
+  if(!list.length){
+    el('od-list').innerHTML='<div class="od-empty">Aucune commande dans cette vue.<br>Les commandes du menu web arrivent automatiquement ici (rafraîchissement 15s).</div>';
+    return;
+  }
+  el('od-list').innerHTML=list.map(function(o){
+    var ref=orderRef(o); var done=isApproved(o);
+    var items=parseItems(o);
+    var itemsHtml=items.map(function(i){ return (i.qty||i.q||1)+'× '+esc(i.name||i.n||'?'); }).join(', ') || '—';
+    var cust=o.customer||o.client||o.staffName||'Client Web';
+    var phone=o.phone||(o.notes&&(o.notes.match(/Tel[:\s]*([0-9+]+)/i)||[])[1])||'';
+    var time=o.time||(o.createdAt?new Date(o.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):'');
+    return '<div class="oc'+(done?'':' new')+'">'+
+      '<div class="oc-top"><span class="oc-ref">'+esc(ref)+'</span>'+
+      '<span class="oc-badge '+(done?'done':'new')+'">'+(done?'Approuvée':'Nouvelle')+'</span>'+
+      '<span class="oc-time">'+esc(time)+'</span></div>'+
+      '<div class="oc-cust">'+esc(cust)+(phone?' <span>· '+esc(phone)+'</span>':'')+'</div>'+
+      '<div class="oc-items">'+itemsHtml+'</div>'+
+      '<div class="oc-foot"><span class="oc-total">'+money(parseFloat(o.total)||0)+'</span>'+
+      (done
+        ? '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨 Réimprimer</button>'
+        : '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨</button>'+
+          '<button class="oc-approve" onclick=\'approveOrder('+JSON.stringify(ref)+')\'>✓ Approuver & Imprimer</button>')+
+      '</div></div>';
   }).join('');
+}
+function parseItems(o){
+  var it=o.items;
+  if(typeof it==='string'){ try{ it=JSON.parse(it); }catch(e){ it=[]; } }
+  return Array.isArray(it)?it:[];
+}
+function findOrder(ref){ return S.onlineOrders.find(function(o){ return orderRef(o)===ref; }); }
+function approveOrder(ref){
+  var o=findOrder(ref); if(!o) return;
+  S.approvedRefs[ref]=true;
+  // Best-effort server status update (endpoint may or may not exist)
+  fetch(API+'/api/orders/'+encodeURIComponent(o.id||ref)+'/status',{
+    method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},_authHeader()),
+    body:JSON.stringify({status:'approved',by:S.employee?S.employee.name:'?'})
+  }).catch(function(){});
+  // Build a print-ready tx and print
+  printTicket(orderToTx(o));
+  updateBell(countNewOrders(), false);
+  renderOrders();
+  toast('✅ Commande '+ref+' approuvée & imprimée','var(--green)');
+}
+function reprintOrder(ref){ var o=findOrder(ref); if(o) printTicket(orderToTx(o)); }
+function orderToTx(o){
+  return {
+    ref:orderRef(o), date:o.date||todayDate(), time:o.time||nowTime(),
+    type:o.type||'web', table:o.table||'En ligne', mode:o.mode||'Web',
+    client:o.customer||o.client||'Client Web',
+    items:parseItems(o),
+    subtotal:o.subtotal||o.total||0, tva:o.tva||0, total:o.total||0,
+    staffName:S.employee?S.employee.name:'?',
+  };
+}
 
-  var html = [
-    '<div style="font-family:monospace;font-size:12px;width:260px;margin:0 auto;color:#000">',
+// ════════════════════════════════════════════════════════════════
+//  RECEIPT PRINTING
+// ════════════════════════════════════════════════════════════════
+function printTicket(tx){
+  var rows=(tx.items||[]).map(function(c){
+    var n=c.name||c.n||'?'; var q=c.qty||c.q||1; var p=c.price||c.p||0;
+    return '<tr><td style="padding:2px 0">'+esc(n)+'</td>'+
+      '<td style="text-align:center;padding:0 8px">'+q+'</td>'+
+      '<td style="text-align:right">'+(p*q).toFixed(2)+'</td></tr>';
+  }).join('');
+  var html=[
+    '<div style="font-family:monospace;font-size:12px;width:280px;margin:0 auto;color:#000">',
     '<div style="text-align:center;margin-bottom:8px">',
-    '<div style="font-size:18px;font-weight:900;letter-spacing:4px">CAFÉ LUX</div>',
+    '<div style="font-size:20px;font-weight:900;letter-spacing:4px">CAFÉ LUX</div>',
     '<div style="font-size:10px">Résidence Ziat N28 — Taza</div>',
     '<div style="font-size:10px">+212 808 524 169 · cafeslux.com</div>',
     '</div>',
     '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
-    '<div>' + tx.date + ' ' + tx.time + '</div>',
-    '<div>' + (tx.type==='takeaway'?'À Emporter: ':'Table: ') + tx.table + '</div>',
-    '<div>Mode: ' + tx.mode + '</div>',
-    (tx.client ? '<div>Client: ' + tx.client + '</div>' : ''),
+    '<div>Réf: '+esc(tx.ref||'')+'</div>',
+    '<div>'+esc(tx.date)+' '+esc(tx.time)+'</div>',
+    '<div>'+(tx.type==='takeaway'?'À Emporter: ':(tx.type==='web'?'Commande en ligne ':'Table: '))+esc(tx.table||'')+'</div>',
+    '<div>Mode: '+esc(tx.mode||'')+'</div>',
+    (tx.staffName?'<div>Caissier: '+esc(tx.staffName)+'</div>':''),
+    (tx.client?'<div>Client: '+esc(tx.client)+'</div>':''),
     '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
     '<table style="width:100%;border-collapse:collapse">',
     '<thead><tr><th style="text-align:left">Article</th><th>Qté</th><th>Prix</th></tr></thead>',
-    '<tbody>' + rows + '</tbody>',
-    '</table>',
+    '<tbody>'+rows+'</tbody></table>',
     '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
-    '<div>Sous-total: ' + tx.subtotal + ' DH</div>',
-    '<div>TVA 10%: ' + tx.tva + ' DH</div>',
-    '<div style="font-weight:900;font-size:14px;margin-top:4px">TOTAL: ' + tx.total + ' DH</div>',
+    '<div>Sous-total: '+(parseFloat(tx.subtotal)||0).toFixed(2)+' DH</div>',
+    '<div>TVA 10%: '+(parseFloat(tx.tva)||0).toFixed(2)+' DH</div>',
+    (tx.discount>0?'<div>Remise: -'+parseFloat(tx.discount).toFixed(2)+' DH</div>':''),
+    '<div style="font-weight:900;font-size:15px;margin-top:4px">TOTAL: '+(parseFloat(tx.total)||0).toFixed(2)+' DH</div>',
     '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
     '<div style="text-align:center;margin-top:8px">✦ Merci de votre visite ✦</div>',
+    '<div style="text-align:center;font-size:9px;margin-top:4px">Suivez-nous @lux.cafe.restaurant</div>',
     '</div>'
   ].join('');
+  el('print-sheet').innerHTML=html;
+  el('print-overlay').style.display='block';
+  setTimeout(function(){ window.print(); },150);
+}
+function closePrint(){ el('print-overlay').style.display='none'; }
 
-  document.getElementById('print-sheet').innerHTML = html;
-  document.getElementById('print-overlay').style.display = 'block';
-  setTimeout(function() { window.print(); }, 150);
+// ════════════════════════════════════════════════════════════════
+//  DAILY STATS
+// ════════════════════════════════════════════════════════════════
+function loadDailyStats(){
+  var t=getLS('lux_pos_today',null);
+  if(t && t.date===todayDate()){ S.todayCA=t.ca||0; S.todayOrders=t.orders||0; }
+  else { S.todayCA=0; S.todayOrders=0; setLS('lux_pos_today',{ca:0,orders:0,date:todayDate()}); }
+  setTxt('kpi-ca',Math.round(S.todayCA)); setTxt('kpi-orders',S.todayOrders);
 }
 
-function closePrint() {
-  document.getElementById('print-overlay').style.display = 'none';
-}
-window.addEventListener('afterprint', closePrint);
-
-// ════════════════════════════════════════════════════════════
-//  MENU RENDER
-// ════════════════════════════════════════════════════════════
-function buildMenu(menuData) {
-  var tabs  = document.getElementById('menu-tabs');
-  var items = document.getElementById('menu-items');
-  var tabH = '', itemH = '';
-
-  menuData.forEach(function(cat, i) {
-    tabH += '<button class="m-tab' + (i===0?' active':'') + '" data-cat="' + cat.id + '"' +
-            ' onclick="switchTab(\'' + cat.id + '\',this)">' + cat.icon + ' ' + cat.title + '</button>';
-
-    itemH += '<div class="m-sec' + (i===0?' active':'') + '" id="ms-' + cat.id + '">';
-    itemH += '<div class="m-cat-lbl">' + cat.icon + ' ' + cat.title + (cat.sub?'<span style="font-size:10px;color:var(--muted);margin-left:8px">'+cat.sub+'</span>':'') + '</div>';
-    itemH += '<div class="m-grid">';
-    cat.items.forEach(function(it) {
-      var cls = 'm-card' + (it.sig ? ' sig' : '');
-      itemH += '<div class="' + cls + '" data-n="' + esc(it.n) + '" data-p="' + it.p + '">';
-      itemH += '<div class="m-name">' + it.n + '</div>';
-      itemH += '<div class="m-price">' + it.p + ' DH</div>';
-      itemH += '</div>';
-    });
-    itemH += '</div></div>';
-  });
-
-  tabs.innerHTML  = tabH;
-  items.innerHTML = itemH;
-
-  items.querySelectorAll('.m-card').forEach(function(card) {
-    card.addEventListener('click', function() {
-      addToCart(this.getAttribute('data-n'), parseFloat(this.getAttribute('data-p')));
-    });
-  });
-}
-
-function switchTab(catId, btn) {
-  document.querySelectorAll('.m-tab').forEach(function(b)  { b.classList.remove('active'); });
-  document.querySelectorAll('.m-sec').forEach(function(s)  { s.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  var sec = document.getElementById('ms-' + catId);
-  if (sec) sec.classList.add('active');
-}
-
-// ════════════════════════════════════════════════════════════
-//  RFID
-// ════════════════════════════════════════════════════════════
-var _rfidBuf = '', _rfidTimer;
-document.addEventListener('keydown', function(e) {
-  var tag = document.activeElement ? document.activeElement.tagName : '';
-  if (tag==='INPUT'||tag==='TEXTAREA') return;
-  if (e.key === 'Enter') {
-    if (_rfidBuf.length >= 4) handleRFID(_rfidBuf.trim().toUpperCase());
-    _rfidBuf = ''; clearTimeout(_rfidTimer);
-  } else if (e.key.length === 1) {
-    clearTimeout(_rfidTimer);
-    _rfidBuf += e.key;
-    _rfidTimer = setTimeout(function(){ _rfidBuf = ''; }, 400);
+// ════════════════════════════════════════════════════════════════
+//  INIT (lock screen first)
+// ════════════════════════════════════════════════════════════════
+buildEmpChips();
+buildPinPad();
+renderPinDots();
+// Restore session if still active (< 8h)
+(function(){
+  var act=getLS('lux_pos_active_emp',null);
+  if(act && act.at && (Date.now()-act.at < 8*3600*1000)){
+    var emp=EMPLOYEES.find(function(e){ return e.id===act.id; });
+    if(emp){ S.selectedEmp=emp; /* require re-PIN for security — do not auto-unlock */ }
   }
-});
-
-function handleRFID(uid) {
-  var clients = getLS('lux_clients_rfid', {});
-  var client  = clients[uid];
-  var badge   = document.getElementById('rfid-badge');
-  if (client) {
-    caisse.currentClient = client;
-    badge.textContent = '👤 ' + client.name + ' · ' + (client.points||0) + ' pts';
-    badge.className   = 'active';
-    toast('✦ Client: ' + client.name);
-  } else {
-    caisse.currentClient = { uid: uid, name: 'Nouveau #' + uid.slice(-4), points: 0 };
-    badge.textContent = '👤 Nouveau: ' + uid;
-    badge.className   = 'active';
-    toast('Nouveau client RFID: ' + uid);
-  }
-}
-
-function clearClient() {
-  caisse.currentClient = null;
-  var badge = document.getElementById('rfid-badge');
-  badge.textContent = 'Aucun client';
-  badge.className   = '';
-}
-
-// ════════════════════════════════════════════════════════════
-//  LOAD DAILY STATS
-// ════════════════════════════════════════════════════════════
-function loadDailyStats() {
-  var daily = getLS('lux_daily', {});
-  if (daily.date === todayDate()) {
-    caisse.todayCA     = parseFloat(daily.ca || 0);
-    caisse.todayOrders = daily.orders || 0;
-    updateClock();
-  }
-  // Try to load live menu from API
-  var api = window.LuxAPI;
-  if (api) {
-    api.getMenu().then(function(data) {
-      if (Array.isArray(data) && data.length) {
-        // Transform API format to our MENU format
-        var apiMenu = data.map(function(cat) {
-          return {
-            id:    String(cat.id),
-            icon:  cat.icon || '🍽',
-            title: cat.name,
-            items: (cat.products || cat.items || []).map(function(p) {
-              return { n: p.name, p: p.price, sig: p.isSignature };
-            }),
-          };
-        });
-        buildMenu(apiMenu);
-        toast('Menu chargé depuis le serveur ✓');
-      }
-    }).catch(function() { /* keep static MENU */ });
-  }
-}
-
-function renderHome() {
-  var daily = getLS('lux_daily', {});
-  if (daily.date === todayDate()) {
-    caisse.todayCA     = parseFloat(daily.ca || 0);
-    caisse.todayOrders = daily.orders || 0;
-    updateClock();
-  }
-  toast('Actualisé');
-}
-
-// ════════════════════════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', function() {
-  buildMenu(MENU);
-  buildTables();
-  buildPinKeypad();
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // Keyboard PIN support
-  document.getElementById('pin-input').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') checkPin();
-    else if (/^\d$/.test(e.key)) { _pinValue += e.key; this.value = '•'.repeat(_pinValue.length); }
-    else if (e.key === 'Backspace') { _pinValue = _pinValue.slice(0,-1); this.value = '•'.repeat(_pinValue.length); }
-    e.preventDefault();
-  });
-
-  // Check if already authenticated
-  if (window.LuxAPI && window.LuxAPI.isAuthenticated && window.LuxAPI.isAuthenticated()) {
-    openPOS();
-  }
+})();
+// Keyboard PIN support
+document.addEventListener('keydown',function(e){
+  if(el('lock-screen').classList.contains('hidden')) return;
+  if(e.key>='0'&&e.key<='9') pinKey(e.key);
+  else if(e.key==='Backspace') pinKey('⌫');
+  else if(e.key==='Enter') verifyPin();
 });
 </script>
-
 </body>
 </html>
