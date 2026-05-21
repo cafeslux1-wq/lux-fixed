@@ -939,6 +939,43 @@ function bootPOS(){
 //  FEATURE 3 — UNIFIED MENU (with images) + ROBUST SYNC
 // ════════════════════════════════════════════════════════════════
 var MENU_BASE_URL = 'https://cafeslux.com/public/menu/'; // for relative image paths
+
+// Category UUID → {name, icon, order} fallback map, used when the live
+// /api/categories endpoint is unavailable. Built from the live Supabase catalog.
+var CATEGORY_MAP = {
+  '6ddc8a33-4896-4aa3-b2fb-22a24f19ae9e': {name:'Petit-Déjeuner',      icon:'🍳', order:1},
+  '6dd16ee7-0306-4d84-b4e1-534145846455': {name:'Cafés',               icon:'☕', order:2},
+  '7550f994-3dc9-449a-8637-4b5001a32825': {name:'Les Crémeux',         icon:'🥛', order:3},
+  '4ef99eee-ecb6-4183-9163-58cfb039eed5': {name:'Infusions',           icon:'🍵', order:4},
+  '2b690e8f-cb56-4349-9905-f652a9c51e14': {name:'Jus & Boissons',      icon:'🥤', order:5},
+  '3f132dd2-4448-4cd1-9d11-ee28b96893a3': {name:'Signature LUX',       icon:'⭐', order:6},
+  'e5660f83-b44e-4343-9314-c9a544f59402': {name:'Crêpes & Pancakes',   icon:'🥞', order:7},
+  '35ba9c32-5c5c-4812-a73d-217f1c70b217': {name:'Snacks',              icon:'🥪', order:8},
+  '620cdc36-0259-4d1d-8817-3d120a70e10a': {name:'Salades',             icon:'🥗', order:9},
+  '7be8e8b1-1a98-4e25-9e6e-db7ec25d218b': {name:'Pizzas',              icon:'🍕', order:10},
+  'e779d6ab-0a33-4e1c-8a02-e665bc080406': {name:'Burgers & Sandwichs', icon:'🍔', order:11},
+  'e5f3ce82-2f6c-46fa-808b-4b732fbe6dc9': {name:'Grillades & Viandes', icon:'🍖', order:12},
+  'b9cc84ed-4271-4ce1-a6d1-09a1ea401aaf': {name:'Plats Marocains',     icon:'🍲', order:13},
+  'd7936ced-a6cc-42b6-b171-b3f122df4d83': {name:'Gratins & Pâtes',     icon:'🧀', order:14},
+  'cf1a7a93-f713-4539-8225-33bc82ab5066': {name:'Desserts',            icon:'🍰', order:15},
+  '1a5c7072-1f7c-43b3-b0e6-4f6b1dcc60f6': {name:'Glaces',              icon:'🍦', order:16},
+  '54683444-af9b-4f55-8000-9c1885cf7b9b': {name:'Pâtisserie Marocaine',icon:'🍪', order:17},
+  '5a64f125-ed08-412b-bc33-17c890c8e8a8': {name:'Ftour Ramadan',       icon:'🌙', order:18},
+};
+var CAT_ICON_BY_NAME = {
+  'petit-déjeuner':'🍳','petit déjeuner':'🍳','café':'☕','cafés':'☕','coffee':'☕',
+  'crémeux':'🥛','crémeux':'🥛','infusion':'🍵','infusions':'🍵','thé':'🍵','jus':'🥤',
+  'boisson':'🥤','boissons':'🥤','signature':'⭐','crêpe':'🥞','crêpes':'🥞','pancake':'🥞',
+  'snack':'🥪','snacks':'🥪','salade':'🥗','salades':'🥗','pizza':'🍕','pizzas':'🍕',
+  'burger':'🍔','sandwich':'🍔','grillade':'🍖','viande':'🍖','plat':'🍲','tajine':'🍲',
+  'gratin':'🧀','pâte':'🧀','pâtes':'🧀','dessert':'🍰','desserts':'🍰','glace':'🍦',
+  'glaces':'🍦','pâtisserie':'🍪','gâteau':'🍪','ftour':'🌙','ramadan':'🌙',
+};
+function catIcon(name){
+  var l=(name||'').toLowerCase();
+  for(var k in CAT_ICON_BY_NAME){ if(l.indexOf(k)!==-1) return CAT_ICON_BY_NAME[k]; }
+  return '🍽';
+}
 function resolveImg(img){
   if(!img) return '';
   if(/^https?:\/\//i.test(img)) return img;       // absolute (Supabase etc.)
@@ -947,48 +984,126 @@ function resolveImg(img){
 }
 function loadMenu(silent){
   if(!silent) toast('🔄 Synchronisation du menu...','var(--gold)');
-  fetch(API+'/api/menu',{headers:{'Accept':'application/json'}})
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(data){
-      if(data && (Array.isArray(data)?data.length:(data.menu||data.categories))){
-        S.menu = normalizeMenu(data);
-        setLS('lux_pos_menu_cache', S.menu);
-        if(!silent) toast('✅ Menu synchronisé · '+countProducts()+' produits','var(--green)');
-      } else {
-        // API empty → use cached or embedded full catalog
-        S.menu = getLS('lux_pos_menu_cache', null) || normalizeMenu(MENU);
-        if(!silent) toast('ℹ Menu local ('+countProducts()+' produits)','var(--gold)');
-      }
-      applyCategoryOverrides();
-      renderMenuTabs(); renderMenu();
-    })
-    .catch(function(){
+  // Fetch categories + products in parallel. Try several endpoint names so the
+  // POS works whether the API exposes /api/menu, /api/products, or /api/categories.
+  var catReq = fetchFirst(['/api/categories','/api/menu/categories']);
+  var prodReq = fetchFirst(['/api/products','/api/menu','/api/menu/products']);
+  Promise.all([catReq, prodReq]).then(function(res){
+    var catsRaw = res[0], prodRaw = res[1];
+    var built = buildMenu(prodRaw, catsRaw);
+    if(built && built.length){
+      S.menu = built;
+      setLS('lux_pos_menu_cache', S.menu);
+      if(!silent) toast('✅ Menu synchronisé · '+countProducts()+' produits','var(--green)');
+    } else {
       S.menu = getLS('lux_pos_menu_cache', null) || normalizeMenu(MENU);
-      applyCategoryOverrides();
-      renderMenuTabs(); renderMenu();
-      if(!silent) toast('⚠ Hors-ligne — menu local','var(--orange)');
-    });
+      if(!silent) toast('ℹ Menu local ('+countProducts()+' produits)','var(--gold)');
+    }
+    applyCategoryOverrides();
+    renderMenuTabs(); renderMenu();
+  }).catch(function(){
+    S.menu = getLS('lux_pos_menu_cache', null) || normalizeMenu(MENU);
+    applyCategoryOverrides();
+    renderMenuTabs(); renderMenu();
+    if(!silent) toast('⚠ Hors-ligne — menu local','var(--orange)');
+  });
+}
+// Try a list of endpoints, return the JSON of the first that responds with data.
+function fetchFirst(paths){
+  var i=0;
+  function attempt(){
+    if(i>=paths.length) return Promise.resolve(null);
+    return fetch(API+paths[i],{headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        var arr = extractArray(d);
+        if(arr && arr.length) return arr;
+        i++; return attempt();
+      })
+      .catch(function(){ i++; return attempt(); });
+  }
+  return attempt();
+}
+// Pull an array out of various response envelopes.
+function extractArray(d){
+  if(!d) return null;
+  if(Array.isArray(d)) return d;
+  return d.products || d.categories || d.menu || d.data || d.items || null;
 }
 function countProducts(){ return S.menu.reduce(function(s,c){ return s+(c.items?c.items.length:0); },0); }
 function refreshMenu(){ loadMenu(false); }
 
-// Normalize various possible API shapes into [{id,icon,title,items:[{n,p,s,img,sig}]}]
+// ── Build the POS menu from live Supabase data ──────────────────
+// Handles the real shape: a FLAT array of products, each with category_id (UUID),
+// name, price, image_url, featured (=signature), is_active, is_available, order_index.
+// `catsRaw` (optional) is the live categories array → authoritative names/icons/order.
+function buildMenu(prodRaw, catsRaw){
+  if(!prodRaw || !prodRaw.length) return null;
+  // Detect flat-product shape (Supabase) vs already-grouped shape
+  var isFlat = prodRaw.some(function(p){ return ('category_id' in p) || ('image_url' in p) || ('is_active' in p); });
+  if(!isFlat) return normalizeMenu(prodRaw);   // already grouped → old path
+
+  // Build category lookup: live categories first, then fallback CATEGORY_MAP
+  var catInfo = {};   // uuid → {name, icon, order}
+  if(catsRaw && catsRaw.length){
+    catsRaw.forEach(function(c,i){
+      var id=c.id||c.category_id||c.uuid;
+      if(!id) return;
+      catInfo[id]={ name:c.name||c.title||'Catégorie', icon:c.icon||c.emoji||catIcon(c.name||c.title),
+                    order:(c.order_index!=null?c.order_index:(c.order!=null?c.order:i)) };
+    });
+  }
+
+  var groups = {};    // uuid → {id,title,icon,order,items:[]}
+  prodRaw.forEach(function(p){
+    // Skip products explicitly disabled online
+    if(p.is_active===false || p.active===false) return;
+    var cid = p.category_id || 'autres';
+    if(!groups[cid]){
+      var info = catInfo[cid] || CATEGORY_MAP[cid] ||
+                 {name:(cid==='autres'?'Autres':'Catégorie'), icon:'🍽', order:900};
+      groups[cid]={ id:cid, title:info.name, icon:info.icon, order:info.order, items:[] };
+    }
+    groups[cid].items.push({
+      n:    (p.name||'Produit').trim(),
+      p:    parseFloat(p.price!=null?p.price:0)||0,
+      s:    (p.description_fr||p.description||'').trim(),
+      img:  resolveImg(p.image_url||p.image||p.imageUrl||p.img||''),
+      sig:  !!(p.featured||p.signature||p.sig),
+      oos:  (p.is_available===false),   // out of stock from online flag
+      _o:   (p.order_index!=null?p.order_index:999),
+    });
+  });
+
+  // Sort items within each category by order_index, then build sorted category list
+  var list = Object.keys(groups).map(function(k){ return groups[k]; });
+  list.forEach(function(c){ c.items.sort(function(a,b){ return a._o-b._o; }); });
+  list.sort(function(a,b){ return (a.order||900)-(b.order||900); });
+  return list;
+}
+
+// Normalize already-grouped API shapes into [{id,icon,title,items:[{n,p,s,img,sig}]}]
 function normalizeMenu(data){
   var cats = Array.isArray(data) ? data : (data.menu || data.categories || []);
   if(!cats.length) return MENU;
+  // If this is actually a flat product array, route to buildMenu
+  if(cats.some(function(p){ return ('category_id' in p)||('image_url' in p); })) {
+    return buildMenu(cats, null) || MENU;
+  }
   return cats.map(function(c,i){
     var items = (c.items || c.products || []).map(function(p){
       return {
         n:   p.name || p.n || p.title || 'Produit',
         p:   parseFloat(p.price!=null?p.price:(p.p!=null?p.p:0)) || 0,
         s:   p.description || p.desc || p.s || '',
-        img: p.image || p.imageUrl || p.img || p.photo || '',
+        img: resolveImg(p.image || p.imageUrl || p.img || p.photo || p.image_url || ''),
         sig: !!(p.signature || p.sig || p.featured),
+        oos: (p.is_available===false),
       };
     });
     return {
       id:    c.id || c.slug || ('cat'+i),
-      icon:  c.icon || c.emoji || '🍽',
+      icon:  c.icon || c.emoji || catIcon(c.name||c.title),
       title: c.name || c.title || ('Catégorie '+(i+1)),
       sub:   c.subtitle || c.sub || '',
       items: items,
@@ -998,17 +1113,32 @@ function normalizeMenu(data){
 // Apply admin category overrides (rename / reorder / hide)
 function applyCategoryOverrides(){
   var ov = getLS('lux_pos_cat_overrides', {});
-  S.menu.forEach(function(c){
+  S.menu.forEach(function(c, idx){
+    // Default order = natural order from buildMenu (c.order), else position
+    var naturalOrder = (c.order!=null) ? c.order : idx;
     if(ov[c.id]){
       if(ov[c.id].title) c.title = ov[c.id].title;
       if(ov[c.id].icon)  c.icon  = ov[c.id].icon;
       c._hidden = !!ov[c.id].hidden;
-      c._order  = (ov[c.id].order!=null)?ov[c.id].order:999;
-    } else { c._order=999; }
+      c._order  = (ov[c.id].order!=null) ? ov[c.id].order : naturalOrder;
+    } else {
+      c._hidden = false;
+      c._order  = naturalOrder;
+    }
   });
-  S.menu.sort(function(a,b){ return (a._order||999)-(b._order||999); });
+  S.menu.sort(function(a,b){ return (a._order||0)-(b._order||0); });
 }
-function isOutOfStock(name){ var st=getLS('lux_pos_stock',{}); return st[name]===false; }
+// Out of stock = admin toggle OFF, OR product flagged unavailable online
+function isOutOfStock(name){
+  var st=getLS('lux_pos_stock',{});
+  if(st[name]===false) return true;                 // admin disabled it
+  // check online availability flag captured during sync
+  for(var i=0;i<S.menu.length;i++){
+    var items=S.menu[i].items||[];
+    for(var j=0;j<items.length;j++){ if(items[j].n===name && items[j].oos) return true; }
+  }
+  return false;
+}
 function renderMenuTabs(){
   var visible=S.menu.filter(function(c){ return !c._hidden; });
   if(!S.activeCat && visible.length) S.activeCat = visible[0].id;
