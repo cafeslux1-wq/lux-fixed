@@ -792,7 +792,7 @@ var S = {
   employee:      null,          // active employee (Dallas Key)
   selectedEmp:   null,          // employee chosen on lock screen
   pinBuffer:     '',
-  menu:          MENU,
+  menu:          [],
   activeCat:     null,
   selectedSlot:  null,          // { type:'table'|'takeaway', id }
   carts:         {},            // slotKey → [items]
@@ -984,14 +984,14 @@ function resolveImg(img){
 }
 function loadMenu(silent){
   if(!silent) toast('🔄 Synchronisation du menu...','var(--gold)');
-  // ⚡ STEP 1 — Render something IMMEDIATELY so the grid is never empty.
-  // Use cached menu if valid, else the embedded real catalog (149 products).
-  if(!S.menu || !menuHasProducts(S.menu)){
+  // ⚡ STEP 1 — Ensure S.menu has products, then ALWAYS render immediately so the
+  // grid is never empty (even if the background API call later fails or is empty).
+  if(!menuHasProducts(S.menu)){
     var cached = getLS('lux_pos_menu_cache_v2', null);
     S.menu = (cached && menuHasProducts(cached)) ? cached : normalizeMenu(MENU);
-    applyCategoryOverrides();
-    renderMenuTabs(); renderMenu();
   }
+  applyCategoryOverrides();
+  renderMenuTabs(); renderMenu();        // ← always renders, fixes empty-grid bug
   // ⚡ STEP 2 — Refresh from the live API in the background (products + categories).
   var catReq = fetchFirst(['/api/categories','/api/menu/categories']);
   var prodReq = fetchFirst(['/api/products','/api/menu','/api/menu/products']);
@@ -1020,7 +1020,7 @@ function fetchFirst(paths){
   var i=0;
   function attempt(){
     if(i>=paths.length) return Promise.resolve(null);
-    return fetch(API+paths[i],{headers:{'Accept':'application/json'}})
+    return fetch(API+paths[i],{headers:Object.assign({'Accept':'application/json'}, _authHeader())})
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         var arr = extractArray(d);
@@ -1035,7 +1035,7 @@ function fetchFirst(paths){
 function extractArray(d){
   if(!d) return null;
   if(Array.isArray(d)) return d;
-  return d.products || d.categories || d.menu || d.data || d.items || null;
+  return d.products || d.categories || d.menu || d.orders || d.transactions || d.data || d.items || d.rows || null;
 }
 function countProducts(){ return S.menu.reduce(function(s,c){ return s+(c.items?c.items.length:0); },0); }
 function refreshMenu(){ loadMenu(false); }
@@ -1465,22 +1465,35 @@ function startOrdersPolling(){
   _ordersTimer=setInterval(fetchOnlineOrders, 15000);
 }
 function fetchOnlineOrders(){
-  fetch(API+'/api/transactions/web',{headers:{'Accept':'application/json'}})
-    .then(function(r){ return r.ok?r.json():null; })
-    .then(function(d){
-      var list = Array.isArray(d)?d:(d&&d.orders?d.orders:(d&&d.transactions?d.transactions:[]));
-      if(!Array.isArray(list)) return;
-      // Keep only web-source orders; newest first
+  // ⚡ Poll /api/orders — the POS/kitchen order list. We do NOT use
+  // /api/transactions/web here: that endpoint REQUIRES a ?phone= param
+  // (it serves a single customer's history) and returns HTTP 400 without it.
+  // Try a few endpoint/filter variants so it works regardless of backend shape.
+  fetchFirst(['/api/orders?source=web','/api/orders?status=pending','/api/orders'])
+    .then(function(list){
+      if(!Array.isArray(list)){ return; }
       var prevNew = countNewOrders();
       S.onlineOrders = list.filter(function(o){
-        var src=(o.source||o._src||'').toLowerCase();
-        return src==='web'||src==='menu'||src==='account'||(o.notes&&/web|menu|session/i.test(o.notes));
-      }).sort(function(a,b){ return (b.id||0)-(a.id||0); });
+        // Keep web/online orders. Accept if source matches OR it has web-ish notes,
+        // OR there is no source field at all (some backends omit it).
+        var src=(o.source||o._src||o.channel||'').toLowerCase();
+        if(src) return /web|menu|online|account| en.?ligne/.test(src);
+        return true; // no source field → assume it's a normal order, show it
+      }).sort(function(a,b){
+        var ta=orderTime(a), tb=orderTime(b);
+        return tb-ta;
+      });
       var nowNew=countNewOrders();
       updateBell(nowNew, nowNew>prevNew);
       if(el('orders-drawer').classList.contains('open')) renderOrders();
     })
-    .catch(function(){});
+    .catch(function(){ /* offline — keep current list */ });
+}
+function orderTime(o){
+  if(o.id && /^\d+$/.test(String(o.id))) return parseInt(o.id);
+  if(o.createdAt) return new Date(o.createdAt).getTime();
+  if(o.created_date) return new Date(o.created_date).getTime();
+  return 0;
 }
 function orderRef(o){ return o.ref||o.externalId||('TX'+(o.id||'')); }
 function isApproved(o){ return !!S.approvedRefs[orderRef(o)] || o.status==='approved'||o.status==='done'||o.status==='completed'; }
