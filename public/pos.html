@@ -347,6 +347,98 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
   max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN DASHBOARD
+═══════════════════════════════════════════════════════════════ */
+#admin-overlay{position:fixed;inset:0;z-index:1500;background:var(--bg);display:none;flex-direction:column}
+#admin-overlay.open{display:flex}
+.adm-top{height:56px;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.adm-top .adm-logo{font-family:var(--font-d);color:var(--gold);font-size:16px;letter-spacing:3px;font-weight:700}
+.adm-top .adm-title{font-size:12px;color:var(--gold-l);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.adm-body{flex:1;display:grid;grid-template-columns:220px 1fr;overflow:hidden}
+.adm-nav{background:var(--bg2);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto}
+.adm-navitem{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;cursor:pointer;
+  color:var(--text2);font-size:12px;font-weight:600;transition:.15s;margin-bottom:5px}
+.adm-navitem .ai{font-size:17px;width:22px;text-align:center}
+.adm-navitem:hover{background:var(--bg3);color:var(--text)}
+.adm-navitem.active{background:var(--gold-a14);color:var(--gold-l);border:1px solid var(--border2)}
+.adm-content{padding:24px 28px;overflow-y:auto}
+.adm-section{display:none;animation:admFade .3s ease}
+.adm-section.active{display:block}
+@keyframes admFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.adm-h{font-family:var(--font-d);font-size:20px;color:var(--gold);letter-spacing:1px;font-weight:700;margin-bottom:5px}
+.adm-sub{font-size:12px;color:var(--muted);margin-bottom:22px}
+.adm-card{background:linear-gradient(165deg,var(--bg2),var(--bg3));border:1px solid var(--border);
+  border-radius:16px;padding:18px;margin-bottom:16px}
+.adm-card-h{font-size:13px;color:var(--gold-l);font-weight:700;letter-spacing:.5px;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px}
+.adm-field{margin-bottom:14px}
+.adm-field label{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);
+  font-weight:600;margin-bottom:6px}
+.adm-field input,.adm-field select{width:100%;padding:11px 13px;border-radius:10px;background:var(--bg);
+  border:1px solid var(--border);color:var(--text);font-size:13px;font-family:var(--font-b)}
+.adm-field input:focus{border-color:var(--gold);outline:none}
+.adm-row{display:flex;gap:12px;flex-wrap:wrap}
+.adm-row .adm-field{flex:1;min-width:140px}
+.adm-btn{padding:11px 18px;border-radius:11px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:.18s}
+.adm-btn.primary{background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));color:#1A1408;box-shadow:0 4px 16px rgba(201,168,76,.22)}
+.adm-btn.primary:hover{transform:translateY(-1px)}
+.adm-btn.ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.adm-btn.ghost:hover{border-color:var(--border2);color:var(--gold)}
+.adm-btn.danger{background:rgba(224,82,79,.12);border:1px solid rgba(224,82,79,.3);color:var(--red)}
+/* Toggle switch */
+.tgl{position:relative;width:46px;height:25px;border-radius:13px;background:var(--bg4);border:1px solid var(--border);
+  cursor:pointer;transition:.2s;flex-shrink:0}
+.tgl.on{background:linear-gradient(135deg,var(--green),#2da866);border-color:var(--green)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;
+  background:#fff;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.tgl.on::after{transform:translateX(21px)}
+/* Inventory list */
+.inv-search{width:100%;padding:11px 14px;border-radius:11px;background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-size:13px;margin-bottom:14px}
+.inv-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:11px;margin-bottom:7px}
+.inv-row .inv-cat{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.inv-row .inv-name{flex:1;font-size:13px;color:var(--text);font-weight:500}
+.inv-row .inv-price{font-family:var(--font-m);font-size:12px;color:var(--gold);min-width:60px;text-align:right}
+.inv-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;min-width:74px;text-align:center}
+.inv-status.in{background:rgba(61,190,122,.14);color:var(--green)}
+.inv-status.out{background:rgba(224,82,79,.14);color:var(--red)}
+/* Category rows */
+.cat-row{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:11px;margin-bottom:7px}
+.cat-row input{flex:1;background:transparent;border:none;color:var(--text);font-size:13px;font-weight:600;padding:4px}
+.cat-row input:focus{outline:none;border-bottom:1px solid var(--gold)}
+.cat-row .cat-icon{width:34px;text-align:center;font-size:18px}
+.cat-ord-btns{display:flex;flex-direction:column;gap:2px}
+.cat-ord{width:24px;height:18px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--gold);cursor:pointer;font-size:10px;line-height:1;display:flex;align-items:center;justify-content:center}
+.cat-ord:hover{background:var(--gold-a14)}
+/* Employee admin rows */
+.emp-row{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:11px;margin-bottom:7px}
+.emp-row .er-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#1A1408;flex-shrink:0}
+.emp-row input{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);
+  padding:7px 9px;font-size:12px}
+.emp-row .er-name{width:110px} .emp-row .er-role{width:100px} .emp-row .er-pin{width:80px;font-family:var(--font-m)}
+/* Z-Report */
+.z-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.z-kpi{background:linear-gradient(165deg,var(--bg2),var(--bg3));border:1px solid var(--border);
+  border-radius:14px;padding:18px;text-align:center}
+.z-kpi .zk-val{font-family:var(--font-m);font-size:28px;font-weight:700;color:var(--gold-l);line-height:1}
+.z-kpi .zk-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+.z-break{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.z-break span:first-child{color:var(--text2)} .z-break span:last-child{color:var(--text);font-family:var(--font-m)}
+.adm-save-bar{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);padding-top:16px;margin-top:8px}
+
+@media(max-width:900px){
+  .adm-body{grid-template-columns:1fr}
+  .adm-nav{display:flex;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);padding:10px}
+  .adm-navitem{flex-shrink:0;margin-bottom:0;margin-right:6px}
+}
+
 /* RESPONSIVE — tablet portrait fallback */
 @media(max-width:900px){
   .pos-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
@@ -403,6 +495,7 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
       <div class="eb-role" id="eb-role">—</div>
     </div>
   </div>
+  <button class="btn-sm" id="admin-btn" onclick="openAdmin()" title="Admin (PIN requis)">⚙ Admin</button>
   <button class="btn-sm" onclick="window.location.href='index.html'">← Accueil</button>
 </div>
 
@@ -539,6 +632,125 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
   </div>
 </div>
 
+<!-- ═══════════ ADMIN DASHBOARD ═══════════ -->
+<div id="admin-overlay">
+  <div class="adm-top">
+    <span class="adm-logo">✦ LUX</span>
+    <span class="adm-title">Admin · Paramètres</span>
+    <button class="btn-sm" style="margin-left:auto" onclick="closeAdmin()">✕ Fermer</button>
+  </div>
+  <div class="adm-body">
+    <div class="adm-nav">
+      <div class="adm-navitem active" data-s="inventory" onclick="admNav('inventory',this)"><span class="ai">📦</span> Inventaire</div>
+      <div class="adm-navitem" data-s="categories" onclick="admNav('categories',this)"><span class="ai">🗂</span> Catégories</div>
+      <div class="adm-navitem" data-s="config" onclick="admNav('config',this)"><span class="ai">⚙</span> Configuration</div>
+      <div class="adm-navitem" data-s="staff" onclick="admNav('staff',this)"><span class="ai">🔑</span> Personnel</div>
+      <div class="adm-navitem" data-s="zreport" onclick="admNav('zreport',this)"><span class="ai">📊</span> Rapport Z</div>
+      <div class="adm-navitem" data-s="loyalty" onclick="admNav('loyalty',this)"><span class="ai">⭐</span> Fidélité</div>
+    </div>
+    <div class="adm-content">
+      <!-- INVENTORY -->
+      <div class="adm-section active" id="adm-inventory">
+        <div class="adm-h">📦 Contrôle d'inventaire</div>
+        <div class="adm-sub">Activez/désactivez la disponibilité des produits. Les ruptures sont grisées sur la caisse.</div>
+        <input class="inv-search" id="inv-search" placeholder="🔍 Rechercher un produit..." oninput="renderInventory()">
+        <div id="inv-list"></div>
+      </div>
+      <!-- CATEGORIES -->
+      <div class="adm-section" id="adm-categories">
+        <div class="adm-h">🗂 Gestion des catégories</div>
+        <div class="adm-sub">Renommez, réordonnez ou masquez les catégories du menu POS.</div>
+        <div id="cat-list"></div>
+        <div class="adm-save-bar"><button class="adm-btn primary" onclick="saveCategories()">💾 Enregistrer l'ordre & les noms</button>
+        <button class="adm-btn ghost" onclick="resetCategories()" style="margin-left:8px">↺ Réinitialiser</button></div>
+      </div>
+      <!-- CONFIG -->
+      <div class="adm-section" id="adm-config">
+        <div class="adm-h">⚙ Configuration POS</div>
+        <div class="adm-sub">Imprimante, taxe et paramètres de caisse.</div>
+        <div class="adm-card">
+          <div class="adm-card-h">🖨 Imprimante (ticket de caisse)</div>
+          <div class="adm-row">
+            <div class="adm-field"><label>Nom imprimante</label><input id="cfg-printer" placeholder="Imprimante caisse"></div>
+            <div class="adm-field"><label>Largeur ticket (px)</label><input id="cfg-width" type="number" placeholder="280"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+            <div class="tgl" id="cfg-autoprint" onclick="this.classList.toggle('on')"></div>
+            <span style="font-size:12px;color:var(--text2)">Impression automatique après encaissement</span>
+          </div>
+          <button class="adm-btn ghost" style="margin-top:14px" onclick="testPrint()">🖨 Test d'impression</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-card-h">💰 Taxe (TVA)</div>
+          <div class="adm-field" style="max-width:200px"><label>Taux de TVA (%)</label><input id="cfg-tax" type="number" step="0.1" placeholder="10"></div>
+        </div>
+        <div class="adm-save-bar"><button class="adm-btn primary" onclick="saveConfig()">💾 Enregistrer la configuration</button></div>
+      </div>
+      <!-- STAFF (Dallas Key / PIN) -->
+      <div class="adm-section" id="adm-staff">
+        <div class="adm-h">🔑 Personnel & Dallas Key</div>
+        <div class="adm-sub">Gérez les employés, leurs codes PIN et tokens de badge (Dallas Key).</div>
+        <div id="staff-list"></div>
+        <button class="adm-btn ghost" onclick="addEmployee()" style="margin-top:6px">+ Ajouter un employé</button>
+        <div class="adm-save-bar"><button class="adm-btn primary" onclick="saveStaff()">💾 Enregistrer le personnel</button></div>
+      </div>
+      <!-- Z-REPORT -->
+      <div class="adm-section" id="adm-zreport">
+        <div class="adm-h">📊 Rapport Z — Clôture journalière</div>
+        <div class="adm-sub" id="z-date">—</div>
+        <div class="z-grid">
+          <div class="z-kpi"><div class="zk-val" id="z-ca">0</div><div class="zk-lbl">Chiffre d'affaires (DH)</div></div>
+          <div class="z-kpi"><div class="zk-val" id="z-orders">0</div><div class="zk-lbl">Tickets</div></div>
+          <div class="z-kpi"><div class="zk-val" id="z-avg">0</div><div class="zk-lbl">Panier moyen (DH)</div></div>
+        </div>
+        <div class="adm-card">
+          <div class="adm-card-h">🔑 Ventes par caissier (sessions)</div>
+          <div id="z-by-staff"><div style="font-size:12px;color:var(--muted)">Aucune session enregistrée</div></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="adm-btn primary" onclick="printZReport()">🖨 Imprimer le Rapport Z</button>
+          <button class="adm-btn danger" onclick="closeZDay()">🔒 Clôturer la journée (remise à zéro)</button>
+        </div>
+      </div>
+      <!-- LOYALTY -->
+      <div class="adm-section" id="adm-loyalty">
+        <div class="adm-h">⭐ Règles de fidélité</div>
+        <div class="adm-sub">Configurez la conversion des points LUX.</div>
+        <div class="adm-card">
+          <div class="adm-card-h">Gain de points</div>
+          <div class="adm-field" style="max-width:260px">
+            <label>Montant (DH) pour gagner 1 point</label>
+            <input id="loy-earn" type="number" step="1" placeholder="10">
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">Ex : 10 → le client gagne 1 LUX Point par tranche de 10 MAD dépensés.</div>
+          </div>
+          <div class="adm-field" style="max-width:260px">
+            <label>Valeur de 1 point à l'échange (DH)</label>
+            <input id="loy-redeem" type="number" step="0.5" placeholder="1">
+            <div style="font-size:10px;color:var(--muted);margin-top:6px">Ex : 1 → 1 LUX Point = 1 DH de réduction.</div>
+          </div>
+        </div>
+        <div class="adm-card">
+          <div class="adm-card-h">Aperçu</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.8" id="loy-preview">—</div>
+        </div>
+        <div class="adm-save-bar"><button class="adm-btn primary" onclick="saveLoyalty()">💾 Enregistrer les règles</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN PIN MODAL ═══════════ -->
+<div class="modal-ov" id="admin-pin-modal">
+  <div class="modal-box" style="max-width:320px">
+    <div class="modal-title">🔐 Accès Admin</div>
+    <div class="modal-sub">Réservé aux managers · saisissez votre PIN</div>
+    <div class="pin-dots" id="adm-pin-dots" style="margin:18px 0"></div>
+    <div class="pin-err" id="adm-pin-err"></div>
+    <div class="pin-pad" id="adm-pin-pad" style="margin-top:0"></div>
+    <button class="btn-mod cancel" style="width:100%;margin-top:14px" onclick="closeModal('admin-pin-modal')">Annuler</button>
+  </div>
+</div>
+
 <!-- ═══════════ PRINT OVERLAY ═══════════ -->
 <div id="print-overlay">
   <button id="print-close" onclick="closePrint()">✕ Fermer</button>
@@ -557,17 +769,21 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
 var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
 // ── Employee registry (Dallas Key simulation) ──
-// In production these PINs/tokens would come from /api/employees.
-// Each badge "token" simulates the unique Dallas Key serial.
-var EMPLOYEES = [
-  { id:'E01', name:'Youssef',  role:'Manager',  pin:'1990', token:'DK-7A3F91', color:'#C9A84C' },
-  { id:'E02', name:'Salma',    role:'Caissier', pin:'2024', token:'DK-22B4C8', color:'#4A9FE0' },
-  { id:'E03', name:'Karim',    role:'Serveur',  pin:'1357', token:'DK-9F1E07', color:'#3DBE7A' },
-  { id:'E04', name:'Demo',     role:'Test',     pin:'0000', token:'DK-000000', color:'#E89B3D' },
+// Editable via Admin Dashboard → stored in lux_pos_employees.
+var DEFAULT_EMPLOYEES = [
+  { id:'E01', name:'Youssef',  role:'Manager',  pin:'1990', token:'DK-7A3F91', color:'#C9A84C', admin:true },
+  { id:'E02', name:'Salma',    role:'Caissier', pin:'2024', token:'DK-22B4C8', color:'#4A9FE0', admin:false },
+  { id:'E03', name:'Karim',    role:'Serveur',  pin:'1357', token:'DK-9F1E07', color:'#3DBE7A', admin:false },
+  { id:'E04', name:'Demo',     role:'Test',     pin:'0000', token:'DK-000000', color:'#E89B3D', admin:true },
 ];
+function loadEmployees(){
+  try{ var s=JSON.parse(localStorage.getItem('lux_pos_employees')); if(Array.isArray(s)&&s.length) return s; }catch(e){}
+  return DEFAULT_EMPLOYEES.slice();
+}
+var EMPLOYEES = loadEmployees();
 
 // ── Static menu fallback (also fetched live from /api/menu) ──
-var MENU = [{"id":"pdej","icon":"🍳","title":"Petit-Déjeuner","sub":"Café offert","items":[{"n":"Classic Breakfast","p":22,"s":"Pain, oeuf, olives"},{"n":"Chamali","p":27},{"n":"Omelette au Fromage","p":30},{"n":"Moroccan Breakfast","p":35,"sig":true},{"n":"Morning Lux","p":35,"sig":true}]},{"id":"cafes","icon":"☕","title":"Cafés Classiques","items":[{"n":"Espresso","p":7},{"n":"Espresso Prestige","p":9},{"n":"Double Espresso","p":14},{"n":"Café Séparé","p":12},{"n":"Capsule","p":10},{"n":"Lait Chocolat","p":12},{"n":"Lait Chaud","p":9},{"n":"Lait Verveine","p":12},{"n":"Lait Aromatisé","p":10}]},{"id":"cremeux","icon":"🥛","title":"Les Crémeux","items":[{"n":"Café Crème","p":10},{"n":"Cappuccino","p":12},{"n":"Café Chocolat","p":14},{"n":"Chocolat Fondu","p":20}]},{"id":"infusions","icon":"🍵","title":"Infusions","items":[{"n":"Thé Marocain","p":9},{"n":"Golden Tea","p":9},{"n":"Thé Royal","p":20,"sig":true}]},{"id":"jus","icon":"🥤","title":"Jus Frais","items":[{"n":"Banane","p":15},{"n":"Pomme","p":15},{"n":"Orange","p":16},{"n":"Citron","p":16},{"n":"Mangue","p":19},{"n":"Ananas","p":19},{"n":"Avocat","p":20},{"n":"Avocat Royal","p":25,"sig":true}]},{"id":"sig","icon":"⭐","title":"Signature LUX","items":[{"n":"Lux Matcha Bloom","p":20,"sig":true},{"n":"Queen's Rose Coffee","p":30,"sig":true},{"n":"Mojito","p":25},{"n":"Panaché LUX","p":25},{"n":"Cocktail Royal","p":30},{"n":"Zaazaa Lux","p":35,"sig":true}]},{"id":"crepes","icon":"🥞","title":"Crêpes","items":[{"n":"Crêpe Nutella","p":23},{"n":"Crêpe Fruits","p":26},{"n":"Crêpe Royale","p":30,"sig":true},{"n":"Crêpe Fromage","p":25},{"n":"Crêpe Thon Fromage","p":35},{"n":"Pack Crêpes","p":35}]},{"id":"resto","icon":"🍽","title":"Restaurant","items":[{"n":"LUX Power Toast","p":25,"sig":true},{"n":"Harira","p":14},{"n":"Meskouta","p":5},{"n":"Cake Prestige","p":10},{"n":"Sablés 7pcs","p":13},{"n":"Salade Fruits Royale","p":40},{"n":"Plateau Gâteaux","p":100}]},{"id":"soft","icon":"🥫","title":"Soft & Shakes","items":[{"n":"Soda","p":12},{"n":"Red Bull","p":20},{"n":"Milkshake Classic","p":35}]}];
+var MENU = [{"id":"breakfast","icon":"🍳","title":"Breakfast","items":[{"n":"Classic Breakfast","p":22,"s":"Pain, oeuf, olives, fromage, confiture, Danone Mini, jus d'orange, boisson chaude","img":"images/classic_breakfast.jpg"},{"n":"Chamali","p":27,"s":"2 oeufs, fromage, pain cachir, jben, olives, JO, boisson chaude","img":"https://izcwecszmdqcsphmuypg.supabase.co/storage/v1/object/public/basico/uploads/1770847112027-21jfu5rx1sd.jfif"},{"n":"Omelette au Fromage","p":30,"s":"Pain, omelette fromage rouge & mozzarella, JO, boisson chaude","img":"images/omelette_au_fromage.jpg"},{"n":"Moroccan Breakfast","p":35,"s":"Khlii, 2 oeufs, pain, olives, JO, boisson chaude","sig":true,"img":"images/moroccan_breakfast.jpg"},{"n":"Morning LUX","p":35,"s":"2 oeufs, fromage, pain, salade de fruits, JO, boisson chaude","sig":true,"img":"https://izcwecszmdqcsphmuypg.supabase.co/storage/v1/object/public/basico/uploads/1770888380982-m8oj0esyf1j-opt70-1772575351822.jpg"}],"sub":"Café noir offert"},{"id":"coffees","icon":"☕","title":"Espressos & Laits","items":[{"n":"Espresso","p":7,"img":"images/espresso.jpg"},{"n":"Espresso à Emporter","p":8,"img":"images/espresso.jpg"},{"n":"Espresso Prestige","p":9,"s":"Café Noir + eau 33 cl","img":"images/espresso_prestige.jpg"},{"n":"Double Espresso","p":14,"s":"Double Espresso + eau 33 cl","img":"images/double_espresso.jpg"},{"n":"Café Séparé","p":12,"s":"Café Séparé + eau 33 cl","img":"images/cafe_separe.jpg"},{"n":"Capsule au Choix","p":10,"s":"Capsule + eau 33 cl","img":"images/capsule_au_choix.jpg"},{"n":"Lait au Chocolat","p":12,"img":"images/lait_au_chocolat.jpg"},{"n":"Lait Chaud","p":9,"img":"images/lait_chaud.jpg"},{"n":"Lait à la Verveine","p":12,"img":"images/lait_a_la_verveine.jpg"},{"n":"Lait Aromatisé","p":10,"img":"images/lait_aromatise.jpg"}],"sub":"Classiques & à emporter"},{"id":"cremeux","icon":"🥛","title":"Les Crémeux","items":[{"n":"Café Crème","p":10,"s":"Café Crème + eau 33 cl","img":"images/cafe_creme.jpg"},{"n":"Cappuccino","p":12,"s":"Cappuccino + eau 33 cl","img":"images/cappuccino.jpg"},{"n":"Café Chocolat","p":14,"s":"Café Chocolat + eau 33 cl","img":"images/cafe_chocolat.jpg"},{"n":"Chocolat Fondu","p":20,"s":"Chocolat Fondu + eau 33 cl","img":"images/chocolat_fondu.jpg"}],"sub":"Cappuccino · Chocolat"},{"id":"infusions","icon":"🍵","title":"Infusions & Thés","items":[{"n":"Thé Marocain","p":9,"s":"Thé Marocain + eau 33 cl","img":"images/the_marocain.jpg"},{"n":"Golden Tea","p":9,"s":"Tisane, Verveine, Lipton + eau 33 cl","img":"images/golden_tea_tisane_verveine_lipton.jpg"},{"n":"Thé Royal Sellou","p":19,"s":"Thé Royal + Sellou + eau 33 cl","img":"images/the_royal.jpg"},{"n":"Thé Royal","p":20,"s":"Thé Royal + 7 gâteaux marocains + eau 33 cl","sig":true,"img":"images/the_royal.jpg"}]},{"id":"jus","icon":"🥤","title":"Jus Purs & Boissons","items":[{"n":"Banane","p":15,"img":"images/banane.jpg"},{"n":"Pomme","p":15,"img":"images/pomme.jpg"},{"n":"Orange","p":16,"img":"images/orange.webp"},{"n":"Citron","p":16,"img":"images/citron.jpg"},{"n":"Fruits de Saison","p":18,"img":"images/fruits_de_saison.jpg"},{"n":"Mangue","p":19,"img":"images/mangue.jpg"},{"n":"Ananas","p":19,"img":"images/ananas.jpg"},{"n":"Avocat","p":20,"sig":true,"img":"images/avocat.webp"},{"n":"Avocat Royal","p":25,"s":"fruits secs","img":"images/avocat_royal.jpg"},{"n":"Mojito","p":25,"img":"images/mojito.jpg"},{"n":"Panaché LUX","p":25,"s":"Orange ou lait","img":"images/panache_lux.jpg"},{"n":"Cocktail Royal","p":30,"img":"images/cocktail_royal.jpg"},{"n":"Zaazaa Lux","p":35,"sig":true,"img":"images/zaazaa_lux.jpg"},{"n":"Milkshake Classic","p":35,"s":"Fraise, Banane ou Vanille","img":"images/milkshake_classic.jpg"},{"n":"Soda","p":12,"img":"images/soda.jpg"},{"n":"Red Bull","p":20,"img":"images/red_bull.jpg"}],"sub":"100% frais"},{"id":"signature","icon":"⭐","title":"Signature LUX","items":[{"n":"🌸 Lux Matcha Bloom","p":20,"s":"Matcha premium + crémeux (avec 2 gâteaux)","sig":true,"img":"images/l01f338_lux_matcha_bloom.jpg"},{"n":"☕ Queen's Rose Coffee","p":30,"s":"Café au lait, Milka Blanc, gâteaux, dattes, amandes, Rose","sig":true,"img":"images/queens_rose_coffee.jpg"}],"sub":"Créations exclusives"},{"id":"snacks","icon":"🥪","title":"Snacks","items":[{"n":"LUX Power Toast","p":25,"s":"Œufs, thon, fromage, pain de mie, légumes & sauce maison","sig":true,"img":"images/lux_power_toast.jpg"}]},{"id":"crepes","icon":"🥞","title":"Crêpes & Pancakes","items":[{"n":"Pancakes Nutella","p":27,"img":"images/pancakes_nutella.jpg"},{"n":"Pancakes Nutella Banane","p":30,"img":"images/pancakes_nutella_banane.jpg"},{"n":"Pancakes Fruits Tropicaux","p":30,"img":"images/pancakes_fruit_tropicaux.jpg"},{"n":"Pancakes Pistache","p":35,"img":"images/pancakes_pistache.jpg"},{"n":"Pancakes Oreo","p":30,"img":"images/pancakes_oreo.jpg"},{"n":"Crêpes Nutella","p":28,"s":"Crêpes sucrées","img":"images/crepes_nutella.jpg"},{"n":"Crêpes Nutella-Banane","p":30,"img":"images/crepes_nutella-banane.jpg"},{"n":"Crêpes Amlou","p":30,"img":"images/crepes_amlou.jpg"},{"n":"Crêpes Oreo","p":30,"img":"images/crepes_oreo.jpg"},{"n":"Crêpes Pistache","p":35,"s":"Chocolat, banane, noix","img":"images/crepes_pistache.jpg"},{"n":"Crêpe au Fromage","p":25,"s":"Mozzarella & Édam","img":"images/crepe_au_fromage.jpg"},{"n":"Crêpes Poulet Champignon","p":25,"img":"images/crepes_poulet_champignon.jpg"},{"n":"Crêpes Viande Hachée","p":30,"img":"images/crepes_viande_hachee.jpg"},{"n":"Crêpes Charcuterie","p":25,"img":"images/crepes_charcuterie.jpg"},{"n":"Pack 5 Crêpes Nature","p":35,"img":"images/pack_de_5_crepes_nature.jpg"}],"sub":"Sucrées & salées"},{"id":"salades","icon":"🥗","title":"Salades","items":[{"n":"Salade marocaine","p":17,"img":"images/salade_marocaine.jpg"},{"n":"Salade nicoise","p":30,"img":"images/salade_nicoise.jpg"},{"n":"Salade de Fruits Royale","p":40,"s":"Citron, Orange, Ananas, Mangue, Avocat, Banane, Dattes, Fruits secs","img":"images/salade_de_fruits_royale.jpg"},{"n":"Salade Crevette Avocat","p":45,"img":"images/salade_crevette_avocat.jpg"},{"n":"Salade Fruit de Mer","p":50,"img":"images/salade_fruit_de_mer.jpg"},{"n":"Salade Lux","p":55,"sig":true,"img":"images/salade_lux.jpg"}],"sub":"Fraîches & gourmandes"},{"id":"pizzas","icon":"🍕","title":"Pizzas","items":[{"n":"Pizza Margherita","p":30,"img":"images/pizza_margherita.jpg"},{"n":"Pizza Vegetariana","p":30,"img":"images/pizza_vegetariana.jpg"},{"n":"Pizza Thon","p":35,"img":"images/pizza_thon.jpg"},{"n":"Pizza 4 Fromages","p":45,"img":"images/pizza_4_fromages.jpg"},{"n":"Pizza Charcuterie","p":40,"img":"images/pizza_charcuterie.jpg"},{"n":"Pizza Poulet","p":45,"img":"images/pizza_poulet.jpg"},{"n":"Pizza Viande Hachée","p":45,"img":"images/pizza_viande_hachee.jpg"},{"n":"Pizza Fruit de Mer","p":55,"img":"images/pizza_fruit_de_mer.jpg"},{"n":"Pizza 4 Saisons","p":45,"img":"images/pizza_4_saisons.jpg"}],"sub":"Four traditionnel"},{"id":"burgers","icon":"🍔","title":"Burgers, Tacos & Sandwichs","items":[{"n":"Chicken Burger","p":30,"img":"images/chicken_burger.jpg"},{"n":"Cheeseburger","p":32,"img":"images/cheeseburger.jpg"},{"n":"Big Cheeseburger","p":35,"img":"images/big_cheeseburger.jpg"},{"n":"Royal Burger","p":40,"img":"images/royal_burger.jpg"},{"n":"Tacos Poulet","p":35,"img":"images/tacos_poulet.jpg"},{"n":"Tacos Viande Hachée","p":35,"img":"images/tacos_viande_hachee.jpg"},{"n":"Tacos Mixte","p":40,"img":"images/tacos_mixte.jpg"},{"n":"Tacos Nuggets","p":42,"img":"images/tacos_nuggets.jpg"},{"n":"Tacos Cordon Bleu","p":42,"img":"images/tacos_cordon_bleu.jpg"},{"n":"Tacos Fruit de Mer","p":48,"img":"images/tacos_fruit_de_mer.jpg"},{"n":"Panini Thon","p":25,"img":"images/panini_thon.jpg"},{"n":"Panini au Poulet","p":28,"img":"images/panini_au_poulet.jpg"},{"n":"Panini Viande Hachée","p":28,"img":"images/panini_viande_hache.jpg"},{"n":"Panini Mixte","p":30,"img":"images/panini_mixte.jpg"},{"n":"Panini Fruit de Mer","p":35,"img":"images/panini_fruit_de_mer.jpg"},{"n":"Sandwich Thon","p":20,"img":"images/sandwich_thon.jpg"},{"n":"Sandwich Poulet","p":25,"img":"images/sandwich_pouet.jpg"},{"n":"Sandwich Viande Hachée","p":30,"img":"images/sandwich_viande_hachee.jpg"},{"n":"Sandwich Mix","p":30,"img":"images/sandwich_mix.jpg"}]},{"id":"marocaine","icon":"🫕","title":"Cuisine Marocaine","items":[{"n":"Délice Harira","p":14,"s":"Harira marocain, Datte, Chebakia","img":"images/delice_harira.jpg"},{"n":"Pastilla Poulet","p":30,"img":"https://izcwecszmdqcsphmuypg.supabase.co/storage/v1/object/public/basico/products/1777365120844-482ef7b6-788.jpg"},{"n":"Tajine Poulet","p":45,"img":"https://izcwecszmdqcsphmuypg.supabase.co/storage/v1/object/public/basico/products/1777365156343-e50109eb-34f.jpg"},{"n":"Tajine Viande Hachée","p":45,"img":"images/tajine_viande_hachee.jpg"},{"n":"Tajine Crevette Pil Pil","p":50,"img":"images/tajine_crevette_pil_pil.jpg"},{"n":"Couscous Marocain","p":45,"img":"images/couscous_marocain.jpg"}],"sub":"Recettes authentiques"},{"id":"grillades","icon":"🔥","title":"Grillades & Shawarma","items":[{"n":"Escalope de Poulet Gratinée","p":50,"img":"images/escalope_de_poulet_gratinee.jpg"},{"n":"Émincé de Poulet","p":50,"img":"images/emince_de_poule.jpg"},{"n":"Brochette Dinde","p":55,"img":"images/brochette_dinde.jpg"},{"n":"Brochette Mixte","p":70,"img":"images/brochette_dinde.jpg"},{"n":"Cordon Bleu","p":60,"img":"images/cordon_bleu.jpg"},{"n":"Chicken Shawarma","p":30,"img":"images/chicken_shawarma.jpg"},{"n":"Shawarma Mix","p":35,"img":"images/shawarma_mix.jpg"},{"n":"Shawarma","p":30,"img":"images/shawarma.jpg"}]},{"id":"gratins","icon":"🍝","title":"Gratins & Pâtes","items":[{"n":"Gratin Viande Hachée","p":32,"img":"images/gratin_viande_hachee.jpg"},{"n":"Gratin de Poulet","p":32,"img":"images/gratin_de_poulet.jpg"},{"n":"Gratin Charcuterie","p":32,"img":"images/gratin_charcuterie.jpg"},{"n":"Gratin Nugget","p":35,"img":"images/gratin_nugget.jpg"},{"n":"Gratin Fruit de Mer","p":45,"img":"images/gratin_fruit_de_mer.jpg"},{"n":"Pasticcio Poulet","p":35,"img":"images/pasticcio_poulet.jpg"},{"n":"Pasticcio Charcuterie","p":35,"img":"images/pasticcio_charcuterie.jpg"},{"n":"Pasticcio Viande Hachée","p":40,"img":"images/pasticcio_viande_hachee.jpg"},{"n":"Pasticcio Mix","p":40,"img":"images/pasticcio_charcuterie.jpg"},{"n":"Pasticcio Fruit de Mer","p":45,"img":"images/pasticcio_fruit_de_mer.jpg"},{"n":"Pâtes Poulet","p":35,"img":"images/pates_poulet.jpg"},{"n":"Pâtes Bolognaise","p":40,"img":"images/pates_bolognaise.jpg"},{"n":"Pâte 4 Fromages","p":40,"img":"images/pate_4_fromages.jpg"},{"n":"Pâtes Carbonara","p":40,"img":"images/pates_carbonara.jpg"},{"n":"Pâtes Fruit de Mer","p":45,"img":"images/pates_fruit_de_mer.jpg"}]},{"id":"patisseries","icon":"🍮","title":"Pâtisseries & Desserts","items":[{"n":"Tranches Pâtisserie","p":15,"img":"images/tranches_patisserie.jpg"},{"n":"Panna Cota","p":20,"img":"images/panna_cota.jpg"},{"n":"Tiramisu","p":20,"img":"images/tiramisu.jpg"},{"n":"Assiette de fruits","p":25,"img":"images/assiette_de_fruits.jpg"}]},{"id":"glaces","icon":"🍨","title":"Ice Cream & Glaces","items":[{"n":"Glaces Vanille","p":10,"s":"1 boule (au choix)","img":"images/glaces_vanille.jpg"},{"n":"Glaces Chocolat","p":10,"s":"1 boule (au choix)","img":"images/glaces_chocolat.jpg"},{"n":"Glaces Caramel","p":10,"s":"1 boule (au choix)","img":"images/glaces_caramel.jpg"},{"n":"Pistache","p":10,"s":"1 boule (au choix)","img":"images/pistache.jpg"},{"n":"Glaces Fraise","p":10,"s":"1 boule (au choix)","img":"images/glaces_fraise.jpg"},{"n":"Glaces Nougat","p":10,"s":"1 boule (au choix)","img":"images/glaces_nougat.jpg"},{"n":"Coup de glace Lux","p":35,"s":"5 boules (au choix) avec fruits","sig":true,"img":"images/coup_de_glace_lux.jpg"}],"sub":"Arômes au choix"},{"id":"marocfood","icon":"🍪","title":"Pâtisseries Marocaines","items":[{"n":"Sablés (7 pcs)","p":13,"s":"Gâteaux marocains faits à la main","img":"images/sables_7_pcs.jpg"},{"n":"Meskouta Traditionnelle","p":5,"img":"images/meskouta_traditionnelle.jpg"},{"n":"Cake Prestige","p":10,"img":"images/cake_prestige.jpg"},{"n":"Sellou — 100g","p":10,"s":"Portion individuelle · tradition marocaine","img":"images/sellou_sfouf_-_100_gramme.jpg"},{"n":"Sellou — 150g","p":15,"img":"images/sellou_sfouf_-_150_gramme.jpg"},{"n":"Sellou — 500g","p":50,"img":"images/sellou_sfouf_-_500_gramme.jpg"},{"n":"Sellou — 1 Kg","p":100,"img":"images/sellou_sfouf_-_1_kg.jpg"},{"n":"Plateau de Gâteaux Marocains","p":100,"s":"Plateau prestige · idéal pour réceptions","sig":true,"img":"images/plateau_de_gateaux_marocains.jpg"}],"sub":"Fait maison"},{"id":"ftour","icon":"🌙","title":"Ftour & Menus Spéciaux","items":[{"n":"Ftour Ramadan Classique","p":40,"s":"Dates, Harira, Omelette fromage, JO, Lait, Boisson chaude","img":"images/ftour_ramadan_classique.jpg"}]}];
 
 // ════════════════════════════════════════════════════════════════
 //  STATE
@@ -720,19 +936,42 @@ function bootPOS(){
 }
 
 // ════════════════════════════════════════════════════════════════
-//  FEATURE 3 — UNIFIED MENU (with images)
+//  FEATURE 3 — UNIFIED MENU (with images) + ROBUST SYNC
 // ════════════════════════════════════════════════════════════════
-function loadMenu(){
+var MENU_BASE_URL = 'https://cafeslux.com/public/menu/'; // for relative image paths
+function resolveImg(img){
+  if(!img) return '';
+  if(/^https?:\/\//i.test(img)) return img;       // absolute (Supabase etc.)
+  if(img.indexOf('/')===0) return 'https://cafeslux.com'+img;
+  return MENU_BASE_URL + img;                       // relative → menu page assets
+}
+function loadMenu(silent){
+  if(!silent) toast('🔄 Synchronisation du menu...','var(--gold)');
   fetch(API+'/api/menu',{headers:{'Accept':'application/json'}})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
       if(data && (Array.isArray(data)?data.length:(data.menu||data.categories))){
         S.menu = normalizeMenu(data);
+        setLS('lux_pos_menu_cache', S.menu);
+        if(!silent) toast('✅ Menu synchronisé · '+countProducts()+' produits','var(--green)');
+      } else {
+        // API empty → use cached or embedded full catalog
+        S.menu = getLS('lux_pos_menu_cache', null) || normalizeMenu(MENU);
+        if(!silent) toast('ℹ Menu local ('+countProducts()+' produits)','var(--gold)');
       }
+      applyCategoryOverrides();
       renderMenuTabs(); renderMenu();
     })
-    .catch(function(){ renderMenuTabs(); renderMenu(); });
+    .catch(function(){
+      S.menu = getLS('lux_pos_menu_cache', null) || normalizeMenu(MENU);
+      applyCategoryOverrides();
+      renderMenuTabs(); renderMenu();
+      if(!silent) toast('⚠ Hors-ligne — menu local','var(--orange)');
+    });
 }
+function countProducts(){ return S.menu.reduce(function(s,c){ return s+(c.items?c.items.length:0); },0); }
+function refreshMenu(){ loadMenu(false); }
+
 // Normalize various possible API shapes into [{id,icon,title,items:[{n,p,s,img,sig}]}]
 function normalizeMenu(data){
   var cats = Array.isArray(data) ? data : (data.menu || data.categories || []);
@@ -756,25 +995,47 @@ function normalizeMenu(data){
     };
   });
 }
+// Apply admin category overrides (rename / reorder / hide)
+function applyCategoryOverrides(){
+  var ov = getLS('lux_pos_cat_overrides', {});
+  S.menu.forEach(function(c){
+    if(ov[c.id]){
+      if(ov[c.id].title) c.title = ov[c.id].title;
+      if(ov[c.id].icon)  c.icon  = ov[c.id].icon;
+      c._hidden = !!ov[c.id].hidden;
+      c._order  = (ov[c.id].order!=null)?ov[c.id].order:999;
+    } else { c._order=999; }
+  });
+  S.menu.sort(function(a,b){ return (a._order||999)-(b._order||999); });
+}
+function isOutOfStock(name){ var st=getLS('lux_pos_stock',{}); return st[name]===false; }
 function renderMenuTabs(){
-  if(!S.activeCat && S.menu.length) S.activeCat = S.menu[0].id;
-  el('menu-tabs').innerHTML = S.menu.map(function(c){
-    return '<div class="cat-btn'+(c.id===S.activeCat?' active':'')+'" onclick="switchCat(\''+c.id+'\')">'+
-      '<span class="ci">'+(c.icon||'🍽')+'</span>'+esc(c.title)+'</div>';
-  }).join('');
+  var visible=S.menu.filter(function(c){ return !c._hidden; });
+  if(!S.activeCat && visible.length) S.activeCat = visible[0].id;
+  el('menu-tabs').innerHTML =
+    '<button class="cat-btn" style="background:var(--bg3)" onclick="refreshMenu()" title="Synchroniser le menu">🔄</button>' +
+    visible.map(function(c){
+      return '<div class="cat-btn'+(c.id===S.activeCat?' active':'')+'" onclick="switchCat(\''+c.id+'\')">'+
+        '<span class="ci">'+(c.icon||'🍽')+'</span>'+esc(c.title)+'</div>';
+    }).join('');
 }
 function switchCat(id){ S.activeCat=id; renderMenuTabs(); renderMenu(); }
 function renderMenu(){
-  var cat = S.menu.find(function(c){ return c.id===S.activeCat; }) || S.menu[0];
+  var cat = S.menu.find(function(c){ return c.id===S.activeCat; }) || S.menu.filter(function(c){return !c._hidden;})[0];
   if(!cat){ el('menu-items').innerHTML='<div class="ticket-empty">Menu indisponible</div>'; return; }
   el('menu-items').innerHTML = cat.items.map(function(it){
-    var img = it.img
-      ? '<img src="'+esc(it.img)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span class=&quot;ph-icon&quot;>'+(cat.icon||'🍽')+'</span>\'">'
+    var imgUrl = resolveImg(it.img);
+    var img = imgUrl
+      ? '<img src="'+esc(imgUrl)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span class=&quot;ph-icon&quot;>'+(cat.icon||'🍽')+'</span>\'">'
       : '<span class="ph-icon">'+(cat.icon||'🍽')+'</span>';
     var sig = it.sig ? '<span class="prod-sig">★ SIG</span>' : '';
     var desc = it.s ? '<div class="prod-desc">'+esc(it.s)+'</div>' : '';
-    return '<div class="prod" onclick="addToCart('+JSON.stringify(it.n).replace(/"/g,'&quot;')+','+it.p+')">'+
-      '<div class="prod-img">'+img+sig+'</div>'+
+    var oos = isOutOfStock(it.n);
+    var click = oos ? '' : 'onclick="addToCart('+JSON.stringify(it.n).replace(/"/g,'&quot;')+','+it.p+')"';
+    var oosStyle = oos ? ' style="opacity:.4;filter:grayscale(.7);cursor:not-allowed" title="Rupture de stock"' : '';
+    var oosBadge = oos ? '<span class="prod-sig" style="background:var(--red);color:#fff;left:6px;right:auto">RUPTURE</span>' : '';
+    return '<div class="prod"'+oosStyle+' '+click+'>'+
+      '<div class="prod-img">'+img+sig+oosBadge+'</div>'+
       '<div class="prod-body"><div class="prod-name">'+esc(it.n)+'</div>'+desc+
       '<div class="prod-price">'+it.p+' <small>DH</small></div></div></div>';
   }).join('');
@@ -839,13 +1100,16 @@ function clearCart(){
   if(!S.selectedSlot) return;
   S.carts[slotKey()]=[]; renderTicket(); refreshTableStates(); buildTakeaway();
 }
+function posConfig(){ return getLS('lux_pos_config', {taxRate:10, printerName:'Imprimante caisse', printWidth:280, autoPrint:true}); }
+function loyaltyConfig(){ return getLS('lux_pos_loyalty', {earnRate:10, redeemValue:1}); } // 10 MAD = 1pt; 1pt = 1 DH
 function cartTotals(){
   var cart=curCart();
   var sub=cart.reduce(function(s,c){ return s+c.p*c.q; },0);
-  var tva=+(sub*0.1).toFixed(2);
+  var taxRate=(posConfig().taxRate||0)/100;
+  var tva=+(sub*taxRate).toFixed(2);
   var disc=S._discount||0;
   var total=Math.max(0,+(sub+tva-disc).toFixed(2));
-  return {sub:sub,tva:tva,disc:disc,total:total};
+  return {sub:sub,tva:tva,disc:disc,total:total,taxRate:taxRate};
 }
 function renderTicket(){
   var cart=curCart();
@@ -963,10 +1227,11 @@ function checkLoyalty(){
           '<input class="field-inp" id="pts-manual" type="number" placeholder="Points à utiliser" style="margin-top:8px" oninput="applyPointsManual()">';
         S.loyalty={phone:phone,points:null};
       } else {
-        var t=cartTotals(); var usable=Math.min(pts,Math.floor(t.total));
+        var t=cartTotals(); var rv=loyaltyConfig().redeemValue||1;
+        var usableDh=Math.min(pts*rv, t.total);
         S.loyalty={phone:phone,points:pts};
-        el('pts-info').innerHTML='Solde : <b>'+pts+' LUX Points</b><br>Utilisable : <b class="ok">'+usable+' pts = '+money(usable)+'</b>';
-        S._discount=usable; setTxt('pm-total',money(cartTotals().total));
+        el('pts-info').innerHTML='Solde : <b>'+pts+' LUX Points</b><br>Utilisable : <b class="ok">'+money(usableDh)+'</b> ('+rv+' DH/pt)';
+        S._discount=usableDh; setTxt('pm-total',money(cartTotals().total));
       }
     })
     .catch(function(){
@@ -1213,6 +1478,249 @@ function loadDailyStats(){
   if(t && t.date===todayDate()){ S.todayCA=t.ca||0; S.todayOrders=t.orders||0; }
   else { S.todayCA=0; S.todayOrders=0; setLS('lux_pos_today',{ca:0,orders:0,date:todayDate()}); }
   setTxt('kpi-ca',Math.round(S.todayCA)); setTxt('kpi-orders',S.todayOrders);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN DASHBOARD
+// ════════════════════════════════════════════════════════════════
+var _admPin='';
+function openAdmin(){
+  // Manager-only: if current employee is admin, go straight in; else require PIN
+  if(S.employee && S.employee.admin){ showAdmin(); return; }
+  _admPin=''; renderAdmPinDots();
+  el('admin-pin-modal').classList.add('open');
+  el('adm-pin-err').classList.remove('show');
+  buildAdmPinPad();
+}
+function buildAdmPinPad(){
+  var keys=['1','2','3','4','5','6','7','8','9','C','0','⌫'];
+  el('adm-pin-pad').innerHTML=keys.map(function(k){ return '<div class="pin-k" onclick="admPinKey(\''+k+'\')">'+k+'</div>'; }).join('');
+}
+function renderAdmPinDots(){
+  var h=''; for(var i=0;i<4;i++) h+='<div class="pin-dot'+(i<_admPin.length?' on':'')+'"></div>';
+  el('adm-pin-dots').innerHTML=h;
+}
+function admPinKey(k){
+  if(k==='C'){ _admPin=''; renderAdmPinDots(); return; }
+  if(k==='⌫'){ _admPin=_admPin.slice(0,-1); renderAdmPinDots(); return; }
+  if(_admPin.length>=4) return;
+  _admPin+=k; renderAdmPinDots();
+  if(_admPin.length===4){
+    var ok=EMPLOYEES.find(function(e){ return e.admin && e.pin===_admPin; });
+    if(ok){ closeModal('admin-pin-modal'); showAdmin(); }
+    else { el('adm-pin-err').textContent='PIN admin incorrect'; el('adm-pin-err').classList.add('show'); _admPin=''; renderAdmPinDots(); }
+  }
+}
+function showAdmin(){
+  el('admin-overlay').classList.add('open');
+  admNav('inventory', document.querySelector('.adm-navitem[data-s="inventory"]'));
+}
+function closeAdmin(){ el('admin-overlay').classList.remove('open'); }
+function admNav(section, btn){
+  document.querySelectorAll('.adm-navitem').forEach(function(n){ n.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.adm-section').forEach(function(s){ s.classList.remove('active'); });
+  el('adm-'+section).classList.add('active');
+  if(section==='inventory') renderInventory();
+  else if(section==='categories') renderCatAdmin();
+  else if(section==='config') loadConfigForm();
+  else if(section==='staff') renderStaffAdmin();
+  else if(section==='zreport') renderZReport();
+  else if(section==='loyalty') loadLoyaltyForm();
+}
+
+// ── INVENTORY ──
+function renderInventory(){
+  var q=(el('inv-search').value||'').toLowerCase();
+  var st=getLS('lux_pos_stock',{});
+  var rows='';
+  S.menu.forEach(function(c){
+    c.items.forEach(function(it){
+      if(q && it.n.toLowerCase().indexOf(q)===-1) return;
+      var inStock = st[it.n]!==false;
+      rows+='<div class="inv-row">'+
+        '<div style="flex:1"><div class="inv-cat">'+esc(c.title)+'</div><div class="inv-name">'+esc(it.n)+'</div></div>'+
+        '<div class="inv-price">'+it.p+' DH</div>'+
+        '<div class="inv-status '+(inStock?'in':'out')+'">'+(inStock?'En stock':'Rupture')+'</div>'+
+        '<div class="tgl'+(inStock?' on':'')+'" onclick="toggleStock('+JSON.stringify(it.n).replace(/"/g,'&quot;')+',this)"></div>'+
+      '</div>';
+    });
+  });
+  el('inv-list').innerHTML=rows||'<div style="font-size:12px;color:var(--muted);padding:20px;text-align:center">Aucun produit trouvé</div>';
+}
+function toggleStock(name,tgl){
+  var st=getLS('lux_pos_stock',{});
+  var cur=st[name]!==false;
+  st[name]=!cur; setLS('lux_pos_stock',st);
+  renderInventory(); renderMenu();
+  toast((!cur?'✅ ':'⛔ ')+name+(!cur?' remis en stock':' marqué en rupture'), !cur?'var(--green)':'var(--orange)');
+}
+
+// ── CATEGORIES ──
+function renderCatAdmin(){
+  el('cat-list').innerHTML=S.menu.map(function(c,i){
+    return '<div class="cat-row" data-id="'+c.id+'">'+
+      '<div class="cat-ord-btns"><div class="cat-ord" onclick="moveCat('+i+',-1)">▲</div><div class="cat-ord" onclick="moveCat('+i+',1)">▼</div></div>'+
+      '<input class="cat-icon" value="'+esc(c.icon)+'" maxlength="2" style="flex:0 0 34px">'+
+      '<input value="'+esc(c.title)+'" data-field="title">'+
+      '<div class="tgl'+(c._hidden?'':' on')+'" onclick="this.classList.toggle(\'on\')" title="Visible sur la caisse"></div>'+
+    '</div>';
+  }).join('');
+}
+function moveCat(i,dir){
+  var j=i+dir; if(j<0||j>=S.menu.length) return;
+  var tmp=S.menu[i]; S.menu[i]=S.menu[j]; S.menu[j]=tmp;
+  renderCatAdmin();
+}
+function saveCategories(){
+  var ov=getLS('lux_pos_cat_overrides',{});
+  document.querySelectorAll('#cat-list .cat-row').forEach(function(row,idx){
+    var id=row.dataset.id;
+    var icon=row.querySelector('.cat-icon').value;
+    var title=row.querySelector('input[data-field="title"]').value;
+    var hidden=!row.querySelector('.tgl').classList.contains('on');
+    ov[id]={title:title,icon:icon,hidden:hidden,order:idx};
+  });
+  setLS('lux_pos_cat_overrides',ov);
+  applyCategoryOverrides(); renderMenuTabs(); renderMenu();
+  toast('✅ Catégories enregistrées','var(--green)');
+}
+function resetCategories(){
+  setLS('lux_pos_cat_overrides',{});
+  loadMenu(true); setTimeout(renderCatAdmin,300);
+  toast('↺ Catégories réinitialisées','var(--gold)');
+}
+
+// ── CONFIG ──
+function loadConfigForm(){
+  var c=posConfig();
+  el('cfg-printer').value=c.printerName||'';
+  el('cfg-width').value=c.printWidth||280;
+  el('cfg-tax').value=c.taxRate!=null?c.taxRate:10;
+  el('cfg-autoprint').classList.toggle('on', c.autoPrint!==false);
+}
+function saveConfig(){
+  var c={
+    printerName:el('cfg-printer').value||'Imprimante caisse',
+    printWidth:parseInt(el('cfg-width').value)||280,
+    taxRate:parseFloat(el('cfg-tax').value)||0,
+    autoPrint:el('cfg-autoprint').classList.contains('on'),
+  };
+  setLS('lux_pos_config',c);
+  renderTicket();
+  toast('✅ Configuration enregistrée · TVA '+c.taxRate+'%','var(--green)');
+}
+function testPrint(){
+  printTicket({ref:'TEST-PRINT',date:todayDate(),time:nowTime(),type:'test',table:'—',mode:'Test',
+    staffName:S.employee?S.employee.name:'Admin',items:[{name:'Test imprimante',qty:1,price:0}],subtotal:0,tva:0,total:0});
+}
+
+// ── STAFF (Dallas Key / PIN) ──
+function renderStaffAdmin(){
+  el('staff-list').innerHTML=EMPLOYEES.map(function(e,i){
+    return '<div class="emp-row" data-i="'+i+'">'+
+      '<div class="er-av" style="background:linear-gradient(135deg,'+e.color+','+e.color+'aa)">'+esc(e.name[0]||'?')+'</div>'+
+      '<input class="er-name" value="'+esc(e.name)+'" data-f="name" placeholder="Nom">'+
+      '<input class="er-role" value="'+esc(e.role)+'" data-f="role" placeholder="Rôle">'+
+      '<input class="er-pin" value="'+esc(e.pin)+'" data-f="pin" placeholder="PIN" maxlength="4">'+
+      '<input value="'+esc(e.token)+'" data-f="token" placeholder="DK-token" style="width:110px;font-family:var(--font-m)">'+
+      '<div class="tgl'+(e.admin?' on':'')+'" onclick="this.classList.toggle(\'on\')" title="Accès admin"></div>'+
+      '<button class="adm-btn danger" style="padding:7px 10px" onclick="removeEmployee('+i+')">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function addEmployee(){
+  EMPLOYEES.push({id:'E'+Date.now().toString().slice(-4),name:'Nouvel employé',role:'Caissier',pin:'0000',token:'DK-'+Math.random().toString(16).slice(2,8).toUpperCase(),color:'#C9A84C',admin:false});
+  renderStaffAdmin();
+}
+function removeEmployee(i){
+  if(EMPLOYEES.length<=1){ toast('⚠ Au moins un employé requis','var(--orange)'); return; }
+  EMPLOYEES.splice(i,1); renderStaffAdmin();
+}
+function saveStaff(){
+  var rows=document.querySelectorAll('#staff-list .emp-row');
+  var updated=[];
+  rows.forEach(function(row){
+    var i=parseInt(row.dataset.i);
+    var base=EMPLOYEES[i]||{id:'E'+Date.now(),color:'#C9A84C'};
+    updated.push({
+      id:base.id, color:base.color,
+      name:row.querySelector('[data-f="name"]').value||'?',
+      role:row.querySelector('[data-f="role"]').value||'Caissier',
+      pin:(row.querySelector('[data-f="pin"]').value||'0000').slice(0,4),
+      token:row.querySelector('[data-f="token"]').value||'DK-000000',
+      admin:row.querySelector('.tgl').classList.contains('on'),
+    });
+  });
+  EMPLOYEES=updated;
+  setLS('lux_pos_employees',EMPLOYEES);
+  buildEmpChips();
+  toast('✅ Personnel enregistré ('+EMPLOYEES.length+' employés)','var(--green)');
+}
+
+// ── Z-REPORT ──
+function renderZReport(){
+  var t=getLS('lux_pos_today',{ca:0,orders:0,date:todayDate()});
+  setTxt('z-date','Journée du '+(t.date||todayDate()));
+  setTxt('z-ca',Math.round(t.ca||0));
+  setTxt('z-orders',t.orders||0);
+  setTxt('z-avg', t.orders? Math.round((t.ca||0)/t.orders):0);
+  // Sessions by staff
+  var sessions=getLS('lux_pos_sessions',[]);
+  var today=todayDate();
+  var byStaff={};
+  sessions.forEach(function(s){
+    var d=new Date(s.at).toLocaleDateString('fr-MA');
+    if(d!==today) return;
+    byStaff[s.name]=(byStaff[s.name]||0)+1;
+  });
+  var keys=Object.keys(byStaff);
+  el('z-by-staff').innerHTML = keys.length
+    ? keys.map(function(k){ return '<div class="z-break"><span>'+esc(k)+'</span><span>'+byStaff[k]+' session(s)</span></div>'; }).join('')
+    : '<div style="font-size:12px;color:var(--muted)">Aucune session aujourd\'hui</div>';
+}
+function printZReport(){
+  var t=getLS('lux_pos_today',{ca:0,orders:0,date:todayDate()});
+  var html='<div style="font-family:monospace;font-size:12px;width:280px;margin:0 auto;color:#000">'+
+    '<div style="text-align:center"><div style="font-size:18px;font-weight:900;letter-spacing:3px">RAPPORT Z</div>'+
+    '<div style="font-size:11px">CAFÉ LUX — Taza</div><div style="font-size:10px">'+(t.date||todayDate())+' · '+nowTime()+'</div></div>'+
+    '<div style="border-top:1px dashed #000;margin:8px 0"></div>'+
+    '<div style="display:flex;justify-content:space-between"><span>Chiffre d\'affaires</span><b>'+Math.round(t.ca||0)+' DH</b></div>'+
+    '<div style="display:flex;justify-content:space-between"><span>Nombre de tickets</span><b>'+(t.orders||0)+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between"><span>Panier moyen</span><b>'+(t.orders?Math.round((t.ca||0)/t.orders):0)+' DH</b></div>'+
+    '<div style="border-top:1px dashed #000;margin:8px 0"></div>'+
+    '<div style="text-align:center;font-size:10px">Édité par '+(S.employee?esc(S.employee.name):'Admin')+'</div>'+
+    '<div style="text-align:center;margin-top:8px">✦ Clôture de caisse ✦</div></div>';
+  el('print-sheet').innerHTML=html; el('print-overlay').style.display='block';
+  setTimeout(function(){ window.print(); },150);
+}
+function closeZDay(){
+  setLS('lux_pos_today',{ca:0,orders:0,date:todayDate()});
+  S.todayCA=0; S.todayOrders=0;
+  setTxt('kpi-ca',0); setTxt('kpi-orders',0);
+  renderZReport();
+  toast('🔒 Journée clôturée — compteurs remis à zéro','var(--gold)');
+}
+
+// ── LOYALTY ──
+function loadLoyaltyForm(){
+  var l=loyaltyConfig();
+  el('loy-earn').value=l.earnRate||10;
+  el('loy-redeem').value=l.redeemValue||1;
+  updateLoyPreview();
+  el('loy-earn').oninput=updateLoyPreview; el('loy-redeem').oninput=updateLoyPreview;
+}
+function updateLoyPreview(){
+  var earn=parseFloat(el('loy-earn').value)||10;
+  var redeem=parseFloat(el('loy-redeem').value)||1;
+  el('loy-preview').innerHTML=
+    '• Un client qui dépense <b style="color:var(--gold)">100 DH</b> gagne <b style="color:var(--gold)">'+Math.floor(100/earn)+' points</b>.<br>'+
+    '• <b style="color:var(--gold)">50 points</b> valent <b style="color:var(--gold)">'+(50*redeem)+' DH</b> de réduction.';
+}
+function saveLoyalty(){
+  var l={earnRate:parseFloat(el('loy-earn').value)||10, redeemValue:parseFloat(el('loy-redeem').value)||1};
+  setLS('lux_pos_loyalty',l);
+  toast('✅ Règles de fidélité enregistrées','var(--green)');
 }
 
 // ════════════════════════════════════════════════════════════════
