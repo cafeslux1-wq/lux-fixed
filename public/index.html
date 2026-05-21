@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
-<head>
-<meta charset="UTF-8">
+<head>ب
+<meta charset="UTF-8">ب
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0D0D0D">
 <meta name="description" content="Café LUX — Café & Pâtisserie Premium · Taza">
@@ -566,7 +566,8 @@ body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
 var _laiOpen=false,_laiLoading=false,_laiHist=[],_laiMid=0;
 var LUX_AI_API=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
 var LUX_AI_FALLBACK={
-  'horaire':'🕐 Café LUX est ouvert tous les jours de 8h à 23h.',
+  'default': '✦ أنا مساعد LUX الذكي. اسألني عن أي شيء في العالم وسأربطه لك بـ Café LUX!',
+  'horaire':'🕐 Café LUX est ouvert tous les jours de 7h à 23h.',
   'commander':'🛍️ Commandez ici: cafeslux.com/public/menu · WhatsApp: +212 677 717 201',
   'gaming':'🎮 Tarifs Gaming: 15 min=5DH · 30 min=10DH · 1h=20DH · 2h=55DH',
   'réserver':'📅 Réservations: cafeslux.com/public/reservations',
@@ -614,7 +615,7 @@ function laiSend(){
   fetch(LUX_AI_API+'/api/ai/chat',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({message:txt,lang:'fr',history:_laiHist.slice(-6),
-context: 'Tu es LUX AI, une intelligence absolue et un conseiller expert dans TOUS les domaines de la vie (sciences, histoire, technologie, psychologie, business, etc.). Ton objectif est double : 1) ÉBLOUIR LE CLIENT : Réponds à sa question ou donne-lui des conseils avec la profondeur, l\'exactitude et le génie d\'un véritable expert. Sois fascinant et inspirant. 2) LE PIVOT MAGIQUE (Marketing Subtil) : Une fois la réponse donnée, crée une transition métaphorique, ultra-naturelle et intelligente vers l\'univers du Café LUX (à Taza, Maroc). Utilise le contexte de sa question pour lier subtilement le sujet à nos produits (exemples : s\'il demande des conseils sur la concentration, parle de notre Matcha Bloom ou Espresso ; s\'il parle d\'art ou de design, mentionne l\'ambiance Premium et le Latte Art de LUX ; s\'il parle de divertissement, invite-le dans notre Gaming Zone PS5). Nos atouts : Cafés signature, Pâtisseries de luxe, Zaazaa, espace VIP. Horaires : 7h-23h. Ton ton : Élégant, chaleureux, sage, et discrètement séducteur. Le client doit se sentir privilégié.'})  }).then(function(r){return r.json();}).then(function(d){
+context: 'Tu es LUX AI, une intelligence absolue et un conseiller expert dans TOUS les domaines de la vie (sciences, histoire, technologie, psychologie, business, etc.). Ton objectif est double : 1) ÉBLOUIR LE CLIENT : Réponds à sa question ou donne-lui des conseils avec la profondeur, l\'exactitude et le génie d\'un véritable expert. Sois fascinant et inspirant. 2) LE PIVOT MAGIQUE (Marketing Subtil) : Une fois la réponse donnée, crée une transition métaphorique, ultra-naturelle et intelligente vers l\'univers du Café LUX (à Taza, Maroc). Utilise le contexte de sa question pour lier subtilement le sujet à nos produits (exemples : s\'il demande des conseils sur la concentration, parle de notre Matcha Bloom ou Espresso ; s\'il parle d\'art ou de design, mentionne l\'ambiance Premium et le Latte Art de LUX ; s\'il parle de divertissement, invite-le dans notre Gaming Zone PS5). Nos atouts : Cafés signature, Pâtisseries de luxe, Zaazaa, espace VIP. Horaires : 8h-23h. Ton ton : Élégant, chaleureux, sage, et discrètement séducteur. Le client doit se sentir privilégié.'})  }).then(function(r){return r.json();}).then(function(d){
     laiRemove(tid);
     var rep=d.response||d.message||d.reply||d.content||null;
     if(!rep)throw new Error('no response');
@@ -622,7 +623,7 @@ context: 'Tu es LUX AI, une intelligence absolue et un conseiller expert dans TO
     if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
   }).catch(function(){
     laiRemove(tid);
-    var lo=txt.toLowerCase(),rep='✦ Pour nous contacter: WhatsApp +212 677 717 201 · cafeslux.com';
+    var lo=txt.toLowerCase(),rep=LUX_AI_FALLBACK['default'];
     for(var k in LUX_AI_FALLBACK){if(lo.indexOf(k)!==-1){rep=LUX_AI_FALLBACK[k];break;}}
     laiAppend('bot',rep);
     if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
