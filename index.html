@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
-<head>
-<meta charset="UTF-8">
+<head>ب
+<meta charset="UTF-8">ب
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0D0D0D">
+<meta name="description" content="Café LUX — Café & Pâtisserie Premium · Taza">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,7 +49,14 @@ window.goPage = window.luxNavigate;
 
 <style>
 :root { --gold: #C9A84C; --gold-br: #E8C97A; --bg: #080808; --bg2: #131313; --bg3: #1A1A1A; --text: #F0E8D5; --muted: rgba(240,232,213,.45); --border: rgba(201,168,76,.15); }
-body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+/* ⚡ FIX TASK 2 — Single scroll context
+   Avant : <body> et .main-content avaient tous les deux un scrollbar
+   visible sur le bord droit (deux barres superposées). On verrouille
+   ici html + body à 100vh avec overflow:hidden — seul .main-content
+   garde son overflow-y:auto, donc UNE seule scrollbar visible. */
+html { height: 100%; overflow: hidden; }
+body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; height: 100vh; overflow: hidden; }
 
 .topbar { height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; position: sticky; top: 0; z-index: 100; }
 .logo { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; letter-spacing: 3px; flex: 1; }
@@ -56,7 +64,14 @@ body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-fa
 
 body.on-home-page .topbar { display: none !important; }
 body.on-home-page .main-content { height: 100vh; }
-.main-content { height: calc(100vh - 56px); overflow-y: auto; }
+.main-content { height: calc(100vh - 56px); overflow-y: auto; overflow-x: hidden; }
+
+/* ⚡ Premium Dark & Gold scrollbar — only one visible now */
+.main-content::-webkit-scrollbar { width: 6px; }
+.main-content::-webkit-scrollbar-track { background: transparent; }
+.main-content::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(201,168,76,.4), rgba(201,168,76,.15)); border-radius: 3px; }
+.main-content::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(201,168,76,.6), rgba(201,168,76,.3)); }
+.main-content { scrollbar-width: thin; scrollbar-color: rgba(201,168,76,.3) transparent; }
 .page { display: none; min-height: 100%; }
 .page.active { display: flex !important; flex-direction: column; animation: lux-fade-in .3s ease; }
 @keyframes lux-fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -388,149 +403,63 @@ window._luxToast = function(msg, type) {
 };
 window.luxToast = window._luxToast;
 </script>
-</body>
-</html>
-<!-- ══════════════════════════════════════════════════════
-     LUX FAB SYSTEM — Commander · PWA · WA · AI Chat
-     Fix icône: img→onerror via outerHTML (pas innerHTML+=)
-═══════════════════════════════════════════════════════ -->
+
+<!-- ════════════════════════════════════════════════════════════
+     COMMANDER BAR FIXE (bottom: 0)
+════════════════════════════════════════════════════════════ -->
 <style>
 body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
-
-/* ── Commander Bar ── */
-#lcb{position:fixed;bottom:0;left:0;right:0;z-index:500;
-  height:calc(64px + env(safe-area-inset-bottom,0px));
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  background:rgba(8,8,8,.97);backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border-top:1px solid rgba(201,168,76,.22);
-  display:flex;align-items:center;padding:0 16px;
-  box-shadow:0 -6px 24px rgba(0,0,0,.5)}
-#lcb a{flex:1;height:44px;border-radius:12px;display:flex;
-  align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,#8B6E2F,#C9A84C,#E8C97A);
-  background-size:200%;background-position:100%;
-  color:#000;font-size:14px;font-weight:700;letter-spacing:.4px;
-  text-decoration:none;transition:.4s;
-  box-shadow:0 4px 18px rgba(201,168,76,.3)}
-#lcb a:hover,#lcb a:active{background-position:0%;transform:translateY(-1px);
-  box-shadow:0 6px 28px rgba(201,168,76,.5)}
-
-/* ── PWA Banner ── */
-#lpwa{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px));
-  left:0;right:0;z-index:501;background:rgba(8,8,8,.98);
-  border-top:1px solid rgba(201,168,76,.15);backdrop-filter:blur(16px);
-  display:none;align-items:center;padding:10px 14px;gap:10px;
-  animation:suIn .35s cubic-bezier(.4,0,.2,1)}
+#lcb{position:fixed;bottom:0;left:0;right:0;z-index:500;height:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(8,8,8,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(201,168,76,.2);display:flex;align-items:center;padding-left:16px;padding-right:16px;box-shadow:0 -6px 24px rgba(0,0,0,.5)}
+#lcb a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:linear-gradient(135deg,#8B6E2F,#C9A84C,#E8C97A);background-size:200%;background-position:100%;color:#000;font-size:14px;font-weight:700;letter-spacing:.4px;text-decoration:none;transition:.4s;box-shadow:0 4px 18px rgba(201,168,76,.3)}
+#lcb a:hover,#lcb a:active{background-position:0%;box-shadow:0 6px 28px rgba(201,168,76,.5);transform:translateY(-1px)}
+/* PWA Banner */
+#lpwa{position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:501;background:rgba(10,10,10,.98);border-top:1px solid rgba(201,168,76,.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:none;align-items:center;padding:10px 14px;gap:10px;animation:suIn .35s cubic-bezier(.4,0,.2,1)}
 #lpwa.show{display:flex}
-@keyframes suIn{from{transform:translateY(100%)}to{transform:none}}
-.lpwa-ico{width:38px;height:38px;border-radius:9px;
-  background:linear-gradient(135deg,#1A0800,#2D1500);
-  border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;
-  justify-content:center;font-size:18px;flex-shrink:0}
-.lpwa-txt{flex:1;min-width:0}
-.lpwa-txt b{display:block;font-size:12px;font-weight:700;color:#F0EDE8;margin-bottom:1px}
-.lpwa-txt s{display:block;font-style:normal;font-size:10px;color:rgba(240,237,232,.45)}
-.lpwa-btn{flex-shrink:0;padding:7px 14px;border-radius:9px;
-  background:linear-gradient(135deg,#8B6E2F,#C9A84C);
-  color:#000;font-size:11px;font-weight:700;border:none;cursor:pointer}
-.lpwa-x{flex-shrink:0;width:26px;height:26px;border-radius:50%;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-  color:rgba(240,237,232,.5);font-size:14px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
-.lpwa-x:hover{background:rgba(255,255,255,.12);color:#F0EDE8}
-
-/* ── FAB group ── */
-#lfg{position:fixed;right:16px;
-  bottom:calc(80px + env(safe-area-inset-bottom,0px));
-  z-index:940;display:flex;flex-direction:column;align-items:center;gap:12px}
-
-/* WhatsApp FAB */
-#lfg-wa{width:56px;height:56px;border-radius:50%;background:#25D366;
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  text-decoration:none;border:2px solid rgba(255,255,255,.2);
-  box-shadow:0 8px 24px rgba(37,211,102,.35);transition:transform .2s;
-  animation:waGlow 4s ease-in-out infinite}
-@keyframes waGlow{0%,100%{box-shadow:0 8px 24px rgba(37,211,102,.35)}
-  50%{box-shadow:0 8px 36px rgba(37,211,102,.65)}}
-#lfg-wa:hover{transform:scale(1.1) translateY(-2px)}
-#lfg-wa:active{transform:scale(.95)}
-
-/* AI FAB — FIX: un seul contenu (img OU span, jamais les deux) */
-#lfg-ai{width:76px;height:76px;border-radius:50%;
-  background:linear-gradient(135deg,#C9A84C,#E8C97A);
-  border:none;cursor:pointer;overflow:hidden;position:relative;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 0 0 rgba(201,168,76,.7);
-  animation:pulseGold 2s infinite;transition:transform .2s,box-shadow .2s}
-@keyframes pulseGold{0%{box-shadow:0 0 0 0 rgba(201,168,76,.7)}
-  70%{box-shadow:0 0 0 20px rgba(201,168,76,0)}
-  100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
-#lfg-ai:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(201,168,76,.6)}
-#lfg-ai:active{transform:scale(.95)}
-/* Image remplit le bouton */
-#lfg-ai img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
-/* Badge notification */
-#lfg-ai-badge{position:absolute;top:0;right:0;width:15px;height:15px;
-  border-radius:50%;background:#E05252;border:2px solid #C9A84C;display:none}
-#lfg-ai-badge.on{display:block}
-
-/* ── AI Chat Window ── */
-#lai{display:none;position:fixed;
-  right:12px;bottom:calc(172px + env(safe-area-inset-bottom,0px));
-  width:min(380px,calc(100vw - 24px));
-  height:min(520px,calc(100dvh - 240px));
-  background:linear-gradient(180deg,#1A1A1A,#0C0C0C);
-  border:1px solid #C9A84C;border-radius:20px;z-index:960;
-  box-shadow:0 16px 64px rgba(0,0,0,.8);overflow:hidden;flex-direction:column;
-  animation:chatIn .3s cubic-bezier(.4,0,.2,1)}
-#lai.open{display:flex!important}
-@keyframes chatIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
-.lai-head{background:linear-gradient(135deg,#1A0A00,#2D1500);
-  padding:14px 18px;display:flex;align-items:center;gap:14px;
-  border-bottom:1px solid rgba(201,168,76,.2);flex-shrink:0}
-/* FIX icône header: même approche outerHTML */
-.lai-av{width:48px;height:48px;border-radius:50%;border:2px solid #C9A84C;
-  overflow:hidden;flex-shrink:0;position:relative;
-  background:linear-gradient(135deg,#C9A84C,#E8C97A);
-  display:flex;align-items:center;justify-content:center}
-.lai-av img{width:100%;height:100%;object-fit:cover;display:block}
-.lai-av-dot{position:absolute;bottom:2px;right:2px;width:10px;height:10px;
-  background:#0f0;border:2px solid #1A0A00;border-radius:50%;box-shadow:0 0 5px #0f0}
-.lai-title{flex:1}
-.lai-title b{font-family:'Cinzel',Georgia,serif;color:#C9A84C;font-size:15px;
-  letter-spacing:1px;font-weight:700;display:block}
-.lai-title s{font-style:normal;font-size:10px;color:rgba(255,255,255,.5)}
-.lai-cls{background:none;border:none;color:rgba(255,255,255,.6);
-  font-size:20px;cursor:pointer;transition:color .18s;padding:4px}
-.lai-cls:hover{color:#fff}
-#lai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;
-  gap:12px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.2) transparent}
-#lai-msgs::-webkit-scrollbar{width:3px}
-#lai-msgs::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:3px}
-.lai-chip{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);
-  color:#D7D2C8;padding:7px 14px;border-radius:20px;font-size:11px;
-  cursor:pointer;transition:all .25s;margin-bottom:4px;font-family:inherit}
-.lai-chip:hover{background:#C9A84C;color:#000;transform:translateY(-2px)}
-.lai-row{padding:12px 14px;background:rgba(0,0,0,.3);display:flex;
-  align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
-.lai-mic{width:42px;height:42px;background:#C9A84C;border:none;border-radius:11px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:18px;transition:.3s;flex-shrink:0}
-.lai-inp{flex:1;padding:11px 13px;background:rgba(255,255,255,.05);
-  border:1px solid rgba(201,168,76,.2);border-radius:12px;
-  color:#fff;outline:none;font-size:13px;font-family:inherit}
-.lai-inp:focus{border-color:rgba(201,168,76,.45)}
-.lai-inp::placeholder{color:rgba(255,255,255,.3)}
-.lai-send{padding:11px 14px;background:rgba(201,168,76,.1);border:1px solid #C9A84C;
-  border-radius:11px;font-weight:700;cursor:pointer;color:#C9A84C;
-  font-size:13px;transition:.18s;flex-shrink:0}
-.lai-send:hover{background:rgba(201,168,76,.22)}
-
-@media(max-width:480px){
-  #lai{right:10px;bottom:calc(162px + env(safe-area-inset-bottom,0px));height:60vh}
-  #lfg{right:12px}
-}
+@keyframes suIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.lpwa-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1A0800,#2D1500);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.lpwa-text{flex:1;min-width:0}
+.lpwa-text b{display:block;font-size:12px;font-weight:700;color:#F0EDE8;margin-bottom:1px}
+.lpwa-text span{font-size:10px;color:rgba(240,237,232,.45)}
+.lpwa-ibtn{flex-shrink:0;padding:7px 14px;border-radius:9px;background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;font-size:11px;font-weight:700;border:none;cursor:pointer;letter-spacing:.3px}
+.lpwa-xbtn{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(240,237,232,.5);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lpwa-xbtn:hover{background:rgba(255,255,255,.12);color:#F0EDE8}
+/* AI FAB */
+#laifab{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:502;width:52px;height:52px;border-radius:50%;background:linear-gradient(145deg,#0D0500,#1A0800);border:2px solid #C9A84C;box-shadow:0 0 20px rgba(201,168,76,.35),0 6px 24px rgba(0,0,0,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;animation:fabGlow 3s ease-in-out infinite;transition:transform .2s}
+@keyframes fabGlow{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.35),0 6px 24px rgba(0,0,0,.6)}50%{box-shadow:0 0 36px rgba(201,168,76,.6),0 6px 24px rgba(0,0,0,.6)}}
+#laifab:hover{transform:scale(1.1) translateY(-2px)}
+#laifab:active{transform:scale(.95)}
+#laifab svg{width:28px;height:28px}
+#laibadge{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:#E05252;border:2px solid #0A0505;display:none}
+#laibadge.on{display:block}
+/* Chat window */
+#laichat{position:fixed;right:12px;bottom:calc(144px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100vw - 24px));height:min(460px,calc(100dvh - 220px));background:rgba(8,8,5,.98);border:1px solid rgba(201,168,76,.2);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;z-index:9980;box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 40px rgba(201,168,76,.08);transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s}
+#laichat.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.laic-head{padding:12px 14px 10px;background:linear-gradient(135deg,rgba(26,8,0,.97),rgba(45,18,0,.97));border-bottom:1px solid rgba(201,168,76,.15);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.laic-av{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(201,168,76,.4);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#0D0500}
+.laic-av img{width:100%;height:100%;object-fit:cover}
+.laic-info{flex:1}
+.laic-info b{display:block;font-size:13px;color:#F0EDE8;font-weight:600}
+.laic-info span{font-size:10px;color:rgba(201,168,76,.7)}
+.laic-cls{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:rgba(240,237,232,.55);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.laic-cls:hover{background:rgba(255,255,255,.14);color:#F0EDE8}
+.laic-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.15) transparent}
+.laic-msgs::-webkit-scrollbar{width:3px}
+.laic-msgs::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:3px}
+.lmsg{max-width:82%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.55;word-break:break-word}
+.lmsg.bot{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.13);color:#F0EDE8;border-radius:4px 14px 14px 14px;align-self:flex-start}
+.lmsg.usr{background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;font-weight:600;border-radius:14px 4px 14px 14px;align-self:flex-end}
+.lmsg.typing{color:rgba(201,168,76,.65);font-style:italic;font-size:12px;align-self:flex-start}
+.laic-sugs{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
+.lsug{padding:5px 10px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:20px;font-size:11px;color:rgba(201,168,76,.75);cursor:pointer;transition:.15s;white-space:nowrap}
+.lsug:hover{background:rgba(201,168,76,.15);color:#C9A84C}
+.laic-inp-row{padding:10px 12px;border-top:1px solid rgba(201,168,76,.1);display:flex;gap:8px;flex-shrink:0;background:rgba(8,8,5,.85)}
+.laic-inp{flex:1;padding:9px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.16);border-radius:22px;color:#F0EDE8;font-size:13px;outline:none;font-family:inherit;transition:border-color .2s}
+.laic-inp:focus{border-color:rgba(201,168,76,.42)}
+.laic-inp::placeholder{color:rgba(240,237,232,.3)}
+.laic-send{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#8B6E2F,#C9A84C);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px;font-weight:700;transition:.18s}
+.laic-send:hover{filter:brightness(1.12);transform:scale(1.05)}
+.laic-send:disabled{opacity:.5;cursor:not-allowed}
+#lx-toast-adj{bottom:calc(148px + env(safe-area-inset-bottom,0px))!important}
 </style>
 
 <!-- Commander Bar -->
@@ -540,220 +469,137 @@ body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
 
 <!-- PWA Banner -->
 <div id="lpwa">
-  <div class="lpwa-ico">✦</div>
-  <div class="lpwa-txt">
+  <div class="lpwa-icon">✦</div>
+  <div class="lpwa-text">
     <b>📱 Installez l'application LUX</b>
-    <s>Accès rapide · Expérience optimale</s>
+    <span>Accès rapide · Expérience optimale</span>
   </div>
-  <button class="lpwa-btn" id="lpwa-btn">Installer</button>
-  <button class="lpwa-x" id="lpwa-x">✕</button>
+  <button class="lpwa-ibtn" id="lpwa-ibtn">Installer</button>
+  <button class="lpwa-xbtn" id="lpwa-xbtn">✕</button>
 </div>
 
-<!-- FAB Group -->
-<div id="lfg">
-
-  <!-- WhatsApp FAB -->
-  <a id="lfg-wa" href="https://wa.me/212677717201?text=Bonjour%20Café%20LUX%2C%20je%20souhaite%20avoir%20des%20informations..." target="_blank" title="WhatsApp · Café LUX">
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.628 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </a>
-
-  <!-- ✅ AI FAB — UNE SEULE icône (img OU fallback ✦, jamais les deux) -->
-  <button id="lfg-ai" type="button" onclick="laiToggle()" title="Assistant LUX IA">
-    <div id="lfg-ai-badge"></div>
-    <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
-         onerror="this.outerHTML='<span style=\'font-size:26px;font-weight:900;font-family:serif;color:#000;line-height:1\'>✦</span>'">
-  </button>
-
+<!-- AI FAB Button -->
+<div id="laifab" onclick="laiToggle()" title="Assistant LUX IA" aria-label="Assistant IA">
+  <div id="laibadge"></div>
+  <img src="./lux-Chatbot_IA-icon.png" alt="LUX AI" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
 </div>
 
-<!-- AI Chat Window -->
-<div id="lai">
-  <div class="lai-head">
-    <div class="lai-av">
-      <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI"
-           onerror="this.outerHTML='<span style=\'font-size:22px;font-weight:900;font-family:serif;color:#000\'>✦</span>'">
-      <div class="lai-av-dot"></div>
+<!-- Chat Window -->
+<div id="laichat">
+  <div class="laic-head">
+    <div class="laic-av">
+      <img src="/lux-Chatbot_IA-icon.png" alt="LUX AI" onerror="this.parentElement.innerHTML='✦'">
     </div>
-    <div class="lai-title">
-      <b>LUX AI</b>
-      <s>Assistant intelligent · Café LUX</s>
+    <div class="laic-info">
+      <b>Assistant LUX IA</b>
+      <span>✦ Café &amp; Pâtisserie · Taza</span>
     </div>
-    <button type="button" class="lai-cls" onclick="laiToggle()">✕</button>
+    <button class="laic-cls" onclick="laiToggle()">✕</button>
   </div>
-
-  <div id="lai-msgs">
-    <div style="background:rgba(215,210,200,.05);border:1px solid rgba(201,168,76,.1);border-radius:15px 15px 15px 5px;padding:16px;font-size:13px;color:#D7D2C8;line-height:1.7;direction:rtl;text-align:right">
-      <strong style="color:#C9A84C;font-size:15px;display:block;margin-bottom:8px">مرحباً بك في عالم LUX ☕</strong>
-      <p style="margin:0 0 14px;opacity:.9">أنا مساعدك الذكي، كيف يمكنني خدمتك اليوم؟</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;direction:rtl">
-        <button type="button" class="lai-chip" onclick="laiSug('Où se trouve Café LUX ?')">📍 أين تقعون؟</button>
-        <button type="button" class="lai-chip" onclick="laiSug('Montrez-moi le menu')">📖 المينيو</button>
-        <button type="button" class="lai-chip" onclick="laiSug('Je veux une carte cadeau')">🎁 بطاقة هدية</button>
-        <button type="button" class="lai-chip" onclick="laiSug('Vos horaires ?')">🕐 الأوقات</button>
-      </div>
-    </div>
-    <div id="lai-time-hint" style="display:none;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:12px;padding:12px;font-size:12px;color:#D7D2C8;line-height:1.6"></div>
+  <div class="laic-msgs" id="laic-msgs">
+    <div class="lmsg bot">Bonjour ! Je suis l'assistant IA de Café LUX ✦<br>Comment puis-je vous aider ?</div>
   </div>
-
-  <div class="lai-row">
-    <button type="button" class="lai-mic" id="lai-mic" onclick="window.luxMic&&window.luxMic.toggle()">🎤</button>
-    <input type="text" id="lai-inp" class="lai-inp"
-           placeholder="تحدث أو اكتب سؤالك هنا..."
-           onkeydown="if(event.key==='Enter')laiSend()">
-    <button type="button" class="lai-send" onclick="laiSend()">إرسال</button>
+  <div class="laic-sugs" id="laic-sugs">
+    <button class="lsug" onclick="laiSug('Quels sont vos horaires ?')">🕐 Horaires</button>
+    <button class="lsug" onclick="laiSug('Je veux commander')">🛍️ Commander</button>
+    <button class="lsug" onclick="laiSug('Réserver une table')">📅 Réserver</button>
+    <button class="lsug" onclick="laiSug('Prix Gaming PS5')">🎮 Gaming</button>
+  </div>
+  <div class="laic-inp-row">
+    <input class="laic-inp" id="laic-inp" placeholder="Posez votre question..." maxlength="300"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();laiSend()}">
+    <button class="laic-send" id="laic-sbtn" onclick="laiSend()">➤</button>
   </div>
 </div>
 
 <script>
-(function(){
-'use strict';
-
-var __SYS=[
-  'You are LUX AI — Assistant intelligent · Café LUX, Taza, Morocco.',
-  'CRITICAL: Always answer the real question fully first, then pivot to a specific Café LUX menu item.',
-  'End EVERY reply with: يسعدنا زيارتكم في مقهى لكس، فريق لكس في خدمتكم.',
-  'then: تابعونا — Instagram: https://www.instagram.com/lux.cafe.restaurant/ · Twitter: https://x.com/cafeslux',
-  'Mirror user language (AR/FR/EN).'
-].join('\n');
-
-var _LAPI=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
-var _FB={
-  'horaire':'🕐 Ouvert tous les jours de 8h à 23h ✦',
-  'heure':'🕐 Horaires: 8h–23h, 7j/7.',
-  'menu':'📖 Menu: cafeslux.com/public/menu',
-  'gaming':'🎮 Gaming: 15min=5DH · 30min=10DH · 1h=20DH · 2h=55DH',
-  'réserver':'📅 Réservations: cafeslux.com/public/reservations',
-  'wifi':'📶 WiFi gratuit ✦',
-  'prix':'💰 Cafés dès 7DH · Pâtisseries 15–45DH',
-  'adresse':'📍 Café LUX — Taza, Maroc',
-  'اين':'📍 مقهى لكس — مدينة تازة، المغرب ✦',
-  'وين':'📍 مقهى لكس — تازة ✦',
-};
-
-/* ── PWA ── */
+/* ── PWA Install ── */
 (function(){
   if(window.matchMedia('(display-mode:standalone)').matches||navigator.standalone)return;
   if(localStorage.getItem('lpwa_off'))return;
-  var dp=null,b=document.getElementById('lpwa');if(!b)return;
+  var dp=null,banner=document.getElementById('lpwa');
   window.addEventListener('beforeinstallprompt',function(e){
-    e.preventDefault();dp=e;setTimeout(function(){b.classList.add('show');},5000);
+    e.preventDefault();dp=e;
+    setTimeout(function(){banner.classList.add('show')},4000);
   });
-  document.getElementById('lpwa-btn').onclick=function(){
+  document.getElementById('lpwa-ibtn').onclick=function(){
     if(!dp)return;dp.prompt();
-    dp.userChoice.then(function(r){if(r.outcome==='accepted'){b.classList.remove('show');localStorage.setItem('lpwa_off','1');}dp=null;});
+    dp.userChoice.then(function(r){if(r.outcome==='accepted'){banner.classList.remove('show');localStorage.setItem('lpwa_off','1');}dp=null;});
   };
-  document.getElementById('lpwa-x').onclick=function(){b.classList.remove('show');localStorage.setItem('lpwa_off','1');};
-  window.addEventListener('appinstalled',function(){b.classList.remove('show');});
+  document.getElementById('lpwa-xbtn').onclick=function(){banner.classList.remove('show');localStorage.setItem('lpwa_off','1');};
+  window.addEventListener('appinstalled',function(){banner.classList.remove('show');});
+  /* Reposition toast above bars */
+  var t=document.getElementById('lux-toast');
+  if(t) t.style.bottom='calc(148px + env(safe-area-inset-bottom,0px))';
 })();
 
-/* ── Chat Toggle ── */
-var _open=false;
-window.laiToggle=function(){
-  _open=!_open;
-  var c=document.getElementById('lai');
-  if(!c)return;
-  c.classList.toggle('open',_open);
-  if(_open){
-    document.getElementById('lfg-ai-badge').classList.remove('on');
-    if(!window._laiInit){window._laiInit=true;_loadHint();}
-    setTimeout(function(){var i=document.getElementById('lai-inp');if(i)i.focus();},250);
-  }
+/* ── AI Chat ── */
+var _laiOpen=false,_laiLoading=false,_laiHist=[],_laiMid=0;
+var LUX_AI_API=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+var LUX_AI_FALLBACK={
+  'default': '✦ أنا مساعد LUX الذكي. اسألني عن أي شيء في العالم وسأربطه لك بـ Café LUX!',
+  'horaire':'🕐 Café LUX est ouvert tous les jours de 7h à 23h.',
+  'commander':'🛍️ Commandez ici: cafeslux.com/public/menu · WhatsApp: +212 677 717 201',
+  'gaming':'🎮 Tarifs Gaming: 15 min=5DH · 30 min=10DH · 1h=20DH · 2h=55DH',
+  'réserver':'📅 Réservations: cafeslux.com/public/reservations',
+  'wifi':'📶 WiFi gratuit disponible pour tous nos clients ✦',
+  'prix':'💰 Cafés dès 7DH · Pâtisseries 15-45DH · Gaming dès 5DH/15min',
+  'livraison':'🚚 Livraison disponible · Délai: 30-45 min · Commandez en ligne!',
+  'parking':'🚗 Parking disponible à proximité du café ✦',
 };
-window.toggleAIChat=window.laiToggle; // Alias
-
-/* ── Time hint ── */
-async function _loadHint(){
-  var h=document.getElementById('lai-time-hint');if(!h)return;
-  try{
-    var r=await fetch(_LAPI+'/api/ai/init',{headers:{'Accept':'application/json'}});
-    if(!r.ok)return;var d=await r.json();
-    if(d.timeSuggestion&&(d.timeSuggestion.hintAr||d.timeSuggestion.hintFr)){
-      h.style.display='block';
-      h.innerHTML='<strong style="color:#C9A84C">✦ اقتراح حسب الوقت</strong><br>'+
-        (d.timeSuggestion.hintAr?'<span>'+d.timeSuggestion.hintAr+'</span><br>':'')+
-        (d.timeSuggestion.hintFr?'<span style="opacity:.85">'+d.timeSuggestion.hintFr+'</span>':'');
-    }
-  }catch(e){}
+function laiToggle(){
+  _laiOpen=!_laiOpen;
+  var c=document.getElementById('laichat'),f=document.getElementById('laifab');
+  if(_laiOpen){
+    c.classList.add('open');
+    document.getElementById('laibadge').classList.remove('on');
+    f.style.borderColor='#E8C97A';
+    setTimeout(function(){var i=document.getElementById('laic-inp');if(i)i.focus();},300);
+  } else {
+    c.classList.remove('open');
+    f.style.borderColor='#C9A84C';
+  }
 }
-
-/* ── Quick chips ── */
-window.laiSug=function(t){var i=document.getElementById('lai-inp');if(i){i.value=t;laiSend();}};
-window.luxAIQuickSend=window.laiSug;
-
-/* ── Send ── */
-var _loading=false,_mid=0;
-function _app(type,txt){
-  var id='lm'+(++_mid),el=document.createElement('div');
-  el.id=id;
-  if(type==='usr') el.style.cssText='background:linear-gradient(135deg,#8B6E2F,#C9A84C);color:#000;border-radius:12px 12px 4px 12px;padding:10px 14px;font-size:12px;max-width:85%;align-self:flex-end;font-weight:500;word-break:break-word';
-  else if(type==='bot') el.style.cssText='background:linear-gradient(165deg,rgba(215,210,200,.08),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.18);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:12px;color:#D7D2C8;line-height:1.65;max-width:100%;word-break:break-word';
-  else el.style.cssText='color:rgba(201,168,76,.65);font-size:11px;font-style:italic;padding:4px 0';
-  el.textContent=txt;
-  var c=document.getElementById('lai-msgs');c.appendChild(el);c.scrollTop=c.scrollHeight;
+function laiSug(t){
+  document.getElementById('laic-inp').value=t;
+  var s=document.getElementById('laic-sugs');if(s)s.style.display='none';
+  laiSend();
+}
+function laiAppend(type,text){
+  var id='lm-'+(++_laiMid);
+  var el=document.createElement('div');
+  el.id=id;el.className='lmsg '+type;el.textContent=text;
+  var c=document.getElementById('laic-msgs');
+  c.appendChild(el);c.scrollTop=c.scrollHeight;
   return id;
 }
-function _rem(id){var e=document.getElementById(id);if(e)e.remove();}
-
-window.laiSend=async function(){
-  var inp=document.getElementById('lai-inp');var msgs=document.getElementById('lai-msgs');
-  if(!inp||!msgs||_loading)return;
-  var q=inp.value.trim();if(!q)return;
-  inp.value='';_loading=true;
-  _app('usr',q);
-  var tid=_app('typ','✦ LUX AI réfléchit...');
-  var lo=q.toLowerCase();
-  try{
-    var ctrl=new AbortController();
-    var to=setTimeout(function(){ctrl.abort();},30000);
-    var r=await fetch(_LAPI+'/api/ai/chat',{method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({prompt:q,message:q,lang:'fr-ar',context:'cafe_lux_taza',
-        systemPrompt:__SYS,systemInstruction:__SYS,system:__SYS}),
-      signal:ctrl.signal});
-    clearTimeout(to);
-    var d=await r.json();_rem(tid);
-    var pay=d.html||d.reply||d.message||d.response||d.text||'';
-    var div=document.createElement('div');
-    div.style.cssText='background:linear-gradient(165deg,rgba(215,210,200,.08),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.18);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:12px;color:#D7D2C8;line-height:1.65;max-width:100%;word-break:break-word';
-    if(d.format==='html'||/<[a-z]/i.test(pay)){div.innerHTML=pay;}
-    else if(pay){div.textContent=pay;}
-    else{var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}div.textContent=rep||'✦ تواصلوا معنا: WhatsApp +212 677 717 201';}
-    var c=document.getElementById('lai-msgs');c.appendChild(div);c.scrollTop=c.scrollHeight;
-    if(!_open)document.getElementById('lfg-ai-badge').classList.add('on');
-  }catch(er){
-    _rem(tid);
-    var rep=null;for(var k in _FB){if(lo.indexOf(k)!==-1){rep=_FB[k];break;}}
-    var div2=document.createElement('div');
-    div2.style.cssText='background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.15);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:12px;color:#D7D2C8;line-height:1.6;max-width:100%';
-    if(rep){div2.textContent=rep;}
-    else{div2.innerHTML='⚠ Service IA indisponible.<br><a href="https://wa.me/212677717201?text='+encodeURIComponent(q)+'" target="_blank" style="color:#C9A84C;font-weight:600;margin-top:8px;display:inline-block">📲 WhatsApp Café LUX</a>';}
-    var c2=document.getElementById('lai-msgs');c2.appendChild(div2);c2.scrollTop=c2.scrollHeight;
-    if(!_open)document.getElementById('lfg-ai-badge').classList.add('on');
-  }
-  _loading=false;
-};
-// Alias for existing calls
-window.sendToGemma=window.laiSend;
-
-/* ── Voice ── */
-window.luxMic={recognition:null,isListening:false,
-  init:function(){
-    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){alert('يرجى استخدام Chrome للإدخال الصوتي');return;}
-    this.recognition=new SR();this.recognition.lang='ar-MA';this.recognition.continuous=false;
-    this.recognition.onresult=function(e){var t=e.results[0][0].transcript;var i=document.getElementById('lai-inp');if(i){i.value=t;setTimeout(window.laiSend,300);}};
-    this.recognition.onend=function(){window.luxMic.isListening=false;window.luxMic.upd(false);};
-    this.recognition.onerror=function(){window.luxMic.isListening=false;window.luxMic.upd(false);};
-    this.recognition.onstart=function(){window.luxMic.isListening=true;window.luxMic.upd(true);};
-  },
-  toggle:function(){if(!this.recognition)this.init();try{this.isListening?this.recognition.stop():this.recognition.start();}catch(e){this.init();this.recognition.start();}},
-  upd:function(a){var b=document.getElementById('lai-mic');if(b){b.textContent=a?'🛑':'🎤';b.style.background=a?'#E05252':'#C9A84C';}}
-};
-
-/* ── Reposition toast ── */
-var _t=document.getElementById('lux-toast');
-if(_t)_t.style.bottom='calc(148px + env(safe-area-inset-bottom,0px))';
-})();
+function laiRemove(id){var el=document.getElementById(id);if(el)el.remove();}
+function laiSend(){
+  var inp=document.getElementById('laic-inp');
+  var txt=inp.value.trim();
+  if(!txt||_laiLoading)return;
+  inp.value='';_laiLoading=true;
+  var sbtn=document.getElementById('laic-sbtn');if(sbtn)sbtn.disabled=true;
+  laiAppend('usr',txt);
+  _laiHist.push({role:'user',content:txt});
+  var tid=laiAppend('typing','✦ En train d\'écrire...');
+  fetch(LUX_AI_API+'/api/ai/chat',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({message:txt,lang:'fr',history:_laiHist.slice(-6),
+context: 'Tu es LUX AI, une intelligence absolue et un conseiller expert dans TOUS les domaines de la vie (sciences, histoire, technologie, psychologie, business, etc.). Ton objectif est double : 1) ÉBLOUIR LE CLIENT : Réponds à sa question ou donne-lui des conseils avec la profondeur, l\'exactitude et le génie d\'un véritable expert. Sois fascinant et inspirant. 2) LE PIVOT MAGIQUE (Marketing Subtil) : Une fois la réponse donnée, crée une transition métaphorique, ultra-naturelle et intelligente vers l\'univers du Café LUX (à Taza, Maroc). Utilise le contexte de sa question pour lier subtilement le sujet à nos produits (exemples : s\'il demande des conseils sur la concentration, parle de notre Matcha Bloom ou Espresso ; s\'il parle d\'art ou de design, mentionne l\'ambiance Premium et le Latte Art de LUX ; s\'il parle de divertissement, invite-le dans notre Gaming Zone PS5). Nos atouts : Cafés signature, Pâtisseries de luxe, Zaazaa, espace VIP. Horaires : 8h-23h. Ton ton : Élégant, chaleureux, sage, et discrètement séducteur. Le client doit se sentir privilégié.'})  }).then(function(r){return r.json();}).then(function(d){
+    laiRemove(tid);
+    var rep=d.response||d.message||d.reply||d.content||null;
+    if(!rep)throw new Error('no response');
+    laiAppend('bot',rep);_laiHist.push({role:'assistant',content:rep});
+    if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
+  }).catch(function(){
+    laiRemove(tid);
+    var lo=txt.toLowerCase(),rep=LUX_AI_FALLBACK['default'];
+    for(var k in LUX_AI_FALLBACK){if(lo.indexOf(k)!==-1){rep=LUX_AI_FALLBACK[k];break;}}
+    laiAppend('bot',rep);
+    if(!_laiOpen)document.getElementById('laibadge').classList.add('on');
+  }).finally(function(){_laiLoading=false;if(sbtn)sbtn.disabled=false;});
+}
 </script>
+</body>
+</html>
