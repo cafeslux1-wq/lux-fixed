@@ -676,7 +676,7 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
           </div>
           <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
             <div class="tgl" id="cfg-autoprint" onclick="this.classList.toggle('on')"></div>
-            <span style="font-size:12px;color:var(--text2)">Impression automatique après encaissement</span>
+            <span style="font-size:12px;color:var(--text2)">Impression auto des commandes en ligne + après encaissement</span>
           </div>
           <button class="adm-btn ghost" style="margin-top:14px" onclick="testPrint()">🖨 Test d'impression</button>
         </div>
@@ -1485,9 +1485,32 @@ function fetchOnlineOrders(){
       });
       var nowNew=countNewOrders();
       updateBell(nowNew, nowNew>prevNew);
+      autoPrintNewOrders();   // ⚡ auto-print brand-new orders if enabled in Admin
       if(el('orders-drawer').classList.contains('open')) renderOrders();
     })
     .catch(function(){ /* offline — keep current list */ });
+}
+// ⚡ Auto-print: print genuinely-new online orders the moment they arrive,
+// but only if the Admin "Auto-print" toggle is ON. Guards against reprinting
+// the same order on every 15s poll and against printing history on first load.
+function autoPrintNewOrders(){
+  var printed = getLS('lux_pos_autoprinted', []);
+  var firstLoad = !S._ordersInitialized;
+  S._ordersInitialized = true;
+  var fresh = [];
+  S.onlineOrders.forEach(function(o){
+    var ref = orderRef(o);
+    if(printed.indexOf(ref)!==-1) return;     // already auto-printed earlier
+    printed.push(ref);                         // mark as seen
+    if(isApproved(o)) return;                  // already handled manually
+    if(!firstLoad) fresh.push(o);              // only NEW arrivals (not history)
+  });
+  setLS('lux_pos_autoprinted', printed.slice(-300));
+  if(fresh.length && posConfig().autoPrint!==false){
+    // Print sequentially. Most setups receive one new order per poll.
+    fresh.forEach(function(o){ printTicket(orderToTx(o)); });
+    toast('🖨 '+fresh.length+' commande(s) imprimée(s) automatiquement','var(--green)');
+  }
 }
 function orderTime(o){
   if(o.id && /^\d+$/.test(String(o.id))) return parseInt(o.id);
@@ -1539,15 +1562,25 @@ function renderOrders(){
       '<div class="oc-foot"><span class="oc-total">'+money(parseFloat(o.total)||0)+'</span>'+
       (done
         ? '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨 Réimprimer</button>'
-        : '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨</button>'+
+        : '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨 Imprimer</button>'+
           '<button class="oc-approve" onclick=\'approveOrder('+JSON.stringify(ref)+')\'>✓ Approuver & Imprimer</button>')+
       '</div></div>';
   }).join('');
 }
 function parseItems(o){
-  var it=o.items;
+  // items may be: an array, a JSON string, or nested under another key
+  var it = o.items || o.lineItems || o.products || o.cart || o.orderItems;
   if(typeof it==='string'){ try{ it=JSON.parse(it); }catch(e){ it=[]; } }
-  return Array.isArray(it)?it:[];
+  if(!Array.isArray(it)) return [];
+  // Normalize each line to {name, qty, price} so printTicket renders cleanly
+  return it.map(function(x){
+    if(typeof x==='string') return { name:x, qty:1, price:0 };
+    return {
+      name:  x.name||x.n||x.title||x.productName||x.product||'Article',
+      qty:   parseInt(x.qty!=null?x.qty:(x.q!=null?x.q:(x.quantity!=null?x.quantity:1)))||1,
+      price: parseFloat(x.price!=null?x.price:(x.p!=null?x.p:(x.unitPrice!=null?x.unitPrice:(x.unit_price!=null?x.unit_price:0))))||0,
+    };
+  });
 }
 function findOrder(ref){ return S.onlineOrders.find(function(o){ return orderRef(o)===ref; }); }
 function approveOrder(ref){
@@ -1566,13 +1599,39 @@ function approveOrder(ref){
 }
 function reprintOrder(ref){ var o=findOrder(ref); if(o) printTicket(orderToTx(o)); }
 function orderToTx(o){
+  var items = parseItems(o);
+  // Derive subtotal/total/tva from whatever the order provides
+  var total    = parseFloat(o.total!=null?o.total:(o.amount!=null?o.amount:(o.totalAmount!=null?o.totalAmount:0)))||0;
+  var subtotal = parseFloat(o.subtotal!=null?o.subtotal:(o.sub!=null?o.sub:0))||0;
+  var tva      = parseFloat(o.tva!=null?o.tva:(o.tax!=null?o.tax:0))||0;
+  // If only total is known, reconstruct subtotal/tva from the configured tax rate
+  if(!subtotal && total){
+    var rate=(posConfig().taxRate||10)/100;
+    subtotal=+(total/(1+rate)).toFixed(2);
+    tva=+(total-subtotal).toFixed(2);
+  }
+  // If items have prices but no total, sum them
+  if(!total && items.length){
+    subtotal=items.reduce(function(s,i){ return s+i.price*i.qty; },0);
+    var r2=(posConfig().taxRate||10)/100;
+    tva=+(subtotal*r2).toFixed(2);
+    total=+(subtotal+tva).toFixed(2);
+  }
+  var typ = o.type||o.orderType||'web';
   return {
-    ref:orderRef(o), date:o.date||todayDate(), time:o.time||nowTime(),
-    type:o.type||'web', table:o.table||'En ligne', mode:o.mode||'Web',
-    client:o.customer||o.client||'Client Web',
-    items:parseItems(o),
-    subtotal:o.subtotal||o.total||0, tva:o.tva||0, total:o.total||0,
-    staffName:S.employee?S.employee.name:'?',
+    ref:      orderRef(o),
+    date:     o.date || (o.createdAt?new Date(o.createdAt).toLocaleDateString('fr-MA'):(o.created_date?new Date(o.created_date).toLocaleDateString('fr-MA'):todayDate())),
+    time:     o.time || (o.createdAt?new Date(o.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):nowTime()),
+    type:     /deliver|livr/i.test(typ)?'delivery':(/emporter|takeaway|away/i.test(typ)?'takeaway':'web'),
+    table:    o.table || o.address || 'En ligne',
+    mode:     o.mode || o.payMethod || o.paymentMethod || 'Web',
+    client:   o.customer || o.client || o.customerName || o.name || 'Client Web',
+    phone:    o.phone || '',
+    items:    items,
+    subtotal: subtotal, tva: tva, total: total,
+    notes:    o.notes || '',
+    staffName: S.employee?S.employee.name:'En ligne',
+    _online:  true,
   };
 }
 
