@@ -682,6 +682,18 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
           <button class="adm-btn ghost" style="margin-top:14px" onclick="testPrint()">🖨 Test d'impression</button>
         </div>
         <div class="adm-card">
+          <div class="adm-card-h">✓ Comportement à l'approbation d'une commande en ligne</div>
+          <div class="adm-sub" style="margin-bottom:10px">Que se passe-t-il quand vous cliquez « Approuver » sur une commande ?</div>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;cursor:pointer;margin-bottom:8px" id="apm-print-row">
+            <input type="radio" name="approveMode" value="print" id="apm-print" style="margin-top:2px;accent-color:var(--gold)">
+            <span style="font-size:12px;color:var(--text)"><b style="color:var(--gold-l)">Option B — Charger dans le ✦ TICKET + imprimer</b><br><span style="color:var(--muted);font-size:11px">La commande est envoyée à la zone d'impression et imprimée automatiquement (prête en un clic).</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;cursor:pointer" id="apm-mark-row">
+            <input type="radio" name="approveMode" value="mark" id="apm-mark" style="margin-top:2px;accent-color:var(--gold)">
+            <span style="font-size:12px;color:var(--text)"><b style="color:var(--gold-l)">Option C — Marquer « Approuvée » seulement</b><br><span style="color:var(--muted);font-size:11px">Aucune impression automatique. La commande passe en « Approuvée » ; vous imprimez manuellement si besoin.</span></span>
+          </label>
+        </div>
+        <div class="adm-card">
           <div class="adm-card-h">💰 Taxe (TVA)</div>
           <div class="adm-field" style="max-width:200px"><label>Taux de TVA (%)</label><input id="cfg-tax" type="number" step="0.1" placeholder="10"></div>
         </div>
@@ -1242,7 +1254,7 @@ function clearCart(){
   if(!S.selectedSlot) return;
   S.carts[slotKey()]=[]; renderTicket(); refreshTableStates(); buildTakeaway();
 }
-function posConfig(){ return getLS('lux_pos_config', {taxRate:10, printerName:'Imprimante caisse', printWidth:280, autoPrint:true}); }
+function posConfig(){ return getLS('lux_pos_config', {taxRate:10, printerName:'Imprimante caisse', printWidth:280, autoPrint:true, approveMode:'print'}); }
 function loyaltyConfig(){ return getLS('lux_pos_loyalty', {earnRate:10, redeemValue:1}); } // 10 MAD = 1pt; 1pt = 1 DH
 function cartTotals(){
   var cart=curCart();
@@ -1616,7 +1628,8 @@ function renderOrders(){
       (done
         ? '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨 Réimprimer</button>'
         : '<button class="oc-print" onclick=\'reprintOrder('+JSON.stringify(ref)+')\'>🖨 Imprimer</button>'+
-          '<button class="oc-approve" onclick=\'approveOrder('+JSON.stringify(ref)+')\'>✓ Approuver & Imprimer</button>')+
+          '<button class="oc-approve" onclick=\'approveOrder('+JSON.stringify(ref)+')\'>'+
+          (posConfig().approveMode==='mark'?'✓ Approuver':'✓ Approuver & Imprimer')+'</button>')+
       '</div></div>';
   }).join('');
 }
@@ -1644,14 +1657,21 @@ function approveOrder(ref){
     method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},_authHeader()),
     body:JSON.stringify({status:'approved',by:S.employee?S.employee.name:'?'})
   }).catch(function(){});
-  // ⚡ INSTANT feedback first: card flips to "Approuvée", bell updates, toast
+  // ⚡ INSTANT feedback first: card flips to "Approuvée", bell updates
   updateBell(countNewOrders(), false);
   renderOrders();
+
+  // ⚡ Behavior depends on the Admin setting (Option B vs Option C)
+  var mode = posConfig().approveMode || 'print';
+  if(mode==='mark'){
+    // Option C — mark approved only, NO ticket load, NO auto print
+    toast('✅ Commande '+ref+' marquée « Approuvée »','var(--green)');
+    return;
+  }
+  // Option B — push to the ✦ TICKET panel + auto print (print-ready, one click)
   toast('✅ Commande '+ref+' approuvée → chargée dans le ✦ TICKET','var(--green)');
-  // ⚡ Load into the ✦ TICKET panel + close drawer so the cashier sees it
   loadOrderIntoTicket(o);
   el('orders-drawer').classList.remove('open');
-  // Print on the next frame so the UI paints the confirmation before the dialog
   setTimeout(function(){ printTicket(orderToTx(o)); }, 150);
 }
 // Load an online order's items into the right-hand ✦ TICKET panel for review/print.
@@ -1885,17 +1905,23 @@ function loadConfigForm(){
   el('cfg-width').value=c.printWidth||280;
   el('cfg-tax').value=c.taxRate!=null?c.taxRate:10;
   el('cfg-autoprint').classList.toggle('on', c.autoPrint!==false);
+  // Approve-mode radios (B: print / C: mark only) — default to 'print'
+  var mode=c.approveMode||'print';
+  if(el('apm-print')) el('apm-print').checked = (mode==='print');
+  if(el('apm-mark'))  el('apm-mark').checked  = (mode==='mark');
 }
 function saveConfig(){
+  var mode = (el('apm-mark') && el('apm-mark').checked) ? 'mark' : 'print';
   var c={
     printerName:el('cfg-printer').value||'Imprimante caisse',
     printWidth:parseInt(el('cfg-width').value)||280,
     taxRate:parseFloat(el('cfg-tax').value)||0,
     autoPrint:el('cfg-autoprint').classList.contains('on'),
+    approveMode:mode,
   };
   setLS('lux_pos_config',c);
   renderTicket();
-  toast('✅ Configuration enregistrée · TVA '+c.taxRate+'%','var(--green)');
+  toast('✅ Configuration enregistrée · Approbation : '+(mode==='mark'?'Marquer seulement':'Charger + imprimer'),'var(--green)');
 }
 function testPrint(){
   printTicket({ref:'TEST-PRINT',date:todayDate(),time:nowTime(),type:'test',table:'—',mode:'Test',
