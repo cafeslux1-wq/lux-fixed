@@ -554,6 +554,7 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
 <div id="orders-drawer">
   <div class="od-head">
     <span class="od-title">Commandes en ligne</span>
+    <button class="btn-sm" id="od-clear-btn" onclick="clearPendingOrders()" title="Effacer toutes les commandes en attente" style="display:none;font-size:11px;padding:6px 10px">🗑 Tout effacer</button>
     <button class="od-close" onclick="toggleOrdersDrawer()">✕</button>
   </div>
   <div class="od-filters">
@@ -805,6 +806,7 @@ var S = {
   loyalty:       null,          // { phone, points }
   onlineOrders:  [],            // fetched web orders
   approvedRefs:  {},            // ref → true (locally approved)
+  dismissedRefs: {},            // ref → true (cleared/purged from view, persisted)
   orderFilter:   'new',
 };
 
@@ -1476,13 +1478,17 @@ function fetchOnlineOrders(){
   fetchFirst(['/api/orders?source=web','/api/orders?status=pending','/api/orders'])
     .then(function(list){
       if(!Array.isArray(list)){ return; }
+      // Load persisted dismissals (orders cleared by the cashier)
+      S.dismissedRefs = getLS('lux_pos_dismissed', {});
       var prevNew = countNewOrders();
       S.onlineOrders = list.filter(function(o){
         // Keep web/online orders. Accept if source matches OR it has web-ish notes,
         // OR there is no source field at all (some backends omit it).
         var src=(o.source||o._src||o.channel||'').toLowerCase();
-        if(src) return /web|menu|online|account| en.?ligne/.test(src);
-        return true; // no source field → assume it's a normal order, show it
+        if(src && !/web|menu|online|account| en.?ligne/.test(src)) return false;
+        // ⚡ Drop orders the cashier has cleared (purged) — they won't reappear
+        if(S.dismissedRefs[orderRef(o)]) return false;
+        return true;
       }).sort(function(a,b){
         var ta=orderTime(a), tb=orderTime(b);
         return tb-ta;
@@ -1540,12 +1546,54 @@ function setOrderFilter(f,btn){
   if(btn) btn.classList.add('active');
   renderOrders();
 }
+// ⚡ Clear ALL pending (Nouvelle) online orders — purges stuck/backlog orders.
+// Marks them dismissed locally + persists so they don't reappear on the next poll.
+function clearPendingOrders(){
+  var pending = S.onlineOrders.filter(function(o){ return !isApproved(o); });
+  if(!pending.length){ toast('Aucune commande à effacer','var(--gold)'); return; }
+  if(!confirm('Effacer '+pending.length+' commande(s) en attente ? Elles disparaîtront de la file.')) return;
+  S.dismissedRefs = getLS('lux_pos_dismissed', {});
+  pending.forEach(function(o){
+    S.dismissedRefs[orderRef(o)] = true;
+    // Best-effort: tell the server they're archived (endpoint may not exist)
+    fetch(API+'/api/orders/'+encodeURIComponent(o.id||orderRef(o))+'/status',{
+      method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},_authHeader()),
+      body:JSON.stringify({status:'archived',by:S.employee?S.employee.name:'?'})
+    }).catch(function(){});
+  });
+  setLS('lux_pos_dismissed', S.dismissedRefs);
+  // Remove them from the in-memory list immediately
+  S.onlineOrders = S.onlineOrders.filter(function(o){ return !S.dismissedRefs[orderRef(o)]; });
+  updateBell(countNewOrders(), false);
+  renderOrders();
+  toast('🗑 '+pending.length+' commande(s) effacée(s)','var(--green)');
+}
+// Clear a single order from the view
+function clearOneOrder(ref){
+  S.dismissedRefs = getLS('lux_pos_dismissed', {});
+  S.dismissedRefs[ref] = true;
+  setLS('lux_pos_dismissed', S.dismissedRefs);
+  S.onlineOrders = S.onlineOrders.filter(function(o){ return orderRef(o)!==ref; });
+  updateBell(countNewOrders(), false);
+  renderOrders();
+  toast('🗑 Commande '+ref+' effacée','var(--gold)');
+}
+// Restore previously cleared orders (in case of mistake)
+function restoreClearedOrders(){
+  setLS('lux_pos_dismissed', {});
+  S.dismissedRefs = {};
+  toast('↩ Commandes effacées restaurées · rafraîchissement...','var(--gold)');
+  fetchOnlineOrders();
+}
 function renderOrders(){
   var list=S.onlineOrders.filter(function(o){
     if(S.orderFilter==='new') return !isApproved(o);
     if(S.orderFilter==='done') return isApproved(o);
     return true;
   });
+  // Show/hide the "Clear All" button depending on whether there are pending orders
+  var hasPending = S.onlineOrders.some(function(o){ return !isApproved(o); });
+  var clrBtn = el('od-clear-btn'); if(clrBtn) clrBtn.style.display = hasPending ? '' : 'none';
   if(!list.length){
     el('od-list').innerHTML='<div class="od-empty">Aucune commande dans cette vue.<br>Les commandes du menu web arrivent automatiquement ici (rafraîchissement 15s).</div>';
     return;
@@ -1560,7 +1608,8 @@ function renderOrders(){
     return '<div class="oc'+(done?'':' new')+'">'+
       '<div class="oc-top"><span class="oc-ref">'+esc(ref)+'</span>'+
       '<span class="oc-badge '+(done?'done':'new')+'">'+(done?'Approuvée':'Nouvelle')+'</span>'+
-      '<span class="oc-time">'+esc(time)+'</span></div>'+
+      '<span class="oc-time">'+esc(time)+'</span>'+
+      '<button onclick=\'clearOneOrder('+JSON.stringify(ref)+')\' title="Effacer cette commande" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 0 0 6px;line-height:1">✕</button></div>'+
       '<div class="oc-cust">'+esc(cust)+(phone?' <span>· '+esc(phone)+'</span>':'')+'</div>'+
       '<div class="oc-items">'+itemsHtml+'</div>'+
       '<div class="oc-foot"><span class="oc-total">'+money(parseFloat(o.total)||0)+'</span>'+
@@ -1595,15 +1644,15 @@ function approveOrder(ref){
     method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},_authHeader()),
     body:JSON.stringify({status:'approved',by:S.employee?S.employee.name:'?'})
   }).catch(function(){});
-  // ⚡ Load the approved order into the ✦ TICKET panel (so the cashier sees it there)
-  loadOrderIntoTicket(o);
-  // Close the orders drawer so the ticket panel is visible
-  el('orders-drawer').classList.remove('open');
-  // Print the ticket immediately (button says "Approuver & Imprimer")
-  printTicket(orderToTx(o));
+  // ⚡ INSTANT feedback first: card flips to "Approuvée", bell updates, toast
   updateBell(countNewOrders(), false);
   renderOrders();
-  toast('✅ Commande '+ref+' chargée dans le ✦ TICKET & imprimée','var(--green)');
+  toast('✅ Commande '+ref+' approuvée → chargée dans le ✦ TICKET','var(--green)');
+  // ⚡ Load into the ✦ TICKET panel + close drawer so the cashier sees it
+  loadOrderIntoTicket(o);
+  el('orders-drawer').classList.remove('open');
+  // Print on the next frame so the UI paints the confirmation before the dialog
+  setTimeout(function(){ printTicket(orderToTx(o)); }, 150);
 }
 // Load an online order's items into the right-hand ✦ TICKET panel for review/print.
 function loadOrderIntoTicket(o){
