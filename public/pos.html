@@ -495,7 +495,7 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
       <div class="eb-role" id="eb-role">—</div>
     </div>
   </div>
-  <button class="btn-sm" id="admin-btn" onclick="openAdmin()" title="Admin (PIN requis)">⚙ Admin</button>
+  <button class="btn-sm" id="admin-btn" onclick="openAdmin()" title="Admin (PIN requis)" style="display:none">⚙ Admin</button>
   <button class="btn-sm" onclick="window.location.href='index.html'">← Accueil</button>
 </div>
 
@@ -908,6 +908,8 @@ function unlockRegister(emp, method){
   el('eb-avatar').style.background = 'linear-gradient(135deg,'+emp.color+','+emp.color+'aa)';
   setTxt('eb-name', emp.name);
   setTxt('eb-role', emp.role);
+  // ⚡ Admin button visible ONLY to admin-level employees
+  var ab=el('admin-btn'); if(ab) ab.style.display = emp.admin ? '' : 'none';
   // Hide lock
   el('lock-screen').classList.add('hidden');
   toast('✦ Bienvenue '+emp.name+' · '+method, 'var(--green)');
@@ -1221,7 +1223,8 @@ function refreshTableStates(){
   });
 }
 function addToCart(name,price){
-  if(!S.selectedSlot){ toast('⚠ Sélectionnez une table d\'abord','var(--orange)'); return; }
+  // ⚡ Table is now OPTIONAL — if nothing selected, use a default "Comptoir" slot
+  if(!S.selectedSlot){ S.selectedSlot={type:'comptoir',id:'direct'}; setTxt('pos-table-label','🛎 Comptoir / Direct'); }
   var cart=curCart();
   var ex=cart.find(function(c){ return c.n===name; });
   if(ex) ex.q++; else cart.push({n:name,p:price,q:1});
@@ -1251,7 +1254,7 @@ function cartTotals(){
 function renderTicket(){
   var cart=curCart();
   var box=el('ticket-items');
-  if(!S.selectedSlot){ box.innerHTML='<div class="ticket-empty"><span class="te-icon">🪑</span>Sélectionnez une table<br>ou une commande à emporter</div>'; }
+  if(!S.selectedSlot){ box.innerHTML='<div class="ticket-empty"><span class="te-icon">🍽</span>Touchez un produit pour commencer<br><span style="font-size:10px;opacity:.7">(table optionnelle)</span></div>'; }
   else if(!cart.length){ box.innerHTML='<div class="ticket-empty"><span class="te-icon">🍽</span>Ticket vide<br>Touchez un produit pour l\'ajouter</div>'; }
   else {
     box.innerHTML=cart.map(function(c){
@@ -1291,7 +1294,8 @@ function quickPay(mode){
   finalizeSale(mode, {});
 }
 function ensureCart(){
-  if(!S.selectedSlot){ toast('⚠ Sélectionnez une table','var(--orange)'); return false; }
+  // ⚡ Table no longer required — only need at least one item in the ticket
+  if(!S.selectedSlot){ S.selectedSlot={type:'comptoir',id:'direct'}; setTxt('pos-table-label','🛎 Comptoir / Direct'); }
   if(!curCart().length){ toast('⚠ Ticket vide','var(--orange)'); return false; }
   return true;
 }
@@ -1420,8 +1424,8 @@ function finalizeSale(mode, extra){
   var tx={
     ref:ref, id:Date.now(),
     date:todayDate(), time:nowTime(),
-    type:S.selectedSlot.type==='takeaway'?'takeaway':'dine-in',
-    table:S.selectedSlot.id,
+    type:S.selectedSlot.type==='takeaway'?'takeaway':(S.selectedSlot.type==='comptoir'?'comptoir':(S.selectedSlot.type==='online'?'web':'dine-in')),
+    table:S.selectedSlot.type==='comptoir'?'Comptoir':(S.selectedSlot.type==='online'?('En ligne #'+String(S.selectedSlot.id).slice(-6)):S.selectedSlot.id),
     items:cart.map(function(c){ return {name:c.n,qty:c.q,price:c.p,n:c.n,q:c.q,p:c.p}; }),
     subtotal:t.sub, tva:t.tva, discount:t.disc, total:t.total,
     mode:mode,
@@ -1591,11 +1595,31 @@ function approveOrder(ref){
     method:'PATCH',headers:Object.assign({'Content-Type':'application/json'},_authHeader()),
     body:JSON.stringify({status:'approved',by:S.employee?S.employee.name:'?'})
   }).catch(function(){});
-  // Build a print-ready tx and print
+  // ⚡ Load the approved order into the ✦ TICKET panel (so the cashier sees it there)
+  loadOrderIntoTicket(o);
+  // Close the orders drawer so the ticket panel is visible
+  el('orders-drawer').classList.remove('open');
+  // Print the ticket immediately (button says "Approuver & Imprimer")
   printTicket(orderToTx(o));
   updateBell(countNewOrders(), false);
   renderOrders();
-  toast('✅ Commande '+ref+' approuvée & imprimée','var(--green)');
+  toast('✅ Commande '+ref+' chargée dans le ✦ TICKET & imprimée','var(--green)');
+}
+// Load an online order's items into the right-hand ✦ TICKET panel for review/print.
+function loadOrderIntoTicket(o){
+  var ref   = orderRef(o);
+  var items = parseItems(o);   // normalized [{name,qty,price}]
+  var key   = 'online:'+ref;
+  S.carts[key] = items.map(function(i){ return { n:i.name, p:i.price, q:i.qty }; });
+  S.selectedSlot = { type:'online', id:ref };
+  // Link the customer (name + phone) if present
+  var phone = o.phone || (o.notes && (o.notes.match(/Tel[:\s]*([0-9+]+)/i)||[])[1]) || '';
+  var cust  = o.customer||o.client||o.customerName||o.name||'Client Web';
+  S.client = { phone:phone, name:cust };
+  el('client-badge').innerHTML = '<b>'+esc(cust)+'</b>'+esc(phone||'commande en ligne');
+  setTxt('pos-table-label', '🌐 En ligne #'+String(ref).slice(-6));
+  refreshTableStates();
+  renderTicket();
 }
 function reprintOrder(ref){ var o=findOrder(ref); if(o) printTicket(orderToTx(o)); }
 function orderToTx(o){
@@ -1655,7 +1679,7 @@ function printTicket(tx){
     '<div style="border-top:1px dashed #000;margin:6px 0"></div>',
     '<div>Réf: '+esc(tx.ref||'')+'</div>',
     '<div>'+esc(tx.date)+' '+esc(tx.time)+'</div>',
-    '<div>'+(tx.type==='takeaway'?'À Emporter: ':(tx.type==='web'?'Commande en ligne ':'Table: '))+esc(tx.table||'')+'</div>',
+    '<div>'+(tx.type==='takeaway'?'À Emporter: ':(tx.type==='web'?'Commande en ligne ':(tx.type==='comptoir'?'':'Table: ')))+esc(tx.table||'')+'</div>',
     '<div>Mode: '+esc(tx.mode||'')+'</div>',
     (tx.staffName?'<div>Caissier: '+esc(tx.staffName)+'</div>':''),
     (tx.client?'<div>Client: '+esc(tx.client)+'</div>':''),
@@ -1694,8 +1718,13 @@ function loadDailyStats(){
 // ════════════════════════════════════════════════════════════════
 var _admPin='';
 function openAdmin(){
-  // Manager-only: if current employee is admin, go straight in; else require PIN
-  if(S.employee && S.employee.admin){ showAdmin(); return; }
+  // ⚡ Security: Admin dashboard ALWAYS requires an admin-level PIN check,
+  // using the same PIN logic as employee login. The button itself is only
+  // visible to admin employees (set in unlockRegister), this is the 2nd gate.
+  if(!(S.employee && S.employee.admin)){
+    toast('🔒 Accès réservé aux administrateurs','var(--red)');
+    return;
+  }
   _admPin=''; renderAdmPinDots();
   el('admin-pin-modal').classList.add('open');
   el('adm-pin-err').classList.remove('show');
