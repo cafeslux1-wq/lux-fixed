@@ -1660,6 +1660,8 @@ function approveOrder(ref){
   // ⚡ INSTANT feedback first: card flips to "Approuvée", bell updates
   updateBell(countNewOrders(), false);
   renderOrders();
+  // ⚡ Broadcast to the Kitchen Display (KDS) so it shows the approved order at once
+  notifyKDS(o);
 
   // ⚡ Behavior depends on the Admin setting (Option B vs Option C)
   var mode = posConfig().approveMode || 'print';
@@ -1691,6 +1693,17 @@ function loadOrderIntoTicket(o){
   renderTicket();
 }
 function reprintOrder(ref){ var o=findOrder(ref); if(o) printTicket(orderToTx(o)); }
+// ⚡ Notify the Kitchen Display (KDS) that an order was approved → it refreshes
+// instantly (cross-tab) instead of waiting for its 5s poll. The KDS also reads
+// the same /api/orders list, so this is just a speed-up, not a dependency.
+function notifyKDS(o){
+  try{
+    var bus=new BroadcastChannel('lux-kds');
+    bus.postMessage({type:'order-approved', id:(o&&(o.id||orderRef(o)))||null, at:Date.now()});
+    setTimeout(function(){ try{bus.close();}catch(e){} },800);
+  }catch(e){}
+  try{ localStorage.setItem('lux_kds_ping', String(Date.now())); }catch(e){}
+}
 function orderToTx(o){
   var items = parseItems(o);
   // Derive subtotal/total/tva from whatever the order provides

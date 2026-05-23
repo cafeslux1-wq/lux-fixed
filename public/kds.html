@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Café LUX | Cuisine KDS</title>
+<script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#070707; --bg2:#101010; --card:#161616; --card2:#1d1d1d;
+  --gold:#C9A84C; --gold-l:#E8C97A; --gold-d:#8B6E2F;
+  --text:#F2ECDD; --muted:#9a948a;
+  --border:#2a2a2a; --border-g:rgba(201,168,76,.22);
+  --green:#46c878; --green-bg:rgba(70,200,120,.14);
+  --orange:#E89B3D; --orange-bg:rgba(232,155,61,.14);
+  --red:#e0524f;
+  --font-d:'Cinzel',serif; --font-p:'Playfair Display',serif;
+  --font-b:'DM Sans',sans-serif; --font-m:'JetBrains Mono',monospace;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);
+  background-image:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,168,76,.05), transparent 70%);
+  min-height:100vh}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:rgba(201,168,76,.3);border-radius:4px}
+
+/* TOPBAR */
+.kds-top{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:16px 22px;background:linear-gradient(180deg,var(--bg2),rgba(16,16,16,.9));
+  border-bottom:1px solid var(--border-g);backdrop-filter:blur(8px)}
+.kds-logo{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--gold);letter-spacing:3px}
+.kds-title{font-family:var(--font-p);font-size:15px;color:var(--gold-l)}
+.kds-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.kds-stat{margin-left:auto;display:flex;align-items:center;gap:12px}
+.kds-count{background:var(--card2);border:1px solid var(--border-g);border-radius:12px;
+  padding:8px 16px;font-size:13px;color:var(--text)}
+.kds-count b{color:var(--gold);font-family:var(--font-m);font-size:16px}
+.kds-clock{font-family:var(--font-m);font-size:15px;color:var(--gold-l)}
+.kds-btn{padding:10px 18px;border-radius:40px;background:rgba(201,168,76,.12);
+  border:1px solid var(--gold);color:var(--gold);font-size:14px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:.18s}
+.kds-btn:hover{background:rgba(201,168,76,.25)}
+.kds-btn:active{transform:scale(.96)}
+
+/* CONNECTION INDICATOR */
+.conn{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:30px;font-size:12px;font-weight:600;
+  border:1px solid transparent;transition:.3s}
+.conn .dot{width:9px;height:9px;border-radius:50%;animation:pulse 2s infinite}
+.conn.online{background:var(--green-bg);color:var(--green);border-color:rgba(70,200,120,.3)}
+.conn.online .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.conn.offline{background:rgba(224,82,79,.14);color:var(--red);border-color:rgba(224,82,79,.35)}
+.conn.offline .dot{background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* GRID */
+#kds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;
+  padding:22px;align-content:start}
+.kds-empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:16px;padding:80px 20px}
+.kds-empty .ico{font-size:54px;display:block;margin-bottom:16px;opacity:.5}
+
+/* ORDER CARD */
+.oc{background:linear-gradient(165deg,var(--card),var(--bg2));border:1.5px solid var(--border-g);
+  border-radius:20px;padding:18px;display:flex;flex-direction:column;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);position:relative;overflow:hidden;
+  animation:cardIn .35s cubic-bezier(.2,.8,.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.oc.ready{border-color:rgba(70,200,120,.55)}
+.oc.ready::before{content:'';position:absolute;inset:0;background:var(--green-bg);pointer-events:none}
+.oc.fresh{border-color:var(--orange)}
+.oc.fresh::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--orange)}
+.oc-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;position:relative}
+.oc-id{font-family:var(--font-p);font-size:22px;font-weight:700;color:var(--gold)}
+.oc-badges{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.b{padding:5px 11px;border-radius:30px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.b-type{background:var(--gold);color:#111}
+.b-status-prep{background:var(--orange-bg);color:var(--orange)}
+.b-status-ready{background:var(--green-bg);color:var(--green)}
+.oc-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:14px;position:relative}
+.oc-items{border-left:3px solid var(--gold);padding-left:14px;margin-bottom:16px;position:relative}
+.oc-item{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;margin-bottom:9px;line-height:1.3}
+.oc-item .q{font-family:var(--font-m);color:var(--gold-l);font-weight:600;font-size:16px;min-width:34px}
+.oc-item .nm{flex:1;color:var(--text);padding:0 8px}
+.oc-item .pr{color:var(--muted);font-size:13px;font-family:var(--font-m)}
+.oc-note{font-size:12px;color:var(--orange);background:var(--orange-bg);border-radius:8px;padding:6px 10px;margin-bottom:12px}
+.oc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;gap:10px;position:relative}
+.oc-total{font-family:var(--font-m);font-size:18px;font-weight:700;color:var(--gold-l)}
+.oc-btn{flex:1;max-width:60%;padding:14px;border-radius:14px;border:none;cursor:pointer;
+  font-size:15px;font-weight:700;font-family:inherit;transition:.18s;color:#0a0a0a;
+  background:linear-gradient(135deg,var(--gold),var(--gold-l))}
+.oc-btn:hover{filter:brightness(1.08)}
+.oc-btn:active{transform:scale(.96)}
+.oc-btn.done{background:var(--green);color:#0a1a0e;cursor:default}
+.oc-btn:disabled{opacity:.6;cursor:wait}
+.oc-age{font-size:11px;font-family:var(--font-m);color:var(--muted)}
+.oc-age.late{color:var(--red);font-weight:700}
+
+/* TOAST */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--card2);border:1px solid var(--gold);color:var(--gold-l);padding:13px 24px;
+  border-radius:40px;font-size:14px;font-weight:600;z-index:2000;opacity:0;transition:.3s;
+  box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:620px){
+  #kds-grid{grid-template-columns:1fr;padding:14px;gap:14px}
+  .kds-top{padding:12px 16px;gap:10px}
+  .kds-logo{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="kds-top">
+  <div>
+    <div class="kds-logo">✦ LUX</div>
+  </div>
+  <div>
+    <div class="kds-title">📺 Cuisine KDS</div>
+    <div class="kds-sub">Commandes en préparation · sync temps réel</div>
+  </div>
+  <div class="kds-stat">
+    <div class="kds-count">À préparer <b id="kc-count">0</b></div>
+    <div class="kds-clock" id="kc-clock">--:--</div>
+    <div class="conn online" id="conn"><span class="dot"></span><span id="conn-txt">Connexion...</span></div>
+    <button class="kds-btn" id="refreshBtn">🔄 Actualiser</button>
+  </div>
+</div>
+
+<div id="kds-grid">
+  <div class="kds-empty"><span class="ico">⏳</span>Chargement des commandes...</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+var POLL_MS = 5000;
+
+// ── State ──
+var ORDERS = [];
+var KNOWN_IDS = {};          // id → true (to detect brand-new orders for the chime)
+var BUSY = {};               // id → true while a status PATCH is in flight
+var _firstLoad = true;
+
+// ── Helpers ──
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function authHeader(){ try{ var t=localStorage.getItem('lux_token'); return t?{'Authorization':'Bearer '+t}:{}; }catch(e){ return {}; } }
+
+var _toastT;
+function toast(msg, ms){
+  var t=el('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ t.classList.remove('show'); }, ms||2200);
+}
+function setConn(online){
+  var c=el('conn');
+  c.className='conn '+(online?'online':'offline');
+  el('conn-txt').textContent = online ? 'En ligne' : 'Hors ligne';
+}
+function clock(){ el('kc-clock').textContent = new Date().toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}); }
+setInterval(clock,1000); clock();
+
+// ── Normalize an order from the API (handles many possible shapes) ──
+function normalizeOrder(o){
+  // items: array or JSON string, with various field names
+  var raw = o.items || o.lineItems || o.products || o.cart || o.orderItems;
+  if(typeof raw==='string'){ try{ raw=JSON.parse(raw); }catch(e){ raw=[]; } }
+  if(!Array.isArray(raw)) raw=[];
+  var items = raw.map(function(x){
+    if(typeof x==='string') return {n:x,q:1,p:0};
+    return {
+      n: x.name||x.n||x.title||x.productName||x.product||'Article',
+      q: parseInt(x.qty!=null?x.qty:(x.q!=null?x.q:(x.quantity!=null?x.quantity:1)))||1,
+      p: parseFloat(x.price!=null?x.price:(x.p!=null?x.p:(x.unitPrice!=null?x.unitPrice:0)))||0,
+    };
+  });
+  var total = parseFloat(o.total!=null?o.total:(o.amount!=null?o.amount:0))||0;
+  if(!total && items.length) total = items.reduce(function(s,i){ return s+i.p*i.q; },0);
+  var type = (o.type||o.orderType||'').toLowerCase();
+  var status = (o.status||o.state||'pending').toLowerCase();
+  return {
+    id:       o.id||o.ref||o.externalId||('?'+Math.random().toString(36).slice(2,7)),
+    rawId:    o.id!=null?o.id:(o.ref||o.externalId),
+    customer: o.customer||o.client||o.customerName||o.name||(type==='delivery'?'Client livraison':'Client'),
+    type:     type,
+    table:    o.table||o.tableNo||o.table_no||'',
+    address:  o.address||o.deliveryAddr||o.delivery_address||'',
+    items:    items,
+    total:    total,
+    notes:    o.notes||o.note||o.comment||'',
+    status:   status,
+    time:     o.time || (o.createdAt?new Date(o.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):(o.created_date?new Date(o.created_date).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):'')),
+    ts:       o.createdAt?new Date(o.createdAt).getTime():(o.created_date?new Date(o.created_date).getTime():(typeof o.id==='number'?o.id:Date.now())),
+  };
+}
+
+// Status the kitchen still needs to act on (exclude finished/cancelled)
+function isActiveForKitchen(st){
+  return ['delivered','completed','done','served','cancelled','canceled','archived','refused','rejected'].indexOf(st)===-1;
+}
+function isReady(st){ return ['ready','prête','prete','prepared'].indexOf(st)!==-1; }
+
+function typeLabel(o){
+  if(o.type==='delivery'||/livr/.test(o.type)) return '🛵 Livraison';
+  if(o.type==='takeaway'||/emporter|away/.test(o.type)) return '🥡 Emporter';
+  if(o.type==='table'||o.type==='dine-in'||/place|sur/.test(o.type)) return '🪑 Sur place'+(o.table?(' · T'+o.table):'');
+  if(o.type==='web'||o.type==='online') return '🌐 En ligne';
+  return '📦 Commande';
+}
+function ageMin(o){ if(!o.ts) return null; return Math.floor((Date.now()-o.ts)/60000); }
+
+// ── Fetch live orders (with endpoint fallbacks + offline handling) ──
+function fetchOrders(){
+  var paths=['/api/orders?status=pending','/api/orders?source=web','/api/orders'];
+  var i=0;
+  function attempt(){
+    if(i>=paths.length) return Promise.resolve(null);
+    return fetch(API+paths[i],{headers:Object.assign({'Accept':'application/json'},authHeader())})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(d){
+        var arr = Array.isArray(d)?d:(d&&(d.orders||d.data||d.transactions||d.items||d.rows));
+        if(Array.isArray(arr)) return arr;
+        i++; return attempt();
+      })
+      .catch(function(){ i++; return attempt(); });
+  }
+  return attempt();
+}
+
+function refresh(silent){
+  fetchOrders().then(function(list){
+    if(!Array.isArray(list)){ setConn(false); if(!silent) toast('⚠️ API injoignable — mode hors-ligne'); renderKDS(); return; }
+    setConn(true);
+    var normalized = list.map(normalizeOrder)
+      .filter(function(o){ return isActiveForKitchen(o.status); })
+      .sort(function(a,b){ return b.ts-a.ts; });
+    // Detect brand-new orders (after first load) for the alert
+    if(!_firstLoad){
+      var fresh = normalized.filter(function(o){ return !KNOWN_IDS[o.id] && !isReady(o.status); });
+      if(fresh.length){ toast('📢 '+fresh.length+' nouvelle(s) commande(s) en cuisine !', 3000); chime(); }
+    }
+    normalized.forEach(function(o){ KNOWN_IDS[o.id]=true; });
+    ORDERS = normalized;
+    _firstLoad=false;
+    renderKDS();
+  });
+}
+
+// ── Render ──
+function renderKDS(){
+  var grid=el('kds-grid');
+  var active = ORDERS;
+  el('kc-count').textContent = active.filter(function(o){ return !isReady(o.status); }).length;
+  if(!active.length){
+    grid.innerHTML='<div class="kds-empty"><span class="ico">🍽️</span>Aucune commande à préparer.<br>Belle journée en cuisine !</div>';
+    return;
+  }
+  grid.innerHTML = active.map(function(o){
+    var ready=isReady(o.status);
+    var fresh=(!ready && ageMin(o)!=null && ageMin(o)<=2);
+    var itemsHtml=o.items.map(function(it){
+      return '<div class="oc-item"><span class="q">'+it.q+'×</span><span class="nm">'+esc(it.n)+'</span><span class="pr">'+(it.p*it.q)+' DH</span></div>';
+    }).join('') || '<div class="oc-item"><span class="nm" style="color:var(--muted)">Aucun article</span></div>';
+    var age=ageMin(o);
+    var ageHtml = age!=null ? '<span class="oc-age'+(age>=15?' late':'')+'">⏱ '+age+' min</span>' : '';
+    var noteHtml = o.notes ? '<div class="oc-note">📝 '+esc(o.notes)+'</div>' : '';
+    return '<div class="oc'+(ready?' ready':'')+(fresh?' fresh':'')+'">'+
+      '<div class="oc-head"><span class="oc-id">#'+esc(String(o.id).slice(-6))+'</span>'+
+        '<div class="oc-badges">'+
+          '<span class="b '+(ready?'b-status-ready':'b-status-prep')+'">'+(ready?'✔️ Prête':'⏳ En cuisine')+'</span>'+
+          '<span class="b b-type">'+typeLabel(o)+'</span>'+
+        '</div></div>'+
+      '<div class="oc-meta"><span>🧑‍🍳 '+esc(o.customer)+'</span><span>'+(o.time?('⏱️ '+esc(o.time)):'')+'</span></div>'+
+      noteHtml+
+      '<div class="oc-items">'+itemsHtml+'</div>'+
+      '<div class="oc-foot"><span class="oc-total">'+o.total+' DH</span>'+ageHtml+
+        (ready
+          ? '<button class="oc-btn done" disabled>✅ Prête</button>'
+          : '<button class="oc-btn" '+(BUSY[o.id]?'disabled':'')+' onclick="markReady('+JSON.stringify(o.rawId)+')">'+(BUSY[o.id]?'⏳...':'🍳 Marquer prête')+'</button>')+
+      '</div></div>';
+  }).join('');
+}
+
+// ── Two-way sync: mark order ready on the backend ──
+function markReady(rawId){
+  if(rawId==null) return;
+  var o = ORDERS.find(function(x){ return String(x.rawId)===String(rawId); });
+  if(!o){ return; }
+  if(BUSY[o.id]){ return; }
+  BUSY[o.id]=true; renderKDS();
+  // Use the same convention as the POS: PATCH /api/orders/:id/status {status:'ready'}
+  fetch(API+'/api/orders/'+encodeURIComponent(rawId)+'/status',{
+    method:'PATCH',
+    headers:Object.assign({'Content-Type':'application/json'},authHeader()),
+    body:JSON.stringify({status:'ready', by:'Cuisine'})
+  })
+  .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json().catch(function(){return{};}); })
+  .then(function(){
+    BUSY[o.id]=false;
+    o.status='ready';                 // optimistic local update
+    toast('✅ Commande #'+String(o.id).slice(-6)+' prête — service en salle', 2200);
+    renderKDS();
+  })
+  .catch(function(){
+    // Fallback: try PUT in case the backend expects PUT, else revert
+    fetch(API+'/api/orders/'+encodeURIComponent(rawId),{
+      method:'PUT',headers:Object.assign({'Content-Type':'application/json'},authHeader()),
+      body:JSON.stringify({status:'ready'})
+    }).then(function(r){ if(!r.ok) throw new Error(); return r; })
+      .then(function(){ BUSY[o.id]=false; o.status='ready'; toast('✅ Commande #'+String(o.id).slice(-6)+' prête', 2200); renderKDS(); })
+      .catch(function(){
+        BUSY[o.id]=false;
+        toast('⚠️ Échec de mise à jour — vérifiez la connexion', 2600);
+        renderKDS();
+      });
+  });
+}
+
+// ── Soft chime on new orders (WebAudio, no asset needed) ──
+function chime(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.value=880;
+    g.gain.setValueAtTime(.0001,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.2,ctx.currentTime+.05);
+    g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.6);
+    o.start(); o.stop(ctx.currentTime+.6);
+  }catch(e){}
+}
+
+// ── Boot + polling ──
+el('refreshBtn').addEventListener('click', function(){ refresh(false); toast('📋 Actualisé', 1200); });
+window.markReady = markReady;
+
+// ⚡ Instant cross-tab sync: when the POS approves an order it pings 'lux-kds'
+// (BroadcastChannel) and writes localStorage 'lux_kds_ping'. We refresh at once
+// instead of waiting for the 5s poll. Works when POS + KDS share a browser.
+try{
+  var bus=new BroadcastChannel('lux-kds');
+  bus.onmessage=function(e){ if(e.data&&(e.data.type==='order-approved'||e.data.type==='refresh')){ refresh(true); toast('📢 Nouvelle commande envoyée en cuisine',2500); chime(); } };
+}catch(e){}
+window.addEventListener('storage', function(e){ if(e.key==='lux_kds_ping'){ refresh(true); } });
+
+refresh(true);
+var _poll = setInterval(function(){ if(!document.hidden) refresh(true); }, POLL_MS);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) refresh(true); });
+window.addEventListener('beforeunload', function(){ clearInterval(_poll); });
+</script>
+</body>
+</html>
