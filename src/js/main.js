@@ -505,9 +505,10 @@ window.__MAESTRO_IS_RUNNING = true;
     });
   }
 
-  // ── Service Worker cache bust ───────────────────────────────
+// ── Service Worker cache bust ───────────────────────────────
   function bustOldServiceWorkers() {
     if (!('serviceWorker' in navigator)) return;
+    
     navigator.serviceWorker.getRegistrations().then(function (regs) {
       regs.forEach(function (r) {
         // Unregister old SWs from previous deployments
@@ -518,6 +519,7 @@ window.__MAESTRO_IS_RUNNING = true;
         }
       });
     }).catch(function () {});
+
     // Clear old caches
     if ('caches' in window) {
       caches.keys().then(function (keys) {
@@ -529,7 +531,7 @@ window.__MAESTRO_IS_RUNNING = true;
         });
       });
     }
-  }
+  } // تم إغلاق الدالة هنا
 
   // ── Bootstrap ───────────────────────────────────────────────
   function bootstrap() {
