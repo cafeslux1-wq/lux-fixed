@@ -55,28 +55,41 @@ input,button,select,textarea{font-family:inherit}
 }
 .cart-badge:hover{transform:scale(1.1)}
 
-/* ── Layout ────────────────────────────────────────────────── */
+/* ── Layout (3-column SaaS: top categories · grid · right cart) ── */
 .app-layout{
-  display:flex;height:100vh;padding-top:var(--topbar-h);
+  display:grid;
+  grid-template-columns:1fr 300px;
+  grid-template-rows:auto 1fr;
+  grid-template-areas:"cats cart" "main cart";
+  height:100vh;padding-top:var(--topbar-h);
 }
 
-/* ── Sidebar (category nav) ────────────────────────────────── */
+/* ── Categories: horizontal scrollable pill bar (was vertical sidebar) ── */
 .sidebar{
-  width:var(--sidebar-w);flex-shrink:0;background:var(--dark);
-  overflow-y:auto;padding:12px 8px;border-right:1px solid rgba(201,168,76,.15);
+  grid-area:cats;
+  display:flex;align-items:center;gap:8px;
+  width:auto;background:var(--dark);
+  overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+  padding:11px 16px;border-right:none;border-bottom:1px solid rgba(201,168,76,.15);
+  scrollbar-width:thin;
 }
-.sidebar-label{font-size:9px;letter-spacing:3px;color:rgba(201,168,76,.4);text-transform:uppercase;padding:8px 8px 6px;margin-top:8px}
+.sidebar::-webkit-scrollbar{height:6px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(201,168,76,.3);border-radius:6px}
+.sidebar-label{font-size:9px;letter-spacing:3px;color:rgba(201,168,76,.4);text-transform:uppercase;
+  padding:0 8px 0 2px;margin:0;flex-shrink:0}
+#cat-nav-list{display:flex;gap:7px;align-items:center}
 .cat-btn{
-  width:100%;text-align:left;padding:9px 12px;border:none;background:none;
-  color:rgba(240,232,213,.6);font-size:12px;font-weight:500;cursor:pointer;
-  border-radius:8px;transition:.15s;display:flex;align-items:center;gap:8px;
+  width:auto;flex-shrink:0;white-space:nowrap;text-align:center;padding:9px 16px;
+  border:1px solid rgba(201,168,76,.15);background:rgba(255,255,255,.04);
+  color:rgba(240,232,213,.6);font-size:12px;font-weight:600;cursor:pointer;
+  border-radius:30px;transition:.15s;display:inline-flex;align-items:center;gap:7px;
 }
-.cat-btn:hover,.cat-btn:focus{background:rgba(201,168,76,.08);color:var(--gold)}
-.cat-btn.active{background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.06));color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:9px;}
-.cat-btn.active{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));color:var(--gold);font-weight:700;border-left:2px solid var(--gold)}
+.cat-btn:hover,.cat-btn:focus{background:rgba(201,168,76,.1);color:var(--gold);border-color:rgba(201,168,76,.4)}
+.cat-btn.active{background:rgba(201,168,76,.16);color:var(--gold);font-weight:700;
+  border:1px solid var(--gold);border-left:1px solid var(--gold);padding:9px 16px}
 
 /* ── Menu Grid ─────────────────────────────────────────────── */
-.menu-main{flex:1;overflow-y:auto;padding:16px}
+.menu-main{grid-area:main;overflow-y:auto;padding:16px}
 .cat-section{margin-bottom:28px}
 .cat-title{font-family:var(--font-display);font-size:20px;color:var(--text);margin-bottom:3px}
 .cat-sub{font-size:11px;color:var(--muted);margin-bottom:12px}
@@ -107,6 +120,7 @@ input,button,select,textarea{font-family:inherit}
 
 /* ── Cart Panel ────────────────────────────────────────────── */
 .cart-panel{
+  grid-area:cart;
   width:300px;flex-shrink:0;background:var(--dark);border-left:1px solid rgba(201,168,76,.15);
   display:flex;flex-direction:column;overflow:hidden;
 }
@@ -163,14 +177,43 @@ input,button,select,textarea{font-family:inherit}
 .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:rgba(201,168,76,.5)}
 .field-select option{background:#1A1A1A}
 .field-textarea{resize:vertical;min-height:60px}
-.pay-methods-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 18px}
-.pay-method-btn{
-  padding:10px;background:#1A1A1A;border:1.5px solid rgba(201,168,76,.15);
-  border-radius:10px;color:rgba(240,232,213,.6);font-size:12px;font-weight:600;
-  cursor:pointer;text-align:center;transition:.2s;
+.pay-methods-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 6px;
 }
-.pay-method-btn:hover{border-color:rgba(201,168,76,.4);color:var(--gold)}
-.pay-method-btn.selected{border-color:var(--gold);background:rgba(201,168,76,.08);color:var(--gold)}
+.pay-method-btn{
+  position:relative;padding:14px 8px 12px;background:#161616;
+  border:2px solid rgba(201,168,76,.12);border-radius:14px;
+  color:rgba(240,232,213,.55);font-size:11px;font-weight:700;
+  cursor:pointer;text-align:center;transition:.2s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  -webkit-tap-highlight-color:transparent;
+}
+.pay-method-btn .pay-icon{font-size:22px;line-height:1}
+.pay-method-btn .pay-label{font-size:10px;letter-spacing:.3px;line-height:1.3}
+.pay-method-btn:hover{border-color:rgba(201,168,76,.35);color:var(--gold);background:#1A1A1A}
+.pay-method-btn.selected{
+  border-color:var(--gold);background:rgba(201,168,76,.1);color:var(--gold);
+  box-shadow:0 0 0 3px rgba(201,168,76,.12);
+}
+.pay-method-btn.selected::after{
+  content:'✓';position:absolute;top:6px;right:8px;
+  font-size:10px;font-weight:900;color:var(--gold);
+}
+/* Gift card code input */
+.gift-card-field{
+  display:none;margin-top:8px;margin-bottom:4px;
+  animation:slide-in .2s ease;
+}
+@keyframes slide-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.gift-card-field.show{display:block}
+.gift-card-input{
+  width:100%;background:#1A1A1A;border:2px solid var(--gold);border-radius:10px;
+  color:var(--gold);padding:11px 14px;font-size:14px;font-weight:700;
+  outline:none;letter-spacing:2px;text-transform:uppercase;
+  text-align:center;font-family:monospace;
+}
+.gift-card-input::placeholder{color:rgba(201,168,76,.3);letter-spacing:1px;font-size:12px}
+.gift-card-hint{font-size:10px;color:rgba(201,168,76,.5);text-align:center;margin-top:5px;letter-spacing:.5px}
 .modal-actions{display:flex;gap:8px;margin-top:4px}
 .btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(201,168,76,.2);border-radius:10px;color:rgba(240,232,213,.4);font-size:12px;cursor:pointer}
 .btn-confirm{flex:2;padding:12px;background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.5px}
@@ -291,6 +334,7 @@ input,button,select,textarea{font-family:inherit}
 
   /* ── Layout ────────────────────────────────────────────── */
   .app-layout{
+    display:block;
     flex-direction:column;
     padding-top:var(--content-top);
     height:100vh;
@@ -362,7 +406,9 @@ input,button,select,textarea{font-family:inherit}
     margin:0;
   }
   .modal-title{ font-size:16px;margin-bottom:14px }
-  .pay-methods-grid{ grid-template-columns:repeat(2,1fr) }
+  /* Gift card input on mobile */
+  .pay-methods-grid{ grid-template-columns:repeat(3,1fr) }
+  .gift-card-input{ font-size:16px;padding:13px 14px }
 
   /* ── Success banner ───────────────────────────────────── */
   .success-banner{
@@ -382,75 +428,6 @@ input,button,select,textarea{font-family:inherit}
   .item-img,.item-img-ph{ height:110px }
   .mobile-cat-chip{ font-size:10px;padding:5px 10px }
 }
-
-/* ════════════════════════════════════════════════════════════
-   ⚡ TASK 1 — LUX SESSION BANNER
-   Shown inside checkout modal when user is authenticated via
-   Mon Espace LUX (lux_customer_session in localStorage).
-═════════════════════════════════════════════════════════════ */
-.lux-session-banner{
-  display:none;
-  align-items:center;
-  gap:10px;
-  background:linear-gradient(135deg, rgba(61,190,122,.10), rgba(61,190,122,.03));
-  border:1px solid rgba(61,190,122,.35);
-  border-radius:12px;
-  padding:11px 14px;
-  margin-bottom:16px;
-  font-size:12px;
-  color:#3DBE7A;
-  line-height:1.45;
-  position:relative;
-  overflow:hidden;
-}
-.lux-session-banner::before{
-  content:'';
-  position:absolute; top:0; left:0; right:0; height:1px;
-  background:linear-gradient(90deg, transparent, #3DBE7A, transparent);
-  opacity:.5;
-}
-.lux-session-banner.active{ display:flex; }
-.lux-session-banner .lsb-dot{
-  width:9px; height:9px; border-radius:50%;
-  background:#3DBE7A;
-  box-shadow:0 0 12px #3DBE7A, 0 0 0 4px rgba(61,190,122,.18);
-  animation:lsbPulse 1.8s ease-in-out infinite;
-  flex-shrink:0;
-}
-@keyframes lsbPulse{
-  0%,100%{ opacity:1; transform:scale(1); }
-  50%    { opacity:.45; transform:scale(1.15); }
-}
-.lux-session-banner strong{
-  color:#fff; font-weight:600;
-}
-.lux-session-banner .lsb-tier{
-  display:inline-block;
-  background:rgba(201,168,76,.18);
-  color:#E8C97A;
-  border:1px solid rgba(201,168,76,.35);
-  padding:2px 7px; border-radius:8px;
-  font-size:9px; letter-spacing:1px; font-weight:700;
-  text-transform:uppercase;
-  margin-left:6px;
-}
-.lux-session-banner .lsb-switch{
-  margin-left:auto;
-  font-size:10px; color:#888;
-  text-decoration:underline;
-  cursor:pointer;
-  letter-spacing:.3px;
-}
-.lux-session-banner .lsb-switch:hover{ color:#3DBE7A; }
-
-/* Locked input style (when session pre-fills name/phone) */
-.field-input.lux-locked{
-  background:rgba(61,190,122,.05) !important;
-  border-color:rgba(61,190,122,.25) !important;
-  color:#fff !important;
-  cursor:default;
-}
-.field-input.lux-locked:focus{ outline:none; }
 
 </style>
 </head>
@@ -520,16 +497,6 @@ input,button,select,textarea{font-family:inherit}
   <div class="modal-box">
     <div class="modal-title">✦ Votre Commande</div>
 
-    <!-- ⚡ Task 1: LUX Session Banner (auto-shown when authenticated via Mon Espace) -->
-    <div class="lux-session-banner" id="lux-session-banner">
-      <span class="lsb-dot"></span>
-      <span>
-        Connecté en tant que <strong id="lsb-name">—</strong><span class="lsb-tier" id="lsb-tier" style="display:none">BRONZE</span><br>
-        <span style="opacity:.85;font-size:11px">Vos coordonnées sont déjà remplies · paiement direct</span>
-      </span>
-      <a class="lsb-switch" onclick="luxSwitchUser()">Changer</a>
-    </div>
-
     <div class="field-group">
       <label class="field-label">Nom du client *</label>
       <input id="f-name" type="text" class="field-input" placeholder="Votre prénom...">
@@ -555,12 +522,37 @@ input,button,select,textarea{font-family:inherit}
       <textarea id="f-notes" class="field-textarea" placeholder="Allergies, préférences..."></textarea>
     </div>
 
-    <div class="field-label" style="margin-bottom:8px">Mode de paiement</div>
+    <div class="field-label" style="margin-bottom:10px;color:rgba(240,232,213,.6)">
+      Mode de paiement <span style="color:var(--red)">*</span>
+    </div>
     <div class="pay-methods-grid">
-      <div class="pay-method-btn selected" data-pay="cash" onclick="selectPay(this)">💵 Espèces</div>
-      <div class="pay-method-btn" data-pay="card" onclick="selectPay(this)">💳 Carte</div>
-      <div class="pay-method-btn" data-pay="paypal" onclick="selectPay(this)">🅿️ PayPal</div>
-      <div class="pay-method-btn" data-pay="tpe" onclick="selectPay(this)">📟 TPE</div>
+
+      <button class="pay-method-btn" type="button" data-pay="cash" onclick="selectPay(this)">
+        <span class="pay-icon">💵</span>
+        <span class="pay-label">Espèces</span>
+      </button>
+
+      <button class="pay-method-btn" type="button" data-pay="tpe" onclick="selectPay(this)">
+        <span class="pay-icon">💳</span>
+        <span class="pay-label">Carte<br>Bancaire</span>
+      </button>
+
+      <button class="pay-method-btn" type="button" data-pay="gift_card" onclick="selectPay(this)">
+        <span class="pay-icon">🎁</span>
+        <span class="pay-label">Carte<br>Cadeau LUX</span>
+      </button>
+
+    </div>
+
+    <!-- Gift card code — visible only when gift_card selected -->
+    <div class="gift-card-field" id="gift-card-field">
+      <input type="text" id="f-gift-code"
+             class="gift-card-input"
+             placeholder="CODE-XXXX-XXXX"
+             maxlength="20"
+             autocomplete="off"
+             oninput="this.value=this.value.toUpperCase()">
+      <div class="gift-card-hint">✦ Entrez le code figurant sur votre carte cadeau LUX</div>
     </div>
 
     <div class="modal-actions">
@@ -1479,7 +1471,7 @@ const MENU = [
 
 // ── Cart State ────────────────────────────────────────────────
 var cart    = [];
-var payMode = 'cash';
+var payMode = '';  // '' = not selected yet
 
 // ── Utility ───────────────────────────────────────────────────
 function toast(msg) {
@@ -1673,109 +1665,18 @@ function toggleCart() {
 // ── Order Modal ───────────────────────────────────────────────
 function openOrderModal() {
   if (!cart.length) { toast('⚠ Panier vide'); return; }
-  // ⚡ Task 1: Try to pre-fill from Mon Espace session BEFORE showing the modal
-  luxApplySession();
   document.getElementById('order-modal').classList.add('open');
-}
-
-/* ════════════════════════════════════════════════════════════
-   ⚡ TASK 1 — SEAMLESS SESSION (set by Mon Espace LUX)
-   Reads lux_customer_session from localStorage (deposited by
-   the Mon Espace login flow via syncLegacySession). When found,
-   pre-fills name + phone in the checkout modal and shows a
-   green "Connecté" banner. The order POST then also carries
-   the Bearer token so the server can credit loyalty points.
-════════════════════════════════════════════════════════════ */
-var __luxSession = null;
-
-function luxGetSession() {
-  try {
-    var raw = localStorage.getItem('lux_customer_session');
-    if (!raw) return null;
-    var s = JSON.parse(raw);
-    if (!s || !s.phone) return null;
-    return s;
-  } catch (e) { return null; }
-}
-
-function luxGetToken() {
-  try {
-    // Prefer the inline _token (written by Mon Espace v2.0+)
-    if (__luxSession && __luxSession._token) return __luxSession._token;
-    // Fallback to the standalone lux_token key
-    return localStorage.getItem('lux_token') || null;
-  } catch (e) { return null; }
-}
-
-function luxApplySession() {
-  __luxSession = luxGetSession();
-  var banner = document.getElementById('lux-session-banner');
-  var nameEl = document.getElementById('f-name');
-  var phoneEl = document.getElementById('f-phone');
-
-  if (__luxSession) {
-    // Pre-fill (only if empty — never overwrite what the user typed manually)
-    if (!nameEl.value)  { nameEl.value  = __luxSession.name  || ''; }
-    if (!phoneEl.value) { phoneEl.value = __luxSession.phone || ''; }
-    // Lock styling for clarity
-    nameEl.classList.add('lux-locked');
-    phoneEl.classList.add('lux-locked');
-    // Show banner
-    document.getElementById('lsb-name').textContent = __luxSession.name || __luxSession.phone || 'Client LUX';
-    var tier = (__luxSession.level || '').toUpperCase();
-    var tierEl = document.getElementById('lsb-tier');
-    if (tier && tier !== 'BRONZE') { tierEl.textContent = tier; tierEl.style.display = 'inline-block'; }
-    else tierEl.style.display = 'none';
-    banner.classList.add('active');
-    console.log('[LUX] seamless session active for', __luxSession.name, '(' + __luxSession.phone + ')');
-  } else {
-    // No session — make sure banner is hidden and fields are unlocked
-    banner.classList.remove('active');
-    nameEl.classList.remove('lux-locked');
-    phoneEl.classList.remove('lux-locked');
-  }
-}
-
-function luxSwitchUser() {
-  // Allow the user to clear the session for this checkout only (no logout)
-  __luxSession = null;
-  document.getElementById('lux-session-banner').classList.remove('active');
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-phone').value = '';
-  document.getElementById('f-name').classList.remove('lux-locked');
-  document.getElementById('f-phone').classList.remove('lux-locked');
-  document.getElementById('f-name').focus();
-}
-
-/**
- * Notify other LUX tabs (especially Mon Espace) that an order
- * was just placed. The receiving page auto-refreshes its order
- * history and loyalty counter — no manual reload needed.
- * @param {string} ref    Order reference (e.g. WEB-1716567890123)
- * @param {number} total  Order total in DH
- * @param {number} points Loyalty points earned (Math.floor(total/10))
- */
-function luxNotifyOrderPlaced(ref, total, points) {
-  var payload = {
-    ref:    ref,
-    total:  total,
-    points: typeof points === 'number' ? points : Math.floor((total || 0) / 10),
-    at:     Date.now(),
-  };
-  try {
-    // Cross-tab via localStorage 'storage' event
-    localStorage.setItem('lux_order_placed', JSON.stringify(payload));
-  } catch (e) {}
-  try {
-    // Cross-tab via BroadcastChannel (modern browsers)
-    var bc = new BroadcastChannel('lux-session');
-    bc.postMessage({ type: 'order-placed', ref: ref, total: total, points: payload.points });
-    setTimeout(function() { try { bc.close(); } catch(e){} }, 1000);
-  } catch (e) {}
 }
 
 function closeModal() {
   document.getElementById('order-modal').classList.remove('open');
+  // Reset payment selection for next order
+  payMode = '';
+  document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
+  var gc = document.getElementById('gift-card-field');
+  if (gc) gc.classList.remove('show');
+  var gcInp = document.getElementById('f-gift-code');
+  if (gcInp) gcInp.value = '';
 }
 
 function toggleAddress() {
@@ -1788,17 +1689,50 @@ function selectPay(btn) {
   document.querySelectorAll('.pay-method-btn').forEach(function(b) { b.classList.remove('selected'); });
   btn.classList.add('selected');
   payMode = btn.getAttribute('data-pay');
+
+  // Show gift card code input only when gift_card is selected
+  var gcField = document.getElementById('gift-card-field');
+  if (gcField) {
+    if (payMode === 'gift_card') {
+      gcField.classList.add('show');
+      setTimeout(function() {
+        var inp = document.getElementById('f-gift-code');
+        if (inp) inp.focus();
+      }, 150);
+    } else {
+      gcField.classList.remove('show');
+      var inp = document.getElementById('f-gift-code');
+      if (inp) inp.value = '';
+    }
+  }
 }
 
 function confirmOrder() {
-  var name  = document.getElementById('f-name').value.trim();
-  var phone = document.getElementById('f-phone').value.trim();
-  var type  = document.getElementById('f-type').value;
-  var addr  = document.getElementById('f-addr').value.trim();
-  var notes = document.getElementById('f-notes').value.trim();
+  var name     = document.getElementById('f-name').value.trim();
+  var phone    = document.getElementById('f-phone').value.trim();
+  var type     = document.getElementById('f-type').value;
+  var addr     = document.getElementById('f-addr').value.trim();
+  var notes    = document.getElementById('f-notes').value.trim();
+  var giftCode = (document.getElementById('f-gift-code') || {}).value
+                   ? document.getElementById('f-gift-code').value.trim().toUpperCase()
+                   : '';
 
-  if (!name)  { toast('⚠ Entrez votre prénom'); return; }
-  // phone is optional for anonymous WhatsApp-style orders, but REQUIRED to credit loyalty
+  // ── Validations ──────────────────────────────────────────
+  if (!name)    { toast('⚠ Entrez votre prénom'); return; }
+  if (!payMode) {
+    // Flash all payment buttons to alert user
+    document.querySelectorAll('.pay-method-btn').forEach(function(b) {
+      b.style.borderColor = 'rgba(231,76,60,.6)';
+      setTimeout(function(){ b.style.borderColor = ''; }, 1000);
+    });
+    toast('⚠ Choisissez un mode de paiement');
+    return;
+  }
+  if (payMode === 'gift_card' && !giftCode) {
+    var gcInput = document.getElementById('f-gift-code');
+    if (gcInput) { gcInput.style.borderColor = 'var(--red)'; gcInput.focus(); setTimeout(function(){ gcInput.style.borderColor = 'var(--gold)'; }, 1000); }
+    toast('⚠ Entrez le code de votre carte cadeau'); return;
+  }
   if (type === 'delivery' && !addr) { toast('⚠ Entrez votre adresse'); return; }
 
   var sub   = cart.reduce(function(s,c) { return s + c.p * c.q; }, 0);
@@ -1809,46 +1743,30 @@ function confirmOrder() {
     return { name: c.n, price: c.p, qty: c.q };
   });
 
-  // ⚡ Task 1 — Single shared reference for both endpoints, so POS order and
-  // customer transaction can be correlated by external ID.
-  var sharedRef = 'WEB-' + Date.now();
-  var nowDate   = new Date().toISOString().slice(0, 10);
-  var nowTime   = new Date().toTimeString().slice(0, 5);
+  // Build POS-enriched note
+  var posNote = notes;
+  if (payMode === 'tpe')       posNote = '💳 TPE requis à la table' + (notes ? ' — ' + notes : '');
+  if (payMode === 'gift_card') posNote = '🎁 Carte Cadeau: ' + giftCode + (notes ? ' — ' + notes : '');
+  if (payMode === 'cash')      posNote = '💵 Espèces' + (notes ? ' — ' + notes : '');
 
-  // ── Payload 1: /api/orders (POS / Kitchen Display) ──────────────
   var order = {
-    source:     'web',
-    type:       type,
-    address:    addr,
-    notes:      notes,
-    payMethod:  payMode,
-    table:      null,
-    items:      apiItems,
-    subtotal:   sub,
-    total:      total,
-    ref:        sharedRef,
-    customer:   { name: name, phone: phone },
-  };
-
-  // ── Payload 2: /api/transactions/web (Customer History + Loyalty)
-  // CRITICAL: server.js:433-461 reads `phone` at TOP-LEVEL (not customer.phone)
-  // to credit loyaltyPoints (+1 per 10 DH). It also stores the phone in
-  // `notes` so /api/customers/me/orders can find this transaction.
-  var txPayload = {
-    ref:       sharedRef,
-    id:        Date.now(),
-    date:      nowDate,
-    time:      nowTime,
-    type:      type === 'table' ? 'dine-in' : (type === 'takeaway' ? 'takeaway' : 'delivery'),
-    table:     null,
-    items:     apiItems,
-    subtotal:  sub,
-    total:     total,
-    tva:       tva,
-    mode:      payMode || 'cash',
-    notes:     [notes || '', addr ? 'Adresse: ' + addr : ''].filter(Boolean).join(' · '),
-    customer:  name,
-    phone:     phone || (__luxSession ? __luxSession.phone : ''),  // ← top-level for loyalty
+    source:        'web',
+    type:          type,
+    address:       addr,
+    notes:         posNote,
+    payMethod:     payMode,
+    giftCardCode:  giftCode || null,   // null if not gift card
+    table:         detectTableNum(),
+    items:         apiItems,
+    subtotal:      sub,
+    total:         total,
+    customer:      { name: name, phone: phone },
+    _posHint: {
+      method:       payMode,
+      giftCardCode: giftCode || null,
+      needsTpe:     payMode === 'tpe',
+      isGiftCard:   payMode === 'gift_card',
+    },
   };
 
   var confirmBtn = document.querySelector('.btn-confirm');
@@ -1857,100 +1775,42 @@ function confirmOrder() {
 
   // ── Save to API ──────────────────────────────────────────
   var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
-
-  // Build headers — include Bearer token if a Mon Espace session is active
-  var headers = { 'Content-Type': 'application/json' };
-  var luxTok = luxGetToken();
-  if (luxTok) { headers['Authorization'] = 'Bearer ' + luxTok; }
-
-  // Stamp the order with session metadata so the server knows it's a logged-in customer
-  if (__luxSession) {
-    order.customer.email   = __luxSession.email || undefined;
-    order._luxSession      = true;
-    order._luxSource       = 'mon-espace';
-    order._luxLevel        = __luxSession.level || 'Bronze';
-    // Guarantee phone is set even if user cleared it manually — needed for loyalty
-    if (!txPayload.phone && __luxSession.phone) txPayload.phone = __luxSession.phone;
-  }
-
-  // ⚡ Task 1 — DUAL POST IN PARALLEL
-  //  1. /api/orders            → POS / Kitchen Display (existing behavior)
-  //  2. /api/transactions/web  → customer history + auto-loyalty (NEW)
-  // Both POSTs use the SAME ref so they can be correlated server-side.
-  // If /api/transactions/web fails but /api/orders succeeds, the order is
-  // still cooked but won't appear in customer history — acceptable.
-  var orderPromise = fetch(API + '/api/orders', {
+  fetch(API + '/api/orders', {
     method: 'POST',
-    headers: headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(order),
-  })
-  .then(function(r) { return r.json().catch(function(){ return {}; }); })
-  .catch(function(e) {
-    console.warn('[LUX] /api/orders failed:', e);
-    return { _failed: true };
-  });
-
-  // Only POST to /api/transactions/web if we have a phone — server requires it
-  // for loyalty calculation. Without phone the transaction is wasted compute.
-  var txPromise = txPayload.phone
-    ? fetch(API + '/api/transactions/web', {
-        method:  'POST',
-        headers: headers,
-        body:    JSON.stringify(txPayload),
-      })
-      .then(function(r) { return r.json().catch(function(){ return {}; }); })
-      .catch(function(e) {
-        console.warn('[LUX] /api/transactions/web failed:', e);
-        return { _failed: true };
-      })
-    : Promise.resolve({ _skipped: true, reason: 'no_phone' });
-
-  Promise.all([orderPromise, txPromise]).then(function(results) {
-    var orderRes = results[0];
-    var txRes    = results[1];
-
-    // Prefer the ref returned by either endpoint, fall back to our generated one
-    var ref = (orderRes && (orderRes.ref || orderRes.id || (orderRes.order && orderRes.order.id))) ||
-              (txRes && txRes.ref) ||
-              sharedRef;
-
-    var loyaltyEarned = Math.floor(total / 10);
-
-    console.log('[LUX] order results · /api/orders:', orderRes,
-                '· /api/transactions/web:', txRes,
-                '· loyalty +' + loyaltyEarned + 'pts (if phone matched a customer)');
-
-    // ⚡ Notify Mon Espace (and any other open LUX tab) — auto-refresh history + points
-    // The notification includes ref + total + earned points so the listener can show
-    // a precise toast: "Commande #WEB-1234 enregistrée · +24 LUX Points"
-    luxNotifyOrderPlaced(ref, total, loyaltyEarned);
-
-    showSuccess(name, ref, loyaltyEarned);
-  });
+  }).then(function(r) { return r.json(); })
+    .then(function(res) {
+      showSuccess(name, res.ref || res.id || res.order && res.order.id);
+    })
+    .catch(function() {
+      // API unreachable — show success anyway (order queued offline)
+      showSuccess(name, 'LX-' + String(Date.now()).slice(-6));
+    });
 }
 
 // notifyWhatsApp removed — orders sent directly to POS via API
 
-function showSuccess(name, ref, points) {
+function showSuccess(name, ref) {
   closeModal();
   cart = [];
   renderCart();
   var el = document.getElementById('success-banner');
   var refStr = ref ? ' #' + String(ref).slice(-6) : '';
-  // ⚡ Show loyalty points earned (only when user is authenticated AND points > 0)
-  var ptsLine = '';
-  if (typeof points === 'number' && points > 0 && __luxSession) {
-    ptsLine = '<br><span style="font-size:11px;color:#E8C97A;font-weight:600">⭐ +' + points + ' LUX Points crédités sur votre compte</span>';
-  }
   el.innerHTML = '✅ Votre commande' + refStr + ' a été envoyée avec succès au comptoir!<br>' +
-                 '<span style="font-size:11px;opacity:.8">Merci ' + name + ' — prête dans quelques minutes ✦</span>' + ptsLine;
+                 '<span style="font-size:11px;opacity:.8">Merci ' + name + ' — prête dans quelques minutes ✦</span>';
   el.style.display = 'block';
   document.querySelector('.btn-confirm').textContent = '✦ Confirmer →';
   document.querySelector('.btn-confirm').disabled = false;
-  setTimeout(function() { el.style.display = 'none'; }, 6000);
+  setTimeout(function() { el.style.display = 'none'; }, 5000);
 }
 
 // ── QR Table detection ────────────────────────────────────────
+function detectTableNum() {
+  var p = new URLSearchParams(window.location.search);
+  return p.get('table') || p.get('table_id') || p.get('qr') || null;
+}
+
 function detectTable() {
   var p = new URLSearchParams(window.location.search);
   var table = p.get('table') || p.get('table_id') || p.get('qr');
