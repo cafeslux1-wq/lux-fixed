@@ -1,5 +1,6 @@
 {
   "name": "Café LUX — Taza",
+  "version": "2.0.0",
   "short_name": "Café LUX",
   "description": "Commander en ligne · Café & Pâtisserie · Taza, Maroc",
   "start_url": "/?mode=pos",
