@@ -9,7 +9,7 @@
 "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "npx prisma generate --schema=./prisma/schema.prisma",
+    "build": "npx prisma generate --schema=prisma/schema.prisma",
     "migrate": "npx prisma migrate deploy"
   },
   "dependencies": {
