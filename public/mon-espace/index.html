@@ -577,9 +577,9 @@ input, button, select, textarea { font-family:inherit; }
         <span id="login-btn-txt">Se connecter →</span>
       </button>
 
-      <!-- زر تسجيل الدخول عبر Google -->
-      <a href="https://cafeslux-api-production.up.railway.app/auth/google" 
-         style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:12px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:12px; color:var(--text); font-weight:600; font-size:13px; text-decoration:none; margin-top:8px; transition:0.2s;"
+      <!-- زر تسجيل الدخول عبر Google الصحيح -->
+      <button type="button" onclick="triggerGoogleLogin()"
+         style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:12px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:12px; color:var(--text); font-weight:600; font-size:13px; text-decoration:none; margin-top:8px; cursor:pointer; transition:0.2s;"
          onmouseover="this.style.borderColor='var(--gold)'; this.style.background='var(--bg4)';"
          onmouseout="this.style.borderColor='var(--border2)'; this.style.background='var(--bg3)';">
         <svg width="18" height="18" viewBox="0 0 24 24">
@@ -589,12 +589,6 @@ input, button, select, textarea { font-family:inherit; }
           <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/>
         </svg>
         Continuer avec Google
-      </a>
-
-      <div class="auth-divider">diagnostic</div>
-      <button class="btn-primary" onclick="testConnection()"
-        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
-        🔌 Tester la connexion au serveur
       </button>
     </div>
 
