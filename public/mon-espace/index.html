@@ -2028,7 +2028,17 @@ async function handleGoogleResponse(response) {
       body: JSON.stringify({ credential: response.credential })
     });
 
-    const data = await res.json();
+    // قراءة الرد كنص أولاً لنعرف ما الذي يرسله السيرفر حقاً
+    const textResponse = await res.text();
+    console.log("رد السيرفر الخام:", textResponse);
+
+    let data;
+    try {
+      data = JSON.parse(textResponse);
+    } catch (e) {
+      throw new Error("السيرفر لم يرد بصيغة JSON. الرد كان: " + textResponse.substring(0, 100));
+    }
+
     if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
 
     localStorage.setItem('token', data.token);
