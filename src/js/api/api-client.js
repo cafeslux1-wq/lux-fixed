@@ -207,7 +207,10 @@
 
   // ── Endpoint map ─────────────────────────────────────────────
   var EP = {
-    LOGIN:'api/auth/login', PIN_LOGIN:'/api/auth/pin', ME:'/api/auth/me',
+    LOGIN:'api/auth/login', 
+    PIN_LOGIN:'/api/auth/pin',
+    GOOGLE_LOGIN: '/api/auth/google',
+    ME:'/api/auth/me',
     CATEGORIES:'/api/categories', PRODUCTS:'/api/products', MENU:'/api/menu',
     ORDERS:'/api/orders',
     ORDER:        function(id){ return '/api/orders/'+id; },
