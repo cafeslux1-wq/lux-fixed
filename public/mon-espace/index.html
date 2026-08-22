@@ -1942,7 +1942,6 @@ window.LUX_SESSION = {
     <button type="button" class="me-snd" onclick="meLaiSend()">إرسال</button>
   </div>
 </div>
-
 <script>
 (function(){
   var _AAPI=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
@@ -1998,20 +1997,26 @@ window.LUX_SESSION = {
 
 <!-- ── Google Auth Handler ── -->
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-  if (window.google) {
+window.addEventListener('load', () => {
+  if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.initialize({
       client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
       callback: handleGoogleResponse
     });
+  } else {
+    console.warn("مكتبة جوجل لم تحمل بشكل صحيح.");
   }
 });
 
 function triggerGoogleLogin() {
-  if (window.google) {
-    google.accounts.id.prompt();
+  if (typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        console.log("تم تخطي نافذة جوجل أو حظرها بواسطة المتصفح:", notification.getNotDisplayedReason());
+      }
+    });
   } else {
-    alert("مكتبة جوجل لم تحمل بعد، يرجى إعادة تحميل الصفحة.");
+    alert("مكتبة جوجل غير متوفرة حالياً، يرجى التحقق من اتصال الإنترنت أو إيقاف مانع الإعلانات.");
   }
 }
 
@@ -2033,5 +2038,3 @@ async function handleGoogleResponse(response) {
   }
 }
 </script>
-</body>
-</html>
