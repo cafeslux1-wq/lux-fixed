@@ -1995,5 +1995,43 @@ window.LUX_SESSION = {
   };
 })();
 </script>
+
+<!-- ── Google Auth Handler ── -->
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.google) {
+    google.accounts.id.initialize({
+      client_id: "ضع_معرف_جوجل_هنا.apps.googleusercontent.com", // استبدل هذا بـ Client ID الخاص بك
+      callback: handleGoogleResponse
+    });
+  }
+});
+
+function triggerGoogleLogin() {
+  if (window.google) {
+    google.accounts.id.prompt();
+  } else {
+    alert("مكتبة جوجل لم تحمل بعد، يرجى إعادة تحميل الصفحة.");
+  }
+}
+
+async function handleGoogleResponse(response) {
+  try {
+    const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
+
+    localStorage.setItem('token', data.token);
+    window.location.reload();
+  } catch (err) {
+    alert("خطأ في تسجيل الدخول: " + err.message);
+  }
+}
+</script>
 </body>
 </html>
