@@ -2022,13 +2022,13 @@ function triggerGoogleLogin() {
 
 async function handleGoogleResponse(response) {
   try {
+    // استخدم الرابط المباشر وتأكد من عدم وجود مسارات وسيطة
     const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential: response.credential })
     });
 
-    // قراءة الرد كنص أولاً لنعرف ما الذي يرسله السيرفر حقاً
     const textResponse = await res.text();
     console.log("رد السيرفر الخام:", textResponse);
 
