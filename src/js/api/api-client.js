@@ -207,7 +207,7 @@
 
   // ── Endpoint map ─────────────────────────────────────────────
 var EP = {
-    LOGIN:'api/auth/login', // 👈 هنا المشكلة (مفقود حرف الشرطة المائلة /)
+    LOGIN:'/api/auth/login', 
     PIN_LOGIN:'/api/auth/pin',
     GOOGLE_LOGIN: '/api/auth/google',
     ME:'/api/auth/me',
