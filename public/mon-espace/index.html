@@ -1995,17 +1995,35 @@ window.LUX_SESSION = {
 })();
 </script>
 
+
 <!-- ── Google Auth Handler ── -->
 <script>
-window.addEventListener('load', () => {
+function initGoogleAuth() {
   if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.initialize({
       client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
       callback: handleGoogleResponse
     });
-  } else {
-    console.warn("مكتبة جوجل لم تحمل بشكل صحيح.");
+    return true;
   }
+  return false;
+}
+
+window.addEventListener('load', () => {
+  // محاولة الفحص الفوري
+  if (initGoogleAuth()) return;
+
+  // إذا لم تكن جاهزة، انتظر حتى تتحمل المكتبة بحد أقصى 5 ثوانٍ
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (initGoogleAuth() || attempts > 25) {
+      clearInterval(interval);
+      if (attempts > 25 && (typeof google === 'undefined' || !google.accounts)) {
+        console.warn("مكتبة جوجل لم تحمل بشكل صحيح (تجاوز الوقت المحدد).");
+      }
+    }
+  }, 200);
 });
 
 function triggerGoogleLogin() {
@@ -2022,7 +2040,6 @@ function triggerGoogleLogin() {
 
 async function handleGoogleResponse(response) {
   try {
-    // استخدم الرابط المباشر وتأكد من عدم وجود مسارات وسيطة
     const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
