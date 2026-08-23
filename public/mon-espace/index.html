@@ -2000,20 +2000,20 @@ window.LUX_SESSION = {
           callback: handleGoogleResponse
         });
 
-        // 2. رسم زر جوجل الرسمي داخل العنصر الجديد
+        // 2. رسم زر جوجل الرسمي
         const container = document.getElementById('google-btn-container');
         if (container) {
           container.innerHTML = '';
           google.accounts.id.renderButton(
             container,
-            { type: 'standard', theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }
+            { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with' }
           );
         }
       }
     }, 100);
   });
 
-  // 3. معالجة الرد وإرساله للسيرفر وتخزين الـ Token
+  // 3. معالجة الرد وإرساله للسيرفر
   async function handleGoogleResponse(response) {
     try {
       const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
