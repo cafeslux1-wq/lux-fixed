@@ -2004,6 +2004,12 @@ function initGoogleAuth() {
       client_id: "ضع_معرف_العميل_Google_Client_ID_هنا.apps.googleusercontent.com",
       callback: handleGoogleResponse
     });
+    
+    // محاولة ربط الزر تلقائياً إذا كان موجوداً في الصفحة
+    const btnContainer = document.getElementById('google-login-btn');
+    if (btnContainer) {
+      // يمكنك ترك الزر الحالي يعمل، أو جعل جوجل ترسم الزر الرسمي مباشرة لتجنب التوقف
+    }
     return true;
   }
   return false;
@@ -2017,22 +2023,22 @@ window.addEventListener('load', () => {
     attempts++;
     if (initGoogleAuth() || attempts > 25) {
       clearInterval(interval);
-      if (attempts > 25 && (typeof google === 'undefined' || !google.accounts)) {
-        console.warn("مكتبة جوجل لم تحمل بشكل صحيح (تجاوز الوقت المحدد).");
-      }
     }
   }, 200);
 });
 
+// تعديل الدالة لفتح نافذة تسجيل الدخول بضمنية أكبر
 function triggerGoogleLogin() {
   if (typeof google !== 'undefined' && google.accounts) {
+    // استخدام الطريقة المباشرة لإظهار نافذة تسجيل الدخول عبر One Tap أو Prompt
     google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        console.log("تم تخطي نافذة جوجل أو حظرها بواسطة المتصفح:", notification.getNotDisplayedReason());
+      if (notification.isNotDisplayed()) {
+        console.warn("المتصفح حظر نافذة جوجل:", notification.getNotDisplayedReason());
+        alert("يرجى السماح بالنافذة المنبثقة (Popups) لتسجيل الدخول بواسطة جوجل.");
       }
     });
   } else {
-    alert("مكتبة جوجل غير متوفرة حالياً، يرجى التحقق من اتصال الإنترنت أو إيقاف مانع الإعلانات.");
+    alert("مكتبة جوجل لم تتحمل بعد، تحقق من اتصالك بالإنترنت.");
   }
 }
 
@@ -2044,16 +2050,7 @@ async function handleGoogleResponse(response) {
       body: JSON.stringify({ credential: response.credential })
     });
 
-    const textResponse = await res.text();
-    console.log("رد السيرفر الخام:", textResponse);
-
-    let data;
-    try {
-      data = JSON.parse(textResponse);
-    } catch (e) {
-      throw new Error("السيرفر لم يرد بصيغة JSON. الرد كان: " + textResponse.substring(0, 100));
-    }
-
+    const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
 
     localStorage.setItem('token', data.token);
