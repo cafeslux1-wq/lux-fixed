@@ -354,6 +354,13 @@ function showHome(){
 /* Commander → ensure menu view + scroll its iframe to the top */
 function openMenu(){
   closeSidebar();
+  // Sur mobile, l'iframe pose des soucis d'affichage tactile (scroll,
+  // largeur) : on ouvre directement la page menu/index.html en plein écran,
+  // qui est déjà 100% responsive toute seule.
+  if (window.innerWidth <= 900) {
+    window.location.href = 'menu/index.html';
+    return;
+  }
   showHome();
   var f=document.getElementById('home-frame');
   try{ f.contentWindow.scrollTo(0,0); }catch(e){}
@@ -427,6 +434,12 @@ var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYe
 
 /* boot */
 window.addEventListener('load',function(){
+  // Sur mobile : on saute directement sur la page Commander à part entière
+  // au chargement initial (même souci d'iframe que ci-dessus).
+  if (window.innerWidth <= 900) {
+    window.location.href = 'menu/index.html';
+    return;
+  }
   document.getElementById('view-home').classList.add('show');
   setActiveSidebar('home');
   if(window.luxNavigate) window.luxNavigate('home');
