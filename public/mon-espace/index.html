@@ -1987,55 +1987,48 @@ window.LUX_SESSION = {
 
 
 <!-- ── Google Auth Handler ── -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-function initGoogleAuth() {
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.initialize({
-      client_id: "ضع_معرف_العميل_Google_Client_ID_هنا.apps.googleusercontent.com",
-      callback: handleGoogleResponse
-    });
-    
-    // رسم زر جوجل الرسمي داخل العنصر المخصص تلقائياً
-    const btnContainer = document.getElementById('google-login-btn');
-    if (btnContainer) {
-      // تفريغ الحاضنة أولاً لتجنب تكرار الزر
-      btnContainer.innerHTML = '';
-      google.accounts.id.renderButton(
-        btnContainer,
-        { theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }
-      );
-    }
-    return true;
-  }
-  return false;
-}
+  window.addEventListener('load', () => {
+    let checkInterval = setInterval(() => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(checkInterval);
+        
+        // 1. تهيئة المصادقة
+        google.accounts.id.initialize({
+          client_id: "ضع_معرف_العميل_Google_Client_ID_هنا.apps.googleusercontent.com",
+          callback: handleGoogleResponse
+        });
 
-window.addEventListener('load', () => {
-  if (initGoogleAuth()) return;
-
-  let attempts = 0;
-  const interval = setInterval(() => {
-    attempts++;
-    if (initGoogleAuth() || attempts > 25) {
-      clearInterval(interval);
-      if (attempts > 25 && (typeof google === 'undefined' || !google.accounts)) {
-        console.warn("مكتبة جوجل لم تحمل بشكل صحيح.");
+        // 2. رسم زر جوجل الرسمي داخل العنصر الجديد
+        const container = document.getElementById('google-btn-container');
+        if (container) {
+          container.innerHTML = '';
+          google.accounts.id.renderButton(
+            container,
+            { type: 'standard', theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }
+          );
+        }
       }
+    }, 100);
+  });
+
+  // 3. معالجة الرد وإرساله للسيرفر وتخزين الـ Token
+  async function handleGoogleResponse(response) {
+    try {
+      const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
+
+      localStorage.setItem('token', data.token);
+      window.location.reload();
+    } catch (err) {
+      alert("خطأ في تسجيل الدخول: " + err.message);
     }
-  }, 200);
-});
-
-async function handleGoogleResponse(response) {
-  try {
-    const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: response.credential })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
-
-    localStorage.setItem('token', data.token);
-    window.location.reload();
-  } بهذه الطريقة، سيقوم جوجل ببناء الزر الرسمي داخل الـ `div` الذي يحمل الـ id `google-login-btn` ولن تحتاج إلى استدلال دالة `triggerGoogleLogin()` اليدوية التي تسبب حظر النوافذ المنبثقة.
+  }
+</script>
