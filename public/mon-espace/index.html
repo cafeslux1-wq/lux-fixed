@@ -564,24 +564,22 @@ input, button, select, textarea { font-family:inherit; }
     </div>
 
    <!-- Login -->
-    <div id="form-login" class="auth-form">
-      <div class="auth-field">
-        <span class="af-label">Téléphone / Email</span>
-        <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
-      </div>
-      <div class="auth-field">
-        <span class="af-label">Mot de passe</span>
-        <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
-      </div>
-      <button class="btn-primary" onclick="doLogin()">
-        <span id="login-btn-txt">Se connecter →</span>
-      </button>
+<div id="form-login" class="auth-form">
+  <div class="auth-field">
+    <span class="af-label">Téléphone / Email</span>
+    <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
+  </div>
+  <div class="auth-field">
+    <span class="af-label">Mot de passe</span>
+    <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
+  </div>
+  <button class="btn-primary" onclick="doLogin()">
+    <span id="login-btn-txt">Se connecter →</span>
+  </button>
 
-      <!-- حاضنة زر جوجل الرسمي الآمن -->
-      <div id="google-btn-container" style="width: 100%; margin-top: 8px; display: flex; justify-content: center;"></div>
-    </div>
-
-
+  <div id="google-btn-container" style="width:100%; margin-top:8px; display:flex; justify-content:center;"></div>
+</div>
+     
     <!-- Register -->
     <div id="form-register" class="auth-form" style="display:none">
       <div class="pf-row">
@@ -1987,48 +1985,94 @@ window.LUX_SESSION = {
 
 
 <!-- ── Google Auth Handler ── -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="onGoogleScriptLoad()"></script>
 <script>
-  window.addEventListener('load', () => {
-    let checkInterval = setInterval(() => {
-      if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(checkInterval);
-        
-        // 1. تهيئة المصادقة
-        google.accounts.id.initialize({
-          client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
-          callback: handleGoogleResponse
-        });
+  const GOOGLE_CLIENT_ID = "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com";
+  const API_BASE = "https://cafeslux-api-production.up.railway.app";
 
-        // 2. رسم زر جوجل الرسمي
-        const container = document.getElementById('google-btn-container');
-        if (container) {
-          container.innerHTML = '';
-          google.accounts.id.renderButton(
-            container,
-            { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with' }
-          );
-        }
-      }
-    }, 100);
-  });
+  let googleInitialized = false;
 
-  // 3. معالجة الرد وإرساله للسيرفر
+  // يُستدعى تلقائيًا بعد تحميل سكربت جوجل بنجاح
+  function onGoogleScriptLoad() {
+    if (googleInitialized) return;
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+      // احتياط: في حال تأخر تعريف الكائن قليلاً بعد onload
+      setTimeout(onGoogleScriptLoad, 100);
+      return;
+    }
+    googleInitialized = true;
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      // مهم: FedCM أصبح مطلوبًا/موصى به من جوجل حاليًا
+      use_fedcm_for_prompt: true
+    });
+
+    renderGoogleButton();
+  }
+
+  function renderGoogleButton() {
+    const container = document.getElementById('google-btn-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    google.accounts.id.renderButton(container, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      width: container.offsetWidth || 300 // يجعل الزر يملأ عرض الحاوية
+    });
+  }
+
+  // معالجة الرد القادم من جوجل وإرساله للسيرفر
   async function handleGoogleResponse(response) {
+    if (!response || !response.credential) {
+      alert("لم يتم استلام بيانات صحيحة من جوجل، حاول مرة أخرى.");
+      return;
+    }
+
     try {
-      const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
+      const res = await fetch(`${API_BASE}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credential: response.credential })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("استجابة غير صالحة من السيرفر");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'فشل تسجيل الدخول عبر جوجل');
+      }
+
+      if (!data.token) {
+        throw new Error("لم يتم استلام التوكن من السيرفر");
+      }
 
       localStorage.setItem('token', data.token);
       window.location.reload();
+
     } catch (err) {
+      console.error('Google Auth Error:', err);
       alert("خطأ في تسجيل الدخول: " + err.message);
     }
   }
+
+  // في حال فشل تحميل السكربت نهائيًا (مثلاً مانع إعلانات أو مشكلة شبكة)
+  window.addEventListener('error', (e) => {
+    if (e.target && e.target.src && e.target.src.includes('accounts.google.com/gsi/client')) {
+      const container = document.getElementById('google-btn-container');
+      if (container) {
+        container.innerHTML = '<p style="color:#c0392b;font-size:13px;">تعذر تحميل خدمة تسجيل الدخول بجوجل. تحقق من الاتصال أو مانع الإعلانات.</p>';
+      }
+    }
+  }, true);
 </script>
