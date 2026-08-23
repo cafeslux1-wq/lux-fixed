@@ -2001,7 +2001,7 @@ window.LUX_SESSION = {
 function initGoogleAuth() {
   if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.initialize({
-      client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
+      client_id: "ضع_معرف_العميل_Google_Client_ID_هنا.apps.googleusercontent.com",
       callback: handleGoogleResponse
     });
     return true;
@@ -2010,10 +2010,8 @@ function initGoogleAuth() {
 }
 
 window.addEventListener('load', () => {
-  // محاولة الفحص الفوري
   if (initGoogleAuth()) return;
 
-  // إذا لم تكن جاهزة، انتظر حتى تتحمل المكتبة بحد أقصى 5 ثوانٍ
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
