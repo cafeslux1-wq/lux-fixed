@@ -930,11 +930,11 @@ input, button, select, textarea { font-family:inherit; }
 ══════════════════════════════════════════════════════════════ */
 const API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-// Routes exactes du backend
+// Routes exactes du backend (src/routes/auth.routes.js — router.post('/login'|'/register'), router.get('/me'))
 const ROUTES = {
-  REGISTER:      `${API}/api/auth/customer/register`,
-  LOGIN:         `${API}/api/auth/customer/login`,
-  ME:            `${API}/api/auth/customer/me`,
+  REGISTER:      `${API}/api/auth/register`,
+  LOGIN:         `${API}/api/auth/login`,
+  ME:            `${API}/api/auth/me`,
   PROFILE_PATCH: `${API}/api/customers/me`,
   ORDERS:        `${API}/api/customers/me/orders`,
   GC_CHECK:      (code) => `${API}/api/gift-cards/check/${encodeURIComponent(code)}`,
@@ -1160,7 +1160,12 @@ async function testConnection() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CONNEXION — POST /api/auth/customer/login
+   CONNEXION — POST /api/auth/login
+   ⚠ Le backend actuel (auth.routes.js) n'accepte que { phone,
+   password } — pas de lookup par email. On envoie donc le champ
+   sous la clé "phone" pour matcher l'API ; si l'utilisateur saisit
+   un email, la connexion échouera tant que la route backend ne
+   supportera pas la recherche par email.
 ══════════════════════════════════════════════════════════════ */
 async function doLogin() {
   const identifier = document.getElementById('login-id').value.trim();
@@ -1177,7 +1182,7 @@ async function doLogin() {
     const { res, data }  = await safeFetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password })
+      body: JSON.stringify({ phone: identifier, password })
     });
 
     if (res.ok && data.token) {
@@ -1984,21 +1989,27 @@ window.LUX_SESSION = {
 </script>
 
 
-<!-- ── Google Auth Handler ── -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- ── Google Auth Handler ──
+     Le script accounts.google.com/gsi/client est déjà chargé une
+     fois dans le <head> (voir ligne ~14) — inutile (et risqué,
+     double init) de le recharger ici. -->
 <script>
+  // Client ID Google Cloud Console (OAuth Client "Web application").
+  // Doit correspondre à GOOGLE_CLIENT_ID côté backend (auth.routes.js).
+  const GOOGLE_CLIENT_ID = '72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com';
+
   window.addEventListener('load', () => {
     let checkInterval = setInterval(() => {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(checkInterval);
-        
-        // 1. تهيئة المصادقة
+
+        // 1. Initialisation de Google Identity Services
         google.accounts.id.initialize({
-          client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
+          client_id: GOOGLE_CLIENT_ID,
           callback: handleGoogleResponse
         });
 
-        // 2. رسم زر جوجل الرسمي
+        // 2. Rendu du bouton officiel Google dans le formulaire de connexion
         const container = document.getElementById('google-btn-container');
         if (container) {
           container.innerHTML = '';
@@ -2009,52 +2020,65 @@ window.LUX_SESSION = {
         }
       }
     }, 100);
+
+    // Filet de sécurité : si google.accounts n'apparaît jamais
+    // (bloqueur de pub, script chargé mais API non exposée…),
+    // on arrête le polling après 15s et on informe l'utilisateur
+    // au lieu de tourner indéfiniment.
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (typeof google === 'undefined' || !google.accounts) {
+        const container = document.getElementById('google-btn-container');
+        if (container && !container.innerHTML) {
+          container.innerHTML = '<p style="color:#c0392b;font-size:12px;text-align:center;">Connexion Google indisponible — vérifiez votre connexion ou désactivez temporairement votre bloqueur de publicités.</p>';
+        }
+      }
+    }, 15000);
   });
 
-  // 3. معالجة الرد وإرساله للسيرفر مع طباعة الخطأ بوضوح في حال حدوثه
+  // 3. Callback GIS — récupère response.credential (le jeton ID)
+  //    et l'envoie au backend via LuxAPI.loginGoogle (api-client.js),
+  //    ce qui garantit que le token est stocké sous la même clé
+  //    ("lux_token") que pour le login classique.
   async function handleGoogleResponse(response) {
     if (!response || !response.credential) {
-      alert("لم يتم استلام بيانات صحيحة من جوجل، حاول مرة أخرى.");
+      toast('⚠ Réponse Google invalide — réessayez');
+      return;
+    }
+
+    if (typeof LuxAPI === 'undefined' || typeof LuxAPI.loginGoogle !== 'function') {
+      toast('❌ api-client.js non chargé — rechargez la page');
+      console.error('[GOOGLE AUTH] LuxAPI.loginGoogle is unavailable');
       return;
     }
 
     try {
-      const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: response.credential })
-      });
+      const data = await LuxAPI.loginGoogle(response.credential);
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("استجابة غير صالحة من السيرفر");
+      if (!data || !data.token || !data.customer) {
+        throw new Error('Réponse serveur incomplète');
       }
 
-      if (!res.ok) {
-        throw new Error(data.error || data.message || 'فشل تسجيل الدخول عبر جوجل');
-      }
-
-      if (!data.token) {
-        throw new Error("لم يتم استلام التوكن من السيرفر");
-      }
-
-      localStorage.setItem('token', data.token);
-      window.location.reload();
+      // Même chemin de succès que doLogin() / doRegister() :
+      // pas de reload complet, on hydrate directement l'UI.
+      loadUserData(data.customer);
+      showApp();
+      toast('✅ Connecté avec Google — Bienvenue ' + (data.customer.name || '') + ' !', 4000);
+      await Promise.all([loadOrders(), loadMyGiftCards()]);
 
     } catch (err) {
-      console.error('Google Auth Error:', err);
-      alert("خطأ في تسجيل الدخول: " + err.message);
+      console.error('[GOOGLE AUTH] Error:', err);
+      toast('❌ ' + (err.message || 'Échec de connexion avec Google'));
     }
   }
 
-  // في حال فشل تحميل السكربت نهائيًا (مثلاً مانع إعلانات أو مشكلة شبكة)
+  // En cas d'échec total du chargement du script GIS lui-même
+  // (bloqueur de pub, coupure réseau…)
   window.addEventListener('error', (e) => {
     if (e.target && e.target.src && e.target.src.includes('accounts.google.com/gsi/client')) {
       const container = document.getElementById('google-btn-container');
       if (container) {
-        container.innerHTML = '<p style="color:#c0392b;font-size:13px;">تعذر تحميل خدمة تسجيل الدخول بجوجل. تحقق من الاتصال أو مانع الإعلانات.</p>';
+        container.innerHTML = '<p style="color:#c0392b;font-size:12px;text-align:center;">Impossible de charger le service de connexion Google. Vérifiez votre connexion ou votre bloqueur de publicités.</p>';
       }
     }
   }, true);
