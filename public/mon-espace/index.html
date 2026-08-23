@@ -1985,50 +1985,33 @@ window.LUX_SESSION = {
 
 
 <!-- ── Google Auth Handler ── -->
-<script src="https://accounts.google.com/gsi/client" async defer onload="onGoogleScriptLoad()"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-  const GOOGLE_CLIENT_ID = "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com";
-  const API_BASE = "https://cafeslux-api-production.up.railway.app";
+  window.addEventListener('load', () => {
+    let checkInterval = setInterval(() => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(checkInterval);
+        
+        // 1. تهيئة المصادقة
+        google.accounts.id.initialize({
+          client_id: "72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com",
+          callback: handleGoogleResponse
+        });
 
-  let googleInitialized = false;
+        // 2. رسم زر جوجل الرسمي
+        const container = document.getElementById('google-btn-container');
+        if (container) {
+          container.innerHTML = '';
+          google.accounts.id.renderButton(
+            container,
+            { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with' }
+          );
+        }
+      }
+    }, 100);
+  });
 
-  // يُستدعى تلقائيًا بعد تحميل سكربت جوجل بنجاح
-  function onGoogleScriptLoad() {
-    if (googleInitialized) return;
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
-      // احتياط: في حال تأخر تعريف الكائن قليلاً بعد onload
-      setTimeout(onGoogleScriptLoad, 100);
-      return;
-    }
-    googleInitialized = true;
-
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      // مهم: FedCM أصبح مطلوبًا/موصى به من جوجل حاليًا
-      use_fedcm_for_prompt: true
-    });
-
-    renderGoogleButton();
-  }
-
-  function renderGoogleButton() {
-    const container = document.getElementById('google-btn-container');
-    if (!container) return;
-
-    container.innerHTML = '';
-    google.accounts.id.renderButton(container, {
-      type: 'standard',
-      theme: 'outline',
-      size: 'large',
-      text: 'continue_with',
-      width: container.offsetWidth || 300 // يجعل الزر يملأ عرض الحاوية
-    });
-  }
-
-  // معالجة الرد القادم من جوجل وإرساله للسيرفر
+  // 3. معالجة الرد وإرساله للسيرفر مع طباعة الخطأ بوضوح في حال حدوثه
   async function handleGoogleResponse(response) {
     if (!response || !response.credential) {
       alert("لم يتم استلام بيانات صحيحة من جوجل، حاول مرة أخرى.");
@@ -2036,7 +2019,7 @@ window.LUX_SESSION = {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/google`, {
+      const res = await fetch('https://cafeslux-api-production.up.railway.app/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credential: response.credential })
