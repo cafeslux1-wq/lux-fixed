@@ -47,8 +47,8 @@
   // ── Token Store ──────────────────────────────────────────────
   var TokenStore = {
     get:   function() { try { return localStorage.getItem(TOKEN_KEY); }  catch(e) { return null; } },
-    set:   function(t){ try { localStorage.setItem(TOKEN_KEY, t); }       catch(e) {} },
-    clear: function() { try { localStorage.removeItem(TOKEN_KEY); }       catch(e) {} },
+    set:   function(t){ try { localStorage.setItem(TOKEN_KEY, t); }        catch(e) {} },
+    clear: function() { try { localStorage.removeItem(TOKEN_KEY); }        catch(e) {} },
     valid: function() { return !!this.get(); },
   };
 
@@ -118,17 +118,18 @@
   }
 
   // ── WhatsApp fallback ────────────────────────────────────────
+  var WA_URL_BASE = 'https://wa.me/';
   function _waFallback(body, type) {
     try {
       var msg;
       if (type === 'order') {
         var items = (body.items||[]).map(function(i){ return (i.qty||i.q||1)+'x '+(i.name||i.n)+' ('+(i.price||i.p)+' DH)'; }).join(', ');
         var c = body.customer||{}; var name=(typeof c==='string')?c:(c.name||'?'); var phone=(c.phone||body.phone||'?');
-        msg = '\u{1F6D2} COMMANDE (hors-ligne)\n\nClient: '+name+' ('+phone+')\nSource: '+PAGE_SOURCE+'\nArticles: '+(items||'—')+'\nTotal: '+(body.total||0)+' DH\nPaiement: '+(body.payMethod||'?')+'\n\n\u26A0\uFE0F Mode hors-ligne — confirmer SVP';
+        msg = '🛒 COMMANDE (hors-ligne)\n\nClient: '+name+' ('+phone+')\nSource: '+PAGE_SOURCE+'\nArticles: '+(items||'—')+'\nTotal: '+(body.total||0)+' DH\nPaiement: '+(body.payMethod||'?')+'\n\n⚠️ Mode hors-ligne — confirmer SVP';
       } else {
-        msg = '\u{1F4C5} RÉSERVATION (hors-ligne)\n\nNom: '+(body.name||'?')+'\nTél: '+(body.phone||'?')+'\nDate: '+(body.date||'?')+' à '+(body.time||'?')+'\nPersonnes: '+(body.guests||2);
+        msg = '📅 RÉSERVATION (hors-ligne)\n\nNom: '+(body.name||'?')+'\nTél: '+(body.phone||'?')+'\nDate: '+(body.date||'?')+' à '+(body.time||'?')+'\nPersonnes: '+(body.guests||2);
       }
-      setTimeout(function(){ global.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank'); }, 400);
+      setTimeout(function(){ global.open(WA_URL_BASE + WA_NUMBER + '?text=' + encodeURIComponent(msg),'_blank'); }, 400);
     } catch(e) {}
   }
 
@@ -206,14 +207,14 @@
   }
 
   // ── Endpoint map ─────────────────────────────────────────────
-var EP = {
+  var EP = {
     LOGIN:'/api/auth/login', 
     PIN_LOGIN:'/api/auth/pin',
     GOOGLE_LOGIN: '/api/auth/google',
     ME:'/api/auth/me',
     CATEGORIES:'/api/categories', PRODUCTS:'/api/products', MENU:'/api/menu',
     ORDERS:'/api/orders',
-    ORDER:        function(id){ return '/api/orders/'+id; },
+    ORDER:       function(id){ return '/api/orders/'+id; },
     ORDER_STATUS: function(id){ return '/api/orders/'+id+'/status'; },
     RESERVATIONS:'/api/reservations',
     RESERVATION:  function(id){ return '/api/reservations/'+id; },
@@ -246,6 +247,13 @@ var EP = {
     loginPin: function(pin) {
       return _request(EP.PIN_LOGIN,'POST',{pin:pin}).then(function(d){
         if(d&&d.token) TokenStore.set(d.token); return d;
+      });
+    },
+    // ✅ تمت إضافة دالة تسجيل الدخول عبر جوجل هنا
+    loginGoogle: function(credential) {
+      return _request(EP.GOOGLE_LOGIN, 'POST', { credential: credential }).then(function(d){
+        if (d && d.token) TokenStore.set(d.token);
+        return d;
       });
     },
     logout:          function()  { TokenStore.clear(); _emit('lux:logout',{}); },
@@ -289,8 +297,8 @@ var EP = {
     EP:          EP,
   };
 
-  global.LuxAPI   = LuxAPI;
-  global.EP       = EP;
+  global.LuxAPI    = LuxAPI;
+  global.EP        = EP;
   global.BASE_URL = API_BASE;
 
   // Auto-flush on load
