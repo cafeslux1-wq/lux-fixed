@@ -289,6 +289,19 @@ body{background:var(--dark);color:var(--text);font-family:var(--font-b);overflow
 
 </div><!-- /content -->
 
+<!-- ═══ ÉCRAN D'ATTENTE — VALIDATION DE LA RÉSERVATION ═══ -->
+<div id="res-wait-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,8,10,.94);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px">
+  <div style="max-width:420px;width:100%;text-align:center;border:1px solid rgba(201,168,76,.35);border-radius:18px;padding:32px 24px;background:linear-gradient(180deg,rgba(30,26,20,.96),rgba(16,14,12,.96))">
+    <div id="res-wait-spin" style="width:58px;height:58px;margin:0 auto 20px;border:3px solid rgba(201,168,76,.2);border-top-color:#C9A84C;border-radius:50%;animation:luxspin .9s linear infinite"></div>
+    <div id="res-wait-icon" style="display:none;font-size:52px;margin-bottom:14px"></div>
+    <div id="res-wait-title" style="font-size:18px;font-weight:700;color:#f0e8d5;margin-bottom:10px">Réservation en attente de validation</div>
+    <div id="res-wait-msg" style="font-size:13px;line-height:1.7;color:rgba(240,232,213,.7)"></div>
+    <div id="res-wait-ref" style="margin-top:16px;font-family:monospace;font-size:12px;color:rgba(201,168,76,.85)"></div>
+    <button id="res-wait-close" onclick="closeResWaiting()" style="display:none;margin-top:22px;padding:11px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,#C9A84C,#a88c37);color:#1a1610;font-weight:700;font-size:13px;cursor:pointer">Fermer</button>
+  </div>
+</div>
+<style>@keyframes luxspin{to{transform:rotate(360deg)}}</style>
+
 <div id="toast"></div>
 
 <script>
@@ -393,44 +406,146 @@ function submitReservation() {
   btn.textContent = 'Envoi en cours...';
   btn.disabled    = true;
 
+  var finalNote = (_occasion ? 'Occasion: ' + _occasion + (notes ? ' — ' + notes : '') : notes);
   var payload = {
     name:     name,
     phone:    phone,
     date:     date,
     time:     time,
     guests:   _guests,
-    notes:    (_occasion ? 'Occasion: ' + _occasion + (notes ? ' — ' + notes : '') : notes),
-    status:   'pending',
+    note:     finalNote,
+    notes:    finalNote
   };
 
-  // Try API
-  var API = window.LuxAPI;
-  var promise;
-  if (API) {
-    promise = API.createReservation(payload);
-  } else {
-    var base = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
-    promise = fetch(base + '/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }).then(function(r) { return r.json(); });
-  }
+  var base = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-  promise.then(function(res) {
-    var ref = res.ref || res.id || ('LX-' + String(Date.now()).slice(-6));
-    showSuccess(name, ref, date, time);
-    sendWhatsApp(name, phone, date, time, ref);
-    btn.textContent = '✦ Confirmer ma réservation';
-    btn.disabled    = false;
-  }).catch(function() {
-    // Offline fallback
-    var ref = 'LX-' + String(Date.now()).slice(-6);
-    showSuccess(name, ref, date, time);
-    sendWhatsApp(name, phone, date, time, ref);
-    btn.textContent = '✦ Confirmer ma réservation';
-    btn.disabled    = false;
-  });
+  fetch(base + '/api/reservations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      btn.textContent = '\u2726 Confirmer ma r\u00e9servation';
+      btn.disabled    = false;
+
+      // Le serveur a refus\u00e9 : on affiche l'erreur, PAS un faux succ\u00e8s
+      if (!res.ok || res.data.error || !res.data.id) {
+        toast('\u2715 ' + (res.data.error || 'Erreur lors de la r\u00e9servation'), 'error');
+        return;
+      }
+
+      // Demande enregistr\u00e9e \u2014 en attente de validation par l'admin
+      startResWaiting(res.data.id, name, date, time, phone);
+    })
+    .catch(function() {
+      btn.textContent = '\u2726 Confirmer ma r\u00e9servation';
+      btn.disabled    = false;
+      toast('\u2715 Erreur r\u00e9seau \u2014 v\u00e9rifiez votre connexion', 'error');
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ÉCRAN D'ATTENTE — validation de la réservation par l'admin
+// ══════════════════════════════════════════════════════════════
+var RES_WAIT_KEY = 'lux_pending_reservation';
+var _resWaitTimer = null;
+
+function startResWaiting(id, name, date, time, phone) {
+  try {
+    localStorage.setItem(RES_WAIT_KEY, JSON.stringify({
+      id: id, name: name, date: date, time: time, phone: phone, t: Date.now()
+    }));
+  } catch(e) {}
+  showResWaitOverlay(id);
+  pollResWaiting(id);
+  if (_resWaitTimer) clearInterval(_resWaitTimer);
+  _resWaitTimer = setInterval(function() { pollResWaiting(id); }, 4000);
+}
+
+function showResWaitOverlay(id) {
+  var ov = document.getElementById('res-wait-overlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  document.getElementById('res-wait-spin').style.display  = 'block';
+  document.getElementById('res-wait-icon').style.display  = 'none';
+  document.getElementById('res-wait-close').style.display = 'none';
+  var t = document.getElementById('res-wait-title');
+  t.textContent = "R\u00e9servation en attente de validation";
+  t.style.color = '#f0e8d5';
+  document.getElementById('res-wait-msg').innerHTML =
+    "Votre demande a bien \u00e9t\u00e9 envoy\u00e9e.<br>L'\u00e9quipe doit confirmer la disponibilit\u00e9 de la table.<br>Merci de patienter, ne fermez pas cette page.";
+  document.getElementById('res-wait-ref').textContent = 'R\u00e9f. #' + String(id).slice(-6).toUpperCase();
+}
+
+function pollResWaiting(id) {
+  var base = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+  fetch(base + '/api/reservations/' + encodeURIComponent(id) + '/public-status')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (!d) return;
+      if (d.status === 'CONFIRMED') { stopResWaiting(); resApproved(); }
+      else if (d.status === 'CANCELLED') { stopResWaiting(); resRejected(); }
+    })
+    .catch(function() {});
+}
+
+function stopResWaiting() {
+  if (_resWaitTimer) { clearInterval(_resWaitTimer); _resWaitTimer = null; }
+}
+
+function resApproved() {
+  var saved = readResSaved();
+  document.getElementById('res-wait-spin').style.display = 'none';
+  var ic = document.getElementById('res-wait-icon');
+  ic.style.display = 'block'; ic.textContent = '\u2705';
+  var t = document.getElementById('res-wait-title');
+  t.textContent = "Table confirm\u00e9e !";
+  t.style.color = '#4ade80';
+  document.getElementById('res-wait-msg').innerHTML =
+    "Votre table est r\u00e9serv\u00e9e. Nous vous attendons \u2726";
+  document.getElementById('res-wait-close').style.display = 'inline-block';
+  document.getElementById('res-wait-close').textContent   = 'Parfait !';
+  if (saved) {
+    try { sendWhatsApp(saved.name, saved.phone, saved.date, saved.time, String(saved.id).slice(-6).toUpperCase()); } catch(e) {}
+  }
+  clearResSaved();
+}
+
+function resRejected() {
+  document.getElementById('res-wait-spin').style.display = 'none';
+  var ic = document.getElementById('res-wait-icon');
+  ic.style.display = 'block'; ic.textContent = '\u274C';
+  var t = document.getElementById('res-wait-title');
+  t.textContent = "R\u00e9servation non disponible";
+  t.style.color = '#f87171';
+  document.getElementById('res-wait-msg').innerHTML =
+    "Malheureusement aucune table n'est disponible \u00e0 cet horaire.<br>Merci de choisir un autre cr\u00e9neau ou de nous appeler.";
+  document.getElementById('res-wait-close').style.display = 'inline-block';
+  document.getElementById('res-wait-close').textContent   = 'Choisir un autre horaire';
+  clearResSaved();
+}
+
+function closeResWaiting() {
+  stopResWaiting();
+  clearResSaved();
+  var ov = document.getElementById('res-wait-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function readResSaved() {
+  try { return JSON.parse(localStorage.getItem(RES_WAIT_KEY) || 'null'); } catch(e) { return null; }
+}
+function clearResSaved() {
+  try { localStorage.removeItem(RES_WAIT_KEY); } catch(e) {}
+}
+
+// Reprise automatique si le client recharge ou ferme la page
+function resumeResWaiting() {
+  var saved = readResSaved();
+  if (!saved || !saved.id) return;
+  if (saved.t && (Date.now() - saved.t) > 12 * 3600 * 1000) { clearResSaved(); return; }
+  startResWaiting(saved.id, saved.name, saved.date, saved.time, saved.phone);
 }
 
 function showSuccess(name, ref, date, time) {
@@ -492,6 +607,7 @@ function checkParams() {
 document.addEventListener('DOMContentLoaded', function() {
   init();
   checkParams();
+  resumeResWaiting();
 });
 </script>
 
