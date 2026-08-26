@@ -10,7 +10,10 @@
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <script src="../../src/js/api/api-client.js" defer></script>
 
-<!-- ── Google Identity Services Library ── -->
+<!-- ── Connexion Google ──
+     Remplacer par le Client ID obtenu sur Google Cloud Console
+     (APIs & Services → Credentials → OAuth Client ID → Web application) ── -->
+<script>window.LUX_GOOGLE_CLIENT_ID = '387050961956-cm4sbb0bsqboinng08cufp68vgl25g4r.apps.googleusercontent.com';</script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- ── Fonts ── -->
@@ -221,6 +224,136 @@ input, button, select, textarea { font-family:inherit; }
   display:flex; align-items:center; justify-content:center;
   font-family:var(--fd); font-size:22px; font-weight:700; color:#000;
   box-shadow:0 4px 16px rgba(201,168,76,.3);
+  position:relative; overflow:hidden;
+}
+.ch-avatar img { width:100%; height:100%; object-fit:cover; display:block }
+
+/* ── Avatar éditable (panneau profil) ─────────────────── */
+.google-btn-wrap { margin:16px 0 6px }
+.google-btn {
+  width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:12px; border-radius:12px; cursor:pointer; font-size:13.5px; font-weight:600;
+  background:#fff; color:#3c4043; border:1px solid rgba(255,255,255,.12);
+  transition:all .2s ease; font-family:var(--fb, inherit);
+}
+.google-btn:hover { box-shadow:0 4px 14px rgba(0,0,0,.25); transform:translateY(-1px) }
+.google-btn svg { width:18px; height:18px; flex-shrink:0 }
+.auth-or {
+  display:flex; align-items:center; gap:12px; margin:16px 0;
+  color:var(--txt2); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+}
+.auth-or::before, .auth-or::after { content:''; flex:1; height:1px; background:var(--border) }
+
+.pc-avatar-wrap { display:flex; align-items:center; gap:16px; margin-bottom:18px }
+.pc-avatar {
+  width:84px; height:84px; border-radius:22px; flex-shrink:0; position:relative;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  font-family:var(--fd); font-size:32px; font-weight:700; color:#000;
+  box-shadow:0 6px 22px rgba(201,168,76,.28);
+  cursor:pointer; transition:transform .25s ease, box-shadow .25s ease;
+}
+.pc-avatar:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(201,168,76,.4) }
+.pc-avatar img { width:100%; height:100%; object-fit:cover; display:block }
+.pc-avatar-cam {
+  position:absolute; inset:auto 0 0 0; height:26px;
+  background:rgba(0,0,0,.62); color:var(--gold-xl);
+  display:flex; align-items:center; justify-content:center; font-size:12px;
+  opacity:0; transition:opacity .22s ease;
+}
+.pc-avatar:hover .pc-avatar-cam { opacity:1 }
+.pc-avatar-side { flex:1; min-width:0 }
+.pc-avatar-name { font-family:var(--fd); font-size:17px; color:var(--gold-xl); margin-bottom:4px }
+.pc-avatar-hint { font-size:11.5px; color:var(--txt2); line-height:1.6 }
+.pc-avatar-actions { display:flex; gap:8px; margin-top:9px; flex-wrap:wrap }
+.pc-mini-btn {
+  padding:6px 13px; border-radius:9px; font-size:11.5px; cursor:pointer;
+  background:var(--bg4); border:1px solid var(--border); color:var(--txt2);
+  transition:all .2s ease;
+}
+.pc-mini-btn:hover { border-color:var(--border2); color:var(--gold-l) }
+
+/* ── WALLET ────────────────────────────────────────────── */
+.wallet-card {
+  border-radius:20px; padding:22px; margin-bottom:16px; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(201,168,76,.04) 55%,rgba(0,0,0,.3));
+  border:1px solid var(--border2);
+  animation:walletIn .55s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes walletIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+.wallet-card::after {
+  content:''; position:absolute; top:-60%; right:-20%; width:280px; height:280px;
+  background:radial-gradient(circle,rgba(201,168,76,.16),transparent 68%);
+  pointer-events:none;
+}
+.wc-label { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--txt2); margin-bottom:7px }
+.wc-balance {
+  font-family:var(--fd); font-size:40px; font-weight:700; line-height:1;
+  color:var(--gold-xl); letter-spacing:-.02em;
+}
+.wc-balance small { font-size:17px; margin-left:5px; color:var(--gold) }
+.wc-sub { font-size:12px; color:var(--txt2); margin-top:9px }
+.wc-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:18px;
+  position:relative; z-index:1;
+}
+.wc-cell {
+  background:rgba(0,0,0,.32); border:1px solid var(--border);
+  border-radius:13px; padding:11px 9px; text-align:center;
+}
+.wc-cell-val { font-family:var(--fd); font-size:17px; font-weight:700; margin-bottom:3px }
+.wc-cell-lbl { font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--txt2) }
+.wc-up   { color:#4ADE80 }
+.wc-down { color:#F87171 }
+.wc-pts  { color:var(--gold-l) }
+.wc-actions { display:flex; gap:9px; margin-top:16px; position:relative; z-index:1; flex-wrap:wrap }
+.wc-btn {
+  flex:1; min-width:132px; padding:11px; border-radius:11px; cursor:pointer;
+  font-size:12.5px; font-weight:600; transition:all .22s ease;
+  background:var(--bg4); border:1px solid var(--border2); color:var(--gold-l);
+}
+.wc-btn:hover { background:var(--bg5); transform:translateY(-1px) }
+.wc-btn.primary {
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  color:#000; border-color:transparent; font-weight:700;
+}
+
+/* ── Historique des transactions ───────────────────────── */
+.tx-list { display:flex; flex-direction:column; gap:8px }
+.tx-item {
+  display:flex; align-items:center; gap:12px; padding:13px 14px;
+  background:var(--bg3); border:1px solid var(--border); border-radius:13px;
+  animation:txIn .4s ease both;
+}
+@keyframes txIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+.tx-icon {
+  width:38px; height:38px; border-radius:11px; flex-shrink:0; font-size:16px;
+  display:flex; align-items:center; justify-content:center; background:var(--bg4);
+}
+.tx-body { flex:1; min-width:0 }
+.tx-label {
+  font-size:13px; color:var(--txt); margin-bottom:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.tx-date { font-size:10.5px; color:var(--txt2) }
+.tx-right { text-align:right; flex-shrink:0 }
+.tx-amount { font-family:var(--fd); font-size:15px; font-weight:700 }
+.tx-after { font-size:10px; color:var(--txt2); margin-top:3px }
+.tx-pts { font-size:10.5px; color:var(--gold-l); margin-top:2px }
+.tx-more {
+  width:100%; margin-top:11px; padding:11px; border-radius:11px; cursor:pointer;
+  background:var(--bg3); border:1px solid var(--border); color:var(--txt2); font-size:12px;
+  transition:all .2s ease;
+}
+.tx-more:hover { border-color:var(--border2); color:var(--gold-l) }
+
+@media (max-width:420px){
+  .wc-balance { font-size:33px }
+  .wc-grid { grid-template-columns:repeat(3,1fr); gap:6px }
+  .wc-cell { padding:9px 5px }
+  .wc-cell-val { font-size:14px }
+  .wc-cell-lbl { font-size:8.5px }
+  .pc-avatar { width:70px; height:70px; font-size:26px }
 }
 .ch-info { flex:1; }
 .ch-name { font-family:var(--fd); font-size:18px; font-weight:700; color:var(--text); margin-bottom:2px; }
@@ -558,28 +691,40 @@ input, button, select, textarea { font-family:inherit; }
       <div class="auth-hero-sub">Café &amp; Pâtisserie · Taza</div>
     </div>
 
+    <!-- Connexion Google — fonctionne pour se connecter ET créer un compte -->
+    <div class="google-btn-wrap">
+      <button type="button" class="google-btn" id="google-signin-btn" onclick="startGoogleSignIn()">
+        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continuer avec Google
+      </button>
+    </div>
+    <div class="auth-or">ou</div>
+
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="authTab('login')">Se connecter</button>
       <button class="auth-tab" onclick="authTab('register')">Créer un compte</button>
     </div>
 
-   <!-- Login -->
-<div id="form-login" class="auth-form">
-  <div class="auth-field">
-    <span class="af-label">Téléphone / Email</span>
-    <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
-  </div>
-  <div class="auth-field">
-    <span class="af-label">Mot de passe</span>
-    <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
-  </div>
-  <button class="btn-primary" onclick="doLogin()">
-    <span id="login-btn-txt">Se connecter →</span>
-  </button>
+    <!-- Login -->
+    <div id="form-login" class="auth-form">
+      <div class="auth-field">
+        <span class="af-label">Téléphone / Email</span>
+        <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
+      </div>
+      <div class="auth-field">
+        <span class="af-label">Mot de passe</span>
+        <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">
+        <span id="login-btn-txt">Se connecter →</span>
+      </button>
+      <div class="auth-divider">diagnostic</div>
+      <button class="btn-primary" onclick="testConnection()"
+        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
+        🔌 Tester la connexion au serveur
+      </button>
+    </div>
 
-  <div id="google-btn-container" style="width:100%; margin-top:8px; display:flex; justify-content:center;"></div>
-</div>
-     
     <!-- Register -->
     <div id="form-register" class="auth-form" style="display:none">
       <div class="pf-row">
@@ -667,6 +812,9 @@ input, button, select, textarea { font-family:inherit; }
     <button class="tn-btn active" id="tn-profil" onclick="switchTab('profil')">
       <span class="ti">👤</span> Profil
     </button>
+    <button class="tn-btn" id="tn-wallet" onclick="switchTab('wallet')">
+      <span class="ti">💳</span> Wallet
+    </button>
     <button class="tn-btn" id="tn-commandes" onclick="switchTab('commandes')">
       <span class="ti">📋</span> Commandes
     </button>
@@ -674,6 +822,44 @@ input, button, select, textarea { font-family:inherit; }
       <span class="ti">🎁</span> Cadeau
     </button>
   </nav>
+
+  <!-- ══ PANEL: WALLET ══ -->
+  <div class="tab-panel" id="panel-wallet">
+
+    <div class="sec-head"><span class="sh-txt">Mon portefeuille LUX</span><div class="sh-line"></div></div>
+
+    <div class="wallet-card">
+      <div class="wc-label">Solde disponible</div>
+      <div class="wc-balance"><span id="wc-balance">0.00</span><small>DH</small></div>
+      <div class="wc-sub" id="wc-points-line">0 points · 10 DH dépensés = 1 point</div>
+
+      <div class="wc-grid">
+        <div class="wc-cell">
+          <div class="wc-cell-val wc-up" id="wc-credited">0</div>
+          <div class="wc-cell-lbl">Gagné</div>
+        </div>
+        <div class="wc-cell">
+          <div class="wc-cell-val wc-down" id="wc-debited">0</div>
+          <div class="wc-cell-lbl">Dépensé</div>
+        </div>
+        <div class="wc-cell">
+          <div class="wc-cell-val wc-pts" id="wc-points">0</div>
+          <div class="wc-cell-lbl">Points</div>
+        </div>
+      </div>
+
+      <div class="wc-actions">
+        <button class="wc-btn primary" onclick="promptRedeemPoints()">✦ Échanger mes points</button>
+        <button class="wc-btn" onclick="promptGiftToWallet()">🎁 Créditer une carte</button>
+      </div>
+    </div>
+
+    <div class="sec-head"><span class="sh-txt">Historique des transactions</span><div class="sh-line"></div></div>
+    <div class="tx-list" id="tx-list">
+      <div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>
+    </div>
+    <button class="tx-more" id="tx-more" style="display:none" onclick="loadMoreTransactions()">Afficher plus</button>
+  </div>
 
   <!-- ══ PANEL: PROFIL ══ -->
   <div class="tab-panel active" id="panel-profil">
@@ -693,6 +879,24 @@ input, button, select, textarea { font-family:inherit; }
 
     <div class="profile-card">
       <div class="pc-title">Mon profil</div>
+
+      <!-- Photo de profil -->
+      <div class="pc-avatar-wrap">
+        <div class="pc-avatar" id="pc-avatar" onclick="pickAvatar()" title="Changer la photo">
+          <span id="pc-avatar-initials">C</span>
+          <div class="pc-avatar-cam">📷 Modifier</div>
+        </div>
+        <div class="pc-avatar-side">
+          <div class="pc-avatar-name" id="pc-avatar-name">—</div>
+          <div class="pc-avatar-hint">JPG ou PNG · redimensionnée automatiquement</div>
+          <div class="pc-avatar-actions">
+            <button class="pc-mini-btn" onclick="pickAvatar()">Choisir une photo</button>
+            <button class="pc-mini-btn" id="pc-avatar-del" onclick="removeAvatar()" style="display:none">Retirer</button>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="onAvatarPicked(event)">
+
       <div class="pc-fields">
         <div class="pf-row">
           <div class="auth-field">
@@ -723,7 +927,7 @@ input, button, select, textarea { font-family:inherit; }
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
 
         <!-- 🛍️ Commander — LIEN DIRECT -->
-        <a href="https://cafeslux.com/public/menu/index.html"
+        <a href="/public/menu/index.html"
            style="background:var(--bg3);border:2px solid rgba(61,190,122,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
            onmouseover="this.style.borderColor='rgba(61,190,122,.7)';this.style.transform='translateY(-2px)'"
            onmouseout="this.style.borderColor='rgba(61,190,122,.25)';this.style.transform='none'">
@@ -746,7 +950,7 @@ input, button, select, textarea { font-family:inherit; }
         </a>
 
         <!-- 🎮 Gaming LUX — LIEN DIRECT -->
-        <a href="https://cafeslux.com/public/gaming/index.html"
+        <a href="/public/gaming/index.html"
            style="background:var(--bg3);border:2px solid rgba(91,141,239,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
            onmouseover="this.style.borderColor='rgba(91,141,239,.7)';this.style.transform='translateY(-2px)'"
            onmouseout="this.style.borderColor='rgba(91,141,239,.25)';this.style.transform='none'">
@@ -757,7 +961,7 @@ input, button, select, textarea { font-family:inherit; }
         </a>
 
         <!-- 🎁 Parrainage — Page Offres & Carte Cadeau -->
-        <a href="https://cafeslux.com/public/offres/index.html#gc"
+        <a href="/public/offres/index.html#gc"
            style="background:var(--bg3);border:2px solid rgba(224,82,82,.25);border-radius:12px;padding:14px 10px;text-align:center;text-decoration:none;display:block;transition:.2s"
            onmouseover="this.style.borderColor='rgba(224,82,82,.7)';this.style.transform='translateY(-2px)'"
            onmouseout="this.style.borderColor='rgba(224,82,82,.25)';this.style.transform='none'">
@@ -930,17 +1134,24 @@ input, button, select, textarea { font-family:inherit; }
 ══════════════════════════════════════════════════════════════ */
 const API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
-// Routes exactes du backend (src/routes/auth.routes.js — router.post('/login'|'/register'), router.get('/me'))
+// Routes exactes du backend
 const ROUTES = {
   REGISTER:      `${API}/api/auth/register`,
   LOGIN:         `${API}/api/auth/login`,
   ME:            `${API}/api/auth/me`,
   PROFILE_PATCH: `${API}/api/customers/me`,
   ORDERS:        `${API}/api/customers/me/orders`,
-  GC_CHECK:      (code) => `${API}/api/gift-cards/check/${encodeURIComponent(code)}`,
-  GC_REDEEM:     (code) => `${API}/api/gift-cards/${encodeURIComponent(code)}/redeem`,
-  GC_MY:         `${API}/api/gift-cards/my`,
+  GC_CHECK:      (code) => `${API}/api/giftcards/${encodeURIComponent(code)}`,
+  GC_REDEEM:     (code) => `${API}/api/giftcards/${encodeURIComponent(code)}/redeem`,
+  GC_MY:         `${API}/api/customers/me/giftcards`,
   LOYALTY_ADD:   `${API}/api/customers/me/loyalty`,
+
+  // ── Mon Espace LUX : Wallet / Points / Profil ──
+  ME_FULL:       `${API}/api/customers/me`,
+  WALLET:        `${API}/api/customers/me/wallet`,
+  TRANSACTIONS:  (limit, skip) => `${API}/api/customers/me/transactions?limit=${limit}&skip=${skip}`,
+  POINTS_REDEEM: `${API}/api/customers/me/points/redeem`,
+  GC_TO_WALLET:  `${API}/api/customers/me/wallet/giftcard`,
 };
 
 // Niveaux de fidélité (synchronisés avec le backend)
@@ -970,6 +1181,13 @@ let STATE = {
   orders:   [],
   payMode:  'gc',
   discount: 0,
+
+  // Wallet
+  wallet:       null,
+  transactions: [],
+  txTotal:      0,
+  txSkip:       0,
+  avatarUrl:    null,
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -1160,13 +1378,73 @@ async function testConnection() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CONNEXION — POST /api/auth/login
-   ⚠ Le backend actuel (auth.routes.js) n'accepte que { phone,
-   password } — pas de lookup par email. On envoie donc le champ
-   sous la clé "phone" pour matcher l'API ; si l'utilisateur saisit
-   un email, la connexion échouera tant que la route backend ne
-   supportera pas la recherche par email.
+   CONNEXION — POST /api/auth/customer/login
 ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   CONNEXION GOOGLE — Google Identity Services
+   Le bouton envoie un jeton ID au backend, qui le vérifie et
+   renvoie notre propre token de session (persistant 90 jours,
+   comme la connexion téléphone/mot de passe).
+══════════════════════════════════════════════════════════════ */
+let _googleInited = false;
+
+function initGoogleSignIn() {
+  if (_googleInited) return;
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+  const clientId = window.LUX_GOOGLE_CLIENT_ID || '';
+  if (!clientId || clientId.indexOf('REMPLACER') === 0) return; // pas encore configuré
+
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: onGoogleCredential,
+  });
+  _googleInited = true;
+}
+
+function startGoogleSignIn() {
+  const clientId = window.LUX_GOOGLE_CLIENT_ID || '';
+  if (!clientId || clientId.indexOf('REMPLACER') === 0) {
+    toast('⚠ Connexion Google non configurée pour le moment');
+    return;
+  }
+  initGoogleSignIn();
+  if (typeof google === 'undefined' || !google.accounts) {
+    toast('⚠ Service Google indisponible — réessayez dans un instant');
+    return;
+  }
+  google.accounts.id.prompt(); // affiche le sélecteur de compte Google
+}
+
+async function onGoogleCredential(response) {
+  const btn = document.getElementById('google-signin-btn');
+  const original = btn ? btn.innerHTML : '';
+  if (btn) { btn.style.opacity = '.6'; btn.style.pointerEvents = 'none'; }
+
+  try {
+    const { res, data } = await safeFetch(`${API}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    if (res.ok && data.token) {
+      setToken(data.token);
+      const customer = data.customer || {};
+      customer.loyaltyPoints = (customer.pointsTotal || 0) - (customer.pointsUsed || 0);
+      loadUserData(customer);
+      showApp();
+      await Promise.all([loadOrders(), loadMyGiftCards(), refreshWallet()]);
+      toast('✅ Connecté avec Google');
+    } else {
+      toast('❌ ' + (data.error || 'Connexion Google impossible'));
+    }
+  } catch (e) {
+    toast('❌ Serveur injoignable');
+  } finally {
+    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; btn.innerHTML = original; }
+  }
+}
+
 async function doLogin() {
   const identifier = document.getElementById('login-id').value.trim();
   const password   = document.getElementById('login-pw').value.trim();
@@ -1182,12 +1460,18 @@ async function doLogin() {
     const { res, data }  = await safeFetch(ROUTES.LOGIN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // Le backend (POST /api/auth/login) attend { phone, password } —
+      // le champ "identifier" (téléphone) doit être envoyé sous la clé "phone".
       body: JSON.stringify({ phone: identifier, password })
     });
 
     if (res.ok && data.token) {
       setToken(data.token);
-      loadUserData(data.customer);
+      // Le login renvoie pointsTotal/pointsUsed — dérive loyaltyPoints
+      // pour rester cohérent avec /api/auth/me (utilisé au rechargement).
+      const customer = data.customer || {};
+      customer.loyaltyPoints = (customer.pointsTotal || 0) - (customer.pointsUsed || 0);
+      loadUserData(customer);
       showApp();
       await loadOrders();
       await loadMyGiftCards();
@@ -1287,6 +1571,8 @@ function loadUserData(user) {
 
   // Topbar & hero
   document.getElementById('avatar-initials').textContent = initial;
+  STATE.avatarUrl = user.avatarUrl || null;
+  applyAvatar(STATE.avatarUrl);
   document.getElementById('client-name').textContent     = user.name || `${fname} ${lname}`.trim();
   document.getElementById('client-since').textContent    = `Membre depuis ${formatDate(user.memberSince || user.createdAt)}`;
 
@@ -1316,6 +1602,10 @@ function loadUserData(user) {
   // Stats (ordersCount vient du backend)
   document.getElementById('stat-orders').textContent  = user.ordersCount || STATE.orders.length || 0;
   document.getElementById('stat-spent').textContent   = `${(user.totalSpent || 0).toLocaleString()} DH`;
+  if (typeof user.walletBalance === 'number') {
+    const wb = document.getElementById('wc-balance');
+    if (wb) wb.textContent = fmtDH(user.walletBalance);
+  }
   document.getElementById('stat-savings').textContent = `${(user.savings || 0).toLocaleString()} DH`;
 
   // Remise VIP
@@ -1366,8 +1656,11 @@ function showApp() {
 function switchTab(tab) {
   document.querySelectorAll('.tn-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tn-' + tab).classList.add('active');
-  document.getElementById('panel-' + tab).classList.add('active');
+  const btn = document.getElementById('tn-' + tab);
+  const pan = document.getElementById('panel-' + tab);
+  if (btn) btn.classList.add('active');
+  if (pan) pan.classList.add('active');
+  if (tab === 'wallet') refreshWallet();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1377,20 +1670,26 @@ async function saveProfile() {
   const fname = document.getElementById('pf-fname').value.trim();
   const lname  = document.getElementById('pf-lname').value.trim();
   const email  = document.getElementById('pf-email').value.trim();
+  const phone  = document.getElementById('pf-phone').value.trim();
   const name   = `${fname} ${lname}`.trim();
 
   if (!name) { toast('⚠ Le nom est requis'); return; }
 
   try {
+    const payload = { name, email: email || undefined };
+    // Un compte créé via Google n'a pas de téléphone au départ —
+    // on ne l'envoie que s'il a été renseigné ou modifié.
+    if (phone !== (STATE.user.phone || '')) payload.phone = phone || null;
+
     const { res, data }  = await safeFetch(ROUTES.PROFILE_PATCH, {
       method: 'PATCH', headers: authHeaders(),
-      body: JSON.stringify({ name, email: email || undefined })
+      body: JSON.stringify(payload)
     });
 
     if (res.ok) {
-      Object.assign(STATE.user, { name: data.name || name, email: data.email || email });
-      document.getElementById('client-name').textContent      = STATE.user.name;
-      document.getElementById('avatar-initials').textContent  = STATE.user.name[0].toUpperCase();
+      Object.assign(STATE.user, { name: data.name || name, email: data.email || email, phone: data.phone });
+      document.getElementById('client-name').textContent = STATE.user.name;
+      applyAvatar(STATE.avatarUrl);
       toast('✅ Profil mis à jour');
     } else {
       toast('❌ ' + (data.error || 'Erreur lors de la sauvegarde'));
@@ -1398,6 +1697,310 @@ async function saveProfile() {
   } catch(e) {
     toast('❌ Impossible de joindre le serveur');
     console.error('[SAVE_PROFILE]', e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WALLET — GET /api/customers/me/wallet
+   Toutes les données viennent du backend. Aucune donnée fictive.
+══════════════════════════════════════════════════════════════ */
+const TX_PAGE = 20;
+
+const TX_META = {
+  TOPUP:           { icon: '\u2B06\uFE0F', label: 'Rechargement' },
+  PAYMENT:         { icon: '\uD83D\uDED2', label: 'Paiement' },
+  REFUND:          { icon: '\u21A9\uFE0F', label: 'Remboursement' },
+  GIFTCARD_CREDIT: { icon: '\uD83C\uDF81', label: 'Carte cadeau' },
+  POINTS_EARNED:   { icon: '\u2B50', label: 'Points gagnés' },
+  POINTS_REDEEMED: { icon: '\uD83C\uDFAF', label: 'Points échangés' },
+  ADJUSTMENT:      { icon: '\u2699\uFE0F', label: 'Ajustement' },
+};
+
+function fmtDH(n) {
+  const v = Number(n) || 0;
+  return v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDateTime(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+      + ' \u00b7 ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return ''; }
+}
+
+// Petite animation sur les chiffres du solde
+function animateValue(el, to, decimals) {
+  if (!el) return;
+  const from = parseFloat(String(el.textContent).replace(/[^\d.-]/g, '')) || 0;
+  const dur = 550, t0 = performance.now();
+  function step(now) {
+    const k = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1 - k, 3);
+    const val = from + (to - from) * eased;
+    el.textContent = decimals ? fmtDH(val) : Math.round(val).toLocaleString('fr-FR');
+    if (k < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+async function refreshWallet() {
+  if (!STATE.isAuth) return;
+  try {
+    const { res, data } = await safeFetch(ROUTES.WALLET, { headers: authHeaders() });
+    if (!res.ok) {
+      if (res.status === 401) { clearToken(); location.reload(); return; }
+      throw new Error(data.error || 'Erreur wallet');
+    }
+
+    STATE.wallet = data;
+
+    animateValue(document.getElementById('wc-balance'), data.balance, true);
+    animateValue(document.getElementById('wc-credited'), data.totalCredited, false);
+    animateValue(document.getElementById('wc-debited'), data.totalDebited, false);
+    animateValue(document.getElementById('wc-points'), data.pointsAvailable, false);
+
+    document.getElementById('wc-points-line').textContent =
+      `${data.pointsAvailable} points disponibles \u00b7 \u2248 ${fmtDH(data.pointsValueDH)} DH \u00b7 ${data.rule}`;
+
+    // Garde les points de l'entête synchronisés
+    if (STATE.user) {
+      STATE.user.loyaltyPoints = data.pointsAvailable;
+      const pd = document.getElementById('pts-display');
+      if (pd) pd.textContent = data.pointsAvailable.toLocaleString();
+    }
+
+    STATE.txSkip = 0;
+    STATE.transactions = [];
+    await loadTransactions(true);
+  } catch (e) {
+    console.error('[WALLET]', e.message);
+    document.getElementById('tx-list').innerHTML =
+      `<div class="empty-state"><span class="empty-icon">\u26A0\uFE0F</span>Impossible de charger le portefeuille</div>`;
+  }
+}
+
+async function loadTransactions(reset) {
+  const list = document.getElementById('tx-list');
+  if (reset) {
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">\u23F3</span>Chargement...</div>`;
+  }
+  try {
+    const { res, data } = await safeFetch(
+      ROUTES.TRANSACTIONS(TX_PAGE, STATE.txSkip), { headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+
+    STATE.txTotal = data.total;
+    STATE.transactions = STATE.transactions.concat(data.transactions || []);
+    STATE.txSkip += (data.transactions || []).length;
+
+    renderTransactions();
+  } catch (e) {
+    console.error('[TX]', e.message);
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">\u26A0\uFE0F</span>Historique indisponible</div>`;
+  }
+}
+
+function loadMoreTransactions() { loadTransactions(false); }
+
+function renderTransactions() {
+  const list = document.getElementById('tx-list');
+  const more = document.getElementById('tx-more');
+
+  if (!STATE.transactions.length) {
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">\uD83D\uDCED</span>
+      Aucune transaction pour le moment.<br>
+      <small style="color:var(--txt2)">Vos points et paiements appara\u00eetront ici.</small></div>`;
+    more.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = STATE.transactions.map((t, i) => {
+    const meta = TX_META[t.type] || { icon: '\u2022', label: t.type };
+    const hasAmount = Math.abs(t.amount) > 0.001;
+    const positive = t.amount > 0;
+
+    let amountHtml = '';
+    if (hasAmount) {
+      amountHtml = `<div class="tx-amount ${positive ? 'wc-up' : 'wc-down'}">
+        ${positive ? '+' : '\u2212'}${fmtDH(Math.abs(t.amount))} DH</div>`;
+    } else if (t.pointsDelta) {
+      amountHtml = `<div class="tx-amount wc-pts">
+        ${t.pointsDelta > 0 ? '+' : '\u2212'}${Math.abs(t.pointsDelta)} pts</div>`;
+    }
+
+    let ptsHtml = '';
+    if (t.pointsDelta && hasAmount) {
+      ptsHtml = `<div class="tx-pts">${t.pointsDelta > 0 ? '+' : '\u2212'}${Math.abs(t.pointsDelta)} pts</div>`;
+    }
+
+    return `<div class="tx-item" style="animation-delay:${Math.min(i, 10) * 28}ms">
+      <div class="tx-icon">${meta.icon}</div>
+      <div class="tx-body">
+        <div class="tx-label">${escapeHtml(t.label || meta.label)}</div>
+        <div class="tx-date">${fmtDateTime(t.createdAt)}</div>
+      </div>
+      <div class="tx-right">
+        ${amountHtml}
+        ${ptsHtml}
+        <div class="tx-after">Solde : ${fmtDH(t.balanceAfter)} DH</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  more.style.display = STATE.transactions.length < STATE.txTotal ? 'block' : 'none';
+  more.textContent = `Afficher plus (${STATE.txTotal - STATE.transactions.length} restantes)`;
+}
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* ── Échange de points contre du solde ─────────────────── */
+async function promptRedeemPoints() {
+  const avail = STATE.wallet ? STATE.wallet.pointsAvailable : 0;
+  if (avail <= 0) { toast('\u26A0 Vous n\'avez pas encore de points'); return; }
+
+  const input = prompt(`Combien de points \u00e9changer ?\n\nDisponible : ${avail} points\n10 points = 1 DH de solde`, String(avail));
+  if (input === null) return;
+
+  const points = parseInt(input, 10);
+  if (!points || points <= 0) { toast('\u26A0 Nombre invalide'); return; }
+  if (points > avail) { toast('\u26A0 Points insuffisants'); return; }
+
+  try {
+    const { res, data } = await safeFetch(ROUTES.POINTS_REDEEM, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ points })
+    });
+    if (!res.ok) { toast('\u274C ' + (data.error || 'Erreur')); return; }
+    toast(`\u2705 ${points} points \u2192 ${fmtDH(data.credited)} DH cr\u00e9dit\u00e9s`);
+    refreshWallet();
+  } catch (e) {
+    toast('\u274C Serveur injoignable');
+  }
+}
+
+/* ── Créditer une carte cadeau sur le solde ────────────── */
+async function promptGiftToWallet() {
+  const code = prompt('Entrez le code de votre carte cadeau LUX :');
+  if (!code) return;
+
+  try {
+    const { res, data } = await safeFetch(ROUTES.GC_TO_WALLET, {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ code: code.trim().toUpperCase() })
+    });
+    if (!res.ok) { toast('\u274C ' + (data.error || 'Carte invalide')); return; }
+    toast(`\u2705 ${fmtDH(data.credited)} DH ajout\u00e9s \u00e0 votre solde`);
+    refreshWallet();
+    if (typeof loadMyGiftCards === 'function') loadMyGiftCards();
+  } catch (e) {
+    toast('\u274C Serveur injoignable');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PHOTO DE PROFIL — redimensionnée puis PATCH /api/customers/me
+══════════════════════════════════════════════════════════════ */
+function pickAvatar() {
+  const input = document.getElementById('avatar-input');
+  if (input) input.click();
+}
+
+function onAvatarPicked(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!file) return;
+
+  if (!/^image\//.test(file.type)) { toast('\u26A0 Choisissez une image'); return; }
+  if (file.size > 8 * 1024 * 1024) { toast('\u26A0 Image trop lourde (max 8 Mo)'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    const img = new Image();
+    img.onload = function() {
+      // Recadrage carré + réduction à 320px : le fichier envoyé reste léger
+      const SIZE = 320;
+      const canvas = document.createElement('canvas');
+      canvas.width = SIZE; canvas.height = SIZE;
+      const ctx = canvas.getContext('2d');
+      const side = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, SIZE, SIZE);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      uploadAvatar(dataUrl);
+    };
+    img.onerror = function() { toast('\u274C Image illisible'); };
+    img.src = reader.result;
+  };
+  reader.onerror = function() { toast('\u274C Lecture impossible'); };
+  reader.readAsDataURL(file);
+}
+
+async function uploadAvatar(dataUrl) {
+  toast('\u23F3 Envoi de la photo...');
+  try {
+    const { res, data } = await safeFetch(ROUTES.PROFILE_PATCH, {
+      method: 'PATCH', headers: authHeaders(),
+      body: JSON.stringify({ avatarUrl: dataUrl })
+    });
+    if (!res.ok) { toast('\u274C ' + (data.error || 'Envoi impossible')); return; }
+    STATE.avatarUrl = data.avatarUrl;
+    if (STATE.user) STATE.user.avatarUrl = data.avatarUrl;
+    applyAvatar(data.avatarUrl);
+    toast('\u2705 Photo mise \u00e0 jour');
+  } catch (e) {
+    toast('\u274C Serveur injoignable');
+  }
+}
+
+async function removeAvatar() {
+  try {
+    const { res, data } = await safeFetch(ROUTES.PROFILE_PATCH, {
+      method: 'PATCH', headers: authHeaders(),
+      body: JSON.stringify({ avatarUrl: null })
+    });
+    if (!res.ok) { toast('\u274C ' + (data.error || 'Erreur')); return; }
+    STATE.avatarUrl = null;
+    if (STATE.user) STATE.user.avatarUrl = null;
+    applyAvatar(null);
+    toast('\u2705 Photo retir\u00e9e');
+  } catch (e) {
+    toast('\u274C Serveur injoignable');
+  }
+}
+
+function applyAvatar(url) {
+  const name = (STATE.user && STATE.user.name) || 'Client';
+  const initial = name.trim().charAt(0).toUpperCase() || 'C';
+
+  const hero = document.getElementById('avatar-initials');
+  const pc = document.getElementById('pc-avatar');
+  const pcIni = document.getElementById('pc-avatar-initials');
+  const del = document.getElementById('pc-avatar-del');
+  const pcName = document.getElementById('pc-avatar-name');
+
+  if (pcName) pcName.textContent = name;
+
+  if (url) {
+    if (hero) hero.innerHTML = `<img src="${url}" alt="">`;
+    if (pcIni) pcIni.style.display = 'none';
+    if (pc) {
+      const old = pc.querySelector('img');
+      if (old) old.remove();
+      const im = document.createElement('img');
+      im.src = url; im.alt = '';
+      pc.insertBefore(im, pc.firstChild);
+    }
+    if (del) del.style.display = 'inline-block';
+  } else {
+    if (hero) hero.textContent = initial;
+    if (pc) { const old = pc.querySelector('img'); if (old) old.remove(); }
+    if (pcIni) { pcIni.style.display = 'block'; pcIni.textContent = initial; }
+    if (del) del.style.display = 'none';
   }
 }
 
@@ -1724,17 +2327,37 @@ async function redeemReward(id, pts, name) {
    INIT — Vérifier session existante
    GET /api/auth/customer/me (avec Bearer token)
 ══════════════════════════════════════════════════════════════ */
+// Le script Google se charge en async — on réessaie l'init
+// plusieurs fois plutôt que de dépendre d'un timing exact.
+(function tryInitGoogle(attempt) {
+  initGoogleSignIn();
+  if (!_googleInited && attempt < 15) {
+    setTimeout(function () { tryInitGoogle(attempt + 1); }, 400);
+  }
+})(0);
+
 (async function init() {
   const tok = getToken();
   if (tok) {
     try {
-      const { res: meRes, data: meData } = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+      // On interroge d'abord /api/customers/me : il renvoie l'avatar,
+      // le solde et les statistiques réelles. Repli sur /api/auth/me.
+      let meRes, meData;
+      try {
+        const r = await safeFetch(ROUTES.ME_FULL, { headers: authHeaders() });
+        meRes = r.res; meData = r.data;
+      } catch (e) { meRes = null; }
+      if (!meRes || !meRes.ok) {
+        const r2 = await safeFetch(ROUTES.ME, { headers: authHeaders() });
+        meRes = r2.res; meData = r2.data;
+      }
+
       if (meRes.ok) {
         const user = meData;
         loadUserData(user);
         showApp();
-        // Charger commandes et cartes en parallèle
-        await Promise.all([loadOrders(), loadMyGiftCards()]);
+        // Charger commandes, cartes et portefeuille en parallèle
+        await Promise.all([loadOrders(), loadMyGiftCards(), refreshWallet()]);
       } else if (meRes.status === 401) {
         // Token expiré → nettoyer
         clearToken();
@@ -1935,6 +2558,7 @@ window.LUX_SESSION = {
     <button type="button" class="me-snd" onclick="meLaiSend()">إرسال</button>
   </div>
 </div>
+
 <script>
 (function(){
   var _AAPI=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
@@ -1987,99 +2611,5 @@ window.LUX_SESSION = {
   };
 })();
 </script>
-
-
-<!-- ── Google Auth Handler ──
-     Le script accounts.google.com/gsi/client est déjà chargé une
-     fois dans le <head> (voir ligne ~14) — inutile (et risqué,
-     double init) de le recharger ici. -->
-<script>
-  // Client ID Google Cloud Console (OAuth Client "Web application").
-  // Doit correspondre à GOOGLE_CLIENT_ID côté backend (auth.routes.js).
-  const GOOGLE_CLIENT_ID = '72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com';
-
-  window.addEventListener('load', () => {
-    let checkInterval = setInterval(() => {
-      if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(checkInterval);
-
-        // 1. Initialisation de Google Identity Services
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleResponse
-        });
-
-        // 2. Rendu du bouton officiel Google dans le formulaire de connexion
-        const container = document.getElementById('google-btn-container');
-        if (container) {
-          container.innerHTML = '';
-          google.accounts.id.renderButton(
-            container,
-            { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with' }
-          );
-        }
-      }
-    }, 100);
-
-    // Filet de sécurité : si google.accounts n'apparaît jamais
-    // (bloqueur de pub, script chargé mais API non exposée…),
-    // on arrête le polling après 15s et on informe l'utilisateur
-    // au lieu de tourner indéfiniment.
-    setTimeout(() => {
-      clearInterval(checkInterval);
-      if (typeof google === 'undefined' || !google.accounts) {
-        const container = document.getElementById('google-btn-container');
-        if (container && !container.innerHTML) {
-          container.innerHTML = '<p style="color:#c0392b;font-size:12px;text-align:center;">Connexion Google indisponible — vérifiez votre connexion ou désactivez temporairement votre bloqueur de publicités.</p>';
-        }
-      }
-    }, 15000);
-  });
-
-  // 3. Callback GIS — récupère response.credential (le jeton ID)
-  //    et l'envoie au backend via LuxAPI.loginGoogle (api-client.js),
-  //    ce qui garantit que le token est stocké sous la même clé
-  //    ("lux_token") que pour le login classique.
-  async function handleGoogleResponse(response) {
-    if (!response || !response.credential) {
-      toast('⚠ Réponse Google invalide — réessayez');
-      return;
-    }
-
-    if (typeof LuxAPI === 'undefined' || typeof LuxAPI.loginGoogle !== 'function') {
-      toast('❌ api-client.js non chargé — rechargez la page');
-      console.error('[GOOGLE AUTH] LuxAPI.loginGoogle is unavailable');
-      return;
-    }
-
-    try {
-      const data = await LuxAPI.loginGoogle(response.credential);
-
-      if (!data || !data.token || !data.customer) {
-        throw new Error('Réponse serveur incomplète');
-      }
-
-      // Même chemin de succès que doLogin() / doRegister() :
-      // pas de reload complet, on hydrate directement l'UI.
-      loadUserData(data.customer);
-      showApp();
-      toast('✅ Connecté avec Google — Bienvenue ' + (data.customer.name || '') + ' !', 4000);
-      await Promise.all([loadOrders(), loadMyGiftCards()]);
-
-    } catch (err) {
-      console.error('[GOOGLE AUTH] Error:', err);
-      toast('❌ ' + (err.message || 'Échec de connexion avec Google'));
-    }
-  }
-
-  // En cas d'échec total du chargement du script GIS lui-même
-  // (bloqueur de pub, coupure réseau…)
-  window.addEventListener('error', (e) => {
-    if (e.target && e.target.src && e.target.src.includes('accounts.google.com/gsi/client')) {
-      const container = document.getElementById('google-btn-container');
-      if (container) {
-        container.innerHTML = '<p style="color:#c0392b;font-size:12px;text-align:center;">Impossible de charger le service de connexion Google. Vérifiez votre connexion ou votre bloqueur de publicités.</p>';
-      }
-    }
-  }, true);
-</script>
+</body>
+</html>
