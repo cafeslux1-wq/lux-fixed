@@ -632,6 +632,8 @@ body{
 .generate-btn:hover{background-position:0%;transform:translateY(-2px);box-shadow:0 12px 36px rgba(201,168,76,.4);}
 .generate-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;background-position:100%;}
 
+.pending-note{font-size:11px;color:var(--muted);text-align:center;margin:-8px 0 16px;line-height:1.6;}
+
 .success-card{background:linear-gradient(135deg,rgba(61,190,122,.08),rgba(61,190,122,.04));border:1.5px solid rgba(61,190,122,.25);border-radius:14px;padding:20px;margin-bottom:16px;animation:panelIn .35s ease;text-align:center;}
 .sc-header{font-size:13px;font-weight:600;color:var(--green);margin-bottom:12px;letter-spacing:.3px;}
 .sc-code{font-family:monospace;font-size:20px;font-weight:700;color:var(--gold-l);letter-spacing:4px;background:var(--gold-alpha-10);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:8px;text-shadow:0 0 16px rgba(201,168,76,.35);}
@@ -642,6 +644,9 @@ body{
 .sc-btn:hover{border-color:var(--border2);color:var(--text);}
 .sc-btn.primary{border-color:rgba(201,168,76,.3);color:var(--gold);}
 .sc-btn.primary:hover{background:var(--gold-alpha-10);}
+
+/* ── Écran d'attente : validation admin ── */
+@keyframes gcspin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -693,13 +698,13 @@ body{
         <div class="gc-concept-title">Offrez l'expérience Café LUX</div>
         <p class="gc-concept-desc">
           Cartes cadeaux numériques — valables 1 an sur commandes, gaming &amp; réservations.
-          Paiement sécurisé en ligne ou en caisse.
+          Chaque demande est validée par notre équipe avant l'émission du code.
         </p>
         <div class="gc-concept-chips">
           <span class="gc-chip">📅 Valable 1 an</span>
           <span class="gc-chip">🌐 Utilisable en ligne</span>
           <span class="gc-chip">🎯 Sur place &amp; livraison</span>
-          <span class="gc-chip">🔒 Paiement sécurisé</span>
+          <span class="gc-chip">✅ Validation admin</span>
         </div>
       </div>
 
@@ -774,7 +779,7 @@ body{
       <!-- ÉTAPE 3 : Paiement -->
       <div class="order-step">
         <div class="step-num">3</div>
-        <div class="step-title">Mode de paiement</div>
+        <div class="step-title">Mode de paiement souhaité</div>
       </div>
 
       <div class="pay-methods">
@@ -786,31 +791,33 @@ body{
         <button class="pm-btn" id="pm-card" onclick="selectPay('card')">
           <span class="pm-icon">💳</span>
           <span class="pm-label">Carte</span>
-          <span class="pm-sub">Visa · Mastercard</span>
+          <span class="pm-sub">En caisse</span>
         </button>
         <button class="pm-btn" id="pm-gpay" onclick="selectPay('gpay')">
           <span class="pm-icon">G</span>
           <span class="pm-label">Google Pay</span>
-          <span class="pm-sub">Via Stripe</span>
+          <span class="pm-sub">Sur demande</span>
         </button>
         <button class="pm-btn" id="pm-paypal" onclick="selectPay('paypal')">
           <span class="pm-icon">🅿</span>
           <span class="pm-label">PayPal</span>
-          <span class="pm-sub">Paiement rapide</span>
+          <span class="pm-sub">Sur demande</span>
         </button>
       </div>
 
-      <!-- PayPal container (shown when paypal selected) -->
-      <div id="paypal-container" style="display:none;margin-bottom:12px;border-radius:12px;overflow:hidden"></div>
+      <div class="pending-note">
+        ⏳ Votre demande sera envoyée à l'administration Café LUX pour validation.<br>
+        Le code de la carte n'apparaît qu'après acceptation — aucun code n'est généré avant confirmation.
+      </div>
 
       <!-- Generate Button -->
       <button class="generate-btn" id="generate-btn" onclick="handleGenerate()">
-        <span id="gen-btn-text">🎁 Générer la Carte Cadeau</span>
+        <span id="gen-btn-text">🎁 Envoyer la demande</span>
       </button>
 
-      <!-- Success card (shown after cash payment) -->
+      <!-- Success card (shown after admin approval) -->
       <div class="success-card" id="success-card" style="display:none">
-        <div class="sc-header">✅ Carte Cadeau Générée</div>
+        <div class="sc-header">✅ Carte Cadeau Approuvée</div>
         <div class="sc-code" id="sc-code-display"></div>
         <div class="sc-amount" id="sc-amount-display"></div>
         <div class="sc-info" id="sc-info"></div>
@@ -994,22 +1001,33 @@ body{
 <!-- Toast -->
 <div id="lux-toast"></div>
 
+<!-- ═══ ÉCRAN D'ATTENTE — VALIDATION ADMIN (carte cadeau) ═══ -->
+<div id="gc-wait-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,8,10,.94);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px">
+  <div style="max-width:420px;width:100%;text-align:center;border:1px solid rgba(212,175,55,.35);border-radius:18px;padding:32px 24px;background:linear-gradient(180deg,rgba(30,26,20,.95),rgba(16,14,12,.95))">
+    <div id="gc-wait-spin" style="width:58px;height:58px;margin:0 auto 20px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:gcspin .9s linear infinite"></div>
+    <div id="gc-wait-icon" style="display:none;font-size:52px;margin-bottom:14px"></div>
+    <div id="gc-wait-title" style="font-size:18px;font-weight:700;color:#f0e8d5;margin-bottom:10px">Demande envoyée — en attente de validation</div>
+    <div id="gc-wait-msg" style="font-size:13px;line-height:1.7;color:rgba(240,232,213,.7)">
+      L'administration doit confirmer votre demande de carte cadeau.<br>Merci de patienter, ne fermez pas cette page.
+    </div>
+    <div id="gc-wait-ref" style="margin-top:16px;font-family:monospace;font-size:12px;color:rgba(212,175,55,.85)"></div>
+    <button id="gc-wait-close" onclick="closeGcWaiting()" style="display:none;margin-top:22px;padding:11px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,#d4af37,#b8952e);color:#1a1610;font-weight:700;font-size:13px;cursor:pointer">Fermer</button>
+  </div>
+</div>
+
 <script>
 'use strict';
 
 /* ══════════════════════════════════════════════════════════════
-   CONFIG — remplacez ces clés avant le lancement
+   CONFIG
 ══════════════════════════════════════════════════════════════ */
-var STRIPE_PUBLIC_KEY  = 'pk_test_VOTRE_CLE_PUBLIQUE_STRIPE'; // dashboard.stripe.com
-var PAYPAL_CLIENT_ID   = 'VOTRE_CLIENT_ID_PAYPAL';            // developer.paypal.com
-var WA_NUMBER          = '212677717201';
-var API                = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+var WA_NUMBER = '212677717201';
+var API       = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 
 /* ── State ── */
 var selectedAmount  = 100;
 var selectedPay     = null;
 var generatedCode   = null;
-var paypalRendered  = false;
 
 /* ── Clock ── */
 (function(){
@@ -1073,290 +1091,196 @@ function updateCardPreview(){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PAYMENT METHOD SELECTION
+   PAYMENT METHOD SELECTION (informatif — le règlement se fait
+   toujours avec le staff ; ceci sert juste à préparer la caisse)
 ══════════════════════════════════════════════════════════════ */
+var PM_LABELS = {
+  cash:   '💵 Envoyer la demande (paiement espèces)',
+  card:   '💳 Envoyer la demande (paiement carte)',
+  gpay:   'G Envoyer la demande (Google Pay)',
+  paypal: '🅿 Envoyer la demande (PayPal)'
+};
 function selectPay(method){
   selectedPay = method;
   document.querySelectorAll('.pm-btn').forEach(function(b){ b.classList.remove('sel'); });
   var btn = document.getElementById('pm-'+method);
   if(btn) btn.classList.add('sel');
-
-  // Update button label
-  var labels = {
-    cash:'💵 Réserver & payer en caisse',
-    card:'💳 Payer par carte (Stripe)',
-    gpay:'G Payer avec Google Pay',
-    paypal:'🅿 Payer avec PayPal'
-  };
-  document.getElementById('gen-btn-text').textContent = labels[method] || '🎁 Générer la Carte Cadeau';
-
-  // PayPal: render buttons only once
-  var ppContainer = document.getElementById('paypal-container');
-  if(method==='paypal'){
-    ppContainer.style.display='block';
-    if(!paypalRendered) renderPayPal();
-  } else {
-    ppContainer.style.display='none';
-  }
+  document.getElementById('gen-btn-text').textContent = PM_LABELS[method] || '🎁 Envoyer la demande';
 }
 
 /* ══════════════════════════════════════════════════════════════
-   GENERATE CODE
+   GENERATE — helpers d'affichage carte
 ══════════════════════════════════════════════════════════════ */
-function generateCode(){
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var parts = [];
-  for(var p=0;p<4;p++){
-    var s='';
-    for(var i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
-    parts.push(s);
-  }
-  return parts.join('-');
-}
-
-function getExpiryISO(){
-  var d=new Date(); d.setFullYear(d.getFullYear()+1);
-  return d.toISOString();
-}
 function getExpiryDisplay(){
   var d=new Date(); d.setFullYear(d.getFullYear()+1);
   return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MAIN GENERATE HANDLER
+   MAIN HANDLER — envoie une VRAIE demande au backend.
+   Le code n'est JAMAIS généré côté client : il n'existe qu'après
+   validation par l'administration (POST /api/giftcards → PENDING,
+   puis approve/reject côté Dashboard).
 ══════════════════════════════════════════════════════════════ */
 function handleGenerate(){
   if(!selectedPay){ toast('⚠ Choisissez un mode de paiement'); return; }
   if(selectedAmount<20){ toast('⚠ Montant minimum: 20 MAD'); return; }
 
-  if(selectedPay==='cash')   flowCash();
-  if(selectedPay==='card')   flowStripe();
-  if(selectedPay==='gpay')   flowStripe();   // Stripe Checkout handles GPay natively
-  if(selectedPay==='paypal') flowPayPal();
-}
-
-/* ══════════════════════════════════════════════════════════════
-   FLUX 1: ESPÈCES — Génération immédiate + réservation
-══════════════════════════════════════════════════════════════ */
-function flowCash(){
   var btn = document.getElementById('generate-btn');
   btn.disabled=true;
-  document.getElementById('gen-btn-text').textContent='⏳ Génération en cours...';
-
-  var code      = generateCode();
-  var recipient = document.getElementById('f-recipient').value.trim();
-  var phone     = document.getElementById('f-phone').value.trim();
-  var message   = document.getElementById('f-message').value.trim();
-  var expiry    = getExpiryISO();
-
-  // POST to API
-  fetch(API+'/api/gift-cards', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      code:code, amount:selectedAmount, status:'pending_cash',
-      expiresAt:expiry, recipient:recipient||null,
-      phone:phone||null, message:message||null,
-      paymentMethod:'cash'
-    })
-  })
-  .then(function(r){ return r.json(); })
-  .catch(function(){ return {code:code,_offline:true}; })
-  .then(function(data){
-    generatedCode = data.code || code;
-    showSuccess(generatedCode, selectedAmount, 'cash', recipient, phone);
-  });
-}
-
-/* ══════════════════════════════════════════════════════════════
-   FLUX 2: STRIPE CHECKOUT (Carte + Google Pay + Apple Pay)
-══════════════════════════════════════════════════════════════ */
-function flowStripe(){
-  var btn = document.getElementById('generate-btn');
-  btn.disabled=true;
-  document.getElementById('gen-btn-text').textContent='⏳ Redirection vers le paiement sécurisé...';
+  document.getElementById('gen-btn-text').textContent='⏳ Envoi de la demande...';
 
   var recipient = document.getElementById('f-recipient').value.trim();
   var phone     = document.getElementById('f-phone').value.trim();
   var message   = document.getElementById('f-message').value.trim();
 
-  fetch(API+'/api/stripe/create-checkout-session', {
+  fetch(API+'/api/giftcards', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      items:[{name:'Carte Cadeau Café LUX '+selectedAmount+' MAD',price:selectedAmount,qty:1}],
-      total:selectedAmount,
-      type:'gift_card',
-      customer:{name:recipient||'Client',phone:phone},
-      giftCard:{amount:selectedAmount,recipient:recipient,message:message},
-      source:'offres',
-      success_url: window.location.origin+'/public/offres/index.html?payment=success&code={CODE}',
-      cancel_url:  window.location.origin+'/public/offres/index.html?payment=cancelled'
+      amount: selectedAmount,
+      buyerPhone: phone || null,
+      recipientName: recipient || null,
+      message: message || null,
+      paymentMethod: selectedPay
     })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ return r.json().then(function(data){ return {ok:r.ok, data:data}; }); })
   .then(function(res){
-    if(res.url)       { window.location.href = res.url; return; }
-    if(res.sessionId) {
-      // Use Stripe.js if available
-      if(window.Stripe){
-        Stripe(STRIPE_PUBLIC_KEY).redirectToCheckout({sessionId:res.sessionId});
-      } else {
-        toast('❌ Stripe.js non chargé — ajoutez le script Stripe dans le <head>');
-        resetBtn();
-      }
+    if(!res.ok || !res.data || !res.data.id){
+      toast('❌ '+((res.data&&res.data.error)||'Erreur — réessayez'));
+      resetBtn();
       return;
     }
-    throw new Error(res.error || 'Réponse invalide');
+    startGcWaiting(res.data.id, selectedAmount, recipient, phone);
   })
-  .catch(function(e){
-    toast('❌ '+(e.message||'Erreur de paiement — réessayez'));
+  .catch(function(){
+    toast('❌ Erreur réseau — vérifiez votre connexion');
     resetBtn();
   });
 }
-
-/* ══════════════════════════════════════════════════════════════
-   FLUX 3: PAYPAL JS SDK
-══════════════════════════════════════════════════════════════ */
-function renderPayPal(){
-  paypalRendered = true;
-  var container = document.getElementById('paypal-container');
-
-  // Load PayPal SDK dynamically
-  if(typeof paypal !== 'undefined'){
-    mountPayPalButtons();
-    return;
-  }
-  if(PAYPAL_CLIENT_ID==='VOTRE_CLIENT_ID_PAYPAL'){
-    container.innerHTML='<div style="padding:12px;text-align:center;font-size:11px;color:var(--muted)">⚠ Configurez PAYPAL_CLIENT_ID dans le code</div>';
-    return;
-  }
-  var script = document.createElement('script');
-  script.src = 'https://www.paypal.com/sdk/js?client-id='+PAYPAL_CLIENT_ID+'&currency=USD&locale=fr_FR';
-  script.onload = mountPayPalButtons;
-  script.onerror = function(){
-    container.innerHTML='<div style="padding:12px;text-align:center;font-size:11px;color:var(--red)">❌ Impossible de charger PayPal</div>';
-  };
-  document.head.appendChild(script);
-}
-
-function mountPayPalButtons(){
-  var container = document.getElementById('paypal-container');
-  container.innerHTML='';
-  // Convert MAD → USD (approximate rate, set your actual rate)
-  var MAD_TO_USD = 0.10;
-  var amountUSD  = (selectedAmount * MAD_TO_USD).toFixed(2);
-
-  try{
-    paypal.Buttons({
-      style:{layout:'vertical',color:'gold',shape:'rect',label:'pay',height:44},
-      createOrder: function(data, actions){
-        return actions.order.create({
-          purchase_units:[{
-            amount:{value:amountUSD,currency_code:'USD'},
-            description:'Carte Cadeau Café LUX '+selectedAmount+' MAD'
-          }]
-        });
-      },
-      onApprove: function(data, actions){
-        return actions.order.capture().then(function(details){
-          var code = generateCode();
-          var recipient = document.getElementById('f-recipient').value.trim();
-          var phone     = document.getElementById('f-phone').value.trim();
-          var message   = document.getElementById('f-message').value.trim();
-          // Save to API
-          fetch(API+'/api/gift-cards',{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-              code:code,amount:selectedAmount,status:'active',
-              expiresAt:getExpiryISO(),recipient:recipient||null,
-              phone:phone||null,message:message||null,
-              paymentMethod:'paypal',
-              paypalOrderId:details.id,
-              paypalPayerId:details.payer.payer_id
-            })
-          }).catch(function(){});
-          generatedCode = code;
-          showSuccess(code, selectedAmount, 'paypal', recipient, phone);
-        });
-      },
-      onError: function(err){
-        toast('❌ Erreur PayPal: '+err);
-      }
-    }).render('#paypal-container');
-  }catch(e){
-    container.innerHTML='<div style="padding:12px;font-size:11px;color:var(--red)">Erreur PayPal: '+e.message+'</div>';
-  }
-}
-
-function flowPayPal(){
-  // Trigger click on PayPal button (already rendered in container)
-  toast('💡 Cliquez sur le bouton PayPal ci-dessus');
-}
-
-/* ══════════════════════════════════════════════════════════════
-   SUCCESS — Affichage de la carte générée
-══════════════════════════════════════════════════════════════ */
-function showSuccess(code, amount, method, recipient, phone){
-  var expiry = getExpiryDisplay();
-  // Update live card preview
-  document.getElementById('cp-code').textContent = code.split('-').slice(0,2).join(' ');
-  document.getElementById('cp-code').classList.add('revealed');
-  document.getElementById('cp-expiry').textContent = expiry;
-
-  // Show success block
-  document.getElementById('sc-code-display').textContent = code;
-  document.getElementById('sc-amount-display').textContent = amount + ' MAD';
-  var infoLines = ['✦ CAFÉ LUX · TAZA · Cafeslux.com', 'Valable jusqu\'au '+expiry];
-  if(method==='cash') infoLines.push('💵 Présentez ce code en caisse pour régler votre achat');
-  if(recipient)       infoLines.push('🎁 Pour: '+recipient);
-  document.getElementById('sc-info').innerHTML = infoLines.join('<br>');
-  document.getElementById('success-card').style.display='block';
-  document.getElementById('success-card').scrollIntoView({behavior:'smooth',block:'center'});
-
-  // Reset button
-  var btn = document.getElementById('generate-btn');
-  btn.disabled=false;
-  document.getElementById('gen-btn-text').textContent='↺ Générer une nouvelle carte';
-  generatedCode = code;
-
-  toast(method==='cash' ? '✅ Carte réservée — payez en caisse avec le code!' : '✅ Paiement confirmé — carte activée!', 4000);
-
-  // Optional: WhatsApp notification to staff
-  if(method==='cash' && phone){
-    var msg = '🎁 Réservation Carte Cadeau LUX\n\nCode: '+code+'\nMontant: '+amount+' MAD\nClient: '+(recipient||'?')+' ('+phone+')\nValable jusqu\'au: '+expiry+'\n\n⚠️ Encaissement en attente';
-    setTimeout(function(){
-      window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');
-    },1500);
-  }
-}
-
-/* ── Check Stripe return ── */
-(function(){
-  var params = new URLSearchParams(location.search);
-  if(params.get('payment')==='success'){
-    var code = params.get('code') || generateCode();
-    showSuccess(code, selectedAmount, 'card', '', '');
-    // Clean URL
-    try{history.replaceState(null,'','/public/offres/index.html#gc');}catch(e){}
-  }
-  if(params.get('payment')==='cancelled'){
-    toast('❌ Paiement annulé — vous pouvez réessayer');
-    try{history.replaceState(null,'','/public/offres/index.html#gc');}catch(e){}
-  }
-})();
 
 /* ── Reset button ── */
 function resetBtn(){
   var btn=document.getElementById('generate-btn');
   btn.disabled=false;
-  document.getElementById('gen-btn-text').textContent='🎁 Générer la Carte Cadeau';
+  document.getElementById('gen-btn-text').textContent = PM_LABELS[selectedPay] || '🎁 Envoyer la demande';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ÉCRAN D'ATTENTE — polling sur /api/giftcards/status/:id
+   (même pattern que la commande espèces dans menu/index.html)
+══════════════════════════════════════════════════════════════ */
+var GC_WAIT_KEY = 'lux_pending_giftcard';
+var _gcWaitTimer = null;
+var _gcWaitCtx = null;
+
+function startGcWaiting(id, amount, recipient, phone){
+  _gcWaitCtx = {id:id, amount:amount, recipient:recipient, phone:phone};
+  try{localStorage.setItem(GC_WAIT_KEY, JSON.stringify({t:Date.now(), ctx:_gcWaitCtx}));}catch(e){}
+
+  var ov = document.getElementById('gc-wait-overlay');
+  ov.style.display='flex';
+  document.getElementById('gc-wait-spin').style.display='block';
+  document.getElementById('gc-wait-icon').style.display='none';
+  document.getElementById('gc-wait-close').style.display='none';
+  document.getElementById('gc-wait-title').textContent='Demande envoyée — en attente de validation';
+  document.getElementById('gc-wait-title').style.color='#f0e8d5';
+  document.getElementById('gc-wait-msg').innerHTML="L'administration doit confirmer votre demande de carte cadeau.<br>Merci de patienter, ne fermez pas cette page.";
+  document.getElementById('gc-wait-ref').textContent='Réf. #'+String(id).slice(-6).toUpperCase();
+
+  pollGcStatus(id);
+  if(_gcWaitTimer) clearInterval(_gcWaitTimer);
+  _gcWaitTimer = setInterval(function(){ pollGcStatus(id); }, 4000);
+}
+
+function pollGcStatus(id){
+  fetch(API+'/api/giftcards/status/'+encodeURIComponent(id))
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d) return;
+      if(d.status==='ACTIVE'){ stopGcWaiting(); gcApproved(d); }
+      else if(d.status==='REJECTED'){ stopGcWaiting(); gcRejected(); }
+    })
+    .catch(function(){});
+}
+
+function stopGcWaiting(){
+  if(_gcWaitTimer){ clearInterval(_gcWaitTimer); _gcWaitTimer=null; }
+  try{localStorage.removeItem(GC_WAIT_KEY);}catch(e){}
+}
+
+function gcApproved(data){
+  document.getElementById('gc-wait-spin').style.display='none';
+  var ic=document.getElementById('gc-wait-icon'); ic.style.display='block'; ic.textContent='✅';
+  var t=document.getElementById('gc-wait-title');
+  t.textContent='Carte cadeau approuvée !';
+  t.style.color='#4ade80';
+  document.getElementById('gc-wait-msg').innerHTML='Votre code est prêt — voir les détails ci-dessous. ✦';
+  document.getElementById('gc-wait-close').style.display='inline-block';
+
+  var amount    = (_gcWaitCtx && _gcWaitCtx.amount) || data.amount;
+  var recipient = (_gcWaitCtx && _gcWaitCtx.recipient) || data.recipient || '';
+  showSuccess(data.code, amount, recipient);
+}
+
+function gcRejected(){
+  document.getElementById('gc-wait-spin').style.display='none';
+  var ic=document.getElementById('gc-wait-icon'); ic.style.display='block'; ic.textContent='❌';
+  var t=document.getElementById('gc-wait-title');
+  t.textContent='Demande refusée';
+  t.style.color='#f87171';
+  document.getElementById('gc-wait-msg').innerHTML="Votre demande de carte cadeau n'a pas été validée.<br>Contactez le comptoir ou réessayez avec un autre mode de paiement.";
+  document.getElementById('gc-wait-close').style.display='inline-block';
+  resetBtn();
+}
+
+function closeGcWaiting(){
+  stopGcWaiting();
+  document.getElementById('gc-wait-overlay').style.display='none';
+}
+
+/* Reprise automatique si le client a fermé/rechargé la page */
+function resumeGcWaiting(){
+  var raw=null;
+  try{raw=localStorage.getItem(GC_WAIT_KEY);}catch(e){}
+  if(!raw) return;
+  var saved=null;
+  try{saved=JSON.parse(raw);}catch(e){}
+  if(!saved||!saved.ctx||!saved.ctx.id){ try{localStorage.removeItem(GC_WAIT_KEY);}catch(e){} return; }
+  if(saved.t && (Date.now()-saved.t)>6*3600*1000){ try{localStorage.removeItem(GC_WAIT_KEY);}catch(e){} return; }
+  startGcWaiting(saved.ctx.id, saved.ctx.amount, saved.ctx.recipient, saved.ctx.phone);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SUCCESS — Affichage de la carte réellement approuvée
+══════════════════════════════════════════════════════════════ */
+function showSuccess(code, amount, recipient){
+  var expiry = getExpiryDisplay();
+  document.getElementById('cp-code').textContent = code.split('-').slice(0,2).join(' ');
+  document.getElementById('cp-code').classList.add('revealed');
+  document.getElementById('cp-expiry').textContent = expiry;
+
+  document.getElementById('sc-code-display').textContent = code;
+  document.getElementById('sc-amount-display').textContent = amount + ' MAD';
+  var infoLines = ['✦ CAFÉ LUX · TAZA · Cafeslux.com', 'Valable jusqu\'au '+expiry];
+  if(recipient) infoLines.push('🎁 Pour: '+recipient);
+  document.getElementById('sc-info').innerHTML = infoLines.join('<br>');
+  document.getElementById('success-card').style.display='block';
+  document.getElementById('success-card').scrollIntoView({behavior:'smooth',block:'center'});
+
+  var btn = document.getElementById('generate-btn');
+  btn.disabled=false;
+  document.getElementById('gen-btn-text').textContent='↺ Envoyer une nouvelle demande';
+  generatedCode = code;
+  selectedAmount = amount;
+
+  toast('✅ Carte cadeau approuvée — code prêt !', 4000);
 }
 
 /* ── Copy generated code ── */
 function copyGeneratedCode(){
-  if(!generatedCode){ toast('⚠ Aucun code généré'); return; }
+  if(!generatedCode){ toast('⚠ Aucun code disponible'); return; }
   navigator.clipboard
     ? navigator.clipboard.writeText(generatedCode).then(function(){toast('📋 Code copié: '+generatedCode);})
     : (function(){var t=document.createElement('textarea');t.value=generatedCode;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('📋 Code copié: '+generatedCode);})();
@@ -1364,7 +1288,7 @@ function copyGeneratedCode(){
 
 /* ── Share generated card ── */
 function shareGeneratedCard(){
-  if(!generatedCode){ toast('⚠ Aucun code généré'); return; }
+  if(!generatedCode){ toast('⚠ Aucun code disponible'); return; }
   var expiry = getExpiryDisplay();
   var recipient = document.getElementById('f-recipient').value.trim();
   var msg = '🎁 Carte Cadeau Café LUX\n\n'
@@ -1380,7 +1304,7 @@ function shareGeneratedCard(){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   BALANCE CHECKER
+   BALANCE CHECKER — endpoint réel : /api/giftcards/:code
 ══════════════════════════════════════════════════════════════ */
 function formatGcCode(inp){
   var raw=inp.value.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,16);
@@ -1397,16 +1321,16 @@ function checkBalance(){
   }
   res.className='balance-result';res.style.display='block';
   res.textContent='⏳ Vérification en cours...';
-  fetch(API+'/api/gift-cards/check/'+encodeURIComponent(code.toUpperCase()))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d&&d.balance!=null){
+  fetch(API+'/api/giftcards/'+encodeURIComponent(code.toUpperCase()))
+    .then(function(r){return r.json().then(function(data){return {ok:r.ok,data:data};});})
+    .then(function(res2){
+      var d=res2.data;
+      if(res2.ok && d && d.balance!=null){
         res.className='balance-result ok';
-        res.innerHTML='✅ Carte valide · Solde disponible<span class="bal-amount">'+d.balance+' MAD</span>'
-          +(d.expiresAt?'<br><small style="font-size:10px;opacity:.7">Expire le '+new Date(d.expiresAt).toLocaleDateString('fr-FR')+'</small>':'');
+        res.innerHTML='✅ Carte valide · Solde disponible<span class="bal-amount">'+d.balance+' MAD</span>';
       } else {
         res.className='balance-result err';
-        res.textContent='❌ '+(d&&d.error?d.error:'Code introuvable ou expiré');
+        res.textContent='❌ '+((d&&d.error)||'Code introuvable ou expiré');
       }
     })
     .catch(function(){
@@ -1427,6 +1351,9 @@ function bookGamingPack(){window.open('https://wa.me/'+WA_NUMBER+'?text='+encode
 function orderSignaturePack(name){window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('☕ Formule '+name+' LUX\nBonjour, je voudrais commander la Formule '+name+'. Merci!'),'_blank');toast('☕ Formule '+name+' — redirection WhatsApp');}
 function notifyRamadan(){toast('🌙 Vous serez notifié dès l\'ouverture des réservations Ramadan!');}
 function joinLoyalty(){window.location.href='/public/index.html?mode=site&view=account';}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', resumeGcWaiting);
 </script>
 </body>
 </html>
