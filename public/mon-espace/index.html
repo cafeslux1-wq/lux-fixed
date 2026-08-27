@@ -1112,8 +1112,8 @@ input, button, select, textarea { font-family:inherit; }
       </button>
     </div>
 
-    <!-- Points exchange -->
-    <div class="sec-head"><span class="sh-txt">Échanger mes points</span><div class="sh-line"></div></div>
+    <!-- Loyalty levels & rewards -->
+    <div class="sec-head"><span class="sh-txt">Mes récompenses de fidélité</span><div class="sh-line"></div></div>
     <div class="rewards-grid" id="rewards-grid"></div>
 
   </div>
@@ -1152,6 +1152,10 @@ const ROUTES = {
   TRANSACTIONS:  (limit, skip) => `${API}/api/customers/me/transactions?limit=${limit}&skip=${skip}`,
   POINTS_REDEEM: `${API}/api/customers/me/points/redeem`,
   GC_TO_WALLET:  `${API}/api/customers/me/wallet/giftcard`,
+
+  // ── Mon Espace LUX : Paliers & récompenses réelles ──
+  LOYALTY_ME:    `${API}/api/loyalty/me`,
+  LOYALTY_CLAIM: `${API}/api/loyalty/claim`,
 };
 
 // Niveaux de fidélité (synchronisés avec le backend)
@@ -1160,15 +1164,6 @@ const TIERS = [
   { name:'Silver',   key:'silver',   min:200,  max:499,  discount:5,   color:'#B0C0D0' },
   { name:'Gold',     key:'gold',     min:500,  max:999,  discount:10,  color:'#C9A84C' },
   { name:'Platinum', key:'platinum', min:1000, max:Infinity, discount:15, color:'#E8F0F8' },
-];
-
-const REWARDS = [
-  { id:1, icon:'☕', name:'Café Signature',  pts:50,  desc:'Americano ou Latte' },
-  { id:2, icon:'🥐', name:'Viennoiserie',    pts:30,  desc:'Au choix du jour' },
-  { id:3, icon:'🍰', name:'Pâtisserie LUX', pts:80,  desc:'Millefeuille ou Tarte' },
-  { id:4, icon:'🎮', name:'30 min Gaming',  pts:60,  desc:'PS5 ou Xbox' },
-  { id:5, icon:'🎁', name:'Carte 50 DH',    pts:150, desc:'Carte cadeau 50 MAD' },
-  { id:6, icon:'✦',  name:'Pack Signature', pts:250, desc:'Café + Pâtisserie + Gaming' },
 ];
 
 /* ══════════════════════════════════════════════════════════════
@@ -1624,7 +1619,7 @@ function loadUserData(user) {
 
   // Tier list & rewards
   renderTierList(pts, tier);
-  renderRewards();
+  loadLoyaltyRewards();
 }
 
 function renderTierList(pts, currentTier) {
@@ -2278,49 +2273,75 @@ async function simulatePay() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RÉCOMPENSES
+   RÉCOMPENSES — paliers réels définis par l'admin (backend)
 ══════════════════════════════════════════════════════════════ */
-function renderRewards() {
-  const pts  = STATE.user?.loyaltyPoints || 0;
+async function loadLoyaltyRewards() {
   const grid = document.getElementById('rewards-grid');
-  grid.innerHTML = REWARDS.map(r => {
-    const canRedeem = pts >= r.pts;
+  if (!grid) return;
+  grid.innerHTML = `<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>`;
+  try {
+    const res  = await fetch(ROUTES.LOYALTY_ME, { headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur récompenses');
+    renderLoyaltyLevels(data);
+  } catch(e) {
+    grid.innerHTML = `<div class="empty-state"><span class="empty-icon">🎁</span>Récompenses indisponibles pour le moment</div>`;
+    console.error('[LOYALTY]', e.message);
+  }
+}
+
+const CLAIM_STATUS_LABEL = {
+  PENDING:   '⏳ Demande envoyée — en attente de validation',
+  APPROVED:  '✅ Approuvée — à récupérer au comptoir',
+  FULFILLED: '🎉 Récompense remise',
+  REJECTED:  '❌ Demande refusée',
+};
+
+function renderLoyaltyLevels(data) {
+  const grid   = document.getElementById('rewards-grid');
+  const levels = data.levels || [];
+  if (!levels.length) {
+    grid.innerHTML = `<div class="empty-state"><span class="empty-icon">🎁</span>Aucun palier disponible pour le moment</div>`;
+    return;
+  }
+  grid.innerHTML = levels.map(lvl => {
+    let body;
+    if (lvl.claim) {
+      body = `<div style="margin-top:8px;font-size:10.5px;color:var(--muted);line-height:1.5">${CLAIM_STATUS_LABEL[lvl.claim.status] || lvl.claim.status}</div>`;
+    } else if (lvl.reached) {
+      const rewardsHtml = (lvl.rewards || []).map(r => {
+        const typeLabel = r.rewardType === 'wallet' ? `💰 ${r.walletValue} DH` : '🎁 Cadeau';
+        return `<button class="rc-redeem" style="margin-top:6px" onclick="claimLoyaltyReward('${r.id}','${escapeHtml(r.title)}')">${escapeHtml(r.title)} — ${typeLabel}</button>`;
+      }).join('');
+      body = rewardsHtml || `<div style="margin-top:8px;font-size:10.5px;color:var(--muted)">Palier atteint — aucune récompense configurée</div>`;
+    } else {
+      const missing = Math.max(0, lvl.pointsRequired - (data.pointsTotal || 0));
+      body = `<div style="margin-top:8px;font-size:10.5px;color:var(--muted)">${missing} pts manquants</div>`;
+    }
     return `<div class="reward-card">
-      <span class="rc-icon">${r.icon}</span>
-      <div class="rc-name">${r.name}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${r.desc}</div>
-      <div class="rc-pts">${r.pts} <span>pts</span></div>
-      <button class="rc-redeem" ${canRedeem?'':'disabled'} onclick="redeemReward(${r.id},${r.pts},'${r.name}')">
-        ${canRedeem ? 'Échanger →' : `${r.pts - pts} pts manquants`}
-      </button>
+      <span class="rc-icon">${lvl.icon || '⭐'}</span>
+      <div class="rc-name">${escapeHtml(lvl.name)}</div>
+      <div class="rc-pts">${lvl.pointsRequired} <span>pts</span></div>
+      ${body}
     </div>`;
   }).join('');
 }
 
-async function redeemReward(id, pts, name) {
-  if (!STATE.user || STATE.user.loyaltyPoints < pts) { toast('⚠ Points insuffisants'); return; }
-  if (!confirm(`Échanger ${pts} LUX Points contre "${name}" ?`)) return;
-
+async function claimLoyaltyReward(rewardId, title) {
+  if (!confirm(`Choisir la récompense "${title}" ?`)) return;
   try {
-    // Déduire les points via API
-    const res = await fetch(ROUTES.LOYALTY_ADD, {
+    const res  = await fetch(ROUTES.LOYALTY_CLAIM, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ points: -pts })   // valeur négative = déduction
+      body: JSON.stringify({ rewardId }),
     });
-    if (res.ok) {
-      if (STATE.user) { STATE.user.loyaltyPoints = data.loyaltyPoints ?? (STATE.user.loyaltyPoints - pts); STATE.user.level = data.level ?? STATE.user.level; }
-    } else {
-      // Déduction locale si l'API ne supporte pas les valeurs négatives
-      if (STATE.user) STATE.user.loyaltyPoints -= pts;
-    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+    toast('✅ Demande envoyée — en attente de validation par le staff', 4200);
+    loadLoyaltyRewards();
   } catch(e) {
-    if (STATE.user) STATE.user.loyaltyPoints -= pts;
-    console.error('[REDEEM]', e.message);
+    toast('❌ ' + e.message);
+    console.error('[LOYALTY_CLAIM]', e.message);
   }
-
-  loadUserData(STATE.user);
-  renderRewards();
-  toast(`🎁 "${name}" échangé — votre récompense sera prête en café !`, 4000);
 }
 
 /* ══════════════════════════════════════════════════════════════
