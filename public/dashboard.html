@@ -512,6 +512,7 @@ canvas.qr-canvas { border-radius:6px; }
     <div class="nav-section-label">ÉQUIPE</div>
     <div class="nav-item" onclick="goTo('employees',this)"><i class="fas fa-users"></i>Employés</div>
     <div class="nav-item" onclick="goTo('customers',this)"><i class="fas fa-gem"></i>Clients & Fidélité</div>
+    <div class="nav-item" onclick="goTo('loyalty',this)"><i class="fas fa-crown"></i>Mon Espace LUX</div>
 
     <div class="nav-section-label">OUTILS</div>
     <div class="nav-item" onclick="goTo('analytics',this)"><i class="fas fa-chart-bar"></i>Analytics LUX</div>
@@ -724,6 +725,41 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
         <div class="loyalty-grid" id="customers-grid" style="margin-bottom:20px">
           <div style="text-align:center;padding:24px;color:var(--text2);grid-column:1/-1">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- ═══ 7bis. MON ESPACE LUX — Paliers, récompenses, validation ═══ -->
+      <div class="panel" id="panel-loyalty">
+        <div class="section-header">
+          <div class="section-title"><span>👑</span>MON ESPACE LUX</div>
+          <button class="btn-primary" onclick="openLevelModal()"><i class="fas fa-plus"></i> Ajouter un Palier</button>
+        </div>
+
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+          Créez des paliers de points (ex: Bronze 100 pts, Silver 300 pts, Gold 600 pts). Ajoutez une ou plusieurs récompenses à chaque palier —
+          <strong style="color:var(--gold)">crédit Wallet automatique</strong> ou <strong style="color:var(--gold)">cadeau libre remis en personne</strong>.
+          Quand un client atteint un palier, il choisit sa récompense dans "Mon Espace LUX", et elle apparaît ici en attente de validation.
+        </div>
+
+        <div id="loyalty-levels-list" style="display:flex;flex-direction:column;gap:14px;margin-bottom:28px">
+          <div style="text-align:center;padding:24px;color:var(--text2)">Chargement...</div>
+        </div>
+
+        <div class="section-header" style="margin-top:8px">
+          <div class="section-title" style="font-size:14px"><span>🎯</span>DEMANDES DE RÉCOMPENSES</div>
+          <select class="field-input" id="loyalty-claims-filter" style="width:auto" onchange="loadLoyaltyClaims()">
+            <option value="PENDING">En attente</option>
+            <option value="APPROVED">Approuvées (à remettre)</option>
+            <option value="FULFILLED">Remises</option>
+            <option value="REJECTED">Refusées</option>
+            <option value="">Toutes</option>
+          </select>
+        </div>
+        <div class="lux-table-wrap">
+          <table class="lux-table">
+            <thead><tr><th>Client</th><th>Palier</th><th>Récompense</th><th>Type</th><th>Demandée le</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="loyalty-claims-tbody"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">Chargement...</td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -1002,6 +1038,59 @@ canvas.qr-canvas { border-radius:6px; }
 </div>
 
 <!-- ═══ GIFT CARD MODAL ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-level">
+  <div class="modal-box">
+    <div class="modal-title"><i class="fas fa-crown"></i> Nouveau Palier</div>
+    <div class="field-group">
+      <div class="field-label">Nom du palier *</div>
+      <input class="field-input" id="lvl-name" placeholder="ex: Bronze, Silver, Gold...">
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">Points requis *</div>
+        <input class="field-input" id="lvl-points" type="number" placeholder="100">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Icône (emoji)</div>
+        <input class="field-input" id="lvl-icon" placeholder="⭐" maxlength="4">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-level')">Annuler</button>
+      <button class="btn-primary" onclick="saveLevel()">Créer le palier</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-reward">
+  <div class="modal-box">
+    <div class="modal-title"><i class="fas fa-gift"></i> Nouvelle Récompense</div>
+    <div class="field-group">
+      <div class="field-label">Titre *</div>
+      <input class="field-input" id="rwd-title" placeholder="ex: 50 DH offerts, Dessert gratuit...">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Description (optionnel)</div>
+      <input class="field-input" id="rwd-desc" placeholder="Détails visibles par le client">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Type de récompense *</div>
+      <select class="field-input" id="rwd-type" onchange="toggleRewardValueField()">
+        <option value="custom">🎁 Cadeau libre — remis en personne par le staff</option>
+        <option value="wallet">💰 Crédit Wallet automatique</option>
+      </select>
+    </div>
+    <div class="field-group" id="rwd-value-wrap" style="display:none">
+      <div class="field-label">Montant du crédit (DH) *</div>
+      <input class="field-input" id="rwd-value" type="number" placeholder="50">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-reward')">Annuler</button>
+      <button class="btn-primary" onclick="saveReward()">Ajouter la récompense</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-giftcard">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-gift"></i> Créer Carte Cadeau</div>
@@ -1321,12 +1410,13 @@ var SECTION_LOADERS = {
   qrtables:     function() { /* on-demand */ },
   giftcards:    loadGiftCards,
   campaigns:    loadCampaigns,
+  loyalty:      loadLoyalty,
 };
 var SECTION_TITLES = {
   dashboard:'TABLEAU DE BORD', products:'PRODUITS & MENU', offers:'OFFRES SPÉCIALES',
   orders:'COMMANDES', reservations:'RÉSERVATIONS', employees:'GESTION DES EMPLOYÉS',
   customers:'CLIENTS & FIDÉLITÉ', analytics:'ANALYTICS LUX', qrtables:'QR TABLES',
-  giftcards:'CARTES CADEAU', campaigns:'CAMPAGNES MARKETING',
+  giftcards:'CARTES CADEAU', campaigns:'CAMPAGNES MARKETING', loyalty:'MON ESPACE LUX',
 };
 function goTo(section, navEl) {
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
@@ -2467,6 +2557,177 @@ async function saveGiftCard() {
 }
 function copyCode(code) {
   navigator.clipboard.writeText(code).then(function(){ toast('✅ Code copié: '+code,'success'); });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MON ESPACE LUX — Paliers, récompenses, validation des demandes
+// ══════════════════════════════════════════════════════════════
+var _loyaltyLevelForReward = null;
+
+async function loadLoyalty() {
+  await Promise.all([loadLoyaltyLevels(), loadLoyaltyClaims()]);
+}
+
+async function loadLoyaltyLevels() {
+  var wrap = document.getElementById('loyalty-levels-list');
+  try {
+    var levels = await api('/api/loyalty/admin/levels') || [];
+    if (!levels.length) {
+      wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">Aucun palier — créez-en un pour démarrer le programme.</div>';
+      return;
+    }
+    wrap.innerHTML = levels.map(function(lvl) {
+      var rewardsHtml = (lvl.rewards || []).map(function(r) {
+        var typeLabel = r.rewardType === 'wallet'
+          ? '<span style="color:var(--gold);font-size:11px">💰 '+r.walletValue+' DH</span>'
+          : '<span style="color:var(--text2);font-size:11px">🎁 Cadeau libre</span>';
+        var activeDot = r.active ? '' : ' style="opacity:.45"';
+        return '<div'+activeDot+' style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg3,#111e35);border-radius:8px;margin-top:6px">' +
+          '<div><div style="font-size:12.5px;font-weight:600">'+esc(r.title)+'</div>' +
+          (r.description ? '<div style="font-size:10.5px;color:var(--text2)">'+esc(r.description)+'</div>' : '') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:10px">' + typeLabel +
+          '<button class="btn-ghost btn-sm" style="color:var(--red)" onclick="deleteReward(\''+r.id+'\')"><i class="fas fa-trash"></i></button>' +
+          '</div></div>';
+      }).join('') || '<div style="font-size:11px;color:var(--text2);padding:6px 0">Aucune récompense pour ce palier.</div>';
+
+      var activeBadge = lvl.active
+        ? ''
+        : ' <span style="font-size:10px;color:var(--red)">(désactivé)</span>';
+
+      return '<div style="background:var(--bg2,#0b1528);border:1px solid var(--border,#2a2a2a);border-radius:12px;padding:16px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div style="font-size:15px;font-weight:700">'+(lvl.icon||'⭐')+' '+esc(lvl.name)+activeBadge+
+            '<span style="font-size:11px;color:var(--gold);margin-left:8px">'+lvl.pointsRequired+' pts</span></div>' +
+          '<div style="display:flex;gap:8px">' +
+            '<button class="btn-ghost btn-sm" onclick="openRewardModal(\''+lvl.id+'\')"><i class="fas fa-plus"></i> Récompense</button>' +
+            '<button class="btn-ghost btn-sm" style="color:var(--red)" onclick="deleteLevel(\''+lvl.id+'\')"><i class="fas fa-trash"></i></button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-top:8px">' + rewardsHtml + '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    wrap.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">API: /api/loyalty/admin/levels non disponible</div>';
+  }
+}
+
+async function loadLoyaltyClaims() {
+  var tbody = document.getElementById('loyalty-claims-tbody');
+  var status = document.getElementById('loyalty-claims-filter').value;
+  try {
+    var q = status ? ('?status='+status) : '';
+    var claims = await api('/api/loyalty/admin/claims'+q) || [];
+    if (!claims.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">Aucune demande</td></tr>';
+      return;
+    }
+    tbody.innerHTML = claims.map(function(c) {
+      var typeLabel = c.reward.rewardType === 'wallet' ? '💰 '+c.reward.walletValue+' DH' : '🎁 Cadeau libre';
+      var st = (c.status || '').toLowerCase();
+      var actions = '—';
+      if (st === 'pending') {
+        actions =
+          '<button class="btn-primary btn-sm" style="background:var(--green)" onclick="approveLoyaltyClaim(\''+c.id+'\')"><i class="fas fa-check"></i> Accepter</button> ' +
+          '<button class="btn-ghost btn-sm" style="color:var(--red)" onclick="rejectLoyaltyClaim(\''+c.id+'\')"><i class="fas fa-times"></i> Refuser</button>';
+      } else if (st === 'approved') {
+        actions = '<button class="btn-primary btn-sm" onclick="fulfillLoyaltyClaim(\''+c.id+'\')"><i class="fas fa-hand-holding-heart"></i> Marquer remise</button>';
+      }
+      return '<tr>' +
+        '<td>'+esc(c.customer ? (c.customer.name || c.customer.phone || c.customer.email || '—') : '—')+'</td>' +
+        '<td>'+(c.level.icon||'⭐')+' '+esc(c.level.name)+'</td>' +
+        '<td>'+esc(c.reward.title)+'</td>' +
+        '<td style="font-size:11px">'+typeLabel+'</td>' +
+        '<td style="font-size:11px;color:var(--text2)">'+new Date(c.claimedAt).toLocaleDateString('fr-MA')+'</td>' +
+        '<td>'+statusBadge(st)+'</td>' +
+        '<td><div class="td-actions">'+actions+'</div></td>' +
+      '</tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text2)">API: /api/loyalty/admin/claims non disponible</td></tr>';
+  }
+}
+
+function openLevelModal() {
+  document.getElementById('lvl-name').value = '';
+  document.getElementById('lvl-points').value = '';
+  document.getElementById('lvl-icon').value = '';
+  openModal('modal-level');
+}
+async function saveLevel() {
+  var name = document.getElementById('lvl-name').value.trim();
+  var points = parseInt(document.getElementById('lvl-points').value, 10);
+  var icon = document.getElementById('lvl-icon').value.trim() || '⭐';
+  if (!name || !Number.isFinite(points) || points < 0) { toast('⚠️ Remplissez le nom et les points requis','error'); return; }
+  try {
+    await api('/api/loyalty/admin/levels','POST',{ name: name, pointsRequired: points, icon: icon });
+    closeModal('modal-level'); toast('✅ Palier créé','success'); loadLoyaltyLevels();
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+function deleteLevel(id) {
+  confirm('Désactiver ce palier ?', 'Les récompenses associées resteront visibles dans l\'historique.', async function() {
+    try {
+      await api('/api/loyalty/admin/levels/'+id,'DELETE');
+      toast('🗑️ Palier désactivé','success'); loadLoyaltyLevels();
+    } catch(e) { toast('❌ '+e.message,'error'); }
+  });
+}
+
+function toggleRewardValueField() {
+  var type = document.getElementById('rwd-type').value;
+  document.getElementById('rwd-value-wrap').style.display = (type === 'wallet') ? 'block' : 'none';
+}
+function openRewardModal(levelId) {
+  _loyaltyLevelForReward = levelId;
+  document.getElementById('rwd-title').value = '';
+  document.getElementById('rwd-desc').value = '';
+  document.getElementById('rwd-type').value = 'custom';
+  document.getElementById('rwd-value').value = '';
+  toggleRewardValueField();
+  openModal('modal-reward');
+}
+async function saveReward() {
+  var title = document.getElementById('rwd-title').value.trim();
+  var desc  = document.getElementById('rwd-desc').value.trim();
+  var type  = document.getElementById('rwd-type').value;
+  var value = parseFloat(document.getElementById('rwd-value').value);
+  if (!title) { toast('⚠️ Le titre est requis','error'); return; }
+  if (type === 'wallet' && (!Number.isFinite(value) || value <= 0)) { toast('⚠️ Montant du crédit invalide','error'); return; }
+  try {
+    await api('/api/loyalty/admin/levels/'+_loyaltyLevelForReward+'/rewards','POST',{
+      title: title, description: desc, rewardType: type, walletValue: type === 'wallet' ? value : undefined,
+    });
+    closeModal('modal-reward'); toast('✅ Récompense ajoutée','success'); loadLoyaltyLevels();
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+function deleteReward(id) {
+  confirm('Désactiver cette récompense ?', '', async function() {
+    try {
+      await api('/api/loyalty/admin/rewards/'+id,'DELETE');
+      toast('🗑️ Récompense désactivée','success'); loadLoyaltyLevels();
+    } catch(e) { toast('❌ '+e.message,'error'); }
+  });
+}
+
+async function approveLoyaltyClaim(id) {
+  try {
+    var r = await api('/api/loyalty/admin/claims/'+id+'/approve','POST');
+    toast(r && r.credited ? ('✅ Crédité automatiquement: '+r.credited+' DH') : '✅ Demande approuvée — à remettre au client','success');
+    loadLoyaltyClaims();
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+function rejectLoyaltyClaim(id) {
+  confirm('Refuser cette demande de récompense ?', '', async function() {
+    try {
+      await api('/api/loyalty/admin/claims/'+id+'/reject','POST');
+      toast('🚫 Demande refusée','success'); loadLoyaltyClaims();
+    } catch(e) { toast('❌ '+e.message,'error'); }
+  });
+}
+async function fulfillLoyaltyClaim(id) {
+  try {
+    await api('/api/loyalty/admin/claims/'+id+'/fulfill','POST');
+    toast('✅ Marquée comme remise au client','success'); loadLoyaltyClaims();
+  } catch(e) { toast('❌ '+e.message,'error'); }
 }
 
 // ══════════════════════════════════════════════════════════════
