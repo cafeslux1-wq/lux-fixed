@@ -434,12 +434,13 @@ var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYe
 
 /* boot */
 window.addEventListener('load',function(){
-  // Sur mobile : on saute directement sur la page Commander à part entière
-  // au chargement initial (même souci d'iframe que ci-dessus).
-  if (window.innerWidth <= 900) {
-    window.location.href = 'menu/index.html';
-    return;
-  }
+  // On affiche toujours la console MAESTRO complète (sidebar + accueil),
+  // y compris sur mobile — le hamburger (☰) ouvre le menu latéral avec
+  // TOUTES les sections (Commander, Offres, Réservations, Mon Espace,
+  // Gaming Zone, SaaS, Espace Professionnel). Cliquer sur "Commander"
+  // redirige explicitement vers menu/index.html (voir openMenu()) pour
+  // éviter les soucis tactiles de l'iframe, mais on ne saute plus cette
+  // étape automatiquement au chargement.
   document.getElementById('view-home').classList.add('show');
   setActiveSidebar('home');
   if(window.luxNavigate) window.luxNavigate('home');
