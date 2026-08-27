@@ -229,8 +229,30 @@
         </div>
     </header>
 
+    <!-- Pending Session (cash — awaiting admin approval) -->
+    <div v-if="activeSession && activeSession.status === 'PENDING'" class="active-session-box">
+        <div style="font-size: 13px; color: var(--gold); font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; z-index: 1;">
+            <i class="fas fa-hourglass-half fa-spin"></i>
+            في انتظار موافقة الإدارة — {{ activeSession.stationLabel }}
+        </div>
+
+        <div style="text-align:center; padding:18px 10px; font-size:13px; color:rgba(255,255,255,.75); line-height:1.8;">
+            اخترتي الدفع نقداً 💵<br>
+            توجه للإدارة باش تأكد الدفع، والجلسة غادي تبدا مباشرة بعد الموافقة.<br>
+            <strong style="color:var(--gold)">{{ activeSession.planLabel }} — {{ activeSession.totalPrice }} DH</strong>
+        </div>
+
+        <div class="player-name-active">
+            <i class="fas fa-user"></i> {{ activeSession.playerName }}
+        </div>
+
+        <button @click="resetSelection" class="btn-service" style="margin-top: 20px; background: transparent; border: 1px solid rgba(231,76,60,.4); color: var(--red);">
+            <i class="fas fa-times"></i> إلغاء الطلب
+        </button>
+    </div>
+
     <!-- Active Session Card -->
-    <div v-if="activeSession" class="active-session-box">
+    <div v-else-if="activeSession && activeSession.status === 'ACTIVE'" class="active-session-box">
         <div style="font-size: 13px; color: var(--gold); font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; z-index: 1;">
             <i class="fas fa-headset"></i> 
             الجلسة نشطة على: {{ activeSession.stationLabel }}
@@ -265,18 +287,18 @@
         <div class="stations-grid">
             <div v-for="s in stations" :key="s.id" 
                  class="st-item" 
-                 :class="{ 'selected': selectedId == s.id, 'is-busy': s.status === 'active' }"
+                 :class="{ 'selected': selectedId == s.id, 'is-busy': s.status === 'active' || s.status === 'pending' }"
                  @click="handleStationClick(s)">
-                <i class="st-icon fas" :class="s.status === 'active' ? 'fa-user-astronaut' : 'fa-gamepad'" 
-                   :style="{color: s.status === 'active' ? 'var(--red)' : 'var(--green)'}"></i>
+                <i class="st-icon fas" :class="s.status === 'active' ? 'fa-user-astronaut' : (s.status === 'pending' ? 'fa-hourglass-half' : 'fa-gamepad')" 
+                   :style="{color: s.status === 'active' ? 'var(--red)' : (s.status === 'pending' ? 'var(--gold)' : 'var(--green)')}"></i>
                 <span class="st-label">{{ s.label }}</span>
-                <span class="st-status" :style="{color: s.status === 'active' ? 'var(--red)' : 'var(--green)'}">
-                    {{ s.status === 'active' ? '● مشغول' : '● متاح' }}
+                <span class="st-status" :style="{color: s.status === 'active' ? 'var(--red)' : (s.status === 'pending' ? 'var(--gold)' : 'var(--green)')}">
+                    {{ s.status === 'active' ? '● مشغول' : (s.status === 'pending' ? '● في الانتظار' : '● متاح') }}
                 </span>
             </div>
         </div>
 
-        <div v-if="selectedStation && selectedStation.status !== 'active'">
+        <div v-if="selectedStation && selectedStation.status === 'idle'">
             <div class="section-title"><i class="fas fa-hourglass-start"></i> 2. مدة الجلسة:</div>
             <div class="options-row">
                 <div v-for="p in plans" :key="p.id" 
@@ -303,17 +325,24 @@
 
             <div id="card-element" v-show="method === 'stripe'"></div>
 
+            <div v-if="method === 'cash'" style="font-size:11px; color:rgba(255,255,255,.55); text-align:center; margin:6px 0 2px; line-height:1.7">
+                ⏳ طلبك غادي ينتظر موافقة الإدارة قبل ما تبدا الجلسة — بحال بالضبط الطلبات ديال المنيو.
+            </div>
+
             <input type="text" v-model="playerName" class="lux-input" placeholder="أدخل اسم اللاعب...">
 
             <button class="btn-pay" @click="processBooking" :disabled="loading">
                 <i v-if="loading" class="fas fa-circle-notch fa-spin"></i>
-                <span v-else>بدء التجربة الآن ⚡</span>
+                <span v-else>{{ method === 'cash' ? 'إرسال الطلب ⚡' : 'بدء التجربة الآن ⚡' }}</span>
             </button>
         </div>
 
-        <div v-else-if="selectedStation && selectedStation.status === 'active'" style="text-align:center; padding:20px; border:1px solid rgba(231,76,60,0.3); border-radius:20px; margin-top:20px;">
+        <div v-else-if="selectedStation && (selectedStation.status === 'active' || selectedStation.status === 'pending')" style="text-align:center; padding:20px; border:1px solid rgba(231,76,60,0.3); border-radius:20px; margin-top:20px;">
             <i class="fas fa-lock" style="color:var(--red); font-size:30px; margin-bottom:15px;"></i>
-            <p style="font-size:14px; font-weight:700;">هذا الجهاز قيد الاستخدام حالياً.<br>تفضل باختيار جهاز متاح من القائمة.</p>
+            <p style="font-size:14px; font-weight:700;">
+                {{ selectedStation.status === 'pending' ? 'هذا الجهاز محجوز حالياً (في انتظار موافقة الإدارة).' : 'هذا الجهاز قيد الاستخدام حالياً.' }}<br>
+                تفضل باختيار جهاز متاح من القائمة.
+            </p>
         </div>
     </main>
     
@@ -430,16 +459,25 @@ createApp({
                 if (this.selectedId) {
                     this.selectedStation = this.stations.find(s => s.id == this.selectedId);
                     console.log("🎯 المحطة المحددة:", this.selectedStation);
-                    
-                    if (this.selectedStation && this.selectedStation.status === 'active' && this.selectedStation.currentSession) {
+
+                    const wasPending = this.activeSession && this.activeSession.status === 'PENDING';
+
+                    if (this.selectedStation && (this.selectedStation.status === 'active' || this.selectedStation.status === 'pending') && this.selectedStation.currentSession) {
                         this.activeSession = {
                             ...this.selectedStation.currentSession,
                             stationLabel: this.selectedStation.label
                         };
-                        console.log("🎮 الجلسة النشطة:", this.activeSession);
-                        this.startTimer();
+                        console.log("🎮 الجلسة:", this.activeSession);
+                        if (this.activeSession.status === 'ACTIVE') {
+                            this.startTimer();
+                            if (wasPending) this.showToast('✅ تمت الموافقة — الجلسة بدات!');
+                        } else {
+                            this.startPendingPoll();
+                        }
                     } else {
+                        if (wasPending) this.showToast('❌ تم رفض طلبك من طرف الإدارة');
                         this.activeSession = null;
+                        this.stopPendingPoll();
                         if (window.timerInterval) {
                             clearInterval(window.timerInterval);
                         }
@@ -457,11 +495,13 @@ createApp({
             const newUrl = window.location.pathname + '?id=' + s.id;
             window.history.pushState({path: newUrl}, '', newUrl);
             
-            if (s.status === 'active' && s.currentSession) {
+            if ((s.status === 'active' || s.status === 'pending') && s.currentSession) {
                 this.activeSession = { ...s.currentSession, stationLabel: s.label };
-                this.startTimer();
+                if (this.activeSession.status === 'ACTIVE') this.startTimer();
+                else this.startPendingPoll();
             } else {
                 this.activeSession = null;
+                this.stopPendingPoll();
                 if (window.timerInterval) {
                     clearInterval(window.timerInterval);
                 }
@@ -477,6 +517,7 @@ createApp({
                 clearInterval(window.timerInterval);
                 window.timerInterval = null;
             }
+            this.stopPendingPoll();
             
             this.activeSession = null;
             this.selectedId = null;
@@ -491,6 +532,19 @@ createApp({
             window.history.pushState({path: newUrl}, '', newUrl);
             
             this.sync();
+        },
+
+        // ⏳ Polling rapide (4s) tant qu'une demande espèces attend
+        // la validation de l'admin — plus réactif que le sync 15s.
+        startPendingPoll() {
+            if (window.pendingPollInterval) return;
+            window.pendingPollInterval = setInterval(() => { this.sync(); }, 4000);
+        },
+        stopPendingPoll() {
+            if (window.pendingPollInterval) {
+                clearInterval(window.pendingPollInterval);
+                window.pendingPollInterval = null;
+            }
         },
 
         selectPlan(plan) {
@@ -608,13 +662,17 @@ createApp({
                     playerName: this.playerName || 'زبون LUX',
                     paymentMethod: this.method,
                     paymentToken: token,
-                    paymentStatus: this.method === 'stripe' ? 'paid' : 'pending'
                 };
 
                 const res = await axios.post(`${window.LUX_API_URL}/api/gaming/activate`, payload);
 
                 if (res.status === 200 || res.status === 201) {
-                    this.showToast("✅ تم تفعيل جهازك بنجاح!");
+                    const sess = res.data && res.data.session;
+                    if (sess && sess.status === 'PENDING') {
+                        this.showToast("⏳ طلبك مرسل — فالانتظار موافقة الإدارة");
+                    } else {
+                        this.showToast("✅ تم تفعيل جهازك بنجاح!");
+                    }
                     this.selectedPlan = null;
                     this.playerName = '';
                     await this.sync();
@@ -641,6 +699,7 @@ createApp({
             clearInterval(window.timerInterval);
             window.timerInterval = null;
         }
+        this.stopPendingPoll();
         if (this.syncInterval) {
             clearInterval(this.syncInterval);
         }
