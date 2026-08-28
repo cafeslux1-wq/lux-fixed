@@ -697,29 +697,24 @@ input, button, select, textarea { font-family:inherit; }
     </div>
 
     <!-- Login -->
-    <div id="form-login" class="auth-form">
-      <!-- Connexion Google — widget officiel, plus fiable que le prompt automatique -->
-      <div class="google-btn-wrap" style="display:flex;justify-content:center">
-        <div id="g_id_login"></div>
-      </div>
-      <div class="auth-or">ou</div>
-      <div class="auth-field">
-        <span class="af-label">Téléphone / Email</span>
-        <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
-      </div>
-      <div class="auth-field">
-        <span class="af-label">Mot de passe</span>
-        <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
-      </div>
-      <button class="btn-primary" onclick="doLogin()">
-        <span id="login-btn-txt">Se connecter →</span>
-      </button>
-      <div class="auth-divider">diagnostic</div>
-      <button class="btn-primary" onclick="testConnection()"
-        style="background:linear-gradient(135deg,#1a3a1a,#2d6a2d);box-shadow:none;font-size:12px;padding:10px">
-        🔌 Tester la connexion au serveur
-      </button>
-    </div>
+<div id="form-login" class="auth-form">
+  <!-- Connexion Google — widget officiel, plus fiable que le prompt automatique -->
+  <div class="google-btn-wrap" style="display:flex;justify-content:center">
+    <div id="g_id_login"></div>
+  </div>
+  <div class="auth-or">ou</div>
+  <div class="auth-field">
+    <span class="af-label">Téléphone / Email</span>
+    <input type="text" id="login-id" class="af-input" placeholder="06xxxxxxxx ou email@...">
+  </div>
+  <div class="auth-field">
+    <span class="af-label">Mot de passe</span>
+    <input type="password" id="login-pw" class="af-input" placeholder="••••••••">
+  </div>
+  <button class="btn-primary" onclick="doLogin()">
+    <span id="login-btn-txt">Se connecter →</span>
+  </button>
+</div>
 
     <!-- Register -->
     <div id="form-register" class="auth-form" style="display:none">
