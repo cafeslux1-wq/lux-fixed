@@ -508,6 +508,7 @@ canvas.qr-canvas { border-radius:6px; }
     <div class="nav-item" onclick="goTo('offers',this)"><i class="fas fa-star"></i>Offres Spéciales</div>
     <div class="nav-item" onclick="goTo('orders',this)"><i class="fas fa-receipt"></i>Commandes</div>
     <div class="nav-item" onclick="goTo('reservations',this)"><i class="fas fa-calendar-alt"></i>Réservations</div>
+    <div class="nav-item" onclick="goTo('gamingzone',this)"><i class="fas fa-gamepad"></i>Gaming Zone</div>
 
     <div class="nav-section-label">ÉQUIPE</div>
     <div class="nav-item" onclick="goTo('employees',this)"><i class="fas fa-users"></i>Employés</div>
@@ -692,6 +693,36 @@ canvas.qr-canvas { border-radius:6px; }
             <thead><tr><th>Nom</th><th>Téléphone</th><th>Date</th><th>Heure</th><th>Couverts</th><th>Note</th><th>Statut</th><th>Actions</th></tr></thead>
             <tbody id="reservations-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">Chargement...</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ═══ 5bis. GAMING ZONE ═════════════════════════════════ -->
+      <div class="panel" id="panel-gamingzone">
+        <div class="section-header">
+          <div class="section-title"><span>🎮</span>GAMING ZONE</div>
+          <button class="btn-ghost" onclick="loadGamingZone()"><i class="fas fa-sync-alt"></i> Actualiser</button>
+        </div>
+
+        <!-- ═══ ESPÈCES GAMING — VALIDATION REQUISE ═══ -->
+        <div id="gaming-awaiting-box" style="display:none;margin-bottom:18px;border:1px solid rgba(212,175,55,.45);border-radius:14px;overflow:hidden;background:rgba(212,175,55,.06)">
+          <div style="padding:12px 16px;background:rgba(212,175,55,.14);display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;color:var(--gold)">
+            <span>💵</span>
+            <span>GAMING ZONE — PAIEMENTS ESPÈCES EN ATTENTE</span>
+            <span id="gaming-awaiting-count" style="margin-left:auto;background:var(--gold);color:#1a1610;border-radius:20px;padding:2px 10px;font-size:12px">0</span>
+          </div>
+          <div class="lux-table-wrap">
+            <table class="lux-table">
+              <thead><tr><th>Station</th><th>Joueur</th><th>Formule</th><th>Total</th><th>Demandée le</th><th>Décision</th></tr></thead>
+              <tbody id="gaming-awaiting-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sec-head" style="margin-top:4px">
+          <span class="sec-head-txt" style="font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase">Stations</span>
+        </div>
+        <div class="loyalty-grid" id="gaming-stations-grid" style="margin-bottom:20px">
+          <div style="text-align:center;padding:24px;color:var(--text2);grid-column:1/-1">Chargement...</div>
         </div>
       </div>
 
@@ -1411,12 +1442,14 @@ var SECTION_LOADERS = {
   giftcards:    loadGiftCards,
   campaigns:    loadCampaigns,
   loyalty:      loadLoyalty,
+  gamingzone:   loadGamingZone,
 };
 var SECTION_TITLES = {
   dashboard:'TABLEAU DE BORD', products:'PRODUITS & MENU', offers:'OFFRES SPÉCIALES',
   orders:'COMMANDES', reservations:'RÉSERVATIONS', employees:'GESTION DES EMPLOYÉS',
   customers:'CLIENTS & FIDÉLITÉ', analytics:'ANALYTICS LUX', qrtables:'QR TABLES',
   giftcards:'CARTES CADEAU', campaigns:'CAMPAGNES MARKETING', loyalty:'MON ESPACE LUX',
+  gamingzone:'GAMING ZONE',
 };
 function goTo(section, navEl) {
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
@@ -1841,7 +1874,6 @@ async function saveBulkProducts() {
     progress.innerHTML='<div style="font-size:12px;color:var(--red)">⚠️ '+created+' réussi(s), '+failed.length+' échec(s).<br><div style="margin-top:6px">'+details+'</div></div>';
     btn.disabled=false;
     btn.innerHTML='<i class="fas fa-redo"></i> Réessayer les lignes échouées';
-    // Keep only failed rows so retry won't duplicate successful products.
     document.getElementById('bulk-products-rows').innerHTML='';
     failed.forEach(function(x){ addBulkProductRow(x.item); });
     updateBulkProductCount();
@@ -1858,8 +1890,6 @@ async function saveProduct() {
   if (!name || !price || !catId) { toast('⚠️ Remplissez les champs obligatoires', 'error'); return; }
   if (isOffer && (offerPriceRaw === '' || isNaN(parseFloat(offerPriceRaw)))) { toast('⚠️ Indiquez le prix en offre', 'error'); return; }
   if (isOffer && parseFloat(offerPriceRaw) >= price) { toast('⚠️ Le prix en offre doit être inférieur au prix normal', 'error'); return; }
-  // IMPORTANT: keep only fields supported by the current Prisma Product model.
-  // The backend Product model has no `description` field. Sending it makes Prisma reject the request.
   var body = {
     name: name,
     price: price,
@@ -1964,7 +1994,6 @@ async function loadAwaiting() {
     box.style.display = 'block';
     if (cnt) cnt.textContent = list.length;
 
-    // Bip sonore quand une nouvelle demande arrive
     if (list.length > _awaitingSeen && _awaitingSeen !== 0) beepAwaiting();
     _awaitingSeen = list.length;
 
@@ -2036,7 +2065,6 @@ function renderOrders(list) {
   }).join('');
 }
 function filterOrders(q) {
-  /* Client-side filter on existing table rows */
   var rows = document.querySelectorAll('#orders-tbody tr');
   rows.forEach(function(r){ r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
 }
@@ -2072,7 +2100,6 @@ function exportOrders() {
   a.click(); toast('✅ Export téléchargé', 'success');
 }
 
-// Rafraîchissement auto des demandes espèces (toutes les 15s)
 setInterval(function() {
   var panel = document.getElementById('panel-orders');
   if (panel && panel.classList.contains('active')) loadAwaiting();
@@ -2107,9 +2134,6 @@ async function loadReservations() {
   } catch(e) { console.error('[Reservations]', e.message); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  RÉSERVATIONS — EN ATTENTE DE VALIDATION
-// ══════════════════════════════════════════════════════════════
 var _resAwaitingSeen = 0;
 
 async function loadResAwaiting() {
@@ -2161,7 +2185,6 @@ function rejectReservation(id) {
   });
 }
 
-// Rafraîchissement auto des demandes de réservation (toutes les 15s)
 setInterval(function() {
   var panel = document.getElementById('panel-reservations');
   if (panel && panel.classList.contains('active')) loadResAwaiting();
@@ -2204,26 +2227,6 @@ async function saveReservation() {
 // ══════════════════════════════════════════════════════════════
 //  6. EMPLOYEES
 // ══════════════════════════════════════════════════════════════
-async function loadEmployees() {
-  try {
-    var list = await api('/api/employees') || [];
-    var tbody = document.getElementById('employees-tbody');
-    if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">Aucun employé</td></tr>'; return; }
-    tbody.innerHTML = list.map(function(e) {
-      var roleMap = {admin:'🔑 Admin', pos:'💰 Caissier', kds:'🍳 Cuisine', staff:'⭐ Staff'};
-      return '<tr>' +
-        '<td><strong>' + e.name + '</strong></td>' +
-        '<td><span class="td-badge badge-blue">'+(roleMap[e.role]||e.role)+'</span></td>' +
-        '<td><a href="tel:'+e.phone+'" style="color:var(--text2);font-family:monospace;font-size:11px">'+e.phone+'</a></td>' +
-        '<td style="font-family:\'JetBrains Mono\',monospace">'+(e.salary||0)+' MAD</td>' +
-        '<td>' + (e.active ? '<span class="td-badge badge-green">Actif</span>' : '<span class="td-badge badge-red">Inactif</span>') + '</td>' +
-        '<td><div class="td-actions">' +
-          '<button class="btn-primary btn-sm" onclick="editEmployee(\''+e.id+'\')"><i class="fas fa-pen"></i></button>' +
-          '<button class="btn-primary btn-danger btn-sm" onclick="toggleEmployee(\''+e.id+'\','+(e.active?'false':'true')+')"><i class="fas fa-power-off"></i></button>' +
-        '</div></td></tr>';
-    }).join('');
-  } catch(e) { console.error('[Employees]', e.message); }
-}
 var _empCache = [];
 async function loadEmployees() {
   try {
@@ -2338,7 +2341,6 @@ function exportCustomers() {
 // ══════════════════════════════════════════════════════════════
 async function loadAnalytics() {
   try {
-    // NOTE: backend has no dedicated /api/stats route — reuse /api/dashboard
     var data = await api('/api/dashboard');
     if (data) {
       var orders = data.orders || {}, sales = data.sales || {}, gaming = data.gaming || {};
@@ -2403,8 +2405,6 @@ function generateQRCode(canvas, text, size) {
   var ctx = canvas.getContext('2d');
   canvas.width = size; canvas.height = size;
   ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,size,size);
-  // Simple QR display using Google Charts API as data URI approach
-  // We'll use a data URL from QR.js if available, else show URL text
   var img = new Image();
   img.crossOrigin = 'anonymous';
   img.src = 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text)+'&bgcolor=ffffff&color=000000&margin=2';
@@ -2538,9 +2538,6 @@ async function saveGiftCard() {
   var amount    = parseFloat(document.getElementById('gc-amount').value);
   if (!sender||!recipient||!phone||!amount) { toast('⚠️ Remplissez tous les champs','error'); return; }
   try {
-    // Crée la demande (statut PENDING côté serveur) puis l'admin l'approuve
-    // immédiatement pour générer le code — cohérent avec le workflow
-    // "aucun code sans validation admin" (ici l'admin valide lui-même).
     var created = await api('/api/giftcards','POST',{
       amount: amount,
       buyerName: sender,
@@ -2731,6 +2728,119 @@ async function fulfillLoyaltyClaim(id) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  GAMING ZONE — stations + validation des paiements espèces
+// ══════════════════════════════════════════════════════════════
+var _gamingAwaitingSeen = 0;
+
+async function loadGamingZone() {
+  await Promise.all([loadGamingStations(), loadGamingAwaiting()]);
+}
+
+var STATION_ICONS = { SNOOKER:'🎱', BILLARD:'🎯', PS5:'🎮', PS4:'🎮' };
+
+async function loadGamingStations() {
+  var grid = document.getElementById('gaming-stations-grid');
+  try {
+    var stations = await api('/api/gaming/stations') || [];
+    if (!stations.length) {
+      grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);grid-column:1/-1">Aucune station</div>';
+      return;
+    }
+    grid.innerHTML = stations.map(function(s) {
+      var st = (s.status || 'idle');
+      var badge = st === 'active'
+        ? '<span class="td-badge badge-red">● Occupée</span>'
+        : (st === 'pending'
+          ? '<span class="td-badge" style="background:rgba(212,175,55,.18);color:var(--gold);border:1px solid rgba(212,175,55,.4)">⏳ En attente</span>'
+          : '<span class="td-badge badge-green">● Libre</span>');
+      var sess = s.currentSession;
+      var sessInfo = sess
+        ? '<div style="font-size:10.5px;color:var(--text2);margin-top:6px">'+esc(sess.playerName||'—')+' · '+esc(sess.planLabel||'')+' · '+(sess.totalPrice||0)+' MAD</div>'
+        : '';
+      var actions = '';
+      if (st === 'active') {
+        actions = '<button class="btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="deactivateStation(\''+s.id+'\')"><i class="fas fa-stop"></i> Terminer la session</button>';
+      }
+      return '<div class="loyalty-card" style="align-items:flex-start;flex-direction:column;gap:6px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;width:100%">' +
+          '<div style="font-size:14px;font-weight:700">'+(STATION_ICONS[s.type]||'🎮')+' '+esc(s.label)+'</div>' +
+          badge +
+        '</div>' +
+        sessInfo + actions +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">API: /api/gaming/stations non disponible</div>';
+  }
+}
+
+async function loadGamingAwaiting() {
+  var box   = document.getElementById('gaming-awaiting-box');
+  var tbody = document.getElementById('gaming-awaiting-tbody');
+  var cnt   = document.getElementById('gaming-awaiting-count');
+  try {
+    var list = await api('/api/gaming/awaiting') || [];
+    if (!box || !tbody) return;
+
+    if (!list.length) { box.style.display = 'none'; _gamingAwaitingSeen = 0; return; }
+
+    box.style.display = 'block';
+    if (cnt) cnt.textContent = list.length;
+
+    if (list.length > _gamingAwaitingSeen && _gamingAwaitingSeen !== 0 && typeof beepAwaiting === 'function') beepAwaiting();
+    _gamingAwaitingSeen = list.length;
+
+    tbody.innerHTML = list.map(function(s) {
+      return '<tr>' +
+        '<td>'+(STATION_ICONS[s.station.type]||'🎮')+' '+esc(s.station.label)+'</td>' +
+        '<td>'+esc(s.playerName||'—')+'</td>' +
+        '<td style="font-size:11px">'+esc(s.planLabel||'')+'</td>' +
+        '<td style="font-family:\'JetBrains Mono\',monospace;color:var(--gold);font-weight:700">'+s.totalPrice+' MAD</td>' +
+        '<td style="font-size:11px;color:var(--text2)">'+new Date(s.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'})+'</td>' +
+        '<td><div class="td-actions">' +
+          '<button class="btn-primary btn-sm" onclick="approveGamingSession(\''+s.stationId+'\')"><i class="fas fa-check"></i> Accepter</button> ' +
+          '<button class="btn-primary btn-danger btn-sm" onclick="rejectGamingSession(\''+s.stationId+'\')"><i class="fas fa-times"></i> Refuser</button>' +
+        '</div></td></tr>';
+    }).join('');
+  } catch(e) {
+    console.error('[GamingAwaiting]', e.message);
+  }
+}
+
+async function approveGamingSession(stationId) {
+  try {
+    await api('/api/gaming/stations/'+stationId+'/approve','POST');
+    toast('✅ Session validée — le client peut jouer','success');
+    loadGamingZone();
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+
+function rejectGamingSession(stationId) {
+  confirm('Refuser cette demande espèces ?', 'La station redevient libre immédiatement.', async function() {
+    try {
+      await api('/api/gaming/stations/'+stationId+'/reject','POST');
+      toast('🚫 Demande refusée','success');
+      loadGamingZone();
+    } catch(e) { toast('❌ '+e.message,'error'); }
+  });
+}
+
+function deactivateStation(stationId) {
+  confirm('Terminer cette session ?', 'La station redevient libre.', async function() {
+    try {
+      await api('/api/gaming/stations/'+stationId+'/deactivate','POST');
+      toast('✅ Session terminée','success');
+      loadGamingZone();
+    } catch(e) { toast('❌ '+e.message,'error'); }
+  });
+}
+
+setInterval(function() {
+  var panel = document.getElementById('panel-gamingzone');
+  if (panel && panel.classList.contains('active')) loadGamingAwaiting();
+}, 15000);
+
+// ══════════════════════════════════════════════════════════════
 //  11. CAMPAIGNS
 // ══════════════════════════════════════════════════════════════
 var _campaignHistory = [];
@@ -2826,7 +2936,6 @@ function statusBadge(s) {
   return '<span class="td-badge '+(map[s]||'badge-gray')+'">'+s+'</span>';
 }
 
-// Image URL preview
 document.getElementById('prd-img').addEventListener('input', function(){
   var v = this.value;
   var prev = document.getElementById('img-preview');
@@ -2834,7 +2943,6 @@ document.getElementById('prd-img').addEventListener('input', function(){
   else   { prev.style.display='none'; }
 });
 
-// Upload photo from device — compress client-side then store as base64 data URL
 document.getElementById('prd-img-file').addEventListener('change', function(e){
   var file = e.target.files[0];
   if (!file) return;
@@ -2860,7 +2968,6 @@ document.getElementById('prd-img-file').addEventListener('change', function(e){
   reader.readAsDataURL(file);
 });
 
-// Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(function(el){
   el.addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
 });
