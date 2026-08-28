@@ -11,9 +11,13 @@
 <script src="../../src/js/api/api-client.js" defer></script>
 
 <!-- ── Connexion Google ──
-     Remplacer par le Client ID obtenu sur Google Cloud Console
-     (APIs & Services → Credentials → OAuth Client ID → Web application) ── -->
-<script>window.LUX_GOOGLE_CLIENT_ID = '387050961956-cm4sbb0bsqboinng08cufp68vgl25g4r.apps.googleusercontent.com';</script>
+     Ce Client ID DOIT être exactement le même que celui utilisé
+     comme audience côté backend (GOOGLE_CLIENT_ID sur Railway, service
+     cafeslux-api-production — voir src/routes/auth.routes.js), et
+     c'est CE Client ID précis qui doit avoir l'origine
+     https://lux-fixed-production.up.railway.app dans "Authorized
+     JavaScript origins" sur Google Cloud Console. ── -->
+<script>window.LUX_GOOGLE_CLIENT_ID = '72812921264-bpqde4p1q3amsvqh9qb2m1p43gjtssbu.apps.googleusercontent.com';</script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <!-- ── Fonts ── -->
