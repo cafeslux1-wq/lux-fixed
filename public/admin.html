@@ -192,6 +192,7 @@
                 </div>
                 <div class="flex flex-col gap-2 mt-2">
                     <button v-if="station.status === 'awaiting_activation' || station.status === 'pending'" @click="approve(station.id)" class="btn btn-approve">✅ تأكيد الدفع وتفعيل الوقت</button>
+                    <button v-if="station.status === 'awaiting_activation' || station.status === 'pending'" @click="reject(station.id)" class="btn btn-stop">❌ رفض الطلب</button>
                     <div v-if="station.status === 'available'" class="flex flex-col gap-2 mt-2">
                         <div class="text-xs text-gray-500 mb-1" style="letter-spacing:.5px">⏱ تحديد مدة الجلسة</div>
                         <div class="grid grid-cols-2 gap-2">
@@ -424,10 +425,9 @@
             const approve = async (stationId) => {
                 if (!requireAuth()) return;
                 try {
-                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/confirm`, {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/approve`, {
                         method: 'POST',
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify({ action: 'confirm' })
+                        headers: getAuthHeaders()
                     });
                     if (res.ok) {
                         await sync();
@@ -435,9 +435,30 @@
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
                         localStorage.removeItem('lux_token');
                     } else {
-                        alert('فشل التأكيد — ' + res.status);
+                        const err = await res.json().catch(() => ({}));
+                        alert('فشل التأكيد: ' + (err.error || res.status));
                     }
                 } catch (e) { console.error('[approve]', e); }
+            };
+
+            const reject = async (stationId) => {
+                if (!requireAuth()) return;
+                if (!confirm('هل تريد رفض طلب الدفع هذا؟ سيصبح الجهاز متاحاً فوراً.')) return;
+                try {
+                    const res = await fetch(`${API_BASE}/api/gaming/stations/${stationId}/reject`, {
+                        method: 'POST',
+                        headers: getAuthHeaders()
+                    });
+                    if (res.ok) {
+                        await sync();
+                    } else if (res.status === 401) {
+                        alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
+                        localStorage.removeItem('lux_token');
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        alert('فشل الرفض: ' + (err.error || res.status));
+                    }
+                } catch (e) { console.error('[reject]', e); }
             };
             
             const manual = async (stationId, hours, fixedPrice) => {
@@ -692,6 +713,7 @@
                 formatTime,
                 sync,
                 approve,
+                reject,
                 manual,
                 stop,
                 openPriceModal,
