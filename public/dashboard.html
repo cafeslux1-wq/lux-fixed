@@ -8,10 +8,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   MAESTRO DASHBOARD — CAFÉ LUX
-   Carbon/Gold luxury aesthetic — Cinzel titles, Cairo Arabic
-═══════════════════════════════════════════════════════════════ */
 :root {
   --gold:     #C9A84C;
   --gold-lt:  #E8C96A;
@@ -33,14 +29,8 @@
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg0); color: var(--text); font-family: 'Cairo', sans-serif; overflow: hidden; }
-
-/* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-
-/* ═══════════════════════════════════════════════════════
-   LOGIN SCREEN
-═══════════════════════════════════════════════════════ */
 #login-screen {
   position: fixed; inset: 0; z-index: 1000;
   background: radial-gradient(ellipse at 30% 40%, rgba(201,168,76,.08) 0%, transparent 60%), var(--bg0);
@@ -88,13 +78,7 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 }
 .login-btn:hover { filter:brightness(1.1); }
 .login-err { color: var(--red); font-size:12px; margin-top:12px; min-height:18px; }
-
-/* ═══════════════════════════════════════════════════════
-   APP SHELL
-═══════════════════════════════════════════════════════ */
 #app { display:flex; height:100vh; }
-
-/* ── SIDEBAR ── */
 #sidebar {
   width: var(--sidebar-w); flex-shrink:0;
   background: var(--bg1);
@@ -137,8 +121,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
   color:var(--red); cursor:pointer; font-size:11px;
   margin-top:8px; padding:6px 0;
 }
-
-/* ── MAIN CONTENT ── */
 #main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
 #topbar {
   height: var(--header-h);
@@ -156,10 +138,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 .topbar-stat strong { color:var(--gold); font-size:13px; }
 .topbar-time { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2); }
 #content { flex:1; overflow-y:auto; padding:28px; }
-
-/* ═══════════════════════════════════════════════════════
-   SECTION HEADER
-═══════════════════════════════════════════════════════ */
 .section-header {
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:24px;
@@ -186,10 +164,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
   font-size:12px; font-weight:700; cursor:pointer; transition:.15s;
 }
 .btn-ghost:hover { background:rgba(201,168,76,.08); }
-
-/* ═══════════════════════════════════════════════════════
-   STATS GRID
-═══════════════════════════════════════════════════════ */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:28px; }
 .stat-card {
   background: var(--bg2);
@@ -208,10 +182,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 .stat-value.green { color:var(--green); }
 .stat-value.blue  { color:var(--blue); }
 .stat-unit { font-size:11px; color:var(--text2); margin-top:4px; }
-
-/* ═══════════════════════════════════════════════════════
-   TABLE
-═══════════════════════════════════════════════════════ */
 .lux-table-wrap {
   background:var(--bg2); border:1px solid var(--border);
   border-radius:14px; overflow:hidden;
@@ -240,8 +210,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 .badge-gold  { background:rgba(201,168,76,.15); color:var(--gold);  }
 .badge-blue  { background:rgba(52,152,219,.15); color:var(--blue);  }
 .badge-gray  { background:rgba(255,255,255,.07); color:var(--text2); }
-
-/* ── Product image thumb ── */
 .prod-thumb {
   width:42px; height:42px; border-radius:8px;
   object-fit:cover; border:1px solid var(--border);
@@ -253,10 +221,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
   display:flex; align-items:center; justify-content:center;
   font-size:16px; color:var(--text2);
 }
-
-/* ═══════════════════════════════════════════════════════
-   MODAL
-═══════════════════════════════════════════════════════ */
 .modal-overlay {
   position:fixed; inset:0; z-index:500;
   background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
@@ -300,10 +264,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 .drop-zone:hover { border-color:var(--gold); background:rgba(201,168,76,.04); }
 .drop-zone img { max-height:80px; border-radius:8px; margin-bottom:8px; }
 .drop-zone-label { font-size:11px; color:var(--text2); }
-
-/* ═══════════════════════════════════════════════════════
-   CHARTS
-═══════════════════════════════════════════════════════ */
 .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
 .chart-card {
   background:var(--bg2); border:1px solid var(--border);
@@ -311,10 +271,6 @@ html, body { height: 100%; background: var(--bg0); color: var(--text); font-fami
 }
 .chart-card-title { font-size:10px; color:var(--text2); letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
 canvas { max-height:220px; }
-
-/* ═══════════════════════════════════════════════════════
-   QR SECTION
-═══════════════════════════════════════════════════════ */
 .qr-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:16px; }
 .qr-card {
   background:var(--bg2); border:1px solid var(--border);
@@ -326,10 +282,6 @@ canvas { max-height:220px; }
 .qr-label { font-size:11px; color:var(--text2); }
 .qr-table-num { font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--gold); font-weight:700; }
 canvas.qr-canvas { border-radius:6px; }
-
-/* ═══════════════════════════════════════════════════════
-   SEARCH + FILTER BAR
-═══════════════════════════════════════════════════════ */
 .filter-bar {
   display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center;
 }
@@ -353,10 +305,6 @@ canvas.qr-canvas { border-radius:6px; }
   font-family:'Cairo',sans-serif; font-size:12px;
   padding:9px 14px; outline:none; cursor:pointer;
 }
-
-/* ═══════════════════════════════════════════════════════
-   TOAST NOTIFICATION
-═══════════════════════════════════════════════════════ */
 #toast {
   position:fixed; bottom:28px; right:28px; z-index:9999;
   background:var(--bg3); border:1px solid var(--border2);
@@ -368,15 +316,9 @@ canvas.qr-canvas { border-radius:6px; }
 #toast.show { transform:translateY(0); opacity:1; }
 #toast.success { border-color:rgba(46,204,113,.4); color:var(--green); }
 #toast.error   { border-color:rgba(231,76,60,.4);  color:var(--red); }
-
-/* ═══════════════════════════════════════════════════════
-   SECTION PANELS
-═══════════════════════════════════════════════════════ */
 .panel { display:none; }
 .panel.active { display:block; animation:fade-in .2s ease; }
 @keyframes fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-
-/* ── Loyalty card ── */
 .loyalty-card {
   background:var(--bg2); border:1px solid var(--border);
   border-radius:12px; padding:16px; display:flex;
@@ -391,18 +333,12 @@ canvas.qr-canvas { border-radius:6px; }
 .loyalty-name { font-size:13px; font-weight:700; color:var(--text); }
 .loyalty-points { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold); }
 .loyalty-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
-
-/* ── Campaign card ── */
 .campaign-card {
   background:var(--bg2); border:1px solid var(--border);
   border-radius:14px; padding:20px;
 }
 .campaign-card-title { font-size:13px; font-weight:700; margin-bottom:6px; }
 .campaign-meta { font-size:10px; color:var(--text2); margin-bottom:12px; }
-
-/* ═══════════════════════════════════════════════════════
-   CONFIRM OVERLAY (delete confirmation)
-═══════════════════════════════════════════════════════ */
 #confirm-overlay {
   position:fixed; inset:0; z-index:600;
   background:rgba(0,0,0,.8); backdrop-filter:blur(4px);
@@ -417,18 +353,12 @@ canvas.qr-canvas { border-radius:6px; }
 .confirm-msg { font-size:14px; color:var(--text); margin-bottom:8px; }
 .confirm-sub { font-size:11px; color:var(--text2); margin-bottom:24px; }
 .confirm-actions { display:flex; gap:10px; justify-content:center; }
-
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════ */
 @media(max-width:768px){
   :root{ --sidebar-w:0px; }
   #sidebar{ position:fixed; left:-200px; top:0; height:100vh; z-index:100; transition:.3s; width:200px; }
   #sidebar.open{ left:0; }
   .charts-grid{ grid-template-columns:1fr; }
 }
-
-/* ═══ OFFER CATEGORY PRODUCT PICKER ═══ */
 .offer-category-picker{position:relative}
 .offer-category-trigger{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font:inherit;text-align:left}
 .offer-category-trigger:hover{border-color:var(--gold)}
@@ -456,12 +386,10 @@ canvas.qr-canvas { border-radius:6px; }
 .offer-products-empty{padding:14px 9px;color:var(--text2);font-size:11px;text-align:center}
 .offer-selected-product{margin-top:7px;padding:8px 10px;border:1px solid rgba(201,168,76,.28);background:rgba(201,168,76,.05);border-radius:8px;font-size:10px;color:var(--text2);display:none}
 .offer-selected-product strong{color:var(--text)}
-
 </style>
 </head>
 <body>
 
-<!-- ═══ LOGIN SCREEN ════════════════════════════════════════════ -->
 <div id="login-screen" style="display:none">
   <div class="login-box">
     <div class="login-logo">✦ LUX</div>
@@ -492,10 +420,8 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ APP SHELL ════════════════════════════════════════════════ -->
 <div id="app" style="display:none">
 
-  <!-- SIDEBAR -->
   <nav id="sidebar">
     <div class="sidebar-brand">
       <div class="brand-name">MAESTRO</div>
@@ -527,7 +453,6 @@ canvas.qr-canvas { border-radius:6px; }
     </div>
   </nav>
 
-  <!-- MAIN -->
   <div id="main">
     <div id="topbar">
       <div class="topbar-title" id="topbar-title">TABLEAU DE BORD</div>
@@ -540,7 +465,6 @@ canvas.qr-canvas { border-radius:6px; }
 
     <div id="content">
 
-      <!-- ═══ 1. DASHBOARD ══════════════════════════════════════ -->
       <div class="panel active" id="panel-dashboard">
         <div class="section-header">
           <div class="section-title"><span>📊</span>TABLEAU DE BORD</div>
@@ -574,7 +498,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 2. PRODUCTS ═══════════════════════════════════════ -->
       <div class="panel" id="panel-products">
         <div class="section-header">
           <div class="section-title"><span>🍽️</span>PRODUITS & MENU</div>
@@ -601,7 +524,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 3. OFFERS ══════════════════════════════════════════ -->
       <div class="panel" id="panel-offers">
         <div class="section-header">
           <div class="section-title"><span>✦</span>OFFRES SPÉCIALES</div>
@@ -615,7 +537,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 4. ORDERS ══════════════════════════════════════════ -->
       <div class="panel" id="panel-orders">
         <div class="section-header">
           <div class="section-title"><span>📦</span>COMMANDES</div>
@@ -635,7 +556,6 @@ canvas.qr-canvas { border-radius:6px; }
             <option value="cancelled">Annulé</option>
           </select>
         </div>
-        <!-- ═══ PAIEMENTS ESPÈCES EN ATTENTE DE VALIDATION ═══ -->
         <div id="awaiting-box" style="display:none;margin-bottom:18px;border:1px solid rgba(212,175,55,.45);border-radius:14px;overflow:hidden;background:rgba(212,175,55,.06)">
           <div style="padding:12px 16px;background:rgba(212,175,55,.14);display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;color:var(--gold)">
             <span>💵</span>
@@ -658,7 +578,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 5. RESERVATIONS ═══════════════════════════════════ -->
       <div class="panel" id="panel-reservations">
         <div class="section-header">
           <div class="section-title"><span>📅</span>RÉSERVATIONS</div>
@@ -673,7 +592,6 @@ canvas.qr-canvas { border-radius:6px; }
             <option value="cancelled">Annulé</option>
           </select>
         </div>
-        <!-- ═══ RÉSERVATIONS EN ATTENTE DE VALIDATION ═══ -->
         <div id="res-awaiting-box" style="display:none;margin-bottom:18px;border:1px solid rgba(212,175,55,.45);border-radius:14px;overflow:hidden;background:rgba(212,175,55,.06)">
           <div style="padding:12px 16px;background:rgba(212,175,55,.14);display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;color:var(--gold)">
             <span>📅</span>
@@ -696,14 +614,12 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 5bis. GAMING ZONE ═════════════════════════════════ -->
       <div class="panel" id="panel-gamingzone">
         <div class="section-header">
           <div class="section-title"><span>🎮</span>GAMING ZONE</div>
           <button class="btn-ghost" onclick="loadGamingZone()"><i class="fas fa-sync-alt"></i> Actualiser</button>
         </div>
 
-        <!-- ═══ ESPÈCES GAMING — VALIDATION REQUISE ═══ -->
         <div id="gaming-awaiting-box" style="display:none;margin-bottom:18px;border:1px solid rgba(212,175,55,.45);border-radius:14px;overflow:hidden;background:rgba(212,175,55,.06)">
           <div style="padding:12px 16px;background:rgba(212,175,55,.14);display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;color:var(--gold)">
             <span>💵</span>
@@ -726,7 +642,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 6. EMPLOYEES ══════════════════════════════════════ -->
       <div class="panel" id="panel-employees">
         <div class="section-header">
           <div class="section-title"><span>👥</span>GESTION DES EMPLOYÉS</div>
@@ -740,7 +655,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 7. CUSTOMERS ═══════════════════════════════════════ -->
       <div class="panel" id="panel-customers">
         <div class="section-header">
           <div class="section-title"><span>💎</span>CLIENTS & FIDÉLITÉ</div>
@@ -759,7 +673,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 7bis. MON ESPACE LUX — Paliers, récompenses, validation ═══ -->
       <div class="panel" id="panel-loyalty">
         <div class="section-header">
           <div class="section-title"><span>👑</span>MON ESPACE LUX</div>
@@ -794,7 +707,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 8. ANALYTICS ══════════════════════════════════════ -->
       <div class="panel" id="panel-analytics">
         <div class="section-header">
           <div class="section-title"><span>📊</span>ANALYTICS LUX</div>
@@ -821,7 +733,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 9. QR TABLES ══════════════════════════════════════ -->
       <div class="panel" id="panel-qrtables">
         <div class="section-header">
           <div class="section-title"><span>📱</span>QR TABLES</div>
@@ -840,7 +751,6 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 10. GIFT CARDS ════════════════════════════════════ -->
       <div class="panel" id="panel-giftcards">
         <div class="section-header">
           <div class="section-title"><span>🎁</span>CARTES CADEAU</div>
@@ -854,25 +764,21 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
-      <!-- ═══ 11. CAMPAIGNS ════════════════════════════════════ -->
       <div class="panel" id="panel-campaigns">
         <div class="section-header">
           <div class="section-title"><span>📢</span>CAMPAGNES MARKETING</div>
           <button class="btn-primary" onclick="openCampaignModal()"><i class="fas fa-paper-plane"></i> Nouvelle Campagne</button>
         </div>
         <div id="campaigns-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
-          <!-- Campaigns rendered here -->
         </div>
       </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
-</div><!-- /app -->
+    </div>
+  </div>
+</div>
 
-<!-- ═══ TOAST ════════════════════════════════════════════════════ -->
 <div id="toast"></div>
 
-<!-- ═══ CONFIRM OVERLAY ════════════════════════════════════════ -->
 <div id="confirm-overlay">
   <div class="confirm-box">
     <div class="confirm-icon">⚠️</div>
@@ -885,7 +791,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ PRODUCT MODAL ══════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-product">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-utensils"></i> <span id="modal-product-title">Ajouter Produit</span></div>
@@ -943,7 +848,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ BULK PRODUCTS MODAL ═══════════════════════════════════ -->
 <div class="modal-overlay" id="modal-bulk-products">
   <div class="modal-box" style="max-width:1050px;width:96%">
     <div class="modal-title"><i class="fas fa-layer-group"></i> Ajouter plusieurs produits</div>
@@ -964,7 +868,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ EMPLOYEE MODAL ═════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-employee">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-user-plus"></i> <span id="modal-emp-title">Ajouter Employé</span></div>
@@ -1018,7 +921,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ RESERVATION MODAL ══════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-reservation">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-calendar-check"></i> <span id="modal-res-title">Nouvelle Réservation</span></div>
@@ -1068,7 +970,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ GIFT CARD MODAL ═══════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-level">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-crown"></i> Nouveau Palier</div>
@@ -1167,7 +1068,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ CAMPAIGN MODAL ════════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-campaign">
   <div class="modal-box">
     <div class="modal-title"><i class="fas fa-bullhorn"></i> Nouvelle Campagne</div>
@@ -1204,7 +1104,6 @@ canvas.qr-canvas { border-radius:6px; }
   </div>
 </div>
 
-<!-- ═══ ORDER STATUS MODAL ════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-order-status">
   <div class="modal-box" style="max-width:360px">
     <div class="modal-title"><i class="fas fa-edit"></i> Mettre à jour Statut</div>
@@ -1229,11 +1128,6 @@ canvas.qr-canvas { border-radius:6px; }
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   MAESTRO DASHBOARD — JAVASCRIPT CORE
-   API: https://cafeslux-api-production.up.railway.app
-══════════════════════════════════════════════════════════════ */
-
 const API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
 let TOKEN = '';
 let _categories = [];
@@ -1241,21 +1135,18 @@ let _products   = [];
 let _customers  = [];
 let _confirmCb  = null;
 
-// ── Clock ──────────────────────────────────────────────────────
 setInterval(function() {
   var now = new Date();
   var t = document.getElementById('tb-clock');
   if (t) t.textContent = now.toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }, 1000);
 
-// ── API Request ────────────────────────────────────────────────
 async function api(path, method, body) {
   var opts = { method: method || 'GET', headers: { 'Content-Type': 'application/json' } };
   if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
   if (body)  opts.body = JSON.stringify(body);
   var r = await fetch(API + path, opts);
 
-  // ── 401: session expired → show PIN screen ───────────────
   if (r.status === 401) {
     console.warn('[Dashboard] HTTP 401 — session expirée');
     TOKEN = '';
@@ -1277,7 +1168,6 @@ async function api(path, method, body) {
   return r.json();
 }
 
-// ── Toast ──────────────────────────────────────────────────────
 function toast(msg, type) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -1285,7 +1175,6 @@ function toast(msg, type) {
   setTimeout(function() { el.className = ''; }, 3000);
 }
 
-// ── Confirm ────────────────────────────────────────────────────
 function confirm(msg, sub, cb) {
   document.getElementById('confirm-msg').textContent = msg;
   document.getElementById('confirm-sub').textContent = sub || '';
@@ -1298,7 +1187,6 @@ function confirmAction() {
 }
 function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
 
-// ── Modal helpers ──────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
@@ -1309,9 +1197,6 @@ function closeModal(id) {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  PIN LOGIN
-// ══════════════════════════════════════════════════════════════
 var pinValue = '';
 function pinPress(n) {
   if (pinValue.length >= 4) return;
@@ -1336,7 +1221,7 @@ async function pinSubmit() {
       TOKEN = data.token;
       try {
       localStorage.setItem('maestro_token', TOKEN);
-      localStorage.setItem('lux_token', TOKEN); // sync with api-client.js
+      localStorage.setItem('lux_token', TOKEN);
     } catch(e) {}
       launchApp(data.employee);
     } else {
@@ -1350,7 +1235,6 @@ async function pinSubmit() {
     updatePinDots();
   }
 }
-// Enter key on PIN
 document.addEventListener('keydown', function(e) {
   if (document.getElementById('login-screen').style.display === 'none') return;
   if (e.key >= '0' && e.key <= '9') pinPress(parseInt(e.key));
@@ -1377,8 +1261,7 @@ function logout() {
   document.getElementById('login-err').textContent = '';
 }
 
-// ── Auto-login (no PIN screen) ────────────────────────────────
-var AUTO_PIN = '1234';
+var AUTO_PIN = '281397';
 function autoPinLogin() {
   api('/api/auth/pin', 'POST', { pin: AUTO_PIN }).then(function(data) {
     if (data && data.token) {
@@ -1389,7 +1272,6 @@ function autoPinLogin() {
       } catch(e) {}
       launchApp(data.employee);
     } else {
-      // Auto-login failed → fall back to manual PIN screen
       document.getElementById('login-screen').style.display = 'flex';
     }
   }).catch(function() {
@@ -1402,33 +1284,26 @@ function autoPinLogin() {
     var t = localStorage.getItem('maestro_token') || localStorage.getItem('lux_token');
     if (!t) { autoPinLogin(); return; }
 
-    // Validate token against API before skipping PIN
     var base = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
     fetch(base + '/api/auth/me', {
       headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }
     }).then(function(res) {
       if (res.ok) {
-        // Token valid → auto-login
         TOKEN = t;
         res.json().then(function(user) { launchApp(user || {}); }).catch(function() { launchApp({}); });
       } else {
-        // Token expired / invalid → clear and retry auto-login with PIN
         try { localStorage.removeItem('maestro_token'); } catch(e) {}
         try { localStorage.removeItem('lux_token'); }     catch(e) {}
         TOKEN = '';
         autoPinLogin();
       }
     }).catch(function() {
-      // API unreachable → keep token and let user in (offline mode)
       TOKEN = t;
       launchApp({});
     });
   } catch(e) { autoPinLogin(); }
 })();
 
-// ══════════════════════════════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════════════════════════════
 var SECTION_LOADERS = {
   dashboard:    loadDashboard,
   products:     loadProducts,
@@ -1438,7 +1313,7 @@ var SECTION_LOADERS = {
   employees:    loadEmployees,
   customers:    loadCustomers,
   analytics:    loadAnalytics,
-  qrtables:     function() { /* on-demand */ },
+  qrtables:     function() { },
   giftcards:    loadGiftCards,
   campaigns:    loadCampaigns,
   loyalty:      loadLoyalty,
@@ -1461,9 +1336,6 @@ function goTo(section, navEl) {
   if (SECTION_LOADERS[section]) SECTION_LOADERS[section]();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  1. DASHBOARD
-// ══════════════════════════════════════════════════════════════
 async function loadDashboard() {
   try {
     var data = await api('/api/dashboard');
@@ -1498,9 +1370,6 @@ async function loadRecentOrders() {
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════════════════
-//  2. PRODUCTS
-// ══════════════════════════════════════════════════════════════
 async function loadCategories() {
   try {
     _categories = await api('/api/categories') || [];
@@ -1657,7 +1526,6 @@ document.addEventListener('click', function(e) {
     closeOfferCategoryMenus();
   }
 });
-// Renvoie la catégorie "Offres" (la crée automatiquement si elle n'existe pas encore)
 async function getOrCreateOffresCategory() {
   if (!_categories || !_categories.length) { try { _categories = await api('/api/categories') || []; } catch(e) {} }
   var cat = (_categories || []).find(function(c) { return (c.name || '').trim().toLowerCase() === 'offres'; });
@@ -1749,9 +1617,6 @@ function editProduct(id) {
   var p = _products.find(function(x){return x.id===id;});
   if (p) openProductModal(p);
 }
-// ══════════════════════════════════════════════════════════════
-//  BULK PRODUCT CREATION
-// ══════════════════════════════════════════════════════════════
 var _bulkCategories = [];
 
 async function openBulkProductModal() {
@@ -1835,7 +1700,6 @@ async function saveBulkProducts() {
     var price=parseFloat(row.querySelector('.bulk-price').value);
     var categoryId=row.querySelector('.bulk-cat').value;
     var imageUrl=row.querySelector('.bulk-image').value.trim();
-    // Completely empty rows are allowed and ignored.
     if(!name && !row.querySelector('.bulk-price').value && !categoryId && !imageUrl) return;
     if(!name || !isFinite(price) || price <= 0 || !categoryId){
       invalid=true;
@@ -1917,9 +1781,6 @@ async function toggleProduct(id, active, name) {
   });
 }
 
-// ══════════════════════════════════════════════════════════════
-//  3. OFFERS
-// ══════════════════════════════════════════════════════════════
 async function loadOffers() {
   try {
     if (!_categories || !_categories.length) await loadCategories();
@@ -1947,9 +1808,6 @@ async function loadOffers() {
   } catch(e) { console.error('[Offers]', e.message); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  4. ORDERS
-// ══════════════════════════════════════════════════════════════
 var PAY_LABELS = {
   cash:      '💵 Espèces',
   tpe:       '💳 Carte Bancaire',
@@ -1976,9 +1834,6 @@ async function loadOrders() {
   } catch(e) { console.error('[Orders]', e.message); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  PAIEMENTS ESPÈCES — EN ATTENTE DE VALIDATION
-// ══════════════════════════════════════════════════════════════
 var _awaitingSeen = 0;
 
 async function loadAwaiting() {
@@ -2105,9 +1960,6 @@ setInterval(function() {
   if (panel && panel.classList.contains('active')) loadAwaiting();
 }, 15000);
 
-// ══════════════════════════════════════════════════════════════
-//  5. RESERVATIONS
-// ══════════════════════════════════════════════════════════════
 async function loadReservations() {
   try {
     var date   = document.getElementById('res-date-filter') ? document.getElementById('res-date-filter').value : '';
@@ -2224,9 +2076,6 @@ async function saveReservation() {
   } catch(e) { toast('❌ ' + e.message, 'error'); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  6. EMPLOYEES
-// ══════════════════════════════════════════════════════════════
 var _empCache = [];
 async function loadEmployees() {
   try {
@@ -2289,9 +2138,6 @@ async function saveEmployee() {
   } catch(e) { toast('❌ '+e.message,'error'); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  7. CUSTOMERS
-// ══════════════════════════════════════════════════════════════
 async function loadCustomers() {
   try {
     _customers = await api('/api/customers?limit=100') || [];
@@ -2336,9 +2182,6 @@ function exportCustomers() {
   toast('✅ Export téléchargé','success');
 }
 
-// ══════════════════════════════════════════════════════════════
-//  8. ANALYTICS
-// ══════════════════════════════════════════════════════════════
 async function loadAnalytics() {
   try {
     var data = await api('/api/dashboard');
@@ -2365,9 +2208,6 @@ function exportAnalytics(format) {
   toast('✅ Rapport exporté','success');
 }
 
-// ══════════════════════════════════════════════════════════════
-//  9. QR TABLES
-// ══════════════════════════════════════════════════════════════
 var QR_BASE_URL = 'https://cafeslux.com/?table=';
 
 function buildQRGrid() {
@@ -2466,9 +2306,6 @@ function printQR() {
   win.document.close();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  10. GIFT CARDS
-// ══════════════════════════════════════════════════════════════
 async function loadGiftCards() {
   try {
     var list = await api('/api/giftcards') || [];
@@ -2556,9 +2393,6 @@ function copyCode(code) {
   navigator.clipboard.writeText(code).then(function(){ toast('✅ Code copié: '+code,'success'); });
 }
 
-// ══════════════════════════════════════════════════════════════
-//  MON ESPACE LUX — Paliers, récompenses, validation des demandes
-// ══════════════════════════════════════════════════════════════
 var _loyaltyLevelForReward = null;
 
 async function loadLoyalty() {
@@ -2727,9 +2561,6 @@ async function fulfillLoyaltyClaim(id) {
   } catch(e) { toast('❌ '+e.message,'error'); }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  GAMING ZONE — stations + validation des paiements espèces
-// ══════════════════════════════════════════════════════════════
 var _gamingAwaitingSeen = 0;
 
 async function loadGamingZone() {
@@ -2840,9 +2671,6 @@ setInterval(function() {
   if (panel && panel.classList.contains('active')) loadGamingAwaiting();
 }, 15000);
 
-// ══════════════════════════════════════════════════════════════
-//  11. CAMPAIGNS
-// ══════════════════════════════════════════════════════════════
 var _campaignHistory = [];
 async function loadCampaigns() {
   var list = document.getElementById('campaigns-list');
@@ -2878,9 +2706,6 @@ async function sendCampaign() {
   closeModal('modal-campaign'); toast('✅ Campagne lancée pour '+count+' clients','success'); loadCampaigns();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  CHARTS (Chart.js)
-// ══════════════════════════════════════════════════════════════
 var _charts = {};
 function mkChart(id, type, labels, datasets, options) {
   var ctx = document.getElementById(id);
@@ -2920,9 +2745,6 @@ function buildProductChart() {
   mkChart('chart-products','bar',prods,[{label:'Ventes',data:vals,backgroundColor:'rgba(201,168,76,.3)',borderColor:'#C9A84C',borderWidth:2,borderRadius:6,indexAxis:'y'}],{scales:{x:{display:true},y:{ticks:{font:{size:10}}}}});
 }
 
-// ══════════════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════════════
 function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
 function esc(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function badge(s) { return '<span class="td-badge badge-gray">'+s+'</span>'; }
