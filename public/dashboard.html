@@ -1151,7 +1151,7 @@ async function api(path, method, body) {
     console.warn('[Dashboard] HTTP 401 — session expirée');
     TOKEN = '';
     try { localStorage.removeItem('maestro_token'); } catch(e) {}
-    try { localStorage.removeItem('lux_token');     } catch(e) {}
+    try { localStorage.removeItem('lux_staff_token');     } catch(e) {}
     document.getElementById('app').style.display          = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     pinValue = ''; updatePinDots();
@@ -1221,7 +1221,7 @@ async function pinSubmit() {
       TOKEN = data.token;
       try {
       localStorage.setItem('maestro_token', TOKEN);
-      localStorage.setItem('lux_token', TOKEN);
+      localStorage.setItem('lux_staff_token', TOKEN);
     } catch(e) {}
       launchApp(data.employee);
     } else {
@@ -1268,7 +1268,7 @@ function autoPinLogin() {
       TOKEN = data.token;
       try {
         localStorage.setItem('maestro_token', TOKEN);
-        localStorage.setItem('lux_token', TOKEN);
+        localStorage.setItem('lux_staff_token', TOKEN);
       } catch(e) {}
       launchApp(data.employee);
     } else {
@@ -1281,7 +1281,7 @@ function autoPinLogin() {
 
 (function() {
   try {
-    var t = localStorage.getItem('maestro_token') || localStorage.getItem('lux_token');
+    var t = localStorage.getItem('maestro_token') || localStorage.getItem('lux_staff_token');
     if (!t) { autoPinLogin(); return; }
 
     var base = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
@@ -1293,7 +1293,7 @@ function autoPinLogin() {
         res.json().then(function(user) { launchApp(user || {}); }).catch(function() { launchApp({}); });
       } else {
         try { localStorage.removeItem('maestro_token'); } catch(e) {}
-        try { localStorage.removeItem('lux_token'); }     catch(e) {}
+        try { localStorage.removeItem('lux_staff_token'); }     catch(e) {}
         TOKEN = '';
         autoPinLogin();
       }
