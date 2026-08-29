@@ -301,11 +301,12 @@
     const GAMING_URL = 'gaming/index.html';
 
     // ══════════════════════════════════════════════════════════
-    //  AUTH — جلب الـ Token من localStorage (يُخزّنه api-client.js)
-    //  المفتاح: 'lux_token'  |  يُضبط بعد تسجيل الدخول بالـ PIN
+    //  AUTH — جلب الـ Token من localStorage (يُخزّنه dashboard.html)
+    //  المفتاح: 'lux_staff_token'  |  مخصص للطاقم (Admin/POS) — منفصل
+    //  عن 'lux_token' الخاص بجلسة العميل فـ Mon Espace LUX
     // ══════════════════════════════════════════════════════════
     const getToken = () => {
-        try { return localStorage.getItem('lux_token') || null; }
+        try { return localStorage.getItem('lux_staff_token') || null; }
         catch(e) { return null; }
     };
 
@@ -433,7 +434,7 @@
                         await sync();
                     } else if (res.status === 401) {
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
-                        localStorage.removeItem('lux_token');
+                        localStorage.removeItem('lux_staff_token');
                     } else {
                         const err = await res.json().catch(() => ({}));
                         alert('فشل التأكيد: ' + (err.error || res.status));
@@ -453,7 +454,7 @@
                         await sync();
                     } else if (res.status === 401) {
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
-                        localStorage.removeItem('lux_token');
+                        localStorage.removeItem('lux_staff_token');
                     } else {
                         const err = await res.json().catch(() => ({}));
                         alert('فشل الرفض: ' + (err.error || res.status));
@@ -476,7 +477,7 @@
                         await sync();
                     } else if (res.status === 401) {
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
-                        localStorage.removeItem('lux_token');
+                        localStorage.removeItem('lux_staff_token');
                     } else {
                         const err = await res.json().catch(() => ({}));
                         alert('فشل التفعيل: ' + (err.error || res.status));
@@ -496,7 +497,7 @@
                         await sync();
                     } else if (res.status === 401) {
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
-                        localStorage.removeItem('lux_token');
+                        localStorage.removeItem('lux_staff_token');
                     } else {
                         alert('فشل الإنهاء — ' + res.status);
                     }
@@ -525,7 +526,7 @@
                         await sync();
                     } else if (res.status === 401) {
                         alert('⚠️ انتهت صلاحية الجلسة — يرجى تسجيل الدخول مجدداً');
-                        localStorage.removeItem('lux_token');
+                        localStorage.removeItem('lux_staff_token');
                         priceModal.value.show = false;
                     } else {
                         // Optimistic update locally even if server fails
