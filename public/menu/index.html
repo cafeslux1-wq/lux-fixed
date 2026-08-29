@@ -509,20 +509,24 @@ input,button,select,textarea{font-family:inherit}
   ✅ Commande envoyée ! Nous vous contactons bientôt.
 </div>
 
-<!-- ═══ ÉCRAN D'ATTENTE — VALIDATION ESPÈCES ═══ -->
-<div id="wait-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,8,10,.94);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px">
-  <div style="max-width:420px;width:100%;text-align:center;border:1px solid rgba(212,175,55,.35);border-radius:18px;padding:32px 24px;background:linear-gradient(180deg,rgba(30,26,20,.95),rgba(16,14,12,.95))">
-    <div id="wait-spin" style="width:58px;height:58px;margin:0 auto 20px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:luxspin .9s linear infinite"></div>
-    <div id="wait-icon" style="display:none;font-size:52px;margin-bottom:14px"></div>
-    <div id="wait-title" style="font-size:18px;font-weight:700;color:#f0e8d5;margin-bottom:10px">Commande en attente de validation</div>
-    <div id="wait-msg" style="font-size:13px;line-height:1.7;color:rgba(240,232,213,.7)">
-      Paiement en espèces — l'administration doit confirmer votre commande.<br>Merci de patienter, ne fermez pas cette page.
+<!-- ═══ CARTE D'ATTENTE — VALIDATION ESPÈCES (compacte, en bas, non bloquante) ═══ -->
+<div id="wait-overlay" style="display:none;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;width:min(360px,calc(100vw - 24px));text-align:center;border:1px solid rgba(212,175,55,.4);border-radius:16px;padding:14px 18px;background:linear-gradient(180deg,rgba(24,20,16,.97),rgba(14,12,10,.97));box-shadow:0 10px 34px rgba(0,0,0,.5);backdrop-filter:blur(8px)">
+  <div style="display:flex;align-items:center;gap:12px;text-align:left">
+    <div id="wait-spin" style="flex-shrink:0;width:28px;height:28px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:luxspin .9s linear infinite"></div>
+    <div id="wait-icon" style="display:none;flex-shrink:0;font-size:24px"></div>
+    <div style="flex:1;min-width:0">
+      <div id="wait-title" style="font-size:12.5px;font-weight:700;color:#f0e8d5;line-height:1.3">Commande en attente de validation</div>
+      <div id="wait-msg" style="font-size:10.5px;line-height:1.5;color:rgba(240,232,213,.65);margin-top:2px">
+        Paiement en espèces — en attente de confirmation.
+      </div>
+      <div id="wait-ref" style="margin-top:3px;font-family:monospace;font-size:10px;color:rgba(212,175,55,.8)"></div>
     </div>
-    <div id="wait-ref" style="margin-top:16px;font-family:monospace;font-size:12px;color:rgba(212,175,55,.85)"></div>
-    <button id="wait-close" onclick="closeWaiting()" style="display:none;margin-top:22px;padding:11px 26px;border:none;border-radius:10px;background:linear-gradient(135deg,#d4af37,#b8952e);color:#1a1610;font-weight:700;font-size:13px;cursor:pointer">Fermer</button>
+    <button id="wait-close" onclick="closeWaiting()" style="display:none;flex-shrink:0;padding:7px 14px;border:none;border-radius:9px;background:linear-gradient(135deg,#d4af37,#b8952e);color:#1a1610;font-weight:700;font-size:11px;cursor:pointer">OK</button>
   </div>
 </div>
-<style>@keyframes luxspin{to{transform:rotate(360deg)}}</style>
+<style>@keyframes luxspin{to{transform:rotate(360deg)}}
+@media(max-width:900px){ #wait-overlay{ bottom:calc(var(--cta-h, 80px) + 10px); } }
+</style>
 
 <!-- Toast -->
 <div id="toast"></div>
@@ -1165,13 +1169,13 @@ function startWaiting(orderId,name){
 function showWaitOverlay(orderId){
   var ov=document.getElementById('wait-overlay');
   if(!ov)return;
-  ov.style.display='flex';
+  ov.style.display='block';
   document.getElementById('wait-spin').style.display='block';
   document.getElementById('wait-icon').style.display='none';
   document.getElementById('wait-close').style.display='none';
   document.getElementById('wait-title').textContent='Commande en attente de validation';
   document.getElementById('wait-title').style.color='#f0e8d5';
-  document.getElementById('wait-msg').innerHTML="Paiement en esp\u00e8ces \u2014 l'administration doit confirmer votre commande.<br>Merci de patienter, ne fermez pas cette page.";
+  document.getElementById('wait-msg').innerHTML="En attente de confirmation par le comptoir.";
   document.getElementById('wait-ref').textContent='R\u00e9f. #'+String(orderId).slice(-6).toUpperCase();
 }
 
@@ -1196,9 +1200,9 @@ function waitApproved(){
   document.getElementById('wait-spin').style.display='none';
   var ic=document.getElementById('wait-icon');ic.style.display='block';ic.textContent='\u2705';
   var t=document.getElementById('wait-title');
-  t.textContent='Commande confirm\u00e9e avec succ\u00e8s !';
+  t.textContent='Commande confirm\u00e9e !';
   t.style.color='#4ade80';
-  document.getElementById('wait-msg').innerHTML='Votre commande a \u00e9t\u00e9 valid\u00e9e par l\'administration.<br>Elle est en cours de pr\u00e9paration \u2014 merci ! \u2726';
+  document.getElementById('wait-msg').innerHTML='En cours de pr\u00e9paration \u2014 merci ! \u2726';
   document.getElementById('wait-close').style.display='inline-block';
 }
 
@@ -1208,7 +1212,7 @@ function waitRejected(){
   var t=document.getElementById('wait-title');
   t.textContent='Commande refus\u00e9e';
   t.style.color='#f87171';
-  document.getElementById('wait-msg').innerHTML="Votre commande n'a pas \u00e9t\u00e9 valid\u00e9e.<br>Merci de contacter le comptoir ou de r\u00e9essayer avec un autre mode de paiement.";
+  document.getElementById('wait-msg').innerHTML="Contactez le comptoir ou r\u00e9essayez.";
   document.getElementById('wait-close').style.display='inline-block';
 }
 
