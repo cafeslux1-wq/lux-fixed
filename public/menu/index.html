@@ -919,6 +919,18 @@ function renderCart(){
 // ── Order Modal ──
 function openOrderModal(){
   if(!cart.length){toast('⚠ Panier vide');return;}
+
+  // Si un compte Mon Espace LUX est connecté, on masque tout de suite les
+  // champs nom/téléphone (pas d'attente du fetch) pour éviter tout flash,
+  // puis on reconfirme/complète avec les vraies infos une fois chargées.
+  var tk=getLuxToken();
+  if(tk){
+    var gn=document.getElementById('fg-name'),gp=document.getElementById('fg-phone');
+    if(gn)gn.style.display='none';
+    if(gp)gp.style.display='none';
+    loadLuxSession();
+  }
+
   document.getElementById('order-modal').classList.add('open');
 }
 
@@ -1115,6 +1127,8 @@ function loadLuxSession(){
   var tk=getLuxToken();
   if(!tk)return Promise.resolve(null);
 
+  var API=window.LUX_API_URL||'https://cafeslux-api-production.up.railway.app';
+
   return fetch(API+'/api/customers/me',{headers:{'Authorization':'Bearer '+tk}})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
@@ -1124,11 +1138,14 @@ function loadLuxSession(){
       return fetch(API+'/api/auth/me',{headers:{'Authorization':'Bearer '+tk}})
         .then(function(r2){return r2.ok?r2.json():null;})
         .then(function(d2){
-          if(d2&&d2.id)applyLuxSession(d2);
-          return d2;
+          if(d2&&d2.id){applyLuxSession(d2);return d2;}
+          // Token invalide/expiré : on redonne accès aux champs
+          // pour que le client puisse quand même passer commande.
+          editIdentity();
+          return null;
         });
     })
-    .catch(function(){return null;});
+    .catch(function(){editIdentity();return null;});
 }
 
 // ══════════════════════════════════════════════════════
