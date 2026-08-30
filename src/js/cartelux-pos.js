@@ -497,7 +497,14 @@
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (d) {
           if (d && d.token) {
-            try { localStorage.setItem('lux_token', d.token); } catch (e) {}
+            try {
+              localStorage.setItem('lux_token', d.token);
+              // Le jeton serveur expire au bout de 12 h. On garde le PIN
+              // du poste pour le renouveler en silence, sinon le caissier
+              // devrait le retaper chaque matin — ce que la phrase
+              // « ne sera plus redemandé » lui a promis.
+              localStorage.setItem('lux_station_pin', pin);
+            } catch (e) {}
             show('Poste authentifié. Présentez la carte.', 'ok');
             renderScan();
           } else {
@@ -811,7 +818,28 @@
         localStorage.removeItem('admin_token');
         tok = '';
       }
-      if (!tok) { renderAuthNeeded(); return; }
+      if (!tok) {
+        var saved = localStorage.getItem('lux_station_pin');
+        if (saved) {
+          // Jeton expiré mais poste déjà connu : on se réauthentifie
+          // sans rien demander.
+          renderScan();
+          fetch(CFG.apiBase + '/api/auth/pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: saved }),
+          })
+            .then(function (r) { return r.json().catch(function () { return {}; }); })
+            .then(function (d) {
+              if (d && d.token) { localStorage.setItem('lux_token', d.token); }
+              else { renderAuthNeeded(); }
+            })
+            .catch(function () { /* hors ligne : le lookup affichera l'erreur */ });
+          return;
+        }
+        renderAuthNeeded();
+        return;
+      }
     } catch (e) {}
 
     if (!state.card) renderScan();
