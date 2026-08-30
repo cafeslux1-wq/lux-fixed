@@ -450,6 +450,77 @@
     el.body.querySelector('[data-clx="print"]').onclick = function () { printReceipt(r); };
   }
 
+  // ── Authentification du poste ─────────────────────────────
+  // La caisse doit posséder un jeton serveur. Si elle n'en a pas
+  // (nouvel appareil, cache vidé, jeton expiré au bout de 12 h),
+  // toutes les routes protégées répondent « Non authentifié ».
+  // Plutôt que d'envoyer le caissier chercher un écran ailleurs,
+  // on règle ça ici même, dans la fenêtre où le problème apparaît.
+  function isAuthError(err) {
+    return !!(err && (err.status === 401
+      || /non authentifi|session expir/i.test(err.message || '')));
+  }
+
+  function renderAuthNeeded() {
+    el.title.textContent = 'Poste non authentifié';
+    el.body.innerHTML =
+      '<p class="clx-hint" style="margin-bottom:16px">' +
+      'Ce terminal n\u2019est pas encore identifié auprès du serveur. ' +
+      'Saisissez le code PIN d\u2019un employé (ou le code administrateur). ' +
+      'Il reste sur cet appareil et ne sera plus redemandé.' +
+      '</p>' +
+      '<div class="clx-field">' +
+      '  <label class="clx-label" for="clx-pin-station">Code PIN serveur</label>' +
+      '  <input class="clx-input" id="clx-pin-station" data-clx="station-pin" type="password" ' +
+      '         inputmode="numeric" autocomplete="off" placeholder="••••">' +
+      '</div>' +
+      '<div class="clx-actions">' +
+      '  <button class="clx-btn clx-primary" data-clx="do-auth">Authentifier ce poste</button>' +
+      '  <button class="clx-btn clx-ghost" data-clx="back">Retour</button>' +
+      '</div>';
+
+    var input = el.body.querySelector('[data-clx="station-pin"]');
+    var btn = el.body.querySelector('[data-clx="do-auth"]');
+
+    function submit() {
+      var pin = input.value.trim();
+      if (!pin) return show('Entrez le code PIN.');
+      btn.disabled = true;
+      btn.textContent = 'Vérification…';
+      show('');
+
+      fetch(CFG.apiBase + '/api/auth/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin }),
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (d) {
+          if (d && d.token) {
+            try { localStorage.setItem('lux_token', d.token); } catch (e) {}
+            show('Poste authentifié. Présentez la carte.', 'ok');
+            renderScan();
+          } else {
+            btn.disabled = false;
+            btn.textContent = 'Authentifier ce poste';
+            show((d && d.error) || 'Code refusé par le serveur.');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = 'Authentifier ce poste';
+          show('Serveur injoignable. Vérifiez la connexion.');
+        });
+    }
+
+    btn.onclick = submit;
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+    });
+    el.body.querySelector('[data-clx="back"]').onclick = function () { show(''); renderScan(); };
+    setTimeout(function () { input.focus(); }, 60);
+  }
+
   // ── Réseau ────────────────────────────────────────────────
   function api(path, options) {
     var opts = options || {};
@@ -465,6 +536,7 @@
         if (!res.ok) {
           var e = new Error(data.error || 'Erreur réseau');
           e.code = data.code;
+          e.status = res.status;
           throw e;
         }
         return data;
@@ -498,7 +570,8 @@
         else renderCard();
       })
       .catch(function (err) {
-        show(err.message || 'Carte introuvable');
+        if (isAuthError(err)) { renderAuthNeeded(); }
+        else { show(err.message || 'Carte introuvable'); }
         if (typeof CFG.onError === 'function') CFG.onError(err);
       })
       .then(function () { state.busy = false; });
@@ -534,8 +607,11 @@
         if (typeof CFG.onSuccess === 'function') CFG.onSuccess(r);
       })
       .catch(function (err) {
-        show(err.message || 'Paiement refusé');
         if (button) { button.disabled = false; button.textContent = 'Confirmer le paiement'; }
+        // Jeton expiré en pleine opération : on ré-authentifie sans
+        // perdre la carte lue, le caissier reprend où il en était.
+        if (isAuthError(err)) { renderAuthNeeded(); }
+        else { show(err.message || 'Paiement refusé'); }
         if (typeof CFG.onError === 'function') CFG.onError(err);
       })
       .then(function () { state.busy = false; });
@@ -722,6 +798,22 @@
   function open() {
     mount();
     el.overlay.classList.add('clx-open');
+
+    // Certains écrans historiques écrivaient un faux jeton
+    // ('maestro_session_bypass') pour ouvrir le POS hors ligne. Il ne
+    // vaut rien côté serveur : on le retire pour éviter un « Session
+    // expirée » incompréhensible, et on demande une vraie
+    // authentification.
+    try {
+      var tok = CFG.getToken();
+      if (tok && tok.indexOf('.') === -1) {
+        localStorage.removeItem('lux_token');
+        localStorage.removeItem('admin_token');
+        tok = '';
+      }
+      if (!tok) { renderAuthNeeded(); return; }
+    } catch (e) {}
+
     if (!state.card) renderScan();
   }
 
