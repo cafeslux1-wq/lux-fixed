@@ -11,33 +11,59 @@
   "lang": "fr",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png",
+      "src": "https://cafeslux.com/lux-Chatbot_IA-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png",
+      "src": "https://cafeslux.com/lux-Chatbot_IA-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["food", "shopping", "lifestyle"],
+  "categories": [
+    "food",
+    "shopping",
+    "lifestyle"
+  ],
   "shortcuts": [
+    {
+      "name": "Ma Carte LUX",
+      "short_name": "Carte LUX",
+      "description": "Afficher le QR de ma carte de fidélité",
+      "url": "/public/mon-espace/?tab=wallet",
+      "icons": [
+        {
+          "src": "https://cafeslux.com/lux-Chatbot_IA-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
     {
       "name": "Commander",
       "short_name": "Menu",
       "description": "Voir le menu et commander",
       "url": "/?tab=menu",
-      "icons": [{"src": "https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png", "sizes": "96x96"}]
+      "icons": [
+        {
+          "src": "https://cafeslux.com/lux-Chatbot_IA-icon.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Réserver",
       "short_name": "Table",
       "description": "Réserver une table",
       "url": "/?tab=reservation",
-      "icons": [{"src": "https://raw.githubusercontent.com/cafeslux1-wq/lux-fixed/main/lux-ai-icon.png", "sizes": "96x96"}]
+      "icons": [
+        {
+          "src": "https://cafeslux.com/lux-Chatbot_IA-icon.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
   "screenshots": [],
