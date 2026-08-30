@@ -1126,6 +1126,11 @@ input, button, select, textarea { font-family:inherit; }
       </div>
     </div>
 
+    <!-- Le caissier scanne ce QR : le même lecteur Carte LUX
+         reconnaît le code cadeau et débite la carte. -->
+    <button class="clux-btn gold" id="gc-qr-btn" style="width:100%;margin-top:12px;display:none"
+            onclick="openGiftQR()">📱 Afficher le QR de ma carte cadeau</button>
+
     <!-- No card state -->
     <div id="gc-empty-state">
       <div class="sec-head"><span class="sh-txt">Lier une carte cadeau</span><div class="sh-line"></div></div>
@@ -1850,19 +1855,32 @@ let CARTE = null;
 
 async function loadCarteLux() {
   if (!STATE.isAuth) return;
-  try {
-    const { res, data } = await safeFetch(ROUTES.CARTE_LUX, { headers: authHeaders() });
-    if (!res.ok) {
+
+  // Deux chemins pour la même donnée : le chemin PWA, et l'ancien.
+  // Si le backend n'a pas encore la route /api/customer/..., on bascule
+  // automatiquement au lieu de laisser la carte vide sans explication.
+  const paths = [ROUTES.CARTE_LUX, `${API}/api/carte-lux/me`];
+
+  for (const url of paths) {
+    try {
+      const { res, data } = await safeFetch(url, { headers: authHeaders() });
+
       if (res.status === 401) { clearToken(); location.reload(); return; }
-      throw new Error(data.error || 'Carte indisponible');
+      if (res.status === 404) continue;          // route absente → on essaie l'autre
+      if (!res.ok) throw new Error(data.error || 'Carte indisponible');
+
+      CARTE = data;
+      renderCarteLux();
+      return;
+    } catch (e) {
+      console.warn('[Carte LUX]', url, e.message);
     }
-    CARTE = data;
-    renderCarteLux();
-  } catch (e) {
-    // Panne réseau : la carte reste sur ses dernières valeurs connues
-    // plutôt que d'afficher des zéros trompeurs.
-    console.warn('[Carte LUX]', e.message);
   }
+
+  // Les deux chemins ont échoué : on le dit, au lieu d'afficher
+  // une carte à zéro qui ferait croire à un solde vide.
+  const foot = document.querySelector('#clux-card .clux-tap');
+  if (foot) foot.textContent = '⚠ Carte indisponible — réessayez';
 }
 
 function renderCarteLux() {
@@ -1890,9 +1908,13 @@ function openCarteLuxQR() {
     return;
   }
 
+  document.getElementById('clux-modal-title').textContent = 'Présentez ce code en caisse';
   document.getElementById('clux-token').textContent = CARTE.qrPayload;
   modal.classList.add('open');
   drawQR(CARTE.qrPayload);
+
+  const rot = modal.querySelector('.clux-actions .clux-btn:not(.gold)');
+  if (rot) rot.style.display = '';
 
   // Le QR se lit mal sur un écran sombre : on pousse la luminosité
   // le temps de l'affichage (le navigateur ne permet que le contraste
@@ -2367,10 +2389,35 @@ function renderGiftCard() {
   document.getElementById('gc-code-display').textContent   = isEmpty ? '— — — — — — —' : gc.code;
   document.getElementById('gc-exp-display').textContent    = isEmpty ? '—' : formatDate(gc.expiresAt);
 
+  const qrBtn = document.getElementById('gc-qr-btn');
+  if (qrBtn) qrBtn.style.display = isEmpty ? 'none' : 'block';
+
   if (!isEmpty) {
     document.getElementById('gc-bal-stat').textContent = `${gc.balance} DH`;
     document.getElementById('gc-exp-stat').textContent  = formatDate(gc.expiresAt);
   }
+}
+
+/* ── QR de la carte cadeau ───────────────────────────────────
+   Réutilise exactement la fenêtre de la Carte LUX : un seul
+   composant à maintenir, un seul geste à apprendre en caisse.
+   Le code cadeau est reconnu côté serveur par sa forme
+   (E974-K6VV-…), sans que le caissier ait à choisir un mode.
+──────────────────────────────────────────────────────────── */
+function openGiftQR() {
+  const gc = STATE.giftCard;
+  if (!gc || !gc.code) { toast('Aucune carte cadeau active'); return; }
+
+  const modal = document.getElementById('clux-modal');
+  document.getElementById('clux-modal-title').textContent = 'Carte cadeau · ' + gc.balance + ' DH';
+  document.getElementById('clux-token').textContent = gc.code;
+  modal.classList.add('open');
+  drawQR(gc.code);
+
+  // Le bouton « régénérer » n'a aucun sens pour une carte cadeau :
+  // son code est imprimé et a pu être offert à quelqu'un d'autre.
+  const rot = modal.querySelector('.clux-actions .clux-btn:not(.gold)');
+  if (rot) rot.style.display = 'none';
 }
 
 function unlinkCard() {
