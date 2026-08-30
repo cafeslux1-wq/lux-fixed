@@ -445,6 +445,7 @@ canvas.qr-canvas { border-radius:6px; }
     <div class="nav-item" onclick="goTo('analytics',this)"><i class="fas fa-chart-bar"></i>Analytics LUX</div>
     <div class="nav-item" onclick="goTo('qrtables',this)"><i class="fas fa-qrcode"></i>QR Tables</div>
     <div class="nav-item" onclick="goTo('giftcards',this)"><i class="fas fa-gift"></i>Cartes Cadeau</div>
+    <div class="nav-item" onclick="goTo('cartelux',this)"><i class="fas fa-id-card"></i>Cartes LUX (NFC)</div>
     <div class="nav-item" onclick="goTo('campaigns',this)"><i class="fas fa-bullhorn"></i>Campagnes</div>
 
     <div class="sidebar-footer">
@@ -764,6 +765,25 @@ canvas.qr-canvas { border-radius:6px; }
         </div>
       </div>
 
+      <div class="panel" id="panel-cartelux">
+        <div class="section-header">
+          <div class="section-title"><span>💳</span>CARTES LUX (NFC + QR)</div>
+          <button class="btn-primary" onclick="openCarteLuxModal()"><i class="fas fa-plus"></i> Émettre une carte</button>
+        </div>
+
+        <div class="filter-bar">
+          <input class="filter-select" id="clx-search" placeholder="Rechercher : nom, téléphone ou UID…" style="min-width:240px">
+          <button class="btn-ghost btn-sm" onclick="loadCarteLux()"><i class="fas fa-sync-alt"></i> Rafraîchir</button>
+        </div>
+
+        <div class="lux-table-wrap">
+          <table class="lux-table">
+            <thead><tr><th>N° carte</th><th>Client</th><th>Téléphone</th><th>Puce NFC</th><th>Solde</th><th>Points</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="cartelux-tbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="panel" id="panel-campaigns">
         <div class="section-header">
           <div class="section-title"><span>📢</span>CAMPAGNES MARKETING</div>
@@ -1019,6 +1039,59 @@ canvas.qr-canvas { border-radius:6px; }
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-reward')">Annuler</button>
       <button class="btn-primary" onclick="saveReward()">Ajouter la récompense</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CARTE LUX — émission d'une carte physique NFC ══
+     Même structure que « Créer Carte Cadeau », avec en plus la
+     lecture de la puce par le NFC intégré du terminal. -->
+<div class="modal-overlay" id="modal-cartelux">
+  <div class="modal-box">
+    <div class="modal-title"><i class="fas fa-id-card"></i> Émettre une Carte LUX</div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">Téléphone du client *</div>
+        <input class="field-input" id="clx-phone" placeholder="06xxxxxxxx">
+      </div>
+      <div class="field-group">
+        <div class="field-label">UID de la puce (auto-lu)</div>
+        <input class="field-input" id="clx-uid" placeholder="04:A2:B3:C4:D5"
+               style="font-family:'JetBrains Mono',monospace;">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <div class="field-label">Code PIN de la carte (optionnel)</div>
+        <input class="field-input" id="clx-cardpin" type="password" inputmode="numeric"
+               placeholder="demandé au-dessus de 200 DH">
+      </div>
+      <div class="field-group">
+        <div class="field-label">État du lecteur</div>
+        <input class="field-input" id="clx-nfc-state" readonly value="Lecteur inactif"
+               style="color:var(--text2)">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Comment ça marche</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;padding:10px 12px;
+                  background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.18);border-radius:8px">
+        Le client doit déjà avoir un compte « Mon Espace LUX ».
+        La carte ne contient ni argent ni points : elle sert uniquement à
+        retrouver son compte en caisse. En cas de perte, on la bloque ici et
+        on en émet une autre — le client ne perd rien.
+        Aucune écriture n'est faite sur la puce, donc n'importe quelle carte
+        NTAG ou MIFARE convient.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost btn-sm" onclick="clxScanNfc()"><i class="fas fa-wifi"></i> Lire la puce NFC</button>
+      <button class="btn-primary" onclick="saveCarteLux()"><i class="fas fa-save"></i> Émettre</button>
+      <button class="btn-ghost" onclick="closeModal('modal-cartelux')">Annuler</button>
     </div>
   </div>
 </div>
@@ -1315,6 +1388,7 @@ var SECTION_LOADERS = {
   analytics:    loadAnalytics,
   qrtables:     function() { },
   giftcards:    loadGiftCards,
+  cartelux:     loadCarteLux,
   campaigns:    loadCampaigns,
   loyalty:      loadLoyalty,
   gamingzone:   loadGamingZone,
@@ -1324,6 +1398,7 @@ var SECTION_TITLES = {
   orders:'COMMANDES', reservations:'RÉSERVATIONS', employees:'GESTION DES EMPLOYÉS',
   customers:'CLIENTS & FIDÉLITÉ', analytics:'ANALYTICS LUX', qrtables:'QR TABLES',
   giftcards:'CARTES CADEAU', campaigns:'CAMPAGNES MARKETING', loyalty:'MON ESPACE LUX',
+  cartelux:'CARTES LUX (NFC + QR)',
   gamingzone:'GAMING ZONE',
 };
 function goTo(section, navEl) {
@@ -2304,6 +2379,139 @@ function printQR() {
     '<script>window.onafterprint=function(){window.close()};window.onload=function(){window.print();}<\/script>' +
     '</body></html>');
   win.document.close();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARTES LUX — émission et gestion des cartes physiques NFC
+
+   La carte est une simple CLÉ : le solde et les points restent sur
+   le compte client. C'est ce qui permet de bloquer une carte perdue
+   sans que le client perde un centime.
+══════════════════════════════════════════════════════════════ */
+var CLX_READER = null;
+
+async function loadCarteLux() {
+  var tbody = document.getElementById('cartelux-tbody');
+  var q = (document.getElementById('clx-search').value || '').trim();
+
+  try {
+    var cards = await api('/api/carte-lux/admin/cards' + (q ? '?search=' + encodeURIComponent(q) : '')) || [];
+
+    if (!cards.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">'
+        + (q ? 'Aucun résultat pour cette recherche.' : 'Aucune carte émise. Cliquez sur « Émettre une carte ».')
+        + '</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = cards.map(function(c) {
+      var cust = c.customer || {};
+      var active = c.status === 'ACTIVE';
+      var color = active ? 'var(--green)' : 'var(--red)';
+      return '<tr>'
+        + '<td style="font-family:\'JetBrains Mono\',monospace">' + escHtml(c.cardNumber || '—') + '</td>'
+        + '<td>' + escHtml(cust.name || '—') + '</td>'
+        + '<td>' + escHtml(cust.phone || '—') + '</td>'
+        + '<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px">'
+        +   (c.nfcIdentifier ? escHtml(c.nfcIdentifier) : '<span style="color:var(--text2)">QR seulement</span>') + '</td>'
+        + '<td>' + (cust.walletBalance != null ? cust.walletBalance.toFixed(2) + ' DH' : '—') + '</td>'
+        + '<td>' + (cust.pointsAvailable != null ? cust.pointsAvailable : '—') + '</td>'
+        + '<td><span style="color:' + color + '">' + escHtml(c.status) + '</span></td>'
+        + '<td>'
+        +   '<button class="btn-ghost btn-sm" onclick="toggleCarteLux(\'' + c.id + '\',\''
+        +   (active ? 'BLOCKED' : 'ACTIVE') + '\')">'
+        +   (active ? '<i class="fas fa-ban"></i> Bloquer' : '<i class="fas fa-check"></i> Activer') + '</button>'
+        + '</td>'
+        + '</tr>';
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">'
+      + escHtml(e.message) + '</td></tr>';
+  }
+}
+
+function openCarteLuxModal() {
+  document.getElementById('clx-phone').value = '';
+  document.getElementById('clx-uid').value = '';
+  document.getElementById('clx-cardpin').value = '';
+  document.getElementById('clx-nfc-state').value = 'Lecteur inactif';
+  openModal('modal-cartelux');
+}
+
+/* Lecture de la puce par le NFC intégré (Chrome Android, HTTPS).
+   Sur un poste sans NFC, l'UID se saisit à la main : le champ reste
+   éditable, on ne bloque jamais l'émission. */
+function clxScanNfc() {
+  var state = document.getElementById('clx-nfc-state');
+
+  if (!('NDEFReader' in window)) {
+    state.value = window.isSecureContext
+      ? 'NFC non disponible sur ce navigateur'
+      : 'NFC impossible en HTTP';
+    toast('Saisissez l\u2019UID à la main (application NFC Tools)', 'error');
+    return;
+  }
+
+  try {
+    CLX_READER = CLX_READER || new NDEFReader();
+    CLX_READER.scan().then(function() {
+      state.value = 'Lecteur actif — posez la carte';
+      toast('Posez la carte sur le dos du terminal');
+    }).catch(function(e) {
+      state.value = (e && e.name === 'NotAllowedError')
+        ? 'Autorisation NFC refusée'
+        : 'NFC désactivé dans les réglages';
+      toast('NFC indisponible — vérifiez les réglages Android', 'error');
+    });
+
+    CLX_READER.onreading = function(event) {
+      var uid = event.serialNumber || '';
+      if (!uid) return;
+      document.getElementById('clx-uid').value = uid;
+      state.value = 'Puce lue ✓';
+      if (navigator.vibrate) navigator.vibrate(60);
+      toast('✓ Puce lue : ' + uid);
+    };
+    CLX_READER.onreadingerror = function() {
+      toast('Carte illisible — représentez-la bien à plat', 'error');
+    };
+  } catch (e) {
+    state.value = 'NFC indisponible';
+  }
+}
+
+async function saveCarteLux() {
+  var phone = (document.getElementById('clx-phone').value || '').trim();
+  var uid   = (document.getElementById('clx-uid').value || '').trim();
+  var pin   = (document.getElementById('clx-cardpin').value || '').trim();
+
+  if (!phone) return toast('Téléphone du client requis', 'error');
+
+  var body = { phone: phone };
+  if (uid) body.nfcIdentifier = uid;
+  if (pin) body.pin = pin;
+
+  try {
+    var d = await api('/api/carte-lux/admin/cards', 'POST', body);
+    closeModal('modal-cartelux');
+    toast('✓ Carte ' + d.carte.cardNumber + ' liée à ' + d.customer.name);
+    loadCarteLux();
+  } catch (e) {
+    if (e.status === 404) return toast('Aucun client avec ce numéro — il doit créer son compte d\u2019abord', 'error');
+    if (e.status === 409) return toast('Cette puce est déjà liée à un autre client', 'error');
+    toast('❌ ' + e.message, 'error');
+  }
+}
+
+async function toggleCarteLux(id, status) {
+  try {
+    await api('/api/carte-lux/admin/cards/' + id, 'PATCH', { status: status });
+    toast(status === 'ACTIVE' ? '✓ Carte réactivée' : '✓ Carte bloquée');
+    loadCarteLux();
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+  }
 }
 
 async function loadGiftCards() {
