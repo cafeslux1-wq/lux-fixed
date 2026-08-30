@@ -32,6 +32,17 @@
     print: null,          // (data) => void — brancher ici l'imprimante Sunmi
     cafeName: 'Café LUX',
     pinThreshold: 200,
+
+    // Retourne true quand la caisse est verrouillée (écran PIN affiché).
+    // Tant que c'est vrai, la capture clavier est totalement désactivée :
+    // sinon le lecteur — ou le caissier qui tape son code — enverrait
+    // les chiffres du PIN au serveur comme s'ils étaient un UID.
+    isLocked: function () { return false; },
+
+    // Le NFC interne du Sunmi D3 Pro est la voie principale.
+    // La capture clavier reste en secours pour un lecteur externe ;
+    // la passer à false si aucun lecteur USB n'est branché.
+    keyboardWedge: true,
   };
 
   var state = {
@@ -41,6 +52,7 @@
     mode: 'BALANCE',      // BALANCE | POINTS
     busy: false,
     nfcReader: null,
+    nfcReady: false,
     videoStream: null,
     scanTimer: null,
     keybuf: '',
@@ -435,18 +447,37 @@
   // ── Lecture NFC (Web NFC, Chrome Android en HTTPS) ────────
   function startNfc() {
     var hint = el.body.querySelector('[data-clx="hint"]');
+
+    // Web NFC exige HTTPS. En http:// l'API n'existe même pas.
     if (!('NDEFReader' in global)) {
-      if (hint) hint.textContent = 'Lecteur NFC externe, QR ou saisie manuelle. (NFC intégré non disponible sur ce navigateur.)';
+      if (hint) {
+        hint.textContent = global.isSecureContext
+          ? 'NFC intégré non disponible sur ce navigateur. Utilisez le QR ou la saisie manuelle.'
+          : 'NFC indisponible en HTTP. Ouvrez la caisse en HTTPS pour activer le lecteur intégré.';
+      }
       return;
     }
+
     try {
-      var reader = new global.NDEFReader();
+      // Une seule instance : rouvrir la fenêtre ne relance pas dix scans.
+      var reader = state.nfcReader || new global.NDEFReader();
       state.nfcReader = reader;
+
       reader.scan().then(function () {
-        if (hint) hint.textContent = 'Lecteur NFC actif. Posez la carte sur le dos du terminal.';
-      }).catch(function () {
-        if (hint) hint.textContent = 'NFC refusé par le terminal. Utilisez le QR ou la saisie manuelle.';
+        state.nfcReady = true;
+        if (hint) hint.textContent = 'Lecteur NFC actif — posez la carte sur le dos du terminal.';
+      }).catch(function (e) {
+        state.nfcReady = false;
+        if (hint) {
+          hint.textContent = (e && e.name === 'NotAllowedError')
+            ? 'Autorisation NFC refusée. Autorisez le NFC pour ce site, puis rouvrez cette fenêtre.'
+            : 'NFC indisponible. Utilisez le QR ou la saisie manuelle.';
+        }
       });
+
+      reader.onreadingerror = function () {
+        if (hint) hint.textContent = 'Carte illisible — présentez-la à nouveau, bien à plat.';
+      };
       reader.onreading = function (event) {
         // serialNumber = UID de la puce ("04:a2:b3:…").
         var uid = event.serialNumber || '';
@@ -471,6 +502,11 @@
   // Les lecteurs USB/Sunmi tapent l'identifiant très vite puis Entrée.
   // On ne capture que si aucun champ n'a le focus.
   function keyboardWedge(e) {
+    if (!CFG.keyboardWedge) return;
+
+    // Caisse verrouillée → on ne touche à rien (voir CFG.isLocked).
+    try { if (CFG.isLocked()) { state.keybuf = ''; return; } } catch (err) { return; }
+
     var tag = (document.activeElement && document.activeElement.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
@@ -481,7 +517,11 @@
     if (e.key === 'Enter') {
       var code = state.keybuf.trim();
       state.keybuf = '';
-      if (code.length >= 6) {
+      // Un UID NFC fait au moins 8 caractères hexadécimaux et un jeton QR
+      // commence par LUXQ-. Tout ce qui est plus court, ou purement
+      // numérique et court, est ignoré : c'est un code PIN, pas une carte.
+      var looksLikeCard = /^LUXQ-/i.test(code) || (code.length >= 8 && /^[0-9A-Fa-f:\-]+$/.test(code));
+      if (looksLikeCard) {
         open();
         lookup(code, null);
       }
