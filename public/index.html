@@ -394,10 +394,19 @@ function updateDots(){
 }
 function handlePinError(){ document.getElementById('login-err').style.display='block'; currentPin=""; updateDots(); }
 function fallbackLogin(){
-  // Bypass codes (server down): 9999 or 281397
+  // Secours quand le serveur ne répond pas (panne réseau, API en
+  // redémarrage). On ouvre l'écran demandé pour ne pas bloquer le
+  // service, MAIS on n'écrit aucun faux jeton : l'ancien
+  // 'maestro_session_bypass' n'était pas un JWT, donc le serveur le
+  // rejetait et toutes les routes protégées (Carte LUX, stock,
+  // dashboard) répondaient « Session expirée » sans que personne
+  // comprenne pourquoi. Mieux vaut aucun jeton qu'un jeton menteur :
+  // chaque écran sait alors demander une vraie authentification.
   if(currentPin==='9999' || currentPin==='281397'){
-    localStorage.setItem('lux_token','maestro_session_bypass');
-    localStorage.setItem('admin_token','maestro_session_bypass');
+    try{
+      localStorage.removeItem('lux_token');
+      localStorage.removeItem('admin_token');
+    }catch(e){}
     window.location.href = targetUrl;
   } else { handlePinError(); }
 }
@@ -414,6 +423,20 @@ function pinSubmit(){
     }).catch(function(){ fallbackLogin(); });
   } else { fallbackLogin(); }
 }
+/* Nettoyage unique : les appareils déjà en service portent peut-être
+   le faux jeton du bypass. Tant qu'il est là, l'API répond
+   « Session expirée » à chaque appel. On le supprime au chargement. */
+(function(){
+  try{
+    var t = localStorage.getItem('lux_token');
+    // Un JWT contient toujours deux points (header.payload.signature).
+    if(t && t.indexOf('.') === -1){
+      localStorage.removeItem('lux_token');
+      localStorage.removeItem('admin_token');
+    }
+  }catch(e){}
+})();
+
 /* physical keyboard support for PIN */
 document.addEventListener('keydown',function(e){
   if(document.getElementById('blue-modal').style.display!=='flex') return;
