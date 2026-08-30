@@ -471,6 +471,15 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
       <div class="pin-dots" id="pin-dots"></div>
       <div class="pin-err" id="pin-err"></div>
       <div class="pin-pad" id="pin-pad"></div>
+      <!-- Authentification du POSTE auprès de l'API (une seule fois, par le responsable).
+           Sans elle, la Carte LUX et les routes protégées répondent « Non authentifié ». -->
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="setStationPin()"
+                style="background:none;border:0;color:var(--muted);font-size:11px;
+                       text-decoration:underline;cursor:pointer;padding:6px">
+          ⚙ Authentifier ce poste
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -544,6 +553,7 @@ button,input,select{font-family:var(--font-b);font-size:12px;outline:none}
         <button class="pay-btn" onclick="quickPay('Carte')">💳 Carte</button>
         <button class="pay-btn gift" onclick="openPayModal('gift')">🎁 Carte Cadeau</button>
         <button class="pay-btn pts" onclick="openPayModal('points')">⭐ LUX Points</button>
+        <button class="pay-btn" onclick="CarteLUX.open()" style="border-color:rgba(201,168,76,.45)">💳 Carte LUX</button>
         <button class="pay-btn main" onclick="openPayModal('checkout')">✦ Encaisser</button>
       </div>
     </div>
@@ -886,15 +896,84 @@ function pinKey(k){
 }
 function verifyPin(){
   if(!S.selectedEmp){ flashErr('Sélectionnez votre profil'); return; }
-  if(S.pinBuffer===S.selectedEmp.pin){
-    unlockRegister(S.selectedEmp, 'PIN');
-  } else {
+  if(S.pinBuffer!==S.selectedEmp.pin){
     flashErr('Code PIN incorrect');
     S.pinBuffer=''; renderPinDots();
     var w=document.querySelector('.lock-wrap'); w.classList.add('lock-shake');
     setTimeout(function(){ w.classList.remove('lock-shake'); },400);
+    return;
   }
+  // PIN local validé. On demande EN PLUS un vrai jeton au serveur :
+  // sans lui, toutes les routes protégées (Carte LUX, stock, dashboard)
+  // répondent « Non authentifié ».
+  var typed = S.pinBuffer;
+  ensureApiToken(typed).then(function(){ unlockRegister(S.selectedEmp, 'PIN'); });
 }
+
+// ════════════════════════════════════════════════════════════════
+//  JETON SERVEUR — la caisse doit être authentifiée auprès de l'API
+//
+//  Deux chemins, dans cet ordre :
+//   1. le code PIN tapé existe aussi dans la table Employee → jeton
+//      nominatif, chaque opération est tracée au nom du caissier ;
+//   2. sinon, un « PIN poste » saisi une seule fois par le responsable
+//      et gardé sur CE terminal (jamais dans le dépôt Git, qui est
+//      public). Les codes de DEFAULT_EMPLOYEES restent locaux : ils
+//      servent à ouvrir la caisse, pas à parler au serveur.
+//
+//  Si les deux échouent, la caisse s'ouvre quand même — une panne
+//  réseau ne doit jamais bloquer le service — mais la Carte LUX est
+//  annoncée comme indisponible.
+// ════════════════════════════════════════════════════════════════
+function requestToken(pin){
+  return fetch(API + '/api/auth/pin', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ pin: String(pin).trim() }),
+  })
+  .then(function(r){ return r.json().catch(function(){ return {}; }); })
+  .then(function(d){
+    if(d && d.token){ localStorage.setItem('lux_token', d.token); return true; }
+    return false;
+  })
+  .catch(function(){ return false; });
+}
+
+function ensureApiToken(typedPin){
+  return requestToken(typedPin).then(function(ok){
+    if(ok) return true;
+    var station = null;
+    try{ station = localStorage.getItem('lux_station_pin'); }catch(e){}
+    if(station) return requestToken(station);
+    return false;
+  }).then(function(ok){
+    if(!ok){
+      try{ localStorage.removeItem('lux_token'); }catch(e){}
+      setTimeout(function(){
+        toast('⚠ Caisse non authentifiée · Carte LUX indisponible','var(--orange)');
+      }, 900);
+    }
+    return ok;
+  });
+}
+
+// Le responsable saisit une fois le PIN serveur (celui de la table
+// Employee ou l'ADMIN_PIN de Railway). Il reste sur ce terminal.
+function setStationPin(){
+  var pin = prompt('Code PIN serveur de ce poste (fourni par le responsable) :');
+  if(pin===null) return;
+  pin = String(pin).trim();
+  if(!pin){ toast('⚠ Code vide','var(--orange)'); return; }
+  requestToken(pin).then(function(ok){
+    if(ok){
+      try{ localStorage.setItem('lux_station_pin', pin); }catch(e){}
+      toast('✓ Poste authentifié · Carte LUX active','var(--green)');
+    } else {
+      toast('✕ Code refusé par le serveur','var(--red)');
+    }
+  });
+}
+window.setStationPin = setStationPin;
 function flashErr(m){ var e=el('pin-err'); e.textContent=m; e.classList.add('show'); }
 
 // Dallas Key simulation — instant badge tap unlocks if a profile is selected,
@@ -2069,6 +2148,62 @@ document.addEventListener('keydown',function(e){
   if(e.key>='0'&&e.key<='9') pinKey(e.key);
   else if(e.key==='Backspace') pinKey('⌫');
   else if(e.key==='Enter') verifyPin();
+});
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════
+     CARTE LUX — lecture NFC intégrée (Sunmi D3 Pro) et QR
+     Le module injecte sa propre fenêtre et son CSS ; il ne s'affiche
+     que sur appel de CarteLUX.open() (bouton « 💳 Carte LUX »).
+     ════════════════════════════════════════════════════════════════ -->
+<script src="../src/js/cartelux-pos.js?v=2"></script>
+<script>
+CarteLUX.init({
+  apiBase: API,
+
+  // Jeton posé par ensureApiToken() au déverrouillage de la caisse.
+  getToken: function(){
+    try{
+      return (window.LuxAPI && LuxAPI.getToken && LuxAPI.getToken())
+          || localStorage.getItem('lux_token') || '';
+    }catch(e){ return ''; }
+  },
+
+  // Montant du ticket en cours, TVA et remise comprises.
+  getAmount: function(){ try{ return cartTotals().total; }catch(e){ return 0; } },
+
+  // Écran PIN affiché → la capture clavier du lecteur externe est
+  // coupée, sinon elle avalerait les chiffres du code.
+  isLocked: function(){
+    var ls = document.getElementById('lock-screen');
+    return !!(ls && !ls.classList.contains('hidden'));
+  },
+
+  // Aucun lecteur USB branché sur le D3 Pro : le NFC intégré suffit.
+  // Passer à true si un lecteur externe clavier est ajouté un jour.
+  keyboardWedge: false,
+
+  cafeName: 'Café LUX — Taza',
+
+  onSuccess: function(r){
+    // Le ticket de la table en cours est soldé, comme pour les autres
+    // moyens de paiement.
+    try{
+      S.carts[slotKey()] = [];
+      S._discount = 0;
+      renderTicket();
+      refreshTableStates();
+    }catch(e){}
+    toast('✅ Carte LUX · '+(r.deductionType==='POINTS'
+        ? r.pointsDeducted+' points'
+        : money(r.valueDH))+' · '+esc(r.customer.name),'var(--green)');
+  },
+
+  onError: function(err){
+    if(err && (err.code==='NO_TOKEN' || /authentifi/i.test(err.message||''))){
+      toast('⚠ Poste non authentifié — touchez ⚙ pour saisir le PIN serveur','var(--orange)');
+    }
+  },
 });
 </script>
 </body>
