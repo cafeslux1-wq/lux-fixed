@@ -175,8 +175,8 @@
       '</div>' +
       '<video class="clx-video" data-clx="video" playsinline muted></video>' +
       '<div class="clx-field">' +
-      '  <label class="clx-label" for="clx-manual">Saisie manuelle (UID ou code LUXQ)</label>' +
-      '  <input class="clx-input" id="clx-manual" data-clx="manual" autocomplete="off" placeholder="LUXQ-…">' +
+      '  <label class="clx-label" for="clx-manual">Saisie manuelle — code LUXQ, carte cadeau ou UID</label>' +
+      '  <input class="clx-input" id="clx-manual" data-clx="manual" autocomplete="off" placeholder="LUXQ-… ou E974-K6VV-…">' +
       '</div>' +
       '<div class="clx-actions">' +
       '  <button class="clx-btn clx-primary" data-clx="submit-manual">Rechercher le client</button>' +
@@ -340,10 +340,95 @@
     setMode('BALANCE');
   }
 
+  // ── Écran 2 bis : carte cadeau ────────────────────────────
+  // Une carte cadeau n'a ni points ni compte client : un seul mode,
+  // un seul champ. On garde la même fenêtre pour que le caissier
+  // n'ait pas deux gestes différents à apprendre.
+  function renderGiftCard() {
+    var c = state.card;
+    el.title.textContent = 'Carte cadeau';
+
+    var suggested = Number(CFG.getAmount() || 0);
+    var payable = Math.min(suggested > 0 ? suggested : c.balance, c.balance);
+
+    el.body.innerHTML =
+      '<div class="clx-client">' +
+      '  <div class="clx-avatar">🎁</div>' +
+      '  <div>' +
+      '    <div class="clx-name">' + escapeHtml(c.customer.name) + '</div>' +
+      '    <div class="clx-sub">' + escapeHtml(c.code) + '</div>' +
+      '  </div>' +
+      '</div>' +
+      '<div class="clx-grid">' +
+      '  <button class="clx-tile" aria-pressed="true" disabled>' +
+      '    <div class="k">Solde carte</div><div class="v">' + money(c.balance) + '</div>' +
+      '    <div class="u">Valeur initiale ' + money(c.amount) + '</div>' +
+      '  </button>' +
+      '  <button class="clx-tile" aria-pressed="false" disabled>' +
+      '    <div class="k">Usage</div><div class="v">' + (c.singleUse ? '1 fois' : 'Multiple') + '</div>' +
+      '    <div class="u">' + (c.singleUse ? 'Solde consommé en entier' : 'Le reste est conservé') + '</div>' +
+      '  </button>' +
+      '</div>' +
+      (c.singleUse
+        ? '<div class="clx-msg clx-show clx-err" style="margin-bottom:14px">Carte à usage unique : le solde restant sera perdu après ce paiement.</div>'
+        : '') +
+      '<div class="clx-field">' +
+      '  <label class="clx-label" for="clx-amount">Montant à débiter (DH)</label>' +
+      '  <input class="clx-input" id="clx-amount" data-clx="amount" type="number" inputmode="decimal" min="0" step="0.5" value="' +
+      (payable > 0 ? payable : '') + '">' +
+      '  <div class="clx-equiv" data-clx="equiv"></div>' +
+      '</div>' +
+      '<div class="clx-actions">' +
+      '  <button class="clx-btn clx-primary" data-clx="confirm">Confirmer le paiement</button>' +
+      '  <button class="clx-btn clx-ghost" data-clx="back">Lire une autre carte</button>' +
+      '</div>';
+
+    var amountInput = el.body.querySelector('[data-clx="amount"]');
+    var equiv = el.body.querySelector('[data-clx="equiv"]');
+
+    function refresh() {
+      var v = Number(amountInput.value) || 0;
+      equiv.textContent = v > 0
+        ? (c.singleUse ? 'Carte soldée après paiement' : 'Reste sur la carte : ' + money(c.balance - v))
+        : '';
+    }
+    amountInput.addEventListener('input', refresh);
+    refresh();
+
+    el.body.querySelector('[data-clx="back"]').onclick = function () {
+      state.card = null; show(''); renderScan();
+    };
+    el.body.querySelector('[data-clx="confirm"]').onclick = function () {
+      var value = Number(amountInput.value);
+      if (!(value > 0)) return show('Entrez un montant supérieur à zéro.');
+      if (value > c.balance) return show('Solde insuffisant : ' + money(c.balance) + ' sur la carte.');
+      state.mode = 'GIFTCARD';
+      process(value, null, this);
+    };
+  }
+
   // ── Écran 3 : ticket ──────────────────────────────────────
   function renderReceipt(r) {
     el.title.textContent = 'Paiement accepté';
     var isPoints = r.deductionType === 'POINTS';
+    var isGift = r.deductionType === 'GIFTCARD';
+
+    if (isGift) {
+      el.body.innerHTML =
+        '<div class="clx-receipt">' +
+        '  <div class="clx-line"><span>Carte cadeau</span><strong>' + escapeHtml(r.code || '') + '</strong></div>' +
+        '  <div class="clx-line"><span>Débité</span><strong>' + money(r.amountDeducted) + '</strong></div>' +
+        '  <div class="clx-line"><span>Solde restant</span><strong>' + money(r.balance) + '</strong></div>' +
+        '  <div class="clx-line big"><span>' + (r.fullyUsed ? 'Carte soldée' : 'Carte encore valable') + '</span>' +
+        '  <span>' + money(r.valueDH) + '</span></div>' +
+        '</div>' +
+        '<div class="clx-actions">' +
+        '  <button class="clx-btn clx-primary" data-clx="print">Imprimer le ticket</button>' +
+        '  <button class="clx-btn clx-ghost" data-clx="close">Terminer</button>' +
+        '</div>';
+      el.body.querySelector('[data-clx="print"]').onclick = function () { printReceipt(r); };
+      return;
+    }
 
     el.body.innerHTML =
       '<div class="clx-receipt">' +
@@ -393,7 +478,15 @@
     show('');
     stopCamera();
 
-    var kind = type || (/LUXQ/i.test(identifier) ? 'QR' : /^[0-9A-Fa-f:\-\s]{6,32}$/.test(identifier) ? 'NFC' : 'QR');
+    // Trois familles : jeton LUXQ, code de carte cadeau (groupes
+    // séparés par des tirets), UID NFC hexadécimal.
+    var kind = type;
+    if (!kind) {
+      if (/LUXQ/i.test(identifier)) kind = 'QR';
+      else if (/^[0-9A-Za-z]{3,6}(-[0-9A-Za-z]{3,6}){2,4}$/.test(identifier.trim())) kind = 'GIFTCARD';
+      else if (/^[0-9A-Fa-f:\-\s]{6,32}$/.test(identifier)) kind = 'NFC';
+      else kind = 'QR';
+    }
     var url = '/api/carte-lux/lookup?identifier=' + encodeURIComponent(identifier) + '&type=' + kind;
 
     api(url)
@@ -401,7 +494,8 @@
         state.card = card;
         state.identifier = identifier;
         state.type = kind;
-        renderCard();
+        if (card.kind === 'GIFTCARD') renderGiftCard();
+        else renderCard();
       })
       .catch(function (err) {
         show(err.message || 'Carte introuvable');
@@ -424,6 +518,9 @@
         amountToDeduce: value,
         deductionType: state.mode,
         unit: state.mode === 'POINTS' ? 'POINTS' : 'DH',
+        // Le serveur reconnaît aussi le code cadeau tout seul, mais on
+        // est explicite : le terminal sait ce qu'il a lu.
+        kind: state.card && state.card.kind ? state.card.kind : 'CARTE_LUX',
         pin: pin || undefined,
         // Clé d'idempotence : si le réseau coupe et que la caisse
         // renvoie, le serveur ne débite pas deux fois.
