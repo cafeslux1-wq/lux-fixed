@@ -218,8 +218,10 @@
     }).join('');
 
     var itemsHtml = (d.items || []).map(function (it) {
-      return '<div class="lxt-line"><span>' + it.quantity + ' × ' + esc(it.name) + '</span>'
-        + '<span>' + money(it.price * it.quantity) + '</span></div>';
+      var q = Number(it.quantity != null ? it.quantity : it.qty) || 1;
+      var line = it.lineTotal != null ? it.lineTotal : (Number(it.price) || 0) * q;
+      return '<div class="lxt-line"><span>' + q + ' × ' + esc(it.name) + '</span>'
+        + '<span>' + money(line) + '</span></div>';
     }).join('');
 
     el.body.innerHTML =
