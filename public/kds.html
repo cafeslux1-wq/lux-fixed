@@ -200,7 +200,9 @@ function normalizeOrder(o){
 
 // Status the kitchen still needs to act on (exclude finished/cancelled)
 function isActiveForKitchen(st){
-  return ['delivered','completed','done','served','cancelled','canceled','archived','refused','rejected'].indexOf(st)===-1;
+  // 'delivering' = le livreur est déjà parti avec : la cuisine a fini.
+  return ['delivered','delivering','completed','done','served',
+          'cancelled','canceled','archived','refused','rejected'].indexOf(st)===-1;
 }
 function isReady(st){ return ['ready','prête','prete','prepared'].indexOf(st)!==-1; }
 
@@ -215,15 +217,30 @@ function ageMin(o){ if(!o.ts) return null; return Math.floor((Date.now()-o.ts)/6
 
 // ── Fetch live orders (with endpoint fallbacks + offline handling) ──
 function fetchOrders(){
-  var paths=['/api/orders?status=pending','/api/orders?source=web','/api/orders'];
+  // /api/orders sans filtre renvoie déjà TOUTES les commandes actives
+  // (le serveur exclut COMPLETED et CANCELLED). C'est exactement ce que
+  // la cuisine doit voir.
+  //
+  // L'ancien ordre commençait par ?status=pending : une commande payée
+  // par carte arrive en APPROVED, donc ce premier appel renvoyait un
+  // tableau VIDE — et un tableau vide était accepté comme réponse
+  // définitive. La cuisine affichait « Aucune commande » alors que le
+  // client attendait son plat. On garde les autres chemins en secours,
+  // mais un tableau vide ne stoppe plus la recherche.
+  var paths=['/api/orders','/api/orders?status=all','/api/orders?status=pending','/api/orders?source=web'];
   var i=0;
+  var lastEmpty=null;
+
   function attempt(){
-    if(i>=paths.length) return Promise.resolve(null);
+    if(i>=paths.length) return Promise.resolve(lastEmpty);
     return fetch(API+paths[i],{headers:Object.assign({'Accept':'application/json'},authHeader())})
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(d){
         var arr = Array.isArray(d)?d:(d&&(d.orders||d.data||d.transactions||d.items||d.rows));
-        if(Array.isArray(arr)) return arr;
+        if(Array.isArray(arr) && arr.length) return arr;
+        // Réponse valide mais vide : on la retient (l'API répond bien,
+        // il n'y a peut-être vraiment rien) et on tente le chemin suivant.
+        if(Array.isArray(arr)) lastEmpty = arr;
         i++; return attempt();
       })
       .catch(function(){ i++; return attempt(); });
