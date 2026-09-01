@@ -933,6 +933,16 @@ input, button, select, textarea { font-family:inherit; }
       </div>
     </div>
 
+    <!-- Enregistre la Carte LUX dans l'application Google Wallet :
+         elle s'ouvre depuis l'écran verrouillé du téléphone.
+         Caché tant que le serveur n'est pas configuré. -->
+    <button class="clux-btn" id="clux-gwallet" style="width:100%;display:none;margin-bottom:18px;
+            background:#000;color:#fff;border-color:#3c4043;align-items:center;
+            justify-content:center;gap:8px;font-size:14px"
+            onclick="addToGoogleWallet()">
+      <span style="font-size:17px">▤</span> Ajouter à Google Wallet
+    </button>
+
     <div class="sec-head"><span class="sh-txt">Mon portefeuille LUX</span><div class="sh-line"></div></div>
 
     <div class="wallet-card">
@@ -1268,6 +1278,8 @@ const ROUTES = {
   // ── Carte LUX (NFC + QR) ──
   CARTE_LUX:     `${API}/api/customer/carte-lux-details`,
   CARTE_ROTATE:  `${API}/api/carte-lux/me/rotate`,
+  WALLET_STATUS: `${API}/api/carte-lux/wallet/status`,
+  WALLET_SAVE:   `${API}/api/carte-lux/wallet/save`,
 
   // ── Mon Espace LUX : Paliers & récompenses réelles ──
   LOYALTY_ME:    `${API}/api/loyalty/me`,
@@ -1871,6 +1883,7 @@ async function loadCarteLux() {
 
       CARTE = data;
       renderCarteLux();
+      checkGoogleWallet();
       return;
     } catch (e) {
       console.warn('[Carte LUX]', url, e.message);
@@ -1895,6 +1908,47 @@ function renderCarteLux() {
 
   const badge = document.getElementById('clux-badge');
   if (badge) badge.style.display = CARTE.hasNfc ? 'inline-block' : 'none';
+}
+
+/* ── Google Wallet ───────────────────────────────────────────
+   La carte enregistrée affiche solde, points et le MÊME QR que
+   Mon Espace. Le serveur la met à jour après chaque paiement,
+   donc les chiffres suivent sans que le client rouvre le site.
+
+   Ce n'est pas du paiement sans contact : Smart Tap exige des
+   terminaux homologués par Google, ce que le navigateur du Sunmi
+   n'est pas. Le code reste scanné, comme en caisse aujourd'hui.
+──────────────────────────────────────────────────────────── */
+async function checkGoogleWallet() {
+  var btn = document.getElementById('clux-gwallet');
+  if (!btn || !STATE.isAuth) return;
+  try {
+    const { res, data } = await safeFetch(ROUTES.WALLET_STATUS);
+    if (res.ok && data && data.available) btn.style.display = 'flex';
+  } catch (e) {
+    // Serveur non configuré ou injoignable : on n'affiche rien
+    // plutôt qu'un bouton qui échouerait au clic.
+  }
+}
+
+async function addToGoogleWallet() {
+  const btn = document.getElementById('clux-gwallet');
+  const label = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Préparation…';
+
+  try {
+    const { res, data } = await safeFetch(ROUTES.WALLET_SAVE, { headers: authHeaders() });
+    if (!res.ok || !data.saveUrl) throw new Error(data.error || 'Google Wallet indisponible');
+
+    // Google ouvre sa propre page d'enregistrement.
+    window.open(data.saveUrl, '_blank');
+  } catch (e) {
+    toast('✕ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = label;
+  }
 }
 
 /* ── Fenêtre QR ─────────────────────────────────────────────── */
@@ -2275,7 +2329,11 @@ async function loadOrders() {
         id:         tx.externalId || tx.id,
         date:       tx.createdAt  || tx.date,
         total:      tx.total,
-        status:     'delivered',
+        // Le vrai statut sert au suivi ; l'ancien libellé figé
+        // affichait « Livrée » même pour une commande en cours.
+        rawStatus:  tx.status || 'COMPLETED',
+        status:     (tx.status === 'CANCELLED') ? 'cancelled'
+                  : (tx.status === 'COMPLETED') ? 'delivered' : 'pending',
         items:      (() => { try { return JSON.parse(tx.items || '[]').map(i => ({ name:i.name||i.n, qty:i.qty||i.q||1, price:i.price||i.p||0 })); } catch(e){ return []; } })(),
         pts_earned: Math.floor((tx.total || 0) / 10),
       }));
@@ -2318,9 +2376,20 @@ function renderOrders() {
           ${o.items.map(i => `<div class="oc-item"><span class="oc-item-name">${i.qty}× ${i.name}</span><span class="oc-item-price">${(i.qty*i.price)} DH</span></div>`).join('')}
         </div>
         <div class="oc-pts-earned">⭐ +${o.pts_earned} LUX Points gagnés</div>
+        ${['PENDING','APPROVED','PREPARING','READY','DELIVERING'].includes(o.rawStatus)
+          ? `<button class="clux-btn gold" style="width:100%;margin-top:12px"
+                     onclick="event.stopPropagation();trackOrder('${o.id}')">🛵 Suivre ma commande</button>`
+          : ''}
       </div>
     </div>`;
   }).join('');
+}
+
+// Ouvre le suivi en direct sur une commande précise.
+function trackOrder(orderId) {
+  if (!window.LuxTracking) return toast('Suivi indisponible');
+  LuxTracking.follow(orderId);
+  LuxTracking.open();
 }
 
 function toggleOrder(idx) {
@@ -2936,5 +3005,13 @@ window.LUX_SESSION = {
     </div>
   </div>
 </div>
+<!-- ══ Suivi de commande en direct ══ -->
+<script src="../../src/js/lux-tracking.js"></script>
+<script>
+  LuxTracking.init({
+    apiBase: API,
+    cafeName: 'Café LUX',
+  });
+</script>
 </body>
 </html>
