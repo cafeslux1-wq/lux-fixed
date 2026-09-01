@@ -1160,6 +1160,9 @@ var _waitTimer=null;
 
 function startWaiting(orderId,name){
   try{localStorage.setItem(WAIT_KEY,JSON.stringify({id:orderId,name:name||'',t:Date.now()}));}catch(e){}
+  // Suivi en direct : la pastille « Suivre ma commande » apparaît et
+  // reste jusqu'à la livraison, même si le client ferme l'onglet.
+  try{ if(window.LuxTracking) LuxTracking.follow(orderId); }catch(e){}
   showWaitOverlay(orderId);
   pollWaiting(orderId);
   if(_waitTimer)clearInterval(_waitTimer);
@@ -1266,5 +1269,13 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
+<!-- ══ Suivi de commande en direct ══ -->
+<script src="../src/js/lux-tracking.js"></script>
+<script>
+  LuxTracking.init({
+    apiBase: window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app',
+    cafeName: 'Café LUX',
+  });
+</script>
 </body>
 </html>
