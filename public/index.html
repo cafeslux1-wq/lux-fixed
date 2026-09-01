@@ -474,5 +474,15 @@ window.addEventListener('load',function(){
 <script src="https://unpkg.com/socket.io-client@4/dist/socket.io.min.js"></script>
 <script src="../src/js/api/api-client.js" defer></script>
 <script src="../src/js/main.js" defer></script>
+<!-- ══ Suivi de commande en direct ══
+     Reprend automatiquement le suivi d'une commande en cours,
+     même si le client a fermé l'onglet entre-temps. -->
+<script src="../src/js/lux-tracking.js"></script>
+<script>
+  LuxTracking.init({
+    apiBase: window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app',
+    cafeName: 'Café LUX',
+  });
+</script>
 </body>
 </html>
