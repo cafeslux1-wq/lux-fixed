@@ -394,9 +394,17 @@
             
             const getConsumedBalance = (station) => {
                 if (!station.currentSession || !station.currentSession.startedAt) return '0.00';
-                const elapsed = (Date.now() - new Date(station.currentSession.startedAt)) / 1000 / 3600;
                 const rate = station.hourlyRate || 25;
-                const consumed = elapsed * rate;
+                let elapsedHours = (Date.now() - new Date(station.currentSession.startedAt)) / 1000 / 3600;
+                // Plafonné à la durée réelle de la session — le solde consommé
+                // ne doit jamais dépasser le prix total, même juste après
+                // l'expiration du minuteur (avant que le serveur ne clôture
+                // automatiquement la session, quelques secondes plus tard).
+                if (station.currentSession.endsAt) {
+                    const totalHours = (new Date(station.currentSession.endsAt) - new Date(station.currentSession.startedAt)) / 1000 / 3600;
+                    if (totalHours > 0) elapsedHours = Math.min(elapsedHours, totalHours);
+                }
+                const consumed = elapsedHours * rate;
                 return consumed.toFixed(2);
             };
             
