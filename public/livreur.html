@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Café LUX — Livreur</title>
+<script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#14171d; --line:#262b34; --gold:#c9a84c;
+    --txt:#f2efe8; --muted:#8b9099; --green:#4ade80; --red:#d6544a; --orange:#d99a4a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:14px;background:var(--bg);color:var(--txt);
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       max-width:540px;margin-inline:auto;padding-bottom:40px}
+
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .eyebrow{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  h1{font-size:19px;margin:2px 0 0}
+
+  .gps{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);
+       padding:7px 11px;border:1px solid var(--line);border-radius:999px}
+  .gps .dot{width:8px;height:8px;border-radius:50%;background:#555}
+  .gps.on .dot{background:var(--green);animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.gps.on .dot{animation:none}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+        padding:15px;margin-bottom:12px}
+  .card.mine{border-color:rgba(201,168,76,.45)}
+  .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .ref{font-size:16px;font-weight:700}
+  .badge{font-size:10px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .badge.go{color:var(--gold);border-color:rgba(201,168,76,.45)}
+  .badge.rdy{color:var(--green);border-color:rgba(74,222,128,.4)}
+  .meta{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.6}
+  .addr{font-size:13.5px;color:var(--txt);margin-top:8px;line-height:1.5}
+  .items{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .total{font-size:17px;font-weight:700;color:var(--gold);margin-top:8px}
+
+  .acts{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}
+  button,a.btn{flex:1 1 130px;padding:13px;border-radius:11px;border:0;font:inherit;font-size:14px;
+          font-weight:600;cursor:pointer;min-height:48px;text-align:center;text-decoration:none;
+          display:flex;align-items:center;justify-content:center;gap:6px}
+  .primary{background:var(--gold);color:#111}
+  .ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .green{background:var(--green);color:#0b1a0f}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button:focus-visible,a.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+  input{width:100%;padding:13px;font-size:16px;background:#0f1216;color:var(--txt);
+        border:1.5px solid var(--line);border-radius:11px;margin-bottom:11px}
+  input:focus{outline:2px solid var(--gold);outline-offset:1px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+
+  .msg{padding:12px;border-radius:11px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+  .msg.on{display:block}
+  .err{background:rgba(214,84,74,.14);color:#f2a49c;border:1px solid rgba(214,84,74,.34)}
+  .ok{background:rgba(74,222,128,.12);color:#9ddcb2;border:1px solid rgba(74,222,128,.3)}
+  .warn{background:rgba(217,154,74,.14);color:#f0c48a;border:1px solid rgba(217,154,74,.34)}
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:34px 14px;line-height:1.7}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div><div class="eyebrow">Café LUX — Taza</div><h1>Mes livraisons</h1></div>
+  <div class="gps" id="gps"><span class="dot"></span><span id="gps-txt">GPS inactif</span></div>
+</header>
+
+<div class="msg" id="msg"></div>
+
+<!-- Connexion -->
+<div class="card" id="auth">
+  <label for="pin">Code PIN livreur</label>
+  <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••">
+  <button class="primary" id="btn-auth">Se connecter</button>
+</div>
+
+<!-- File des livraisons -->
+<div id="queue" class="hidden"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Interface livreur — Café LUX
+
+   Trois gestes seulement : je prends la commande, je préviens que
+   je suis arrivé, j'ai livré. Le GPS ne s'active QUE pendant une
+   course en cours et s'arrête à la livraison : on ne suit pas un
+   livreur en dehors de son service.
+══════════════════════════════════════════════════════════════ */
+var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+
+var ORDERS = [];
+var WATCH = null;      // identifiant du watchPosition en cours
+var ACTIVE = null;     // commande en cours de livraison
+var TIMER = null;
+var LAST_SENT = 0;
+
+function el(id){ return document.getElementById(id); }
+function token(){ try{ return localStorage.getItem('lux_token') || ''; }catch(e){ return ''; } }
+
+function say(text, kind){
+  var m = el('msg');
+  m.textContent = text || '';
+  m.className = 'msg' + (text ? ' on ' + (kind || 'err') : '');
+}
+
+function api(path, options){
+  var o = options || {};
+  return fetch(API + path, {
+    method: o.method || 'GET',
+    headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + token() },
+    body: o.body ? JSON.stringify(o.body) : undefined
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(d){
+      if(!r.ok){ var e = new Error(d.error || 'Erreur serveur'); e.status = r.status; throw e; }
+      return d;
+    });
+  });
+}
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+  });
+}
+function money(n){ return (Math.round((Number(n)||0)*100)/100).toFixed(2) + ' DH'; }
+
+/* ── Connexion ────────────────────────────────────────────── */
+el('btn-auth').onclick = function(){
+  var pin = el('pin').value.trim();
+  if(!pin) return say('Entrez votre code PIN.');
+
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Vérification…';
+
+  fetch(API + '/api/auth/pin', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ pin: pin })
+  })
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(d){
+      btn.disabled = false; btn.textContent = 'Se connecter';
+      if(!d || !d.token) return say((d && d.error) || 'Code refusé par le serveur.');
+      localStorage.setItem('lux_token', d.token);
+      el('auth').classList.add('hidden');
+      el('queue').classList.remove('hidden');
+      say('Connecté : ' + ((d.employee && d.employee.name) || 'Livreur'), 'ok');
+      start();
+    })
+    .catch(function(){
+      btn.disabled = false; btn.textContent = 'Se connecter';
+      say('Serveur injoignable. Vérifiez la connexion.');
+    });
+};
+
+/* ── File des livraisons ──────────────────────────────────── */
+function start(){
+  loadQueue();
+  if(TIMER) clearInterval(TIMER);
+  TIMER = setInterval(loadQueue, 15000);
+}
+
+function loadQueue(){
+  api('/api/delivery/queue')
+    .then(function(list){
+      ORDERS = list || [];
+      renderQueue();
+    })
+    .catch(function(e){
+      if(e.status === 401){
+        el('auth').classList.remove('hidden');
+        el('queue').classList.add('hidden');
+        say('Session expirée. Reconnectez-vous.');
+        if(TIMER) clearInterval(TIMER);
+      }
+    });
+}
+
+function renderQueue(){
+  var box = el('queue');
+
+  if(!ORDERS.length){
+    box.innerHTML = '<div class="empty">Aucune livraison en attente.<br>'
+      + 'Les nouvelles commandes apparaissent ici automatiquement.</div>';
+    return;
+  }
+
+  box.innerHTML = ORDERS.map(function(o){
+    var going = o.step === 'OUT_FOR_DELIVERY';
+    var ready = o.status === 'READY';
+    var items = (o.items || []).map(function(it){
+      return it.quantity + ' × ' + esc(it.name);
+    }).join(' · ');
+
+    var maps = o.destination
+      ? 'https://www.google.com/maps/dir/?api=1&destination=' + o.destination.lat + ',' + o.destination.lng
+      : (o.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(o.address) : null);
+
+    return '<div class="card' + (o.mine ? ' mine' : '') + '">'
+      + '<div class="row">'
+      + '  <div class="ref">' + esc(o.ref) + '</div>'
+      + '  <span class="badge ' + (going ? 'go' : (ready ? 'rdy' : '')) + '">'
+      +     (going ? 'En route' : (ready ? 'Prête' : 'En préparation')) + '</span>'
+      + '</div>'
+      + '<div class="meta">' + esc(o.customerName || 'Client') + '</div>'
+      + (o.address ? '<div class="addr">📍 ' + esc(o.address) + '</div>' : '')
+      + (items ? '<div class="items">' + items + '</div>' : '')
+      + '<div class="total">' + money(o.totalAmount) + '</div>'
+      + '<div class="acts">'
+      +   (o.customerPhone ? '<a class="btn ghost" href="tel:' + esc(o.customerPhone) + '">📞 Client</a>' : '')
+      +   (maps ? '<a class="btn ghost" href="' + maps + '" target="_blank" rel="noopener">🗺 Itinéraire</a>' : '')
+      +   (!going
+            ? '<button class="primary" onclick="act(\'' + o.id + '\',\'PICKUP\')" '
+              + (ready ? '' : 'disabled title="La commande n\'est pas encore prête"') + '>🛵 Je pars</button>'
+            : '<button class="ghost" onclick="act(\'' + o.id + '\',\'ARRIVED\')">🔔 Je suis arrivé</button>'
+              + '<button class="green" onclick="act(\'' + o.id + '\',\'DELIVERED\')">✅ Livrée</button>')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ── Actions ──────────────────────────────────────────────── */
+function act(orderId, action){
+  api('/api/orders/' + encodeURIComponent(orderId) + '/delivery/status', {
+    method: 'PATCH',
+    body: { status: action }
+  })
+    .then(function(){
+      if(action === 'PICKUP'){
+        ACTIVE = orderId;
+        startGps();
+        say('Course démarrée — le client suit votre position.', 'ok');
+      } else if(action === 'ARRIVED'){
+        say('Le client a été prévenu de votre arrivée.', 'ok');
+      } else if(action === 'DELIVERED'){
+        if(ACTIVE === orderId){ ACTIVE = null; stopGps(); }
+        say('Livraison confirmée. Merci !', 'ok');
+      }
+      loadQueue();
+    })
+    .catch(function(e){ say('✕ ' + e.message); });
+}
+
+/* ── GPS ──────────────────────────────────────────────────
+   Actif uniquement pendant une course. On envoie au plus une
+   position toutes les 10 secondes : suffisant pour une carte,
+   et ça épargne la batterie et le forfait du livreur.
+──────────────────────────────────────────────────────────── */
+function startGps(){
+  if(!navigator.geolocation) return say('Ce téléphone ne fournit pas de position GPS.', 'warn');
+  if(WATCH !== null) return;
+
+  WATCH = navigator.geolocation.watchPosition(function(pos){
+    el('gps').classList.add('on');
+    el('gps-txt').textContent = 'Position partagée';
+
+    var now = Date.now();
+    if(now - LAST_SENT < 10000) return;
+    LAST_SENT = now;
+
+    if(!ACTIVE) return;
+    api('/api/orders/' + encodeURIComponent(ACTIVE) + '/driver-location', {
+      method: 'POST',
+      body: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+    }).catch(function(){ /* perte réseau : la prochaine position repartira */ });
+
+  }, function(err){
+    el('gps').classList.remove('on');
+    el('gps-txt').textContent = 'GPS refusé';
+    say(err.code === 1
+      ? 'Autorisez la localisation pour que le client vous suive sur la carte.'
+      : 'Position indisponible — le suivi carte sera inactif.', 'warn');
+  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+}
+
+function stopGps(){
+  if(WATCH !== null){ navigator.geolocation.clearWatch(WATCH); WATCH = null; }
+  el('gps').classList.remove('on');
+  el('gps-txt').textContent = 'GPS inactif';
+}
+
+// Session encore valable : on saute la connexion.
+if(token() && token().indexOf('.') !== -1){
+  el('auth').classList.add('hidden');
+  el('queue').classList.remove('hidden');
+  start();
+}
+</script>
+</body>
+</html>
