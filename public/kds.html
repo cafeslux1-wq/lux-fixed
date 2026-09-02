@@ -297,12 +297,38 @@ function renderKDS(){
       '<div class="oc-foot"><span class="oc-total">'+o.total+' DH</span>'+ageHtml+
         (ready
           ? '<button class="oc-btn done" disabled>✅ Prête</button>'
-          : '<button class="oc-btn" '+(BUSY[o.id]?'disabled':'')+' onclick="markReady('+JSON.stringify(o.rawId)+')">'+(BUSY[o.id]?'⏳...':'🍳 Marquer prête')+'</button>')+
+          : '<button class="oc-btn" '+(BUSY[o.id]?'disabled':'')+' data-ready="'+escAttr(o.rawId)+'">'+(BUSY[o.id]?'⏳...':'🍳 Marquer prête')+'</button>')+
       '</div></div>';
   }).join('');
 }
 
+// Échappe une valeur destinée à un attribut HTML.
+function escAttr(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 // ── Two-way sync: mark order ready on the backend ──
+//
+// Le bouton était auparavant écrit ainsi :
+//   onclick="markReady("cpo7ay")"
+// JSON.stringify ajoute des guillemets DOUBLES à l'intérieur d'un
+// attribut lui-même délimité par des guillemets doubles : l'attribut
+// se terminait au premier guillemet et le navigateur n'exécutait
+// rien du tout. Le bouton semblait mort. (Le bug ne se voyait pas
+// avec des identifiants numériques, seulement avec les cuid.)
+//
+// On passe donc par un attribut de données et une délégation
+// d'événement : plus aucun code dans le HTML, plus de guillemets à
+// échapper, et un seul écouteur pour toutes les cartes.
+document.addEventListener('click', function(ev){
+  var btn = ev.target.closest ? ev.target.closest('[data-ready]') : null;
+  if(!btn || btn.disabled) return;
+  ev.preventDefault();
+  markReady(btn.getAttribute('data-ready'));
+});
+
 function markReady(rawId){
   if(rawId==null) return;
   var o = ORDERS.find(function(x){ return String(x.rawId)===String(rawId); });
@@ -313,7 +339,10 @@ function markReady(rawId){
   fetch(API+'/api/orders/'+encodeURIComponent(rawId)+'/status',{
     method:'PATCH',
     headers:Object.assign({'Content-Type':'application/json'},authHeader()),
-    body:JSON.stringify({status:'ready', by:'Cuisine'})
+    // 'READY' en majuscules : accepté par l'API actuelle comme par
+    // l'ancienne. 'ready' en minuscules était rejeté par les versions
+    // antérieures du serveur, d'où le repli PUT plus bas.
+    body:JSON.stringify({status:'READY', by:'Cuisine'})
   })
   .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json().catch(function(){return{};}); })
   .then(function(){
