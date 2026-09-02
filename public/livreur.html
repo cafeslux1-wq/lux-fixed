@@ -165,6 +165,37 @@ var LAST_SENT = 0;
 function el(id){ return document.getElementById(id); }
 function token(){ try{ return localStorage.getItem('lux_token') || ''; }catch(e){ return ''; } }
 
+// Rôles autorisés à livrer (doit correspondre à DELIVERY_ROLES côté serveur).
+var DRIVER_ROLES = ['ADMIN','MANAGER','CASHIER','STAFF'];
+
+// Le jeton est un JWT : sa charge utile est lisible sans clé.
+// On y lit le rôle pour savoir AVANT d'appeler l'API si ce jeton
+// convient. Sinon on tombait sur « Accès refusé » sans explication.
+function tokenRole(){
+  var t = token();
+  if(!t || t.indexOf('.') === -1) return null;
+  try{
+    var part = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return (JSON.parse(atob(part)).role || '').toUpperCase();
+  }catch(e){ return null; }
+}
+
+// Le site utilise UNE seule clé 'lux_token' pour le client et pour
+// le personnel. Se connecter à « Mon Espace » écrase donc le jeton
+// du livreur, et inversement. On détecte ce cas au lieu de laisser
+// l'utilisateur face à un refus incompréhensible.
+function forgetToken(){
+  try{ localStorage.removeItem('lux_token'); }catch(e){}
+}
+
+function showLogin(message, kind){
+  el('auth').classList.remove('hidden');
+  ['queue','presence','rolebar'].forEach(function(id){ el(id).classList.add('hidden'); });
+  el('requests').innerHTML = '';
+  if(TIMER) clearInterval(TIMER);
+  if(message) say(message, kind || 'warn');
+}
+
 function say(text, kind){
   var m = el('msg');
   m.textContent = text || '';
@@ -208,6 +239,13 @@ el('btn-auth').onclick = function(){
     .then(function(d){
       btn.disabled = false; btn.textContent = 'Se connecter';
       if(!d || !d.token) return say((d && d.error) || 'Code refusé par le serveur.');
+
+      var role = ((d.employee && d.employee.role) || '').toUpperCase();
+      if(role && DRIVER_ROLES.indexOf(role) === -1){
+        return say('Le rôle « ' + role + ' » ne peut pas livrer. '
+          + 'Demandez au responsable de vous passer en STAFF, ou utilisez un autre code PIN.');
+      }
+
       localStorage.setItem('lux_token', d.token);
       showDriverUI();
       say('Connecté : ' + ((d.employee && d.employee.name) || 'Livreur'), 'ok');
@@ -319,10 +357,14 @@ function loadQueue(){
     })
     .catch(function(e){
       if(e.status === 401){
-        el('auth').classList.remove('hidden');
-        el('queue').classList.add('hidden');
-        say('Session expirée. Reconnectez-vous.');
-        if(TIMER) clearInterval(TIMER);
+        forgetToken();
+        showLogin('Session expirée. Reconnectez-vous avec votre code PIN.');
+      } else if(e.status === 403){
+        // Jeton valide mais rôle non autorisé : presque toujours un
+        // jeton client laissé par « Mon Espace » sur ce téléphone.
+        forgetToken();
+        showLogin('Ce téléphone était connecté en tant que client. '
+          + 'Saisissez votre code PIN employé pour accéder aux livraisons.');
       }
     });
 }
@@ -436,10 +478,22 @@ function stopGps(){
 }
 
 // Session encore valable : on saute la connexion.
-if(token() && token().indexOf('.') !== -1){
+(function(){
+  var role = tokenRole();
+  if(!role){ showLogin(); return; }
+
+  if(DRIVER_ROLES.indexOf(role) === -1){
+    // CUSTOMER, KITCHEN… : on repart proprement sur l'écran de code.
+    forgetToken();
+    showLogin(role === 'CUSTOMER'
+      ? 'Ce téléphone est connecté en tant que client. Saisissez votre code PIN employé.'
+      : 'Le rôle « ' + role + ' » ne peut pas livrer. Utilisez un code PIN autorisé.');
+    return;
+  }
+
   showDriverUI();
   start();
-}
+})();
 </script>
 </body>
 </html>
