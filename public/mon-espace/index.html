@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Carte LUX">
 <link rel="apple-touch-icon" href="/lux-Chatbot_IA-icon.png">
 <script src="../../src/js/lux-auth.js"></script>
+<script src="../../src/js/lux-orders.js"></script>
 <title>Café LUX · Mon Espace</title>
 
 <!-- ── API Config ── -->
@@ -2391,13 +2392,22 @@ function renderOrders() {
     list.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande pour l'instant</div>`;
     return;
   }
-  const statusMap = {
-    delivered: { lbl:'Livrée',   bg:'rgba(61,190,122,.1)', color:'var(--green)' },
-    pending:   { lbl:'En cours', bg:'rgba(201,168,76,.1)', color:'var(--gold)'  },
-    cancelled: { lbl:'Annulée',  bg:'rgba(224,82,82,.1)',  color:'var(--red)'   },
+  // Le libellé vient de lux-orders.js : le client lit exactement
+  // l'état que voient la cuisine et le livreur, mot pour mot.
+  const statusOf = (o) => {
+    if (window.LuxOrders) {
+      return { lbl: LuxOrders.label(o.rawStatus), color: LuxOrders.color(o.rawStatus),
+               bg: 'rgba(255,255,255,.04)' };
+    }
+    const m = {
+      delivered: { lbl:'Livrée',   bg:'rgba(61,190,122,.1)', color:'var(--green)' },
+      pending:   { lbl:'En cours', bg:'rgba(201,168,76,.1)', color:'var(--gold)'  },
+      cancelled: { lbl:'Annulée',  bg:'rgba(224,82,82,.1)',  color:'var(--red)'   },
+    };
+    return m[o.status] || m.delivered;
   };
   list.innerHTML = STATE.orders.map((o, idx) => {
-    const s = statusMap[o.status] || statusMap.delivered;
+    const s = statusOf(o);
     return `<div class="order-card">
       <div class="oc-head" onclick="toggleOrder(${idx})">
         <div>
@@ -2438,6 +2448,16 @@ function setRole(role) {
   document.getElementById('role-client').classList.add('active');
   document.getElementById('role-livreur').classList.remove('active');
 }
+
+// La liste se met à jour dès que la cuisine ou le livreur agit :
+// le client n'a plus à recharger la page pour voir « En livraison ».
+(function () {
+  if (!window.LuxOrders) return;
+  LuxOrders.live({
+    apiBase: API,
+    onChange: function () { if (STATE.isAuth) loadOrders(); },
+  });
+})();
 
 function trackOrder(orderId) {
   if (!window.LuxTracking) return toast('Suivi indisponible');
