@@ -62,14 +62,76 @@
   .warn{background:rgba(217,154,74,.14);color:#f0c48a;border:1px solid rgba(217,154,74,.34)}
   .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:34px 14px;line-height:1.7}
   .hidden{display:none}
+
+  /* Bascule de rôle */
+  .rolebar{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;
+           background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:13px}
+  .rl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .rbtns{display:flex;gap:7px;margin-left:auto}
+  .rbtn{width:auto;padding:9px 15px;min-height:40px;margin:0;border-radius:999px;font-size:13px;
+        background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .rbtn.active{background:var(--gold);color:#111;border-color:var(--gold)}
+
+  /* Disponibilité */
+  .prow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pname{font-size:17px;font-weight:700}
+  .psub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .toggle{width:60px;height:33px;flex:none;border-radius:999px;background:#2a3038;border:0;
+          padding:3px;margin:0;position:relative;cursor:pointer;transition:background .2s;min-height:33px}
+  .toggle[aria-checked="true"]{background:var(--green)}
+  .knob{display:block;width:27px;height:27px;border-radius:50%;background:#fff;transition:transform .2s}
+  .toggle[aria-checked="true"] .knob{transform:translateX(27px)}
+  .pstats{display:flex;margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
+  .ps{flex:1;text-align:center}
+  .ps+.ps{border-left:1px solid var(--line)}
+  .ps .v{font-size:18px;font-weight:700}
+  .ps .k{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Demandes de course */
+  .req{background:#1b1f27;border:1px solid rgba(201,168,76,.35);border-radius:15px;
+       padding:14px;margin-bottom:11px}
+  .req .t{font-size:14.5px;font-weight:600}
+  .req .m{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.6}
 </style>
 </head>
 <body>
 
 <header>
-  <div><div class="eyebrow">Café LUX — Taza</div><h1>Mes livraisons</h1></div>
+  <div><div class="eyebrow">Café LUX — Taza</div><h1>Espace livreur</h1></div>
   <div class="gps" id="gps"><span class="dot"></span><span id="gps-txt">GPS inactif</span></div>
 </header>
+
+<!-- Retour à l'espace client : même compte, autre rôle. -->
+<div class="rolebar hidden" id="rolebar">
+  <span class="rl">Rôle</span>
+  <div class="rbtns">
+    <button class="rbtn" onclick="location.href='mon-espace/index.html'">👤 Client</button>
+    <button class="rbtn active">🛵 Livreur</button>
+  </div>
+</div>
+
+<!-- ══ Disponibilité ══
+     Hors ligne, le livreur disparaît de l'annuaire public et sa
+     position est effacée du serveur. C'est son interrupteur, pas
+     celui du patron. -->
+<div class="card hidden" id="presence">
+  <div class="prow">
+    <div>
+      <div class="pname" id="p-name">—</div>
+      <div class="psub" id="p-status">Hors ligne</div>
+    </div>
+    <button class="toggle" id="p-toggle" role="switch" aria-checked="false"
+            onclick="toggleOnline()"><span class="knob"></span></button>
+  </div>
+  <div class="pstats">
+    <div class="ps"><div class="v" id="p-orders">0</div><div class="k">courses</div></div>
+    <div class="ps"><div class="v" id="p-rating">—</div><div class="k" id="p-reviews">0 avis</div></div>
+    <div class="ps"><div class="v" id="p-verified">—</div><div class="k">vérifié</div></div>
+  </div>
+</div>
+
+<!-- Demandes de course venues du site public -->
+<div id="requests"></div>
 
 <div class="msg" id="msg"></div>
 
@@ -147,8 +209,7 @@ el('btn-auth').onclick = function(){
       btn.disabled = false; btn.textContent = 'Se connecter';
       if(!d || !d.token) return say((d && d.error) || 'Code refusé par le serveur.');
       localStorage.setItem('lux_token', d.token);
-      el('auth').classList.add('hidden');
-      el('queue').classList.remove('hidden');
+      showDriverUI();
       say('Connecté : ' + ((d.employee && d.employee.name) || 'Livreur'), 'ok');
       start();
     })
@@ -158,11 +219,96 @@ el('btn-auth').onclick = function(){
     });
 };
 
+function showDriverUI(){
+  ['auth'].forEach(function(id){ el(id).classList.add('hidden'); });
+  ['queue','presence','rolebar'].forEach(function(id){ el(id).classList.remove('hidden'); });
+}
+
+/* ══ Profil et disponibilité ══════════════════════════════
+   « En ligne » fait deux choses : le livreur apparaît dans
+   l'annuaire public et sa position part au serveur. Se mettre
+   hors ligne efface cette position — hors service, on ne suit
+   personne. */
+var ME = null;
+
+function loadMe(){
+  api('/api/delivery/me')
+    .then(function(d){
+      ME = d;
+      el('p-name').textContent    = d.name || 'Livreur';
+      el('p-status').textContent  = d.online ? 'En ligne — visible par les clients'
+                                             : 'Hors ligne — invisible dans l\u2019annuaire';
+      el('p-orders').textContent  = d.totalOrders || 0;
+      el('p-rating').textContent  = d.rating != null ? '⭐ ' + d.rating : '—';
+      el('p-reviews').textContent = (d.reviewsCount || 0) + ' avis';
+      el('p-verified').textContent = d.verified ? 'Oui' : 'Non';
+
+      var t = el('p-toggle');
+      t.setAttribute('aria-checked', String(!!d.online));
+
+      if(d.online && !WATCH) startGps();
+    })
+    .catch(function(){ /* profil indisponible : la file reste utilisable */ });
+}
+
+function toggleOnline(){
+  var next = el('p-toggle').getAttribute('aria-checked') !== 'true';
+  el('p-toggle').setAttribute('aria-checked', String(next));
+
+  api('/api/delivery/me/online', { method:'POST', body:{ online: next } })
+    .then(function(){
+      say(next ? 'Vous êtes en ligne — les clients peuvent vous demander.'
+               : 'Vous êtes hors ligne. Position effacée.', 'ok');
+      if(next) startGps(); else if(!ACTIVE) stopGps();
+      loadMe();
+    })
+    .catch(function(e){
+      el('p-toggle').setAttribute('aria-checked', String(!next));
+      say('✕ ' + e.message);
+    });
+}
+
+/* ══ Demandes de course venues du site ══ */
+function loadRequests(){
+  api('/api/delivery/requests')
+    .then(function(list){
+      var box = el('requests');
+      if(!list || !list.length){ box.innerHTML = ''; return; }
+
+      box.innerHTML = list.map(function(r){
+        var pending = r.status === 'PENDING';
+        return '<div class="req">'
+          + '<div class="t">' + (pending ? '🔔 Nouvelle demande' : '✅ Course acceptée') + '</div>'
+          + '<div class="m">' + esc(r.customerName || 'Client') + ' · ' + esc(r.customerPhone)
+          + (r.address ? '<br>📍 ' + esc(r.address) : '')
+          + (r.note ? '<br>📝 ' + esc(r.note) : '') + '</div>'
+          + '<div class="acts">'
+          + '  <a class="btn ghost" href="tel:' + esc(r.customerPhone) + '">📞 Appeler</a>'
+          + (pending
+              ? '<button class="ghost" data-req="' + r.id + '" data-act="decline">Refuser</button>'
+                + '<button class="green" data-req="' + r.id + '" data-act="accept">Accepter</button>'
+              : '<button class="primary" data-req="' + r.id + '" data-act="done">Terminée</button>')
+          + '</div></div>';
+      }).join('');
+
+      Array.prototype.forEach.call(box.querySelectorAll('[data-req]'), function(b){
+        b.onclick = function(){
+          api('/api/delivery/requests/' + b.dataset.req + '/' + b.dataset.act, { method:'POST' })
+            .then(function(){ say('Demande mise à jour.', 'ok'); loadRequests(); })
+            .catch(function(e){ say('✕ ' + e.message); });
+        };
+      });
+    })
+    .catch(function(){ /* silencieux */ });
+}
+
 /* ── File des livraisons ──────────────────────────────────── */
 function start(){
+  loadMe();
   loadQueue();
+  loadRequests();
   if(TIMER) clearInterval(TIMER);
-  TIMER = setInterval(loadQueue, 15000);
+  TIMER = setInterval(function(){ loadQueue(); loadRequests(); }, 15000);
 }
 
 function loadQueue(){
@@ -263,11 +409,16 @@ function startGps(){
     if(now - LAST_SENT < 10000) return;
     LAST_SENT = now;
 
-    if(!ACTIVE) return;
-    api('/api/orders/' + encodeURIComponent(ACTIVE) + '/driver-location', {
-      method: 'POST',
-      body: { lat: pos.coords.latitude, lng: pos.coords.longitude }
-    }).catch(function(){ /* perte réseau : la prochaine position repartira */ });
+    var coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+    // En course : la position va sur la commande (le client la voit).
+    // Sinon : elle alimente seulement l'annuaire « à proximité ».
+    var path = ACTIVE
+      ? '/api/orders/' + encodeURIComponent(ACTIVE) + '/driver-location'
+      : '/api/delivery/me/location';
+
+    api(path, { method: 'POST', body: coords })
+      .catch(function(){ /* perte réseau : la prochaine position repartira */ });
 
   }, function(err){
     el('gps').classList.remove('on');
@@ -286,8 +437,7 @@ function stopGps(){
 
 // Session encore valable : on saute la connexion.
 if(token() && token().indexOf('.') !== -1){
-  el('auth').classList.add('hidden');
-  el('queue').classList.remove('hidden');
+  showDriverUI();
   start();
 }
 </script>
