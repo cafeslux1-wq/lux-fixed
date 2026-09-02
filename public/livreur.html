@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0b0d10">
 <title>Café LUX — Livreur</title>
 <script src="../src/js/lux-auth.js"></script>
+<script src="../src/js/lux-orders.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <style>
   :root{
@@ -353,6 +354,12 @@ function start(){
   loadMe();
   loadQueue();
   loadRequests();
+
+  // La commande apparaît dès que la cuisine la déclare prête,
+  // sans attendre les 15 secondes du sondage.
+  if(window.LuxOrders){
+    LuxOrders.live({ apiBase: API, onChange: function(){ loadQueue(); loadRequests(); } });
+  }
   if(TIMER) clearInterval(TIMER);
   TIMER = setInterval(function(){ loadQueue(); loadRequests(); }, 15000);
 }
@@ -425,15 +432,41 @@ function renderQueue(){
       + '<div class="acts">'
       +   (o.customerPhone ? '<a class="btn ghost" href="tel:' + esc(o.customerPhone) + '">📞 Client</a>' : '')
       +   (maps ? '<a class="btn ghost" href="' + maps + '" target="_blank" rel="noopener">🗺 Itinéraire</a>' : '')
-      +   (!going
-            ? '<button class="primary" onclick="act(\'' + o.id + '\',\'PICKUP\')" '
-              + (ready ? '' : 'disabled title="La commande n\'est pas encore prête"') + '>🛵 Je pars</button>'
-            : '<button class="ghost" onclick="act(\'' + o.id + '\',\'ARRIVED\')">🔔 Je suis arrivé</button>'
-              + '<button class="green" onclick="act(\'' + o.id + '\',\'DELIVERED\')">✅ Livrée</button>')
+      +   driverButtons(o)
       + '</div>'
       + '</div>';
   }).join('') + toggle;
 }
+
+// Les boutons proposés viennent de lux-orders.js : le livreur ne
+// peut pas partir avec une commande que la cuisine n'a pas déclarée
+// prête, et ne voit « Livrée » que s'il est effectivement en route.
+function driverButtons(o){
+  var next = window.LuxOrders
+    ? LuxOrders.nextAction({ status: o.status, isDelivery: true }, 'driver')
+    : null;
+
+  if(!next){
+    return '<button class="ghost" disabled>👨‍🍳 En cuisine…</button>';
+  }
+  if(next.action === 'PICKUP'){
+    return '<button class="primary" data-order="' + o.id + '" data-act="PICKUP">'
+      + next.label + '</button>';
+  }
+  return '<button class="ghost" data-order="' + o.id + '" data-act="ARRIVED">🔔 Je suis arrivé</button>'
+    + '<button class="green" data-order="' + o.id + '" data-act="DELIVERED">' + next.label + '</button>';
+}
+
+// Délégation : plus de code JavaScript dans les attributs HTML,
+// donc plus de risque de guillemets cassés (le bug qui avait rendu
+// le bouton de la cuisine inerte).
+document.addEventListener('click', function(ev){
+  if(!ev.target.closest) return;
+  var b = ev.target.closest('[data-order][data-act]');
+  if(!b || b.disabled) return;
+  ev.preventDefault();
+  act(b.getAttribute('data-order'), b.getAttribute('data-act'));
+});
 
 /* ── Actions ──────────────────────────────────────────────── */
 function act(orderId, action){

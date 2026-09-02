@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Café LUX | Cuisine KDS</title>
 <script src="../src/js/lux-auth.js"></script>
+<script src="../src/js/lux-orders.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
@@ -204,25 +205,40 @@ function normalizeOrder(o){
     customer: o.customer||o.client||o.customerName||o.name||(type==='delivery'?'Client livraison':'Client'),
     type:     type,
     table:    o.table||o.tableNo||o.table_no||'',
-    address:  o.address||o.deliveryAddr||o.delivery_address||'',
+    address:  o.deliveryAddress||o.address||o.deliveryAddr||o.delivery_address||'',
     items:    items,
     total:    total,
     notes:    o.notes||o.note||o.comment||'',
-    status:   status,
+    status:     status,
+    isDelivery: !!(o.isDelivery) || !!(o.deliveryAddress) || /livr|delivery/i.test(type),
     time:     o.time || (o.createdAt?new Date(o.createdAt).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):(o.created_date?new Date(o.created_date).toLocaleTimeString('fr-MA',{hour:'2-digit',minute:'2-digit'}):'')),
     ts:       o.createdAt?new Date(o.createdAt).getTime():(o.created_date?new Date(o.created_date).getTime():(typeof o.id==='number'?o.id:Date.now())),
   };
 }
 
 // Status the kitchen still needs to act on (exclude finished/cancelled)
-function isActiveForKitchen(st){
-  // 'delivering' = le livreur est déjà parti avec : la cuisine a fini.
+// La règle vit dans lux-orders.js : une livraison PRÊTE quitte la
+// cuisine et attend le livreur ; une commande sur place prête reste
+// jusqu'à « Servie ». Sans cette distinction, la cuisine clôturait
+// des commandes que le livreur avait déjà en main.
+function isActiveForKitchen(st, o){
+  if(window.LuxOrders){
+    return LuxOrders.inKitchen({
+      status: String(st||'').toUpperCase(),
+      isDelivery: o && o.isDelivery,
+      address: o && o.address,
+      type: o && o.type,
+    });
+  }
   return ['delivered','delivering','completed','done','served',
           'cancelled','canceled','archived','refused','rejected'].indexOf(st)===-1;
 }
 function isReady(st){ return ['ready','prête','prete','prepared'].indexOf(st)!==-1; }
 
 function typeLabel(o){
+  // Le drapeau prime sur le champ `type` : une commande du menu
+  // arrive parfois sans type mais avec une adresse.
+  if(o.isDelivery) return '🛵 Livraison' + (o.address ? '' : ' (sans adresse)');
   if(o.type==='delivery'||/livr/.test(o.type)) return '🛵 Livraison';
   if(o.type==='takeaway'||/emporter|away/.test(o.type)) return '🥡 Emporter';
   if(o.type==='table'||o.type==='dine-in'||/place|sur/.test(o.type)) return '🪑 Sur place'+(o.table?(' · T'+o.table):'');
@@ -288,7 +304,7 @@ function refresh(silent){
     }
     setConn(true);
     var normalized = list.map(normalizeOrder)
-      .filter(function(o){ return isActiveForKitchen(o.status); })
+      .filter(function(o){ return isActiveForKitchen(o.status, o); })
       .sort(function(a,b){ return b.ts-a.ts; });
     // Detect brand-new orders (after first load) for the alert
     if(!_firstLoad){
@@ -330,13 +346,7 @@ function renderKDS(){
       noteHtml+
       '<div class="oc-items">'+itemsHtml+'</div>'+
       '<div class="oc-foot"><span class="oc-total">'+o.total+' DH</span>'+ageHtml+
-        (ready
-          // Une commande prête restait affichée pour toujours : rien
-          // ne la fermait, et le tableau se remplissait (16 cartes,
-          // certaines vieilles de 3 jours). « Servie » la termine et
-          // la retire de l'écran — c'est l'opération qui manquait.
-          ? '<button class="oc-btn served" '+(BUSY[o.id]?'disabled':'')+' data-served="'+escAttr(o.rawId)+'">'+(BUSY[o.id]?'⏳...':'📤 Servie')+'</button>'
-          : '<button class="oc-btn" '+(BUSY[o.id]?'disabled':'')+' data-ready="'+escAttr(o.rawId)+'">'+(BUSY[o.id]?'⏳...':'🍳 Marquer prête')+'</button>')+
+        kitchenButton(o)+
       '</div></div>';
   }).join('');
 }
@@ -346,6 +356,30 @@ function escAttr(v){
   return String(v == null ? '' : v)
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
     .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Le bouton affiché dépend de l'état ET du type de commande.
+// C'est lux-orders.js qui tranche : la cuisine ne voit jamais
+// « Servie » sur une livraison, puisqu'elle ne lui appartient plus.
+function kitchenButton(o){
+  var busy = BUSY[o.id];
+  var next = window.LuxOrders
+    ? LuxOrders.nextAction({
+        status: String(o.status||'').toUpperCase(),
+        isDelivery: o.isDelivery, address: o.address, type: o.type
+      }, 'kitchen')
+    : null;
+
+  if(!next){
+    // Livraison prête : la cuisine a fini, le livreur prend la main.
+    return '<button class="oc-btn done" disabled>'
+      + (o.isDelivery ? '🛵 Attente livreur' : '✅ Prête') + '</button>';
+  }
+
+  var cls = next.status === 'COMPLETED' ? 'oc-btn served' : 'oc-btn';
+  return '<button class="'+cls+'" '+(busy?'disabled':'')
+    + ' data-advance="'+escAttr(o.rawId)+'" data-to="'+escAttr(next.status)+'">'
+    + (busy ? '⏳...' : next.label) + '</button>';
 }
 
 // ── Two-way sync: mark order ready on the backend ──
@@ -363,34 +397,46 @@ function escAttr(v){
 // échapper, et un seul écouteur pour toutes les cartes.
 document.addEventListener('click', function(ev){
   if(!ev.target.closest) return;
-
-  var r = ev.target.closest('[data-ready]');
-  if(r && !r.disabled){ ev.preventDefault(); markReady(r.getAttribute('data-ready')); return; }
-
-  var v = ev.target.closest('[data-served]');
-  if(v && !v.disabled){ ev.preventDefault(); markServed(v.getAttribute('data-served')); return; }
+  var b = ev.target.closest('[data-advance]');
+  if(!b || b.disabled) return;
+  ev.preventDefault();
+  advanceOrder(b.getAttribute('data-advance'), b.getAttribute('data-to'));
 });
 
-// Termine la commande : elle sort du tableau de la cuisine et le
-// client voit « Livrée » de son côté.
-function markServed(rawId){
-  if(rawId == null) return;
+// Avance la commande à l'état suivant. Un seul chemin serveur
+// (PATCH /status) pour toutes les transitions de la cuisine :
+// moins de code, et le client est prévenu par socket dans la
+// foulée quel que soit le bouton pressé.
+function advanceOrder(rawId, to){
+  if(rawId == null || !to) return;
   var o = ORDERS.find(function(x){ return String(x.rawId)===String(rawId); });
   if(!o || BUSY[o.id]) return;
+
   BUSY[o.id] = true; renderKDS();
 
   fetch(API+'/api/orders/'+encodeURIComponent(rawId)+'/status',{
     method:'PATCH',
     headers:Object.assign({'Content-Type':'application/json'},authHeader()),
-    body:JSON.stringify({status:'COMPLETED', by:'Cuisine'})
+    body:JSON.stringify({ status: to, by:'Cuisine' })
   })
   .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json().catch(function(){return{};}); })
   .then(function(){
     BUSY[o.id] = false;
-    // On la retire tout de suite de la liste locale : le prochain
-    // rafraîchissement ne la renverra plus (statut COMPLETED).
-    ORDERS = ORDERS.filter(function(x){ return x.id !== o.id; });
-    toast('📤 Commande #'+String(o.id).slice(-6)+' servie', 2000);
+    o.status = String(to).toLowerCase();
+
+    if(to === 'COMPLETED'){
+      ORDERS = ORDERS.filter(function(x){ return x.id !== o.id; });
+      toast('📤 Commande #'+String(o.id).slice(-6)+' servie', 2000);
+    } else if(to === 'READY'){
+      toast(o.isDelivery
+        ? '🛵 #'+String(o.id).slice(-6)+' prête — transmise au livreur'
+        : '✅ #'+String(o.id).slice(-6)+' prête — service en salle', 2400);
+      // Une livraison prête sort du tableau : elle appartient
+      // désormais au livreur.
+      if(o.isDelivery) ORDERS = ORDERS.filter(function(x){ return x.id !== o.id; });
+    } else {
+      toast('👨‍🍳 #'+String(o.id).slice(-6)+' en préparation', 1800);
+    }
     renderKDS();
   })
   .catch(function(){
@@ -400,42 +446,11 @@ function markServed(rawId){
   });
 }
 
-function markReady(rawId){
-  if(rawId==null) return;
-  var o = ORDERS.find(function(x){ return String(x.rawId)===String(rawId); });
-  if(!o){ return; }
-  if(BUSY[o.id]){ return; }
-  BUSY[o.id]=true; renderKDS();
-  // Use the same convention as the POS: PATCH /api/orders/:id/status {status:'ready'}
-  fetch(API+'/api/orders/'+encodeURIComponent(rawId)+'/status',{
-    method:'PATCH',
-    headers:Object.assign({'Content-Type':'application/json'},authHeader()),
-    // 'READY' en majuscules : accepté par l'API actuelle comme par
-    // l'ancienne. 'ready' en minuscules était rejeté par les versions
-    // antérieures du serveur, d'où le repli PUT plus bas.
-    body:JSON.stringify({status:'READY', by:'Cuisine'})
-  })
-  .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json().catch(function(){return{};}); })
-  .then(function(){
-    BUSY[o.id]=false;
-    o.status='ready';                 // optimistic local update
-    toast('✅ Commande #'+String(o.id).slice(-6)+' prête — service en salle', 2200);
-    renderKDS();
-  })
-  .catch(function(){
-    // Fallback: try PUT in case the backend expects PUT, else revert
-    fetch(API+'/api/orders/'+encodeURIComponent(rawId),{
-      method:'PUT',headers:Object.assign({'Content-Type':'application/json'},authHeader()),
-      body:JSON.stringify({status:'ready'})
-    }).then(function(r){ if(!r.ok) throw new Error(); return r; })
-      .then(function(){ BUSY[o.id]=false; o.status='ready'; toast('✅ Commande #'+String(o.id).slice(-6)+' prête', 2200); renderKDS(); })
-      .catch(function(){
-        BUSY[o.id]=false;
-        toast('⚠️ Échec de mise à jour — vérifiez la connexion', 2600);
-        renderKDS();
-      });
-  });
-}
+// Termine la commande : elle sort du tableau de la cuisine et le
+// client voit « Livrée » de son côté.
+
+
+
 
 // ── Soft chime on new orders (WebAudio, no asset needed) ──
 function chime(){
@@ -453,7 +468,14 @@ function chime(){
 
 // ── Boot + polling ──
 el('refreshBtn').addEventListener('click', function(){ refresh(false); toast('📋 Actualisé', 1200); });
-window.markReady = markReady;
+
+// Synchronisation immédiate : quand le livreur part avec une
+// commande ou que l'admin valide une espèce, la cuisine le voit
+// dans la seconde au lieu d'attendre le prochain sondage.
+if(window.LuxOrders){
+  LuxOrders.live({ apiBase: API, onChange: function(){ refresh(true); } });
+}
+window.advanceOrder = advanceOrder;
 
 // ⚡ Instant cross-tab sync: when the POS approves an order it pings 'lux-kds'
 // (BroadcastChannel) and writes localStorage 'lux_kds_ping'. We refresh at once
