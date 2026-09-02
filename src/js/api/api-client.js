@@ -22,7 +22,10 @@
   var API_BASE  = global.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
   var WA_NUMBER = '212677717201';
   var CACHE_KEY = 'lux_api_cache_v3';
-  var TOKEN_KEY = 'lux_token';
+  // Jeton CLIENT. Le personnel a sa propre case (lux_staff_token,
+  // via lux-auth.js) : mélanger les deux faisait qu'une connexion
+  // « Mon Espace » déconnectait la caisse, et inversement.
+  var TOKEN_KEY = 'lux_customer_token';
   var QUEUE_KEY = 'lux_offline_queue';
 
   // ── Page fingerprint ─────────────────────────────────────────
