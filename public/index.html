@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="../src/js/lux-auth.js"></script>
 <title>CAFÉ LUX — MAESTRO Console</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
@@ -264,6 +265,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:h
 
       <div class="sb-bridge"></div>
 
+      <div class="sb-sec-label"><span class="em">🛵</span> Partenaires</div>
+      <div class="sb-item" onclick="goClient('livreur.html')"><span class="ic">🛵</span><div class="tx"><div class="n">Espace Livreur</div><div class="s">Connexion par code employé</div></div></div>
+
+      <div class="sb-bridge"></div>
+
       <div class="sb-sec-label"><span class="em">🔐</span> Espace Professionnel</div>
       <div class="sb-item pro" onclick="goPro('pos.html')"><span class="ic">🖥️</span><div class="tx"><div class="n">POS Caisse</div><div class="s">Encaissement · Tickets</div></div><span class="lock">🔒</span></div>
       <div class="sb-item pro" onclick="goPro('dashboard.html')"><span class="ic">📊</span><div class="tx"><div class="n">Tableau de Bord</div><div class="s">Analytics · Stock</div></div><span class="lock">🔒</span></div>
@@ -431,10 +437,7 @@ function fallbackLogin(){
   // comprenne pourquoi. Mieux vaut aucun jeton qu'un jeton menteur :
   // chaque écran sait alors demander une vraie authentification.
   if(currentPin==='9999' || currentPin==='281397'){
-    try{
-      localStorage.removeItem('lux_token');
-      localStorage.removeItem('admin_token');
-    }catch(e){}
+    try{ if(window.LuxAuth) LuxAuth.staff.clear(); }catch(e){}
     window.location.href = targetUrl;
   } else { handlePinError(); }
 }
@@ -444,8 +447,10 @@ function pinSubmit(){
   if(api && typeof api.loginPin==='function'){
     api.loginPin(currentPin).then(function(data){
       if(data && data.token){
-        localStorage.setItem('lux_token',data.token);
-        localStorage.setItem('admin_token',data.token);
+        // Connexion PROFESSIONNELLE → case personnel. Elle n'écrase
+        // plus la session « Mon Espace » d'un client sur ce poste.
+        if(window.LuxAuth) LuxAuth.staff.set(data.token);
+        else localStorage.setItem('lux_staff_token', data.token);
         window.location.href = targetUrl;
       } else { fallbackLogin(); }
     }).catch(function(){ fallbackLogin(); });
@@ -454,16 +459,8 @@ function pinSubmit(){
 /* Nettoyage unique : les appareils déjà en service portent peut-être
    le faux jeton du bypass. Tant qu'il est là, l'API répond
    « Session expirée » à chaque appel. On le supprime au chargement. */
-(function(){
-  try{
-    var t = localStorage.getItem('lux_token');
-    // Un JWT contient toujours deux points (header.payload.signature).
-    if(t && t.indexOf('.') === -1){
-      localStorage.removeItem('lux_token');
-      localStorage.removeItem('admin_token');
-    }
-  }catch(e){}
-})();
+// lux-auth.js migre et nettoie les anciens jetons au chargement :
+// plus rien à faire ici.
 
 /* physical keyboard support for PIN */
 document.addEventListener('keydown',function(e){

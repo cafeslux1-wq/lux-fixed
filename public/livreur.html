@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0d10">
 <title>Café LUX — Livreur</title>
+<script src="../src/js/lux-auth.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <style>
   :root{
@@ -163,7 +164,12 @@ var TIMER = null;
 var LAST_SENT = 0;
 
 function el(id){ return document.getElementById(id); }
-function token(){ try{ return localStorage.getItem('lux_token') || ''; }catch(e){ return ''; } }
+// Jeton PERSONNEL. Séparé du jeton client depuis lux-auth.js :
+// se connecter à « Mon Espace » ne déconnecte plus le livreur.
+function token(){
+  try{ return (window.LuxAuth ? LuxAuth.staff.get() : localStorage.getItem('lux_staff_token')) || ''; }
+  catch(e){ return ''; }
+}
 
 // Rôles autorisés à livrer (doit correspondre à DELIVERY_ROLES côté serveur).
 var DRIVER_ROLES = ['ADMIN','MANAGER','CASHIER','STAFF'];
@@ -180,12 +186,13 @@ function tokenRole(){
   }catch(e){ return null; }
 }
 
-// Le site utilise UNE seule clé 'lux_token' pour le client et pour
-// le personnel. Se connecter à « Mon Espace » écrase donc le jeton
-// du livreur, et inversement. On détecte ce cas au lieu de laisser
-// l'utilisateur face à un refus incompréhensible.
+// Les jetons client et personnel sont désormais séparés
+// (lux-auth.js). On garde ce garde-fou pour les appareils qui
+// portent encore un ancien jeton, et pour le cas où le rôle de
+// l'employé ne l'autorise pas à livrer.
 function forgetToken(){
-  try{ localStorage.removeItem('lux_token'); }catch(e){}
+  try{ if(window.LuxAuth) LuxAuth.staff.clear();
+       else localStorage.removeItem('lux_staff_token'); }catch(e){}
 }
 
 function showLogin(message, kind){
@@ -246,7 +253,8 @@ el('btn-auth').onclick = function(){
           + 'Demandez au responsable de vous passer en STAFF, ou utilisez un autre code PIN.');
       }
 
-      localStorage.setItem('lux_token', d.token);
+      if(window.LuxAuth) LuxAuth.staff.set(d.token);
+      else localStorage.setItem('lux_staff_token', d.token);
       showDriverUI();
       say('Connecté : ' + ((d.employee && d.employee.name) || 'Livreur'), 'ok');
       start();

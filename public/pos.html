@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>CAFÉ LUX — POS Caisse</title>
+<script src="../src/js/lux-auth.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -933,7 +934,13 @@ function requestToken(pin){
   })
   .then(function(r){ return r.json().catch(function(){ return {}; }); })
   .then(function(d){
-    if(d && d.token){ localStorage.setItem('lux_token', d.token); return true; }
+    if(d && d.token){
+      // Case PERSONNEL : ne peut plus être écrasée par une connexion
+      // client sur le même appareil.
+      if(window.LuxAuth) LuxAuth.staff.set(d.token);
+      else localStorage.setItem('lux_staff_token', d.token);
+      return true;
+    }
     return false;
   })
   .catch(function(){ return false; });
@@ -948,7 +955,7 @@ function ensureApiToken(typedPin){
     return false;
   }).then(function(ok){
     if(!ok){
-      try{ localStorage.removeItem('lux_token'); }catch(e){}
+      try{ if(window.LuxAuth) LuxAuth.staff.clear(); }catch(e){}
       setTimeout(function(){
         toast('⚠ Caisse non authentifiée · Carte LUX indisponible','var(--orange)');
       }, 900);
@@ -1549,7 +1556,8 @@ function finalizeSale(mode, extra){
   toast('✅ Encaissé '+money(t.total)+' · '+mode,'var(--green)');
 }
 function _authHeader(){
-  try{ var tok=(window.LuxAPI&&LuxAPI.getToken&&LuxAPI.getToken())||localStorage.getItem('lux_token'); return tok?{'Authorization':'Bearer '+tok}:{}; }catch(e){ return {}; }
+  // Jeton PERSONNEL uniquement (voir lux-auth.js).
+  try{ var tok=(window.LuxAuth?LuxAuth.staff.get():localStorage.getItem('lux_staff_token'))||''; return tok?{'Authorization':'Bearer '+tok}:{}; }catch(e){ return {}; }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2163,10 +2171,11 @@ CarteLUX.init({
 
   // Jeton posé par ensureApiToken() au déverrouillage de la caisse.
   getToken: function(){
-    try{
-      return (window.LuxAPI && LuxAPI.getToken && LuxAPI.getToken())
-          || localStorage.getItem('lux_token') || '';
-    }catch(e){ return ''; }
+    // Toujours le jeton PERSONNEL. LuxAPI.getToken() renvoie celui du
+    // client : s'en servir ici donnait « Accès refusé » dès qu'un
+    // client s'était connecté sur la tablette.
+    try{ return (window.LuxAuth ? LuxAuth.staff.get() : localStorage.getItem('lux_staff_token')) || ''; }
+    catch(e){ return ''; }
   },
 
   // Montant du ticket en cours, TVA et remise comprises.

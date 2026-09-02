@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Café LUX | Cuisine KDS</title>
+<script src="../src/js/lux-auth.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
@@ -149,7 +150,14 @@ var _firstLoad = true;
 // ── Helpers ──
 function el(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function authHeader(){ try{ var t=localStorage.getItem('lux_token'); return t?{'Authorization':'Bearer '+t}:{}; }catch(e){ return {}; } }
+function authHeader(){
+  // Jeton du PERSONNEL uniquement (voir lux-auth.js).
+  try{
+    if(window.LuxAuth) return LuxAuth.staff.headers();
+    var t = localStorage.getItem('lux_staff_token') || localStorage.getItem('lux_token');
+    return t ? {'Authorization':'Bearer '+t} : {};
+  }catch(e){ return {}; }
+}
 
 var _toastT;
 function toast(msg, ms){
