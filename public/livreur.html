@@ -357,8 +357,16 @@ function start(){
   TIMER = setInterval(function(){ loadQueue(); loadRequests(); }, 15000);
 }
 
+// « Tout afficher » : commandes prêtes non marquées livraison
+// (commande passée par téléphone, oubli de l'adresse au comptoir).
+var SHOW_ALL = false;
+function toggleAll(){
+  SHOW_ALL = !SHOW_ALL;
+  loadQueue();
+}
+
 function loadQueue(){
-  api('/api/delivery/queue')
+  api('/api/delivery/queue' + (SHOW_ALL ? '?all=1' : ''))
     .then(function(list){
       ORDERS = list || [];
       renderQueue();
@@ -380,9 +388,16 @@ function loadQueue(){
 function renderQueue(){
   var box = el('queue');
 
+  var toggle = '<button class="ghost" style="margin-top:14px" onclick="toggleAll()">'
+    + (SHOW_ALL ? '↩ Afficher seulement les livraisons'
+                : '👁 Afficher toutes les commandes prêtes') + '</button>';
+
   if(!ORDERS.length){
-    box.innerHTML = '<div class="empty">Aucune livraison en attente.<br>'
-      + 'Les nouvelles commandes apparaissent ici automatiquement.</div>';
+    box.innerHTML = '<div class="empty">'
+      + (SHOW_ALL
+          ? 'Aucune commande prête pour le moment.'
+          : 'Aucune livraison en attente.<br>Les commandes avec adresse arrivent ici automatiquement.')
+      + '</div>' + toggle;
     return;
   }
 
@@ -417,7 +432,7 @@ function renderQueue(){
               + '<button class="green" onclick="act(\'' + o.id + '\',\'DELIVERED\')">✅ Livrée</button>')
       + '</div>'
       + '</div>';
-  }).join('');
+  }).join('') + toggle;
 }
 
 /* ── Actions ──────────────────────────────────────────────── */

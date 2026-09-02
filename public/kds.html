@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Café LUX | Cuisine KDS</title>
-<script src="../src/js/lux-auth.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
@@ -110,6 +109,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);
   .kds-top{padding:12px 16px;gap:10px}
   .kds-logo{font-size:16px}
 }
+
+/* Commande prête : action de clôture, distincte du vert « prête » */
+.oc-btn.served{background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.5);color:#e8c97a}
+.oc-btn.served:hover{background:rgba(201,168,76,.26)}
 </style>
 </head>
 <body>
@@ -150,14 +153,7 @@ var _firstLoad = true;
 // ── Helpers ──
 function el(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function authHeader(){
-  // Jeton du PERSONNEL uniquement (voir lux-auth.js).
-  try{
-    if(window.LuxAuth) return LuxAuth.staff.headers();
-    var t = localStorage.getItem('lux_staff_token') || localStorage.getItem('lux_token');
-    return t ? {'Authorization':'Bearer '+t} : {};
-  }catch(e){ return {}; }
-}
+function authHeader(){ try{ var t=localStorage.getItem('lux_token'); return t?{'Authorization':'Bearer '+t}:{}; }catch(e){ return {}; } }
 
 var _toastT;
 function toast(msg, ms){
@@ -304,7 +300,11 @@ function renderKDS(){
       '<div class="oc-items">'+itemsHtml+'</div>'+
       '<div class="oc-foot"><span class="oc-total">'+o.total+' DH</span>'+ageHtml+
         (ready
-          ? '<button class="oc-btn done" disabled>✅ Prête</button>'
+          // Une commande prête restait affichée pour toujours : rien
+          // ne la fermait, et le tableau se remplissait (16 cartes,
+          // certaines vieilles de 3 jours). « Servie » la termine et
+          // la retire de l'écran — c'est l'opération qui manquait.
+          ? '<button class="oc-btn served" '+(BUSY[o.id]?'disabled':'')+' data-served="'+escAttr(o.rawId)+'">'+(BUSY[o.id]?'⏳...':'📤 Servie')+'</button>'
           : '<button class="oc-btn" '+(BUSY[o.id]?'disabled':'')+' data-ready="'+escAttr(o.rawId)+'">'+(BUSY[o.id]?'⏳...':'🍳 Marquer prête')+'</button>')+
       '</div></div>';
   }).join('');
@@ -331,11 +331,43 @@ function escAttr(v){
 // d'événement : plus aucun code dans le HTML, plus de guillemets à
 // échapper, et un seul écouteur pour toutes les cartes.
 document.addEventListener('click', function(ev){
-  var btn = ev.target.closest ? ev.target.closest('[data-ready]') : null;
-  if(!btn || btn.disabled) return;
-  ev.preventDefault();
-  markReady(btn.getAttribute('data-ready'));
+  if(!ev.target.closest) return;
+
+  var r = ev.target.closest('[data-ready]');
+  if(r && !r.disabled){ ev.preventDefault(); markReady(r.getAttribute('data-ready')); return; }
+
+  var v = ev.target.closest('[data-served]');
+  if(v && !v.disabled){ ev.preventDefault(); markServed(v.getAttribute('data-served')); return; }
 });
+
+// Termine la commande : elle sort du tableau de la cuisine et le
+// client voit « Livrée » de son côté.
+function markServed(rawId){
+  if(rawId == null) return;
+  var o = ORDERS.find(function(x){ return String(x.rawId)===String(rawId); });
+  if(!o || BUSY[o.id]) return;
+  BUSY[o.id] = true; renderKDS();
+
+  fetch(API+'/api/orders/'+encodeURIComponent(rawId)+'/status',{
+    method:'PATCH',
+    headers:Object.assign({'Content-Type':'application/json'},authHeader()),
+    body:JSON.stringify({status:'COMPLETED', by:'Cuisine'})
+  })
+  .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json().catch(function(){return{};}); })
+  .then(function(){
+    BUSY[o.id] = false;
+    // On la retire tout de suite de la liste locale : le prochain
+    // rafraîchissement ne la renverra plus (statut COMPLETED).
+    ORDERS = ORDERS.filter(function(x){ return x.id !== o.id; });
+    toast('📤 Commande #'+String(o.id).slice(-6)+' servie', 2000);
+    renderKDS();
+  })
+  .catch(function(){
+    BUSY[o.id] = false;
+    toast('⚠️ Échec — vérifiez la connexion', 2400);
+    renderKDS();
+  });
+}
 
 function markReady(rawId){
   if(rawId==null) return;
