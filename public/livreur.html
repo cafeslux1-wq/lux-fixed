@@ -94,13 +94,93 @@
        padding:14px;margin-bottom:11px}
   .req .t{font-size:14.5px;font-weight:600}
   .req .m{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.6}
+
+  /* ══ En-tête ══ */
+  .icon-btn{width:44px;height:44px;min-height:44px;flex:none;margin:0;padding:0;border-radius:50%;
+            background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);
+            color:var(--gold);font-size:18px;cursor:pointer}
+
+  /* ══ Bandeau de service ══ */
+  .shift{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+         padding:16px;margin-bottom:12px;transition:background .25s,border-color .25s}
+  .shift.on{background:linear-gradient(160deg,rgba(74,222,128,.14),rgba(74,222,128,.04));
+            border-color:rgba(74,222,128,.42)}
+  .shift-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .ident{display:flex;align-items:center;gap:12px;min-width:0}
+  .ava{width:48px;height:48px;flex:none;border-radius:50%;background:rgba(201,168,76,.16);
+       color:var(--gold);display:flex;align-items:center;justify-content:center;
+       font-size:20px;font-weight:700}
+  .shift.on .ava{background:rgba(74,222,128,.2);color:var(--green)}
+  .pname{font-size:17px;font-weight:700}
+  .psub{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+  .gpsline{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);
+           margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .gpsline .dot{width:8px;height:8px;border-radius:50%;background:#555;flex:none}
+  .gpsline.on .dot{background:var(--green);animation:blink 1.6s infinite}
+  .gpsline .acc{margin-left:auto;font-variant-numeric:tabular-nums}
+
+  .pstats{display:flex;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .ps{flex:1;text-align:center}
+  .ps+.ps{border-left:1px solid var(--line)}
+  .ps .v{font-size:17px;font-weight:700}
+  .ps .k{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+  /* ══ Étapes de la course ══ */
+  .steps{display:flex;gap:6px;margin:12px 0 4px}
+  .stp{flex:1;height:4px;border-radius:2px;background:#252b34}
+  .stp.done{background:var(--gold)}
+  .stp.now{background:var(--green)}
+  .stplbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);
+          margin-bottom:10px}
+  .stplbl span.act{color:var(--green);font-weight:600}
+
+  /* ══ Fiche publique ══ */
+  .ov{position:fixed;inset:0;z-index:9990;display:none;align-items:flex-end;justify-content:center;
+      background:rgba(6,6,6,.86);backdrop-filter:blur(6px)}
+  .ov.on{display:flex}
+  .ovbox{width:100%;max-width:520px;max-height:94vh;overflow:auto;background:var(--panel);
+         border-radius:22px 22px 0 0;border:1px solid rgba(201,168,76,.28)}
+  @media(min-width:540px){.ov{align-items:center}.ovbox{border-radius:22px}}
+  .ovhead{background:linear-gradient(160deg,#d6a92b,#b8860b);padding:24px 20px 26px;
+          text-align:center;color:#fff;position:relative;border-radius:21px 21px 0 0}
+  .ovx{position:absolute;top:12px;right:12px;width:34px;height:34px;min-height:34px;margin:0;padding:0;
+       border-radius:50%;background:rgba(255,255,255,.9);border:0;color:#2b2517;font-size:19px}
+  .ovava{width:82px;height:82px;margin:0 auto 10px;border-radius:50%;background:rgba(255,255,255,.22);
+         border:3px solid rgba(255,255,255,.85);display:flex;align-items:center;
+         justify-content:center;font-size:34px;font-weight:700}
+  .ovhead h2{margin:0;font-size:21px}
+  .pills{margin-top:10px}
+  .pill{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.24);
+        font-size:12.5px;margin:0 3px}
+  .ovbody{padding:16px}
+  .pcstats{display:flex;background:#1b1f27;border:1px solid var(--line);border-radius:14px;
+           margin:-30px 0 14px;position:relative;z-index:1}
+  .pcs{flex:1;text-align:center;padding:14px}
+  .pcs+.pcs{border-left:1px solid var(--line)}
+  .pcs .v{font-size:18px;font-weight:700}
+  .pcs .k{font-size:11px;color:var(--muted);margin-top:2px}
+  .pctabs{display:flex;background:#1b1f27;border:1px solid var(--line);border-radius:12px;
+          padding:4px;margin-bottom:12px}
+  .pctab{flex:1;padding:11px;margin:0;min-height:44px;border:0;background:none;border-radius:9px;
+         font:inherit;font-size:13px;font-weight:600;color:var(--muted)}
+  .pctab[aria-selected="true"]{background:var(--gold);color:#111}
+  .pcbox{background:#1b1f27;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .pcrow{display:flex;justify-content:space-between;font-size:13.5px}
+  .pcrow+.pcrow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .pctag{font-size:11px;padding:4px 10px;border-radius:999px;background:rgba(74,222,128,.14);color:var(--green)}
+  .pctag.off{background:rgba(255,255,255,.06);color:var(--muted)}
+  .pcnote{font-size:11.5px;color:var(--muted);text-align:center;margin:12px 0 16px;line-height:1.6}
+  .pclb{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .pcin{width:100%;padding:12px;font-size:15px;background:#0f1216;color:var(--txt);
+        border:1.5px solid var(--line);border-radius:11px;margin-bottom:11px}
 </style>
 </head>
 <body>
 
 <header>
   <div><div class="eyebrow">Café LUX — Taza</div><h1>Espace livreur</h1></div>
-  <div class="gps" id="gps"><span class="dot"></span><span id="gps-txt">GPS inactif</span></div>
+  <button class="icon-btn" onclick="openPublicCard()" title="Ma fiche publique">👁</button>
 </header>
 
 <!-- Retour à l'espace client : même compte, autre rôle. -->
@@ -112,28 +192,81 @@
   </div>
 </div>
 
-<!-- ══ Disponibilité ══
-     Hors ligne, le livreur disparaît de l'annuaire public et sa
-     position est effacée du serveur. C'est son interrupteur, pas
-     celui du patron. -->
-<div class="card hidden" id="presence">
-  <div class="prow">
-    <div>
-      <div class="pname" id="p-name">—</div>
-      <div class="psub" id="p-status">Hors ligne</div>
+<!-- ══ Bandeau de service ══
+     L'état de service doit se lire d'un coup d'œil, à bout de bras,
+     casque sur la tête. D'où le fond qui change de couleur : vert
+     quand on est visible des clients, sombre sinon. -->
+<div class="shift hidden" id="presence">
+  <div class="shift-top">
+    <div class="ident">
+      <div class="ava" id="p-ava">—</div>
+      <div>
+        <div class="pname" id="p-name">—</div>
+        <div class="psub" id="p-status">Hors ligne</div>
+      </div>
     </div>
     <button class="toggle" id="p-toggle" role="switch" aria-checked="false"
             onclick="toggleOnline()"><span class="knob"></span></button>
   </div>
+
+  <div class="gpsline" id="gps">
+    <span class="dot"></span><span id="gps-txt">GPS inactif</span>
+    <span class="acc" id="gps-acc"></span>
+  </div>
+
   <div class="pstats">
     <div class="ps"><div class="v" id="p-orders">0</div><div class="k">courses</div></div>
     <div class="ps"><div class="v" id="p-rating">—</div><div class="k" id="p-reviews">0 avis</div></div>
+    <div class="ps"><div class="v" id="p-today">0</div><div class="k">aujourd’hui</div></div>
     <div class="ps"><div class="v" id="p-verified">—</div><div class="k">vérifié</div></div>
   </div>
 </div>
 
 <!-- Demandes de course venues du site public -->
+<!-- Demandes de course venues du site public -->
 <div id="requests"></div>
+
+<!-- ══ Aperçu de la fiche publique ══
+     Le livreur voit exactement ce que le client voit de lui dans
+     « Chauffeurs à proximité » : mêmes onglets, mêmes chiffres.
+     Les boutons du client (Chat, Demander) sont montrés inertes —
+     il n'a évidemment pas à se commander lui-même. -->
+<div class="ov" id="pubcard">
+  <div class="ovbox">
+    <div class="ovhead">
+      <button class="ovx" onclick="closePublicCard()" aria-label="Fermer">&times;</button>
+      <div class="ovava" id="pc-ava">—</div>
+      <h2 id="pc-name">—</h2>
+      <div class="pills">
+        <span class="pill" id="pc-online">Hors ligne</span>
+        <span class="pill" id="pc-verif">Non vérifié</span>
+      </div>
+    </div>
+
+    <div class="ovbody">
+      <div class="pcstats">
+        <div class="pcs"><div class="v" id="pc-rating">—</div><div class="k" id="pc-reviews">0 avis</div></div>
+        <div class="pcs"><div class="v" id="pc-orders">0</div><div class="k">courses</div></div>
+      </div>
+
+      <div class="pctabs">
+        <button class="pctab" data-pt="services" aria-selected="true">📦 Services</button>
+        <button class="pctab" data-pt="about" aria-selected="false">ℹ️ À propos</button>
+      </div>
+      <div id="pc-tab"></div>
+
+      <div class="pcnote">Vue client — ces boutons sont ceux qu’il utilise pour vous joindre.</div>
+
+      <label class="pclb" for="pc-vehicle">Mon véhicule</label>
+      <input class="pcin" id="pc-vehicle" placeholder="Scooter, Voiture, À pied">
+      <label class="pclb" for="pc-bio">Ma présentation</label>
+      <input class="pcin" id="pc-bio" placeholder="Rapide et soigneux, quartier Medina">
+      <label class="pclb" for="pc-phone">Téléphone professionnel</label>
+      <input class="pcin" id="pc-phone" type="tel" placeholder="06XXXXXXXX">
+      <button class="primary" onclick="savePublicCard()">Enregistrer ma fiche</button>
+    </div>
+  </div>
+</div>
 
 <div class="msg" id="msg"></div>
 
@@ -282,20 +415,45 @@ function loadMe(){
   api('/api/delivery/me')
     .then(function(d){
       ME = d;
+      el('p-ava').textContent     = (d.name || '?').trim().charAt(0).toUpperCase();
       el('p-name').textContent    = d.name || 'Livreur';
-      el('p-status').textContent  = d.online ? 'En ligne — visible par les clients'
-                                             : 'Hors ligne — invisible dans l\u2019annuaire';
+      el('p-status').textContent  = d.online ? 'En service — visible par les clients'
+                                             : 'Hors service — invisible dans l\u2019annuaire';
       el('p-orders').textContent  = d.totalOrders || 0;
       el('p-rating').textContent  = d.rating != null ? '⭐ ' + d.rating : '—';
       el('p-reviews').textContent = (d.reviewsCount || 0) + ' avis';
       el('p-verified').textContent = d.verified ? 'Oui' : 'Non';
 
-      var t = el('p-toggle');
-      t.setAttribute('aria-checked', String(!!d.online));
+      el('p-toggle').setAttribute('aria-checked', String(!!d.online));
+      // Le bandeau vire au vert : l'état de service se lit sans lire.
+      el('presence').classList.toggle('on', !!d.online);
 
       if(d.online && !WATCH) startGps();
     })
     .catch(function(){ /* profil indisponible : la file reste utilisable */ });
+}
+
+// Courses terminées aujourd'hui — compté localement, remis à zéro
+// chaque jour. Un chiffre qui bouge dans la journée motive plus
+// qu'un total historique figé.
+function bumpToday(){
+  try{
+    var key = 'lux_driver_day';
+    var today = new Date().toISOString().slice(0,10);
+    var raw = JSON.parse(localStorage.getItem(key) || '{}');
+    if(raw.d !== today) raw = { d: today, n: 0 };
+    raw.n = (raw.n || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(raw));
+    el('p-today').textContent = raw.n;
+  }catch(e){}
+}
+
+function showToday(){
+  try{
+    var raw = JSON.parse(localStorage.getItem('lux_driver_day') || '{}');
+    var today = new Date().toISOString().slice(0,10);
+    el('p-today').textContent = (raw.d === today ? raw.n : 0) || 0;
+  }catch(e){}
 }
 
 function toggleOnline(){
@@ -304,8 +462,9 @@ function toggleOnline(){
 
   api('/api/delivery/me/online', { method:'POST', body:{ online: next } })
     .then(function(){
-      say(next ? 'Vous êtes en ligne — les clients peuvent vous demander.'
-               : 'Vous êtes hors ligne. Position effacée.', 'ok');
+      el('presence').classList.toggle('on', next);
+      say(next ? 'En service — les clients peuvent vous demander.'
+               : 'Hors service. Position effacée du serveur.', 'ok');
       if(next) startGps(); else if(!ACTIVE) stopGps();
       loadMe();
     })
@@ -351,6 +510,7 @@ function loadRequests(){
 
 /* ── File des livraisons ──────────────────────────────────── */
 function start(){
+  showToday();
   loadMe();
   loadQueue();
   loadRequests();
@@ -419,12 +579,27 @@ function renderQueue(){
       ? 'https://www.google.com/maps/dir/?api=1&destination=' + o.destination.lat + ',' + o.destination.lng
       : (o.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(o.address) : null);
 
+    // Trois étapes lisibles d'un coup d'œil : préparation, en route,
+    // livrée. Le livreur sait où il en est sans lire un libellé.
+    var stage = going ? 1 : (ready ? 0 : -1);
+    var steps = '<div class="steps">'
+      + '<div class="stp ' + (stage >= 0 ? (stage === 0 ? 'now' : 'done') : '') + '"></div>'
+      + '<div class="stp ' + (stage >= 1 ? 'now' : '') + '"></div>'
+      + '<div class="stp"></div>'
+      + '</div>'
+      + '<div class="stplbl">'
+      + '<span' + (stage === 0 ? ' class="act"' : '') + '>Prête</span>'
+      + '<span' + (stage === 1 ? ' class="act"' : '') + '>En route</span>'
+      + '<span>Livrée</span>'
+      + '</div>';
+
     return '<div class="card' + (o.mine ? ' mine' : '') + '">'
       + '<div class="row">'
       + '  <div class="ref">' + esc(o.ref) + '</div>'
       + '  <span class="badge ' + (going ? 'go' : (ready ? 'rdy' : '')) + '">'
       +     (going ? 'En route' : (ready ? 'Prête' : 'En préparation')) + '</span>'
       + '</div>'
+      + steps
       + '<div class="meta">' + esc(o.customerName || 'Client') + '</div>'
       + (o.address ? '<div class="addr">📍 ' + esc(o.address) + '</div>' : '')
       + (items ? '<div class="items">' + items + '</div>' : '')
@@ -483,9 +658,108 @@ function act(orderId, action){
         say('Le client a été prévenu de votre arrivée.', 'ok');
       } else if(action === 'DELIVERED'){
         if(ACTIVE === orderId){ ACTIVE = null; stopGps(); }
+        bumpToday();
         say('Livraison confirmée. Merci !', 'ok');
       }
       loadQueue();
+    })
+    .catch(function(e){ say('✕ ' + e.message); });
+}
+
+/* ══ Fiche publique ══
+   Le livreur voit sa carte telle que le client la découvre dans
+   « Chauffeurs à proximité ». Il peut y corriger son véhicule, sa
+   présentation et son téléphone professionnel — les seuls champs
+   qui lui appartiennent. Le statut « vérifié » reste du ressort de
+   l'administration : personne ne s'auto-certifie.
+══════════════════════════════════════════════════════════════ */
+var PC_TAB = 'services';
+
+function openPublicCard(){
+  if(!ME) return say('Profil en cours de chargement…', 'warn');
+
+  el('pc-ava').textContent    = (ME.name || '?').trim().charAt(0).toUpperCase();
+  el('pc-name').textContent   = ME.name || 'Livreur';
+  el('pc-online').textContent = ME.online ? '🟢 En ligne' : '🌙 Hors ligne';
+  el('pc-verif').textContent  = ME.verified ? '✔ Vérifié' : '⏳ Non vérifié';
+  el('pc-rating').textContent = ME.rating != null ? '⭐ ' + ME.rating : '—';
+  el('pc-reviews').textContent = (ME.reviewsCount || 0) + ' avis';
+  el('pc-orders').textContent = ME.totalOrders || 0;
+  el('pc-vehicle').value = ME.vehicle || '';
+  el('pc-bio').value     = ME.bio || '';
+  el('pc-phone').value   = ME.phone || '';
+
+  PC_TAB = 'services';
+  renderPcTab();
+  el('pubcard').classList.add('on');
+}
+
+function closePublicCard(){ el('pubcard').classList.remove('on'); }
+
+document.addEventListener('click', function(ev){
+  if(!ev.target.closest) return;
+  var t = ev.target.closest('.pctab');
+  if(!t) return;
+  PC_TAB = t.getAttribute('data-pt');
+  Array.prototype.forEach.call(document.querySelectorAll('.pctab'), function(x){
+    x.setAttribute('aria-selected', String(x.getAttribute('data-pt') === PC_TAB));
+  });
+  renderPcTab();
+});
+
+function renderPcTab(){
+  var box = el('pc-tab');
+  if(!ME) return;
+
+  if(PC_TAB === 'about'){
+    box.innerHTML =
+      '<div class="pcbox">'
+      + '<div style="font-weight:700;margin-bottom:10px">👤 Profil du chauffeur</div>'
+      + '<div class="pcrow"><span>Vérifié</span><b>' + (ME.verified ? 'Oui' : 'Non') + '</b></div>'
+      + '<div class="pcrow"><span>Véhicule</span><b>' + esc(ME.vehicle || 'Scooter') + '</b></div>'
+      + '</div>'
+      + '<div class="pcbox">'
+      + '<div style="font-weight:700;margin-bottom:10px">📊 Performance</div>'
+      + '<div class="pcrow"><span>Commandes totales</span><b>' + (ME.totalOrders || 0) + '</b></div>'
+      + '<div class="pcrow"><span>Note moyenne</span><b>'
+      +   (ME.rating != null ? '⭐ ' + ME.rating + ' / 5' : 'Pas encore noté') + '</b></div>'
+      + '<div class="pcrow"><span>Avis</span><b>' + (ME.reviewsCount || 0) + ' avis</b></div>'
+      + '</div>';
+    return;
+  }
+
+  box.innerHTML =
+    '<div class="pcbox">'
+    + '<div class="pcrow">'
+    + '  <div><div style="font-weight:700;font-size:15px">Delivery</div>'
+    + '    <div style="color:var(--gold);font-weight:600;margin-top:3px">Contacter pour le prix</div></div>'
+    + '  <span class="pctag' + (ME.online ? '' : ' off') + '">'
+    +     (ME.online ? '● Disponible' : '● Indisponible') + '</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="pcbox" style="opacity:.55">'
+    + '  <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">'
+    + '    ☑ J\u2019accepte les termes et conditions</div>'
+    + '  <div class="acts" style="margin:0">'
+    + '    <button class="ghost" disabled>💬 Chat</button>'
+    + '    <button class="primary" disabled>Demander maintenant</button>'
+    + '  </div>'
+    + '</div>';
+}
+
+function savePublicCard(){
+  api('/api/delivery/me', {
+    method: 'PATCH',
+    body: {
+      vehicle: el('pc-vehicle').value.trim(),
+      bio:     el('pc-bio').value.trim(),
+      phone:   el('pc-phone').value.trim(),
+    }
+  })
+    .then(function(){
+      say('✓ Fiche mise à jour — les clients voient les nouvelles informations.', 'ok');
+      closePublicCard();
+      loadMe();
     })
     .catch(function(e){ say('✕ ' + e.message); });
 }
@@ -501,7 +775,12 @@ function startGps(){
 
   WATCH = navigator.geolocation.watchPosition(function(pos){
     el('gps').classList.add('on');
-    el('gps-txt').textContent = 'Position partagée';
+    el('gps-txt').textContent = ACTIVE ? 'Position transmise au client' : 'Position partagée';
+    // La précision dit au livreur si le GPS est fiable avant qu'il
+    // n'accuse l'application d'afficher un mauvais point.
+    if(pos.coords && pos.coords.accuracy){
+      el('gps-acc').textContent = '±' + Math.round(pos.coords.accuracy) + ' m';
+    }
 
     var now = Date.now();
     if(now - LAST_SENT < 10000) return;
@@ -531,6 +810,7 @@ function stopGps(){
   if(WATCH !== null){ navigator.geolocation.clearWatch(WATCH); WATCH = null; }
   el('gps').classList.remove('on');
   el('gps-txt').textContent = 'GPS inactif';
+  el('gps-acc').textContent = '';
 }
 
 // Session encore valable : on saute la connexion.
