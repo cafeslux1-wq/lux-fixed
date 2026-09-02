@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Carte LUX — Émission des cartes</title>
+<script src="../src/js/lux-auth.js"></script>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#14171d; --panel-2:#1b1f27; --line:#262b34;
+    --gold:#c9a86a; --txt:#f2efe8; --muted:#8b9099;
+    --green:#60a878; --red:#d6544a; --orange:#d99a4a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px;background:var(--bg);color:var(--txt);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    max-width:520px;margin-inline:auto;padding-bottom:60px;
+  }
+  h1{font-size:19px;margin:0 0 2px}
+  .eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  header{margin-bottom:20px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .card h2{font-size:14px;margin:0 0 12px;font-weight:600}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+  input{
+    width:100%;padding:13px;font-size:16px;background:#0f1216;color:var(--txt);
+    border:1.5px solid var(--line);border-radius:11px;margin-bottom:12px
+  }
+  input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold)}
+  button{
+    width:100%;padding:15px;border-radius:12px;border:0;font:inherit;font-size:15px;
+    font-weight:600;cursor:pointer;min-height:52px;margin-bottom:8px
+  }
+  button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .primary{background:var(--gold);color:#14171d}
+  .ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+
+  .uid{
+    font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:.08em;
+    background:#0f1216;border:1.5px dashed var(--gold);border-radius:11px;
+    padding:14px;text-align:center;color:var(--gold);margin-bottom:12px;word-break:break-all
+  }
+  .wave{
+    width:74px;height:74px;margin:6px auto 12px;border-radius:50%;
+    border:2px solid rgba(201,168,106,.5);display:flex;align-items:center;
+    justify-content:center;font-size:30px;animation:pulse 1.8s ease-out infinite
+  }
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(201,168,106,.35)}100%{box-shadow:0 0 0 22px rgba(201,168,106,0)}}
+  @media (prefers-reduced-motion:reduce){.wave{animation:none}}
+
+  .msg{padding:12px;border-radius:11px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+  .msg.show{display:block}
+  .err{background:rgba(214,84,74,.14);color:#f2a49c;border:1px solid rgba(214,84,74,.35)}
+  .ok{background:rgba(96,168,120,.14);color:#9ddcb2;border:1px solid rgba(96,168,120,.35)}
+  .warn{background:rgba(217,154,74,.14);color:#f0c48a;border:1px solid rgba(217,154,74,.35)}
+
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+       padding:12px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .n{font-size:14px;font-weight:600}
+  .row .s{font-size:11.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+  .row button{width:auto;padding:8px 12px;font-size:12px;min-height:38px;margin:0}
+  .badge{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .badge.a{color:var(--green);border-color:rgba(96,168,120,.4)}
+  .badge.b{color:var(--red);border-color:rgba(214,84,74,.4)}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Café LUX · Administration</div>
+  <h1>Émission des cartes NFC</h1>
+</header>
+
+<div class="msg" id="msg"></div>
+
+<!-- ─── 1. Authentification ─────────────────────────────── -->
+<div class="card" id="auth-card">
+  <h2>1 · Authentifier ce poste</h2>
+  <label for="pin">Code PIN administrateur</label>
+  <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••">
+  <button class="primary" id="btn-auth">Se connecter</button>
+</div>
+
+<!-- ─── 2. Lecture de la puce ───────────────────────────── -->
+<div class="card hidden" id="read-card">
+  <h2>2 · Lire la puce de la carte</h2>
+  <div class="wave">💳</div>
+  <p class="hint" id="nfc-state">Initialisation du lecteur NFC…</p>
+
+  <div class="uid" id="uid-box">— — — — — —</div>
+
+  <button class="primary" id="btn-scan">Activer le lecteur NFC</button>
+
+  <label for="uid-manual">Ou saisir l'UID à la main</label>
+  <input id="uid-manual" autocomplete="off" placeholder="04:A2:B3:C4:D5:E6:80">
+</div>
+
+<!-- ─── 3. Liaison au client ────────────────────────────── -->
+<div class="card hidden" id="link-card">
+  <h2>3 · Lier au compte client</h2>
+  <p class="hint">
+    Le client doit déjà avoir un compte « Mon Espace LUX ».
+    Son solde et ses points restent sur son compte : la carte n'est
+    qu'une clé. En cas de perte, on la bloque et on en émet une autre.
+  </p>
+  <label for="phone">Téléphone du client</label>
+  <input id="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="06XXXXXXXX">
+
+  <label for="cardpin">Code PIN de la carte (optionnel)</label>
+  <input id="cardpin" type="password" inputmode="numeric" autocomplete="off" placeholder="demandé au-dessus de 200 DH">
+
+  <button class="primary" id="btn-link">Lier la carte</button>
+</div>
+
+<!-- ─── 4. Cartes émises ────────────────────────────────── -->
+<div class="card hidden" id="list-card">
+  <h2>4 · Cartes émises</h2>
+  <input id="search" autocomplete="off" placeholder="Rechercher (nom, téléphone, UID)">
+  <div id="list"></div>
+  <button class="ghost" id="btn-refresh">Rafraîchir</button>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   Carte LUX — émission des cartes physiques
+
+   Trois étapes : on s'authentifie, on lit la puce, on la lie
+   à un compte client existant. Rien n'est écrit sur la puce :
+   on ne lit que son UID de fabrication, donc n'importe quelle
+   carte NTAG ou MIFARE convient.
+══════════════════════════════════════════════════════════ */
+var API = window.LUX_API_URL || 'https://cafeslux-api-production.up.railway.app';
+
+var uid = null;
+var reader = null;
+
+function el(id){ return document.getElementById(id); }
+// Jeton PERSONNEL (émission de cartes = ADMIN / MANAGER).
+function token(){
+  try { return (window.LuxAuth ? LuxAuth.staff.get() : localStorage.getItem('lux_staff_token')) || ''; }
+  catch(e){ return ''; }
+}
+
+function say(text, kind){
+  var m = el('msg');
+  m.textContent = text || '';
+  m.className = 'msg' + (text ? ' show ' + (kind || 'err') : '');
+  if (text) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function api(path, options){
+  var o = options || {};
+  return fetch(API + path, {
+    method: o.method || 'GET',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
+    body: o.body ? JSON.stringify(o.body) : undefined
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(d){
+      if (!r.ok) { var e = new Error(d.error || 'Erreur serveur'); e.status = r.status; throw e; }
+      return d;
+    });
+  });
+}
+
+/* ── 1. Authentification ──────────────────────────────── */
+el('btn-auth').onclick = function(){
+  var pin = el('pin').value.trim();
+  if (!pin) return say('Entrez le code PIN.');
+
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Vérification…';
+
+  fetch(API + '/api/auth/pin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin: pin })
+  })
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .then(function(d){
+      btn.disabled = false; btn.textContent = 'Se connecter';
+      if (!d || !d.token) return say((d && d.error) || 'Code refusé par le serveur.');
+
+      // Un rôle ADMIN ou MANAGER est exigé pour émettre des cartes.
+      var role = (d.employee && d.employee.role) || '';
+      if (role && ['ADMIN','MANAGER'].indexOf(role) === -1) {
+        return say('Ce compte (' + role + ') ne peut pas émettre de cartes. Utilisez un compte ADMIN ou MANAGER.');
+      }
+
+      if(window.LuxAuth) LuxAuth.staff.set(d.token);
+      else localStorage.setItem('lux_staff_token', d.token);
+      el('auth-card').classList.add('hidden');
+      el('read-card').classList.remove('hidden');
+      el('link-card').classList.remove('hidden');
+      el('list-card').classList.remove('hidden');
+      say('Connecté en tant que ' + ((d.employee && d.employee.name) || 'Admin') + '.', 'ok');
+      startNfc();
+      loadCards();
+    })
+    .catch(function(){
+      btn.disabled = false; btn.textContent = 'Se connecter';
+      say('Serveur injoignable. Vérifiez la connexion.');
+    });
+};
+
+/* ── 2. Lecture NFC ───────────────────────────────────── */
+function setUid(value){
+  uid = String(value || '').trim();
+  el('uid-box').textContent = uid || '— — — — — —';
+}
+
+function startNfc(){
+  var state = el('nfc-state');
+
+  if (!('NDEFReader' in window)) {
+    state.textContent = window.isSecureContext
+      ? 'Lecteur NFC intégré non disponible sur ce navigateur. Saisissez l\u2019UID à la main (application NFC Tools).'
+      : 'NFC impossible en HTTP. Ouvrez cette page en HTTPS.';
+    el('btn-scan').classList.add('hidden');
+    return;
+  }
+
+  el('btn-scan').onclick = function(){
+    try {
+      reader = reader || new NDEFReader();
+      reader.scan().then(function(){
+        state.textContent = 'Lecteur actif — posez la carte sur le dos du terminal.';
+        el('btn-scan').textContent = 'Lecteur actif ✓';
+        el('btn-scan').disabled = true;
+      }).catch(function(e){
+        state.textContent = (e && e.name === 'NotAllowedError')
+          ? 'Autorisation refusée. Autorisez le NFC pour ce site, puis réessayez.'
+          : 'NFC indisponible. Vérifiez qu\u2019il est activé dans les réglages Android.';
+      });
+
+      reader.onreading = function(event){
+        setUid(event.serialNumber || '');
+        say('Puce lue : ' + uid, 'ok');
+        // Vibration courte : le caissier n'a pas à regarder l'écran.
+        if (navigator.vibrate) navigator.vibrate(60);
+      };
+      reader.onreadingerror = function(){
+        say('Carte illisible — représentez-la bien à plat.');
+      };
+    } catch (e) {
+      state.textContent = 'NFC indisponible sur cet appareil.';
+    }
+  };
+
+  state.textContent = 'Touchez « Activer le lecteur NFC », puis posez la carte.';
+}
+
+el('uid-manual').addEventListener('input', function(){
+  if (this.value.trim()) setUid(this.value);
+});
+
+/* ── 3. Liaison ───────────────────────────────────────── */
+el('btn-link').onclick = function(){
+  var phone = el('phone').value.trim();
+  var pin = el('cardpin').value.trim();
+
+  if (!uid) return say('Lisez d\u2019abord la puce, ou saisissez son UID.');
+  if (!phone) return say('Entrez le téléphone du client.');
+
+  var btn = this;
+  btn.disabled = true; btn.textContent = 'Liaison…';
+
+  var body = { phone: phone, nfcIdentifier: uid };
+  if (pin) body.pin = pin;
+
+  api('/api/carte-lux/admin/cards', { method: 'POST', body: body })
+    .then(function(d){
+      btn.disabled = false; btn.textContent = 'Lier la carte';
+      say('✓ Carte ' + d.carte.cardNumber + ' liée à ' + d.customer.name
+          + '. Elle est utilisable immédiatement en caisse.', 'ok');
+      el('phone').value = '';
+      el('cardpin').value = '';
+      el('uid-manual').value = '';
+      setUid(null);
+      loadCards();
+    })
+    .catch(function(e){
+      btn.disabled = false; btn.textContent = 'Lier la carte';
+      if (e.status === 401) return say('Session expirée. Rechargez la page et reconnectez-vous.');
+      if (e.status === 404) return say('Aucun client avec ce numéro. Le client doit créer son compte « Mon Espace LUX » d\u2019abord.');
+      say(e.message);
+    });
+};
+
+/* ── 4. Liste ─────────────────────────────────────────── */
+function loadCards(){
+  var q = el('search').value.trim();
+  api('/api/carte-lux/admin/cards' + (q ? '?search=' + encodeURIComponent(q) : ''))
+    .then(function(cards){
+      var box = el('list');
+      if (!cards.length) {
+        box.innerHTML = '<p class="hint" style="margin:8px 0">Aucune carte émise pour le moment.</p>';
+        return;
+      }
+      box.innerHTML = cards.map(function(c){
+        var name = (c.customer && c.customer.name) || 'Client';
+        var active = c.status === 'ACTIVE';
+        return '<div class="row">'
+          + '<div>'
+          + '  <div class="n">' + esc(name) + ' <span class="badge ' + (active ? 'a' : 'b') + '">' + c.status + '</span></div>'
+          + '  <div class="s">' + esc(c.cardNumber || '—') + ' · ' + esc(c.nfcIdentifier || 'sans puce') + '</div>'
+          + '</div>'
+          + '<button class="ghost" data-id="' + c.id + '" data-next="' + (active ? 'BLOCKED' : 'ACTIVE') + '">'
+          + (active ? 'Bloquer' : 'Activer') + '</button>'
+          + '</div>';
+      }).join('');
+
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){
+        b.onclick = function(){
+          api('/api/carte-lux/admin/cards/' + b.dataset.id, {
+            method: 'PATCH', body: { status: b.dataset.next }
+          })
+            .then(function(){ say('Statut mis à jour.', 'ok'); loadCards(); })
+            .catch(function(e){ say(e.message); });
+        };
+      });
+    })
+    .catch(function(e){
+      if (e.status === 401) say('Session expirée. Rechargez la page.');
+    });
+}
+
+el('btn-refresh').onclick = loadCards;
+var t = null;
+el('search').addEventListener('input', function(){ clearTimeout(t); t = setTimeout(loadCards, 350); });
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+  });
+}
+
+// Session encore valable : on saute l'étape 1.
+if (token() && token().indexOf('.') !== -1) {
+  el('auth-card').classList.add('hidden');
+  el('read-card').classList.remove('hidden');
+  el('link-card').classList.remove('hidden');
+  el('list-card').classList.remove('hidden');
+  startNfc();
+  loadCards();
+}
+</script>
+</body>
+</html>
