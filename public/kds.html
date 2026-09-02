@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>Café LUX | Cuisine KDS</title>
+<script src="../src/js/lux-auth.js"></script>
 <script>window.LUX_API_URL = 'https://cafeslux-api-production.up.railway.app';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
@@ -153,7 +154,18 @@ var _firstLoad = true;
 // ── Helpers ──
 function el(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function authHeader(){ try{ var t=localStorage.getItem('lux_token'); return t?{'Authorization':'Bearer '+t}:{}; }catch(e){ return {}; } }
+// Depuis la séparation des sessions (lux-auth.js), le jeton du
+// personnel vit dans 'lux_staff_token'. Cette fonction lisait encore
+// l'ancienne clé 'lux_token' — vidée par la migration — donc la
+// cuisine partait sans en-tête d'autorisation, recevait 401 sur
+// toutes les routes, et affichait « API injoignable ».
+function authHeader(){
+  try{
+    if(window.LuxAuth) return LuxAuth.staff.headers();
+    var t = localStorage.getItem('lux_staff_token');
+    return t ? {'Authorization':'Bearer '+t} : {};
+  }catch(e){ return {}; }
+}
 
 var _toastT;
 function toast(msg, ms){
@@ -220,7 +232,13 @@ function typeLabel(o){
 function ageMin(o){ if(!o.ts) return null; return Math.floor((Date.now()-o.ts)/60000); }
 
 // ── Fetch live orders (with endpoint fallbacks + offline handling) ──
+// Dernier code HTTP rencontré : permet de dire au cuisinier ce qui
+// ne va pas vraiment, au lieu d'un « injoignable » qui l'envoie
+// vérifier le wifi alors que c'est la session qui a expiré.
+var LAST_STATUS = 0;
+
 function fetchOrders(){
+  LAST_STATUS = 0;
   // /api/orders sans filtre renvoie déjà TOUTES les commandes actives
   // (le serveur exclut COMPLETED et CANCELLED). C'est exactement ce que
   // la cuisine doit voir.
@@ -238,7 +256,7 @@ function fetchOrders(){
   function attempt(){
     if(i>=paths.length) return Promise.resolve(lastEmpty);
     return fetch(API+paths[i],{headers:Object.assign({'Accept':'application/json'},authHeader())})
-      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(r){ if(!r.ok){ LAST_STATUS = r.status; throw new Error('HTTP '+r.status); } return r.json(); })
       .then(function(d){
         var arr = Array.isArray(d)?d:(d&&(d.orders||d.data||d.transactions||d.items||d.rows));
         if(Array.isArray(arr) && arr.length) return arr;
@@ -254,7 +272,20 @@ function fetchOrders(){
 
 function refresh(silent){
   fetchOrders().then(function(list){
-    if(!Array.isArray(list)){ setConn(false); if(!silent) toast('⚠️ API injoignable — mode hors-ligne'); renderKDS(); return; }
+    if(!Array.isArray(list)){
+      setConn(false);
+      if(!silent){
+        if(LAST_STATUS === 401){
+          toast('🔒 Session cuisine expirée — reconnectez-vous depuis l\u2019accueil', 4000);
+        } else if(LAST_STATUS === 403){
+          toast('🔒 Ce compte n\u2019a pas accès à la cuisine', 4000);
+        } else {
+          toast('⚠️ API injoignable — mode hors-ligne', 3000);
+        }
+      }
+      renderKDS();
+      return;
+    }
     setConn(true);
     var normalized = list.map(normalizeOrder)
       .filter(function(o){ return isActiveForKitchen(o.status); })
