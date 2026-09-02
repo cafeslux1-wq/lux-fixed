@@ -25,7 +25,12 @@
 
   var CFG = {
     apiBase: '',
-    getToken: function () { return localStorage.getItem('token') || ''; },
+    getToken: function () {
+      // Par défaut : jeton PERSONNEL. Les pages qui intègrent le
+      // module peuvent surcharger getToken via init().
+      try { return (global.LuxAuth ? LuxAuth.staff.get() : localStorage.getItem('lux_staff_token')) || ''; }
+      catch (e) { return ''; }
+    },
     getAmount: function () { return 0; },
     onSuccess: null,
     onError: null,
@@ -498,7 +503,8 @@
         .then(function (d) {
           if (d && d.token) {
             try {
-              localStorage.setItem('lux_token', d.token);
+              if (global.LuxAuth) LuxAuth.staff.set(d.token);
+              else localStorage.setItem('lux_staff_token', d.token);
               // Le jeton serveur expire au bout de 12 h. On garde le PIN
               // du poste pour le renouveler en silence, sinon le caissier
               // devrait le retaper chaque matin — ce que la phrase
@@ -814,8 +820,7 @@
     try {
       var tok = CFG.getToken();
       if (tok && tok.indexOf('.') === -1) {
-        localStorage.removeItem('lux_token');
-        localStorage.removeItem('admin_token');
+        if (global.LuxAuth) LuxAuth.clearAll();
         tok = '';
       }
       if (!tok) {
@@ -831,7 +836,10 @@
           })
             .then(function (r) { return r.json().catch(function () { return {}; }); })
             .then(function (d) {
-              if (d && d.token) { localStorage.setItem('lux_token', d.token); }
+              if (d && d.token) {
+                if (global.LuxAuth) LuxAuth.staff.set(d.token);
+                else localStorage.setItem('lux_staff_token', d.token);
+              }
               else { renderAuthNeeded(); }
             })
             .catch(function () { /* hors ligne : le lookup affichera l'erreur */ });
