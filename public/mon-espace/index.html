@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Carte LUX">
 <link rel="apple-touch-icon" href="/lux-Chatbot_IA-icon.png">
+<script src="../../src/js/lux-auth.js"></script>
 <title>Café LUX · Mon Espace</title>
 
 <!-- ── API Config ── -->
@@ -1359,11 +1360,13 @@ function toast(msg, dur = 3200) {
   el._t = setTimeout(() => el.classList.remove('show'), dur);
 }
 
-function getToken()   { try { return localStorage.getItem('lux_token') || null; } catch(e) { return null; } }
-function setToken(t)  { try { localStorage.setItem('lux_token', t); } catch(e) {} }
+// Jeton CLIENT. Le personnel utilise lux_staff_token : les deux
+// cohabitent désormais sur le même appareil sans s'écraser.
+function getToken()   { try { return (window.LuxAuth ? LuxAuth.customer.get() : localStorage.getItem('lux_customer_token')) || null; } catch(e) { return null; } }
+function setToken(t)  { try { if (window.LuxAuth) LuxAuth.customer.set(t); else localStorage.setItem('lux_customer_token', t); } catch(e) {} }
 function clearToken() {
   try {
-    localStorage.removeItem('lux_token');
+    if (window.LuxAuth) LuxAuth.customer.clear(); else localStorage.removeItem('lux_customer_token');
     // ⚡ Mirror clear — sync logout across pages (menu, gaming, offres, etc.)
     localStorage.removeItem('lux_customer_session');
     localStorage.removeItem('lux_session_cache');
@@ -2874,7 +2877,7 @@ window.addEventListener('storage', (e) => {
     autoSyncSession('storage:order-placed', detail);
     return;
   }
-  if (e.key === 'lux_customer_session' || e.key === 'lux_token') {
+  if (e.key === 'lux_customer_session' || e.key === 'lux_customer_token') {
     autoSyncSession('storage:' + e.key);
   }
 });
