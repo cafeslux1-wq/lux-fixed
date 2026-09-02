@@ -740,6 +740,24 @@ input, button, select, textarea { font-family:inherit; }
   background:transparent;color:#eee;font:inherit;font-size:13px;cursor:pointer;min-height:46px
 }
 .clux-btn.gold{background:var(--gold);color:#111;border-color:var(--gold);font-weight:600}
+
+/* ══ Bascule de rôle Client / Livreur ══ */
+.role-switch{
+  max-width:var(--max);margin:0 auto 16px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.22);
+  border-radius:14px
+}
+.role-lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.role-btns{display:flex;gap:8px;margin-left:auto}
+.role-btn{
+  padding:10px 18px;min-height:44px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.12);background:transparent;
+  color:var(--muted);font:inherit;font-size:13.5px;font-weight:600
+}
+.role-btn.active{background:var(--gold);color:#111;border-color:var(--gold)}
+.role-btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@media(max-width:520px){.role-btns{margin-left:0;width:100%}.role-btn{flex:1}}
 </style>
 </head>
 <body>
@@ -880,6 +898,23 @@ input, button, select, textarea { font-family:inherit; }
     <div class="stat-box">
       <div class="stat-val" id="stat-savings">0 DH</div>
       <div class="stat-lbl">Économisé</div>
+    </div>
+  </div>
+
+  <!-- ══ Changer de rôle ══
+       Un employé qui livre utilise le même compte : il bascule ici
+       vers son espace livreur. Le choix est mémorisé, donc il
+       retombe directement sur la bonne interface au prochain
+       passage. -->
+  <div class="role-switch" role="group" aria-label="Changer de rôle">
+    <span class="role-lbl">Changer de rôle</span>
+    <div class="role-btns">
+      <button class="role-btn active" id="role-client" onclick="setRole('client')">
+        👤 Client
+      </button>
+      <button class="role-btn" id="role-livreur" onclick="setRole('livreur')">
+        🛵 Livreur
+      </button>
     </div>
   </div>
 
@@ -2386,6 +2421,21 @@ function renderOrders() {
 }
 
 // Ouvre le suivi en direct sur une commande précise.
+/* ══ Rôles ══
+   « Livreur » ouvre l'espace de livraison. On ne redirige jamais
+   automatiquement : le basculement reste un geste volontaire, sinon
+   un employé qui consulte son solde se retrouverait en tournée. */
+function setRole(role) {
+  if (role === 'livreur') {
+    try { localStorage.setItem('lux_role', 'livreur'); } catch (e) {}
+    window.location.href = '../livreur.html';
+    return;
+  }
+  try { localStorage.setItem('lux_role', 'client'); } catch (e) {}
+  document.getElementById('role-client').classList.add('active');
+  document.getElementById('role-livreur').classList.remove('active');
+}
+
 function trackOrder(orderId) {
   if (!window.LuxTracking) return toast('Suivi indisponible');
   LuxTracking.follow(orderId);
